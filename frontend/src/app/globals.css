@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Starter Template — Design System (v1)
+   Premium developer-tool aesthetic. Restrained palette, high
+   contrast, generous whitespace. Inspired by Linear / Stripe /
+   Resend. Single primary (indigo-violet), tasteful accent
+   gradients, near-black surfaces in dark mode.
+   ============================================================ */
+
+:root {
+  /* Radius scale — slightly tighter than shadcn defaults. */
+  --radius: 0.625rem;       /* 10px */
+  --radius-sm: 0.375rem;    /* 6px */
+  --radius-lg: 0.875rem;    /* 14px */
+
+  /* Surfaces */
+  --background: oklch(0.99 0.002 95);          /* warm off-white */
+  --foreground: oklch(0.18 0.015 268);         /* near-black, hint of indigo */
+  --card: oklch(1 0 0);                        /* pure white card */
+  --card-foreground: var(--foreground);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--foreground);
+
+  /* Brand */
+  --primary: oklch(0.50 0.21 273);             /* indigo-600-ish */
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-soft: oklch(0.96 0.025 273);       /* tint behind primary chips */
+
+  /* Neutral grays */
+  --secondary: oklch(0.97 0.005 268);
+  --secondary-foreground: oklch(0.25 0.015 268);
+  --muted: oklch(0.965 0.005 268);
+  --muted-foreground: oklch(0.50 0.015 268);
+  --accent: oklch(0.96 0.005 268);
+  --accent-foreground: oklch(0.22 0.015 268);
+
+  /* Semantic */
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.66 0.15 155);
+  --warning: oklch(0.74 0.16 75);
+
+  /* Lines & inputs */
+  --border: oklch(0.92 0.006 268);
+  --input: oklch(0.92 0.006 268);
+  --ring: oklch(0.62 0.18 273 / 0.45);
+
+  /* Charts */
+  --chart-1: oklch(0.62 0.18 273);
+  --chart-2: oklch(0.66 0.15 200);
+  --chart-3: oklch(0.66 0.15 155);
+  --chart-4: oklch(0.74 0.16 75);
+  --chart-5: oklch(0.65 0.20 25);
+
+  /* Elevation */
+  --shadow-xs: 0 1px 0 0 rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 1px 1px 0 rgb(15 23 42 / 0.03);
+  --shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 12px 32px -8px rgb(15 23 42 / 0.12), 0 4px 8px -4px rgb(15 23 42 / 0.06);
+  --shadow-glow: 0 0 0 1px rgb(99 102 241 / 0.25), 0 8px 24px -6px rgb(99 102 241 / 0.35);
+
+  /* Brand gradient — used sparingly on hero/CTA accents. */
+  --gradient-brand: linear-gradient(135deg, oklch(0.62 0.22 273) 0%, oklch(0.65 0.22 305) 100%);
+  --gradient-brand-soft:
+    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.62 0.22 273 / 0.10), transparent 70%);
+}
+
+.dark {
+  /* Deep, near-black surfaces — Linear / Resend aesthetic. */
+  --background: oklch(0.13 0.012 268);
+  --foreground: oklch(0.97 0.003 268);
+  --card: oklch(0.17 0.012 268);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.16 0.012 268);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.74 0.16 273);             /* brighter indigo for dark */
+  --primary-foreground: oklch(0.13 0.012 268);
+  --primary-soft: oklch(0.30 0.10 273 / 0.30);
+
+  --secondary: oklch(0.22 0.012 268);
+  --secondary-foreground: oklch(0.97 0.003 268);
+  --muted: oklch(0.20 0.012 268);
+  --muted-foreground: oklch(0.65 0.012 268);
+  --accent: oklch(0.22 0.012 268);
+  --accent-foreground: oklch(0.97 0.003 268);
+
+  --destructive: oklch(0.65 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.72 0.16 155);
+  --warning: oklch(0.78 0.17 75);
+
+  --border: oklch(0.27 0.012 268);
+  --input: oklch(0.27 0.012 268);
+  --ring: oklch(0.74 0.16 273 / 0.55);
+
+  --chart-1: oklch(0.74 0.16 273);
+  --chart-2: oklch(0.74 0.14 200);
+  --chart-3: oklch(0.74 0.14 155);
+  --chart-4: oklch(0.80 0.16 75);
+  --chart-5: oklch(0.72 0.20 25);
+
+  --shadow-xs: 0 1px 0 0 rgb(0 0 0 / 0.40);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.45), 0 1px 1px 0 rgb(0 0 0 / 0.30);
+  --shadow-md: 0 4px 16px -2px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 16px 40px -8px rgb(0 0 0 / 0.65), 0 6px 12px -4px rgb(0 0 0 / 0.45);
+  --shadow-glow: 0 0 0 1px rgb(165 180 252 / 0.25), 0 8px 32px -6px rgb(129 140 248 / 0.45);
+
+  --gradient-brand: linear-gradient(135deg, oklch(0.66 0.22 273) 0%, oklch(0.70 0.22 305) 100%);
+  --gradient-brand-soft:
+    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.74 0.16 273 / 0.18), transparent 70%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius: var(--radius);
+  --radius-sm: var(--radius-sm);
+  --radius-lg: var(--radius-lg);
+
+  /* Type scale (kept minimal; component-level tweaks override). */
+  --font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01", "ss03";
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  ::selection {
+    background: oklch(0.74 0.16 273 / 0.30);
+  }
+}
+
+/* ============================================================
+   Reusable utility classes (used across pages).
+   Prefer composition with semantic tokens over raw colors.
+   ============================================================ */
+
+/* Subtle dotted-grid background (hero sections). */
+.bg-dotgrid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    oklch(var(--foreground) / 0.07) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+}
+
+/* Soft brand glow behind hero headlines. */
+.bg-brand-glow {
+  background: var(--gradient-brand-soft);
+}
+
+/* Frosted nav / sticky bars. */
+.surface-blur {
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+}
+
+/* Card with hover-elevate (admin module cards, dashboard tiles). */
+.card-hover {
+  transition: border-color 180ms ease, box-shadow 240ms ease, transform 240ms ease;
+}
+.card-hover:hover {
+  border-color: oklch(var(--primary) / 0.30);
+  box-shadow: var(--shadow-md);
+}
+
+/* Brand text gradient for headline accents. */
+.text-gradient-brand {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Tasteful focus ring for primary CTA buttons. */
+.btn-glow:focus-visible,
+.btn-glow:hover {
+  box-shadow: var(--shadow-glow);
+}

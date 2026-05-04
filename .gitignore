@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Build artifacts
+.next/
+dist/
+build/
+
+# Environment files — ignore actual secrets, never ignore example templates
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.test
+backend/.env
+frontend/.env.local
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing / browser automation outputs
+.expo
+.playwright-mcp/
+test-results/
+playwright-report/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+# (re-include the assets we genuinely ship)
+!frontend/public/**/*.svg
+!frontend/public/**/*.png
+!frontend/public/**/*.jpg
+!frontend/public/**/*.jpeg
+!frontend/public/**/*.webp
+!frontend/src/**/*.svg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local AI / agent caches & memory (NEVER commit these)
+.claude/
+.cursor/
+.windsurf/
+.aider*
+.planning/
+requirements/
+Tasks
+**/agent-memory/
+**/agent-memory-local/
+*.agent-memory.md
+# Keep the per-rules files at repo root if you maintain them:
+!.cursorrules
+!.windsurfrules

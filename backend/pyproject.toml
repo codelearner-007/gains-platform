@@ -1,0 +1,33 @@
+[project]
+dependencies = [
+    "python-dateutil",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --import-mode=importlib --cov=app --cov-report=html"
+filterwarnings = [
+    "ignore::pydantic.PydanticDeprecatedSince20",
+    "ignore:Unknown config option:asyncio_mode",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]

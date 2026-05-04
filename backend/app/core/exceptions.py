@@ -1,0 +1,120 @@
+"""Custom exception classes for the application."""
+
+from typing import Any, Dict, Optional
+
+
+class AppException(Exception):
+    """Base exception class for application errors."""
+
+    def __init__(
+        self,
+        message: str,
+        status_code: int = 500,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        self.message = message
+        self.status_code = status_code
+        self.details = details or {}
+        super().__init__(self.message)
+
+
+class ResourceNotFoundError(AppException):
+    """Raised when a requested resource is not found."""
+
+    def __init__(self, resource: str, identifier: str) -> None:
+        super().__init__(
+            message=f"{resource} with identifier '{identifier}' not found",
+            status_code=404,
+            details={"resource": resource, "identifier": identifier},
+        )
+
+
+class PermissionDeniedError(AppException):
+    """Raised when user lacks required permission."""
+
+    def __init__(self, required_permission: str, *, code: str | None = None) -> None:
+        # Generic message in the response — never leak the specific permission name.
+        # Store internally for server-side logging via AppException handler.
+        super().__init__(
+            message="Insufficient permissions",
+            status_code=403,
+            details={"code": code} if code else {},
+        )
+        # Available for server-side logging but NOT included in JSON response
+        self._required_permission = required_permission
+
+
+class InvalidTokenError(AppException):
+    """Raised when JWT token is invalid or expired."""
+
+    def __init__(self, reason: str = "Invalid or expired token") -> None:
+        super().__init__(
+            message=reason,
+            status_code=401,
+            details={"token_error": reason},
+        )
+
+
+class ValidationError(AppException):
+    """Raised when data validation fails."""
+
+    def __init__(self, message: str, field: Optional[str] = None) -> None:
+        super().__init__(
+            message=message,
+            status_code=422,
+            details={"field": field} if field else {},
+        )
+
+
+class HierarchyViolationError(AppException):
+    """Raised when attempting to assign higher privilege role."""
+
+    def __init__(
+        self, user_level: int, target_level: int, message: Optional[str] = None
+    ) -> None:
+        default_message = f"Cannot assign role with higher hierarchy level ({target_level}) than your own ({user_level})"
+        super().__init__(
+            message=message or default_message,
+            status_code=403,
+            details={
+                "user_hierarchy_level": user_level,
+                "target_hierarchy_level": target_level,
+            },
+        )
+
+
+class DuplicateResourceError(AppException):
+    """Raised when attempting to create a duplicate resource."""
+
+    def __init__(self, resource: str, field: str, value: str) -> None:
+        super().__init__(
+            message=f"{resource} with {field}='{value}' already exists",
+            status_code=409,
+            details={"resource": resource, "field": field, "value": value},
+        )
+
+
+class ImmutableResourceError(AppException):
+    """Raised when attempting to modify immutable system resource."""
+
+    def __init__(
+        self,
+        resource: str,
+        identifier: str,
+        reason: str = "System resource is immutable",
+    ) -> None:
+        super().__init__(
+            message=f"Cannot modify {resource} '{identifier}': {reason}",
+            status_code=403,
+            details={
+                "resource": resource,
+                "identifier": identifier,
+                "reason": reason,
+            },
+        )
+
+class BadRequestError(AppException):
+    """Raised when request is invalid."""
+
+    def __init__(self, message: str, detail: dict | None = None) -> None:
+        super().__init__(message, status_code=400, details=detail)

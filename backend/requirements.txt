@@ -1,0 +1,42 @@
+# FastAPI Core
+fastapi==0.128.2
+uvicorn[standard]==0.40.0
+
+# Database
+sqlalchemy[asyncio]==2.0.46
+asyncpg==0.31.0
+psycopg2-binary==2.9.11
+
+# Validation & Settings
+pydantic==2.12.5
+pydantic-settings==2.12.0
+dnspython==2.8.0
+email-validator==2.3.0
+
+# JWT & Security
+python-jose[cryptography]==3.5.0
+PyJWT[crypto]==2.11.0
+cryptography==46.0.4
+bcrypt==4.3.0
+
+# HTTP Client
+httpx==0.28.1
+
+# File Uploads
+python-multipart==0.0.22
+
+# Rate Limiting
+slowapi==0.1.9
+limits[redis]==5.8.0
+
+# Redis
+redis==7.4.0
+
+# Supabase Storage (for avatar uploads)
+supabase==2.25.0
+
+# Date/Time Utilities
+python-dateutil==2.9.0.post0
+
+# Environment
+python-dotenv==1.2.1

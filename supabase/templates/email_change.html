@@ -1,0 +1,4 @@
+<h2>Confirm Email Change</h2>
+<p>Follow this link to confirm the update of your email from {{ .Email }} to {{ .NewEmail }}:</p>
+<p><a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/app/user-settings">Confirm email change</a></p>
+<p>Alternatively, enter the code: {{ .Token }}</p>

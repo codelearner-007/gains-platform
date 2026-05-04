@@ -1,0 +1,5 @@
+<h2>Your Sign-In Link</h2>
+<p>Use the link below to sign in. It will expire shortly.</p>
+<p><a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/app">Sign in</a></p>
+<p>Alternatively, enter the code: {{ .Token }}</p>
+<p style="color:#888;font-size:12px;">If you didn&apos;t request this email, you can safely ignore it.</p>
