@@ -7,6 +7,8 @@ import {
   HEADER_BAR_BG,
   LAYOUT_BORDER,
   performanceColor,
+  STRAND_CHIP_BG,
+  STRAND_CHIP_FG,
 } from '@/lib/reports/colors';
 import PerfPill from '../shared/PerfPill';
 import {
@@ -145,7 +147,7 @@ export default function StrandRollupTable({
                     style={{
                       cursor: clickable ? 'pointer' : 'default',
                       backgroundColor: isSelected
-                        ? '#E0E7FF'
+                        ? STRAND_CHIP_BG
                         : 'transparent',
                     }}
                   >
@@ -168,8 +170,8 @@ export default function StrandRollupTable({
                             key={s}
                             className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
                             style={{
-                              backgroundColor: '#E0E7FF',
-                              color: '#1E1B4B',
+                              backgroundColor: STRAND_CHIP_BG,
+                              color: STRAND_CHIP_FG,
                             }}
                           >
                             {s}

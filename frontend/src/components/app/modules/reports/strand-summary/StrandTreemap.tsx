@@ -7,6 +7,7 @@ import {
   LAYOUT_BORDER,
   PERF_PINK,
   performanceColor,
+  STANDARD_HEADER_BG,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
 
@@ -139,7 +140,7 @@ function TreemapNode(props: NodeProps) {
         height={height}
         style={{
           fill,
-          stroke: selected ? '#0E1A77' : '#fff',
+          stroke: selected ? STANDARD_HEADER_BG : '#fff',
           strokeWidth: selected ? 3 : 2,
         }}
       />

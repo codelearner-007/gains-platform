@@ -4,12 +4,15 @@ import { useMemo } from 'react';
 import { Check, X } from 'lucide-react';
 import type { IadDistractorRow } from '@/lib/reports/types';
 import {
+  EMPTY_TABLE_FG,
   HEADER_BAR_BG,
   INCORRECT_GREY,
   LAYOUT_BORDER,
   PERF_GREEN,
   PERF_PINK,
   PERF_YELLOW,
+  STATUS_CORRECT_FG,
+  STATUS_INCORRECT_FG,
 } from '@/lib/reports/colors';
 import {
   tableCellStyle as cellBase,
@@ -105,13 +108,13 @@ export default function DistractorTable({ rows }: Props) {
                     {r.is_correct ? (
                       <Check
                         className="inline h-4 w-4"
-                        style={{ color: '#15803d' }}
+                        style={{ color: STATUS_CORRECT_FG }}
                         aria-label="correct"
                       />
                     ) : (
                       <X
                         className="inline h-4 w-4"
-                        style={{ color: '#b91c1c' }}
+                        style={{ color: STATUS_INCORRECT_FG }}
                         aria-label="incorrect"
                       />
                     )}
@@ -164,7 +167,7 @@ export default function DistractorTable({ rows }: Props) {
                   style={{
                     ...cellBase,
                     textAlign: 'center',
-                    color: '#6b7280',
+                    color: EMPTY_TABLE_FG,
                   }}
                 >
                   No answer-choice data for this question.

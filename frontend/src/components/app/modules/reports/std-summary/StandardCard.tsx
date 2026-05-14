@@ -3,33 +3,47 @@
 import { useState } from 'react';
 import type { StandardSummaryRollupRow } from '@/lib/reports/types';
 import {
+  COMPLEXITY_DEFAULT_BG,
+  COMPLEXITY_DEFAULT_FG,
+  COMPLEXITY_HIGH_BG,
+  COMPLEXITY_HIGH_FG,
+  COMPLEXITY_LOW_BG,
+  COMPLEXITY_LOW_FG,
+  COMPLEXITY_MID_BG,
+  COMPLEXITY_MID_FG,
   INCORRECT_GREY,
   LAYOUT_BORDER,
+  NEUTRAL_CHIP_BG,
   performanceColor,
+  STANDARD_HEADER_BG,
+  STANDARD_HEADER_FG,
+  STRAND_CHIP_BG,
+  STRAND_CHIP_FG,
 } from '@/lib/reports/colors';
 
-const STANDARD_CARD_HEADER_BG = '#0E1A77'; // PBIX deep navy header (spec §8)
 const DESC_TRUNC = 240;
 
 interface StandardCardProps {
   std: StandardSummaryRollupRow;
 }
 
+function complexityColors(value: string): { bg: string; fg: string } {
+  const v = value.toLowerCase();
+  if (v.includes('high')) {
+    return { bg: COMPLEXITY_HIGH_BG, fg: COMPLEXITY_HIGH_FG };
+  }
+  if (v.includes('moderate') || v.includes('mid')) {
+    return { bg: COMPLEXITY_MID_BG, fg: COMPLEXITY_MID_FG };
+  }
+  if (v.includes('low')) {
+    return { bg: COMPLEXITY_LOW_BG, fg: COMPLEXITY_LOW_FG };
+  }
+  return { bg: COMPLEXITY_DEFAULT_BG, fg: COMPLEXITY_DEFAULT_FG };
+}
+
 function ComplexityChip({ value }: { value: string }) {
   if (!value) return null;
-  const v = value.toLowerCase();
-  let bg = '#E5E5E5';
-  let fg = '#000';
-  if (v.includes('high')) {
-    bg = '#FECACA';
-    fg = '#7F1D1D';
-  } else if (v.includes('moderate') || v.includes('mid')) {
-    bg = '#FEF3C7';
-    fg = '#78350F';
-  } else if (v.includes('low')) {
-    bg = '#DCFCE7';
-    fg = '#14532D';
-  }
+  const { bg, fg } = complexityColors(value);
   return (
     <span
       className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold"
@@ -97,8 +111,8 @@ export default function StandardCard({ std }: StandardCardProps) {
       <div
         className="px-3 py-2 text-[15px] font-bold tracking-wide"
         style={{
-          backgroundColor: STANDARD_CARD_HEADER_BG,
-          color: '#FFFFFF',
+          backgroundColor: STANDARD_HEADER_BG,
+          color: STANDARD_HEADER_FG,
         }}
       >
         <div className="flex items-center justify-between gap-2">
@@ -117,8 +131,8 @@ export default function StandardCard({ std }: StandardCardProps) {
             <span
               className="inline-flex items-center rounded px-1.5 py-0.5 font-medium"
               style={{
-                backgroundColor: '#E0E7FF',
-                color: '#1E1B4B',
+                backgroundColor: STRAND_CHIP_BG,
+                color: STRAND_CHIP_FG,
               }}
             >
               {std.strand}
@@ -128,7 +142,7 @@ export default function StandardCard({ std }: StandardCardProps) {
             <span
               className="inline-flex items-center rounded px-1.5 py-0.5 font-medium truncate max-w-full"
               style={{
-                backgroundColor: '#F3F4F6',
+                backgroundColor: NEUTRAL_CHIP_BG,
                 color: '#111827',
               }}
               title={std.cluster}
@@ -145,14 +159,14 @@ export default function StandardCard({ std }: StandardCardProps) {
           <div className="flex items-center gap-1.5 text-[11px] text-neutral-700">
             <span
               className="inline-flex items-center rounded-full px-2 py-0.5 font-semibold"
-              style={{ backgroundColor: '#F3F4F6' }}
+              style={{ backgroundColor: NEUTRAL_CHIP_BG }}
             >
               {std.num_questions} Q
             </span>
             {std.num_assessments > 0 && (
               <span
                 className="inline-flex items-center rounded-full px-2 py-0.5 font-semibold"
-                style={{ backgroundColor: '#F3F4F6' }}
+                style={{ backgroundColor: NEUTRAL_CHIP_BG }}
               >
                 {std.num_assessments} assessment
                 {std.num_assessments === 1 ? '' : 's'}
