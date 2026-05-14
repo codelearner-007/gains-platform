@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import type { IncorrectChoice, QuestionOverall } from '@/lib/reports/types';
 import { cellColor, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import {
@@ -17,10 +19,14 @@ interface QuestionDetailTableProps {
   questions: QuestionOverall[];
   // incorrectChoices reserved for future per-question expansion; kept for API parity
   incorrectChoices?: IncorrectChoice[];
+  /** Item id for drill-through to Incorrect Answer Details. When omitted,
+   *  the per-row "deep dive" link is hidden. */
+  itemId?: string;
 }
 
 export default function QuestionDetailTable({
   questions,
+  itemId,
 }: QuestionDetailTableProps) {
   const rows = useMemo(
     () =>
@@ -40,6 +46,11 @@ export default function QuestionDetailTable({
         style={{ backgroundColor: HEADER_BAR_BG }}
       >
         Question Summary Report
+        {itemId ? (
+          <span className="ml-2 text-[11px] font-normal text-neutral-700">
+            (click a question number to drill into incorrect-answer details)
+          </span>
+        ) : null}
       </div>
       <div className="w-full overflow-auto">
         <table
@@ -89,9 +100,27 @@ export default function QuestionDetailTable({
                       ...cellBase,
                       textAlign: 'center',
                       fontWeight: 600,
+                      padding: 0,
                     }}
                   >
-                    {q.question_no}
+                    {itemId ? (
+                      <Link
+                        href={{
+                          pathname: '/app/reports/incorrect-answer-details',
+                          query: {
+                            item_id: itemId,
+                            question_id: q.question_id,
+                          },
+                        }}
+                        title="Drill into Incorrect Answer Details"
+                        className="inline-flex items-center justify-center gap-0.5 w-full h-full px-2 py-2 text-blue-700 hover:bg-blue-50 hover:underline transition-colors"
+                      >
+                        {q.question_no}
+                        <ChevronRight className="h-3 w-3 opacity-60" />
+                      </Link>
+                    ) : (
+                      <div className="px-2 py-2">{q.question_no}</div>
+                    )}
                   </td>
                   <td style={cellBase}>
                     <div

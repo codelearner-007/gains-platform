@@ -81,6 +81,7 @@ export default function QuestionResponseAnalysisPage() {
         <QuestionDetailTable
           questions={data.questions_overall}
           incorrectChoices={data.incorrect_choices}
+          itemId={itemId}
         />
       </div>
     </ReportCanvas>
