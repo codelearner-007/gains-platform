@@ -11,14 +11,8 @@ import {
   YAxis,
 } from 'recharts';
 import type { IadDistractorRow } from '@/lib/reports/types';
-import {
-  HEADER_BAR_BG,
-  INCORRECT_GREY,
-  LAYOUT_BORDER,
-  PERF_GREEN,
-  PERF_PINK,
-  PERF_YELLOW,
-} from '@/lib/reports/colors';
+import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
+import { distractorFill, maxIncorrectShareOf } from './distractorFill';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -52,29 +46,15 @@ export default function DistractorChart({ rows }: Props) {
     const sorted = [...rows].sort(
       (a, b) => b.students_count - a.students_count,
     );
-    const maxIncorrectShare = sorted
-      .filter((r) => !r.is_correct)
-      .reduce((m, r) => Math.max(m, r.share_of_attempts), 0);
-    return sorted.map((r) => {
-      let fill = PERF_GREEN;
-      if (!r.is_correct) {
-        if (maxIncorrectShare <= 0) fill = INCORRECT_GREY;
-        else {
-          const ratio = r.share_of_attempts / maxIncorrectShare;
-          if (ratio >= 0.66) fill = PERF_PINK;
-          else if (ratio >= 0.33) fill = PERF_YELLOW;
-          else fill = INCORRECT_GREY;
-        }
-      }
-      return {
-        label: truncate(r.answer_submission, TRUNCATE_AT),
-        fullAnswer: r.answer_submission || '(blank)',
-        count: r.students_count,
-        share: r.share_of_attempts,
-        isCorrect: r.is_correct,
-        fill,
-      };
-    });
+    const maxIncorrectShare = maxIncorrectShareOf(sorted);
+    return sorted.map((r) => ({
+      label: truncate(r.answer_submission, TRUNCATE_AT),
+      fullAnswer: r.answer_submission || '(blank)',
+      count: r.students_count,
+      share: r.share_of_attempts,
+      isCorrect: r.is_correct,
+      fill: distractorFill(r, maxIncorrectShare),
+    }));
   }, [rows]);
 
   // Match SDD's per-row sizing pattern: ~28px per row, min 220px.

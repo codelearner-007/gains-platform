@@ -6,14 +6,11 @@ import type { IadDistractorRow } from '@/lib/reports/types';
 import {
   EMPTY_TABLE_FG,
   HEADER_BAR_BG,
-  INCORRECT_GREY,
   LAYOUT_BORDER,
-  PERF_GREEN,
-  PERF_PINK,
-  PERF_YELLOW,
   STATUS_CORRECT_FG,
   STATUS_INCORRECT_FG,
 } from '@/lib/reports/colors';
+import { distractorFill, maxIncorrectShareOf } from './distractorFill';
 import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
@@ -29,27 +26,13 @@ interface Props {
  * the # of students who chose it, % share, status (correct/incorrect),
  * and an inline % bar (PERF colour-graded for wrong choices).
  */
-
-function fillForRow(row: IadDistractorRow, maxIncorrectShare: number): string {
-  if (row.is_correct) return PERF_GREEN;
-  // Color-grade incorrect choices by relative dominance among wrong answers.
-  if (maxIncorrectShare <= 0) return INCORRECT_GREY;
-  const ratio = row.share_of_attempts / maxIncorrectShare;
-  if (ratio >= 0.66) return PERF_PINK;
-  if (ratio >= 0.33) return PERF_YELLOW;
-  return INCORRECT_GREY;
-}
-
 export default function DistractorTable({ rows }: Props) {
   const sorted = useMemo(
     () => [...rows].sort((a, b) => b.students_count - a.students_count),
     [rows],
   );
   const maxIncorrectShare = useMemo(
-    () =>
-      sorted
-        .filter((r) => !r.is_correct)
-        .reduce((m, r) => Math.max(m, r.share_of_attempts), 0),
+    () => maxIncorrectShareOf(sorted),
     [sorted],
   );
   const maxShare = useMemo(
@@ -96,7 +79,7 @@ export default function DistractorTable({ rows }: Props) {
           </thead>
           <tbody>
             {sorted.map((r, idx) => {
-              const fill = fillForRow(r, maxIncorrectShare);
+              const fill = distractorFill(r, maxIncorrectShare);
               const widthPct =
                 maxShare > 0 ? (r.share_of_attempts / maxShare) * 100 : 0;
               return (
