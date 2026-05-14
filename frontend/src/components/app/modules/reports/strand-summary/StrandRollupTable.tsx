@@ -8,6 +8,7 @@ import {
   LAYOUT_BORDER,
   performanceColor,
 } from '@/lib/reports/colors';
+import PerfPill from '../shared/PerfPill';
 import {
   tableCellStyle as cellStyle,
   tableHeaderStyle,
@@ -24,27 +25,6 @@ interface Props {
   strands: StrandSummaryRollupRow[];
   selectedStrand?: string | null;
   onSelectStrand?: (strand: string | null) => void;
-}
-
-function PerfPill({
-  pct,
-  color,
-}: {
-  pct: string;
-  color: string;
-}) {
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold"
-      style={{
-        backgroundColor: color || '#E5E5E5',
-        color: '#000',
-        border: `1px solid ${LAYOUT_BORDER}`,
-      }}
-    >
-      {pct}
-    </span>
-  );
 }
 
 export default function StrandRollupTable({
