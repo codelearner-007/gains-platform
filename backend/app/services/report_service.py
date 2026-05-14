@@ -21,6 +21,11 @@ from app.repositories.dim_repository import DimRepository
 from app.utils.coercion import safe_str, to_float, to_int
 from app.schemas.reports import (
     AssessmentMeta,
+    IadDistractorRow,
+    IadKpis,
+    IadQuestionContext,
+    IadStudentAttempt,
+    IncorrectAnswerDetailsPayload,
     IncorrectChoice,
     KPIs,
     QuestionOverall,
@@ -397,6 +402,126 @@ class ReportService:
             band_high=band_high,
             band_mid=band_mid,
             band_low=band_low,
+        )
+
+    # ────────────────────────────────────────────────────────────────────
+    # Incorrect Answer Details (drill-through from QRA, per-question)
+    # ────────────────────────────────────────────────────────────────────
+    async def build_incorrect_answer_details(
+        self, item_id: str, question_id: str
+    ) -> IncorrectAnswerDetailsPayload:
+        meta_row = await self.cube.get_assessment_meta(item_id)
+        if not meta_row:
+            raise ResourceNotFoundError("Assessment", item_id)
+
+        question_row = await self.cube.get_question_overall(item_id, question_id)
+        if not question_row:
+            raise ResourceNotFoundError("Question", question_id)
+
+        first_access = meta_row.get("first_access")
+        latest_attempt = meta_row.get("latest_attempt")
+        assessment = self._build_assessment_meta(
+            meta_row, first_access, latest_attempt
+        )
+
+        # ─── Question context ──────────────────────────────────────────────
+        grade_average = to_float(question_row.get("grade_average"))
+        question_ctx = IadQuestionContext(
+            question_id=safe_str(question_row.get("question_id")),
+            question_no=safe_str(question_row.get("question_no")),
+            position_number=safe_str(question_row.get("position_number")) or "n/a",
+            question=_strip_html(safe_str(question_row.get("question"))),
+            question_type=safe_str(question_row.get("question_type")),
+            correct_answer=safe_str(question_row.get("correct_answer")),
+            standards=safe_str(question_row.get("standards")),
+            strand=safe_str(question_row.get("strand_raw")),
+            description=safe_str(question_row.get("description")),
+            grade_average=round(grade_average, 6),
+            grade_average_pct=_format_pct(grade_average),
+            total_possible_point=round(
+                to_float(question_row.get("total_possible_point")), 4
+            ),
+            total_score=round(to_float(question_row.get("total_score")), 4),
+        )
+
+        # ─── Distractor breakdown ──────────────────────────────────────────
+        distractor_rows = await self.cube.get_distractor_breakdown(
+            item_id, question_id
+        )
+        distractors: list[IadDistractorRow] = [
+            IadDistractorRow(
+                answer_submission=safe_str(d.get("answer_submission")),
+                students_count=to_int(d.get("students_count")),
+                share_of_attempts=round(to_float(d.get("share_of_attempts")), 6),
+                share_pct=_format_pct(to_float(d.get("share_of_attempts"))),
+                is_correct=bool(d.get("is_correct")),
+            )
+            for d in distractor_rows
+        ]
+
+        # ─── Per-student attempts ──────────────────────────────────────────
+        student_rows = await self.cube.get_per_student_attempts(item_id, question_id)
+        student_attempts: list[IadStudentAttempt] = []
+        for row in student_rows:
+            la = row.get("latest_attempt")
+            student_attempts.append(
+                IadStudentAttempt(
+                    user_uid=safe_str(row.get("user_uid")),
+                    user_name=safe_str(row.get("user_name")),
+                    answer_submission=safe_str(row.get("answer_submission")),
+                    correct_answer=safe_str(row.get("correct_answer")),
+                    is_correct=bool(row.get("is_correct")),
+                    points_received=round(to_float(row.get("points_received")), 4),
+                    points_possible=round(to_float(row.get("points_possible")), 4),
+                    score_pct=round(to_float(row.get("score_pct")), 6),
+                    latest_attempt=la.isoformat() if la else "",
+                )
+            )
+
+        # ─── KPI strip (computed from the rolled-up data) ─────────────────
+        total_attempts = sum(d.students_count for d in distractors)
+        correct_count = sum(d.students_count for d in distractors if d.is_correct)
+        incorrect_count = total_attempts - correct_count
+        correct_pct = (
+            correct_count / total_attempts if total_attempts > 0 else 0.0
+        )
+        incorrect_pct = 1.0 - correct_pct if total_attempts > 0 else 0.0
+
+        wrong_choices = [d for d in distractors if not d.is_correct]
+        wrong_choices_sorted = sorted(
+            wrong_choices, key=lambda d: d.students_count, reverse=True
+        )
+        if wrong_choices_sorted:
+            top = wrong_choices_sorted[0]
+            top_share = (
+                top.students_count / total_attempts if total_attempts > 0 else 0.0
+            )
+            top_wrong_answer = top.answer_submission
+            top_wrong_count = top.students_count
+            top_wrong_pct = _format_pct(top_share)
+        else:
+            top_wrong_answer = ""
+            top_wrong_count = 0
+            top_wrong_pct = _format_pct(0.0)
+
+        kpis = IadKpis(
+            total_attempts=total_attempts,
+            correct_count=correct_count,
+            incorrect_count=incorrect_count,
+            correct_pct=_format_pct(correct_pct),
+            incorrect_pct=_format_pct(incorrect_pct),
+            distinct_answers=len(distractors),
+            top_wrong_answer=top_wrong_answer,
+            top_wrong_count=top_wrong_count,
+            top_wrong_pct=top_wrong_pct,
+        )
+
+        return IncorrectAnswerDetailsPayload(
+            assessment=assessment,
+            question=question_ctx,
+            kpis=kpis,
+            distractors=distractors,
+            student_attempts=student_attempts,
         )
 
     # ────────────────────────────────────────────────────────────────────

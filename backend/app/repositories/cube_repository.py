@@ -721,6 +721,133 @@ class CubeRepository:
         result = await self.session.execute(sql)
         return [_row_to_dict(r) for r in result.all()]
 
+    # ────────────────────────────────────────────────────────────────────
+    # Incorrect Answer Details (drill-through from QRA, single question)
+    # ────────────────────────────────────────────────────────────────────
+    async def get_question_overall(
+        self, item_id: str, question_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """One question's overall metadata (joined to qso for description)."""
+        sql = text(
+            """
+            SELECT
+                qs.question_id,
+                COALESCE(qso.question_no, qs.question_no)         AS question_no,
+                COALESCE(qs.position_number, '')                  AS position_number,
+                COALESCE(qso.question, qs.question)               AS question,
+                COALESCE(qs.question_type, '')                    AS question_type,
+                COALESCE(qso.correct_answer, qs.correct_answer)   AS correct_answer,
+                COALESCE(qso.total_possible_point, qs.total_possible_point) AS total_possible_point,
+                COALESCE(qso.total_score, qs.total_score)         AS total_score,
+                COALESCE(qso.grade_average, qs.grade_average)     AS grade_average,
+                COALESCE(qso.standards, qs.standards, '')         AS standards,
+                COALESCE(qs.standard, '')                         AS strand_raw,
+                COALESCE(qso.description, '')                     AS description
+            FROM cube_question_summary qs
+            LEFT JOIN cube_question_summary_overall qso
+              ON qso.school_id = qs.school_id
+             AND qso.ukey = qs.ukey
+            WHERE qs.item_id = :item_id
+              AND qs.question_id = :question_id
+            LIMIT 1
+            """
+        )
+        result = await self.session.execute(
+            sql, {"item_id": item_id, "question_id": question_id}
+        )
+        row = result.first()
+        return _row_to_dict(row) if row else None
+
+    async def get_distractor_breakdown(
+        self, item_id: str, question_id: str
+    ) -> List[Dict[str, Any]]:
+        """Per-answer-choice rollup for one question (cube_questionincorrectchoice_summary).
+
+        Empty/null answer_submission rows are dropped (matches PBIX M filter).
+        """
+        sql = text(
+            """
+            WITH item_qids AS (
+                SELECT DISTINCT question_id
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                  AND question_id = :question_id
+            ),
+            choices AS (
+                SELECT
+                    qic.answer_submission,
+                    SUM(qic.total_student)        AS students_count,
+                    SUM(qic.total_score)          AS total_score,
+                    SUM(qic.total_possible_point) AS total_possible_point
+                FROM cube_questionincorrectchoice_summary qic
+                JOIN item_qids iq ON iq.question_id = qic.question_id
+                WHERE qic.answer_submission IS NOT NULL
+                  AND qic.answer_submission <> ''
+                GROUP BY qic.answer_submission
+            ),
+            totals AS (
+                SELECT SUM(students_count) AS total_students FROM choices
+            )
+            SELECT
+                c.answer_submission,
+                c.students_count,
+                CASE
+                  WHEN t.total_students > 0
+                  THEN c.students_count::numeric / t.total_students::numeric
+                  ELSE 0
+                END                                              AS share_of_attempts,
+                CASE
+                  WHEN c.total_possible_point > 0
+                       AND c.total_score >= c.total_possible_point
+                  THEN TRUE ELSE FALSE
+                END                                              AS is_correct
+            FROM choices c
+            CROSS JOIN totals t
+            ORDER BY c.students_count DESC NULLS LAST, c.answer_submission
+            """
+        )
+        result = await self.session.execute(
+            sql, {"item_id": item_id, "question_id": question_id}
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
+    async def get_per_student_attempts(
+        self, item_id: str, question_id: str
+    ) -> List[Dict[str, Any]]:
+        """Every student × this question row for the IAD per-student table."""
+        sql = text(
+            """
+            SELECT
+                COALESCE(fss.user_uid, '')                       AS user_uid,
+                COALESCE(NULLIF(fss.user_name, ''), '—')         AS user_name,
+                COALESCE(fss.answer_submission, '')              AS answer_submission,
+                COALESCE(fss.correct_answer, '')                 AS correct_answer,
+                COALESCE(fss.points_received, 0)::numeric        AS points_received,
+                COALESCE(fss.points_possible, 0)::numeric        AS points_possible,
+                CASE
+                  WHEN COALESCE(fss.points_possible, 0) > 0
+                  THEN COALESCE(fss.points_received, 0)::numeric
+                       / COALESCE(fss.points_possible, 0)::numeric
+                  ELSE 0
+                END                                              AS score_pct,
+                CASE
+                  WHEN COALESCE(fss.points_possible, 0) > 0
+                       AND COALESCE(fss.points_received, 0) >= COALESCE(fss.points_possible, 0)
+                  THEN TRUE ELSE FALSE
+                END                                              AS is_correct,
+                fss.latest_attempt
+            FROM fact_student_submission fss
+            WHERE fss.item_id = :item_id
+              AND fss.question_id = :question_id
+              AND fss.user_uid IS NOT NULL
+            ORDER BY fss.user_name
+            """
+        )
+        result = await self.session.execute(
+            sql, {"item_id": item_id, "question_id": question_id}
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
     async def get_ytd_strand_heatmap(self) -> List[Dict[str, Any]]:
         sql = text(
             """

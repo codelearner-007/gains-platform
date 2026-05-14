@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import require_permission
 from app.middleware.rls import get_db_with_rls
 from app.schemas.reports import (
+    IncorrectAnswerDetailsPayload,
     QuestionResponseAnalysisPayload,
     StandardsDeepDivePayload,
     YearToDatePerformancePayload,
@@ -43,6 +44,26 @@ async def standards_deep_dive(
     """Per-assessment SDD payload (mirrors PBIX page #16). Requires: reports:read"""
     service = ReportService(db)
     return await service.build_standards_deep_dive(item_id)
+
+
+@router.get(
+    "/incorrect-answer-details/{item_id}/{question_id}",
+    response_model=IncorrectAnswerDetailsPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def incorrect_answer_details(
+    item_id: str,
+    question_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> IncorrectAnswerDetailsPayload:
+    """Drill-through deep dive for a single question (PBIX page #20).
+
+    Returns the assessment header, the question context (text, correct answer,
+    standards, description), KPI strip, full distractor breakdown, and every
+    student × answer attempt. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_incorrect_answer_details(item_id, question_id)
 
 
 @router.get(
