@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, User, Menu, X, LogOut, Key, Shield, Sparkles } from 'lucide-react';
+import { Home, User, Menu, X, LogOut, Key, Shield, Sparkles, BarChart3 } from 'lucide-react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { canSeeAdminEntry } from '@/lib/rbac/access';
@@ -49,6 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navigation = [
     { name: 'Dashboard', href: '/app', icon: Home },
+    { name: 'Reports', href: '/app/reports', icon: BarChart3 },
     { name: 'Settings', href: '/app/user-settings', icon: User },
   ];
 
@@ -95,7 +96,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navigation.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === '/app'
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
             return (
               <Link

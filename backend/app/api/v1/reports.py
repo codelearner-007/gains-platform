@@ -1,0 +1,63 @@
+"""Composed report endpoints (Question-Response-Analysis, Standards Deep Dive)."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.dependencies import require_permission
+from app.middleware.rls import get_db_with_rls
+from app.schemas.reports import (
+    QuestionResponseAnalysisPayload,
+    StandardsDeepDivePayload,
+    YearToDatePerformancePayload,
+)
+from app.services.report_service import ReportService
+
+router = APIRouter(prefix="/reports", tags=["Reports"])
+
+
+@router.get(
+    "/question-response-analysis/{item_id}",
+    response_model=QuestionResponseAnalysisPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_response_analysis(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QuestionResponseAnalysisPayload:
+    """Composed QRA payload matching frontend dataset.ts. Requires: reports:read"""
+    service = ReportService(db)
+    return await service.build_question_response_analysis(item_id)
+
+
+@router.get(
+    "/standards-deep-dive/{item_id}",
+    response_model=StandardsDeepDivePayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def standards_deep_dive(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StandardsDeepDivePayload:
+    """Per-assessment SDD payload (mirrors PBIX page #16). Requires: reports:read"""
+    service = ReportService(db)
+    return await service.build_standards_deep_dive(item_id)
+
+
+@router.get(
+    "/year-to-date-performance",
+    response_model=YearToDatePerformancePayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def year_to_date_performance(
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> YearToDatePerformancePayload:
+    """Cross-assessment, school-wide YTD performance dashboard.
+
+    Composes timeline, grade distribution, student progression and a
+    strand heatmap from cube_user_summary / cube_standard_summary.
+    Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_year_to_date_performance()

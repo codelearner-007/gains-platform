@@ -65,3 +65,13 @@ Tasks
 # Keep the per-rules files at repo root if you maintain them:
 !.cursorrules
 !.windsurfrules
+
+# Local research artifacts — raw scraper output, PBIX file, extracts. Never commit.
+data/
+
+# Planning, audit, and internal todo docs — orchestration scratch space, not source code.
+tasks/
+docs/superpowers/
+docs/_research/
+*.plan.md
+*.audit.md

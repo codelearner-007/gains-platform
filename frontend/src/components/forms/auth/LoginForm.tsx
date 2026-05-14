@@ -29,26 +29,9 @@ export function LoginForm({ onSubmit, loading }: Props) {
     defaultValues: { email: '', password: '' },
   });
 
-  const handleSubmit = async (data: LoginInput) => {
-    const result = await onSubmit(data);
-    if (!result.success && result.error) {
-      form.setError('root', { message: result.error });
-    }
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
-        {form.formState.errors.root && (
-          <div
-            role="alert"
-            aria-live="polite"
-            className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive"
-          >
-            {form.formState.errors.root.message}
-          </div>
-        )}
-
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <FormField
           control={form.control}
           name="email"

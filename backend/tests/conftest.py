@@ -5,11 +5,8 @@ from typing import AsyncGenerator, Dict
 
 import httpx
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.db.base import Base
 from app.db.session import get_session_manager
 from app.main import app
 

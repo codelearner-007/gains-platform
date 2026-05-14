@@ -2,7 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from app.schemas.auth import CurrentUser
 

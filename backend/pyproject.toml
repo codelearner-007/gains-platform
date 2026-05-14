@@ -13,7 +13,12 @@ python_functions = "test_*"
 addopts = "-v --import-mode=importlib --cov=app --cov-report=html"
 filterwarnings = [
     "ignore::pydantic.PydanticDeprecatedSince20",
-    "ignore:Unknown config option:asyncio_mode",
+    # The pytest warning-filter format is `action:message_regex:category`.
+    # The earlier value placed `asyncio_mode` in the `category` slot, which
+    # pytest 8 then resolves as a Python class — failing to load with
+    # "module 'builtins' has no attribute 'asyncio_mode'". Match the literal
+    # message and leave the category default.
+    "ignore:Unknown config option. asyncio_mode",
 ]
 
 [tool.black]
