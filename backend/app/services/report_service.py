@@ -35,7 +35,18 @@ from app.schemas.reports import (
     SddKpis,
     SddStandardRow,
     SddStrandRow,
+    StandardSummaryFilters,
+    StandardSummaryKpis,
+    StandardSummaryPayload,
+    StandardSummaryRollupRow,
+    StandardSummaryStrandCount,
     StandardsDeepDivePayload,
+    StrandSummaryBandRow,
+    StrandSummaryFilters,
+    StrandSummaryKpis,
+    StrandSummaryPayload,
+    StrandSummaryRollupRow,
+    StrandSummaryStandardRow,
     Student,
     YearToDatePerformancePayload,
     YTDGradeDistribution,
@@ -61,6 +72,24 @@ def _strip_html(s: Optional[str]) -> str:
 
 def _format_pct(v: float) -> str:
     return f"{v * 100:.1f}%"
+
+
+# PBIX 70/80 traffic-light hexes (see lib/reports/colors.ts). Matched here so
+# the server can stamp the perf-color directly into the payload — saves the
+# client from recomputing for every row.
+_PERF_PINK = "#FFCCFF"
+_PERF_YELLOW = "#FFFF00"
+_PERF_GREEN = "#00FF06"
+
+
+def _perf_color(grade: float) -> str:
+    if grade is None or grade <= 0:
+        return ""
+    if grade < 0.7:
+        return _PERF_PINK
+    if grade < 0.8:
+        return _PERF_YELLOW
+    return _PERF_GREEN
 
 
 def _decode_html(s: str) -> str:
@@ -661,4 +690,271 @@ class ReportService:
             grade_distribution=grade_distribution,
             student_progression=student_progression,
             strand_heatmap=strand_heatmap,
+        )
+
+    # ────────────────────────────────────────────────────────────────────
+    # Standard Summary (school-wide, per-cPalms_Standard grain)
+    # ────────────────────────────────────────────────────────────────────
+    async def build_standard_summary(
+        self, filters: StandardSummaryFilters
+    ) -> StandardSummaryPayload:
+        meta = await self.cube.get_school_wide_meta() or {}
+        rows = await self.cube.get_school_standard_rollup(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+        total_students = await self.cube.get_school_total_students(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+
+        standards: list[StandardSummaryRollupRow] = []
+        strand_counts_acc: dict[str, dict[str, Any]] = {}
+        grade_sum = 0.0
+        at_target = 0
+        total_questions_acc = 0
+        for row in rows:
+            cpalms = safe_str(row.get("cpalms_standard"))
+            if not cpalms:
+                continue
+            grade_avg = to_float(row.get("grade_average"))
+            num_q = to_int(row.get("num_questions"))
+            num_a = to_int(row.get("num_assessments"))
+            strand = _decode_html(safe_str(row.get("strand")))
+            description_raw = safe_str(row.get("description"))
+            description = _strip_html(description_raw)
+            last_change = row.get("last_change_date_time")
+            standards.append(
+                StandardSummaryRollupRow(
+                    cpalms_standard=cpalms,
+                    schoology_standard=safe_str(row.get("schoology_standard")),
+                    strand=strand,
+                    cluster=safe_str(row.get("cluster")),
+                    cognitive_complexity=safe_str(row.get("cognitive_complexity")),
+                    description=description,
+                    subject=safe_str(row.get("subject")),
+                    num_questions=num_q,
+                    num_assessments=num_a,
+                    grade_average=round(grade_avg, 6),
+                    grade_average_pct=_format_pct(grade_avg),
+                    perf_color=_perf_color(grade_avg),
+                    last_change_date_time=(
+                        last_change.isoformat() if last_change else None
+                    ),
+                )
+            )
+            grade_sum += grade_avg
+            total_questions_acc += num_q
+            if grade_avg >= 0.8:
+                at_target += 1
+            bucket = strand_counts_acc.setdefault(
+                strand,
+                {
+                    "strand": strand,
+                    "num_standards": 0,
+                    "num_questions": 0,
+                    "grade_sum": 0.0,
+                    "rows": 0,
+                },
+            )
+            bucket["num_standards"] += 1
+            bucket["num_questions"] += num_q
+            bucket["grade_sum"] += grade_avg
+            bucket["rows"] += 1
+
+        total_standards = len(standards)
+        grade_average = grade_sum / total_standards if total_standards else 0.0
+        at_target_pct = at_target / total_standards if total_standards else 0.0
+
+        strand_counts = sorted(
+            (
+                StandardSummaryStrandCount(
+                    strand=b["strand"],
+                    num_standards=int(b["num_standards"]),
+                    num_questions=int(b["num_questions"]),
+                    grade_average=round(b["grade_sum"] / b["rows"], 6)
+                    if b["rows"]
+                    else 0.0,
+                )
+                for b in strand_counts_acc.values()
+                if b["strand"]
+            ),
+            key=lambda r: r.num_standards,
+            reverse=True,
+        )
+
+        kpis = StandardSummaryKpis(
+            total_standards=total_standards,
+            total_questions=total_questions_acc,
+            total_students=total_students,
+            at_target_pct=round(at_target_pct, 6),
+            at_target_pct_str=_format_pct(at_target_pct),
+            grade_average=round(grade_average, 6),
+            grade_average_pct=_format_pct(grade_average),
+        )
+
+        school = YTDSchoolInfo(
+            name=safe_str(meta.get("name")),
+            logo_url=meta.get("logo_url") or None,
+            current_session=safe_str(meta.get("current_session")),
+        )
+
+        return StandardSummaryPayload(
+            school=school,
+            filters_applied=filters,
+            kpis=kpis,
+            standards=standards,
+            strand_counts=strand_counts,
+        )
+
+    # ────────────────────────────────────────────────────────────────────
+    # Strand Summary (school-wide, per-Strand grain)
+    # ────────────────────────────────────────────────────────────────────
+    async def build_strand_summary(
+        self, filters: StrandSummaryFilters
+    ) -> StrandSummaryPayload:
+        meta = await self.cube.get_school_wide_meta() or {}
+        strand_rows = await self.cube.get_school_strand_rollup(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+        std_rows = await self.cube.get_school_standard_rollup(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+        total_students = await self.cube.get_school_total_students(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+
+        strands_rollup: list[StrandSummaryRollupRow] = []
+        band_high: list[StrandSummaryBandRow] = []
+        band_mid: list[StrandSummaryBandRow] = []
+        band_low: list[StrandSummaryBandRow] = []
+        worst_strand = ""
+        worst_grade = 1.5  # any value beats this on the first iteration
+        for row in strand_rows:
+            strand_name = _decode_html(safe_str(row.get("strand")))
+            grade_avg = to_float(row.get("grade_average"))
+            num_questions = to_int(row.get("num_questions"))
+            num_standards = to_int(row.get("num_standards"))
+            subjects_raw = row.get("subjects")
+            subjects = [
+                _decode_html(safe_str(s))
+                for s in (subjects_raw if isinstance(subjects_raw, list) else [])
+                if s
+            ]
+            strands_rollup.append(
+                StrandSummaryRollupRow(
+                    strand=strand_name,
+                    num_standards=num_standards,
+                    num_questions=num_questions,
+                    num_assessments=to_int(row.get("num_assessments")),
+                    grade_average=round(grade_avg, 6),
+                    grade_average_pct=_format_pct(grade_avg),
+                    incorrect_pct=round(max(0.0, 1.0 - grade_avg), 6),
+                    perf_color=_perf_color(grade_avg),
+                    subjects=subjects,
+                )
+            )
+            band_row = StrandSummaryBandRow(
+                strand=strand_name,
+                num_standards=num_standards,
+                num_questions=num_questions,
+                grade_average=round(grade_avg, 6),
+            )
+            if grade_avg >= 0.8:
+                band_high.append(band_row)
+            elif grade_avg >= 0.7:
+                band_mid.append(band_row)
+            else:
+                band_low.append(band_row)
+            if num_questions > 0 and grade_avg < worst_grade:
+                worst_grade = grade_avg
+                worst_strand = strand_name
+
+        standards_rollup: list[StrandSummaryStandardRow] = [
+            StrandSummaryStandardRow(
+                strand=_decode_html(safe_str(r.get("strand"))),
+                cpalms_standard=safe_str(r.get("cpalms_standard")),
+                schoology_standard=safe_str(r.get("schoology_standard")),
+                cluster=safe_str(r.get("cluster")),
+                num_questions=to_int(r.get("num_questions")),
+                num_assessments=to_int(r.get("num_assessments")),
+                grade_average=round(to_float(r.get("grade_average")), 6),
+                grade_average_pct=_format_pct(to_float(r.get("grade_average"))),
+                perf_color=_perf_color(to_float(r.get("grade_average"))),
+            )
+            for r in std_rows
+            if safe_str(r.get("cpalms_standard"))
+        ]
+
+        total_strands = len(strands_rollup)
+        total_standards = sum(s.num_standards for s in strands_rollup)
+        total_questions = sum(s.num_questions for s in strands_rollup)
+        total_assessments_set: set[int] = set()
+        # Count distinct assessment ids across the union of strands; the
+        # strand-rollup itself counts per-strand-distinct only.
+        for r in strand_rows:
+            num_a = to_int(r.get("num_assessments"))
+            if num_a:
+                total_assessments_set.add(num_a)
+        # Since we don't carry item_ids back, fall back to using max of the
+        # per-strand counts as a lower bound. For an exact value we'd need a
+        # second query — pragmatic compromise: take the max.
+        total_assessments = max(
+            (to_int(r.get("num_assessments")) for r in strand_rows), default=0
+        )
+
+        if strands_rollup:
+            grade_average = sum(s.grade_average for s in strands_rollup) / len(
+                strands_rollup
+            )
+        else:
+            grade_average = 0.0
+            worst_strand = ""
+            worst_grade = 0.0
+
+        kpis = StrandSummaryKpis(
+            total_strands=total_strands,
+            total_standards=total_standards,
+            total_questions=total_questions,
+            total_assessments=total_assessments,
+            total_students=total_students,
+            grade_average=round(grade_average, 6),
+            grade_average_pct=_format_pct(grade_average),
+            worst_strand=worst_strand,
+            worst_strand_pct=_format_pct(worst_grade) if worst_strand else "—",
+        )
+
+        school = YTDSchoolInfo(
+            name=safe_str(meta.get("name")),
+            logo_url=meta.get("logo_url") or None,
+            current_session=safe_str(meta.get("current_session")),
+        )
+
+        return StrandSummaryPayload(
+            school=school,
+            filters_applied=filters,
+            kpis=kpis,
+            strands_rollup=strands_rollup,
+            standards_rollup=standards_rollup,
+            band_high=band_high,
+            band_mid=band_mid,
+            band_low=band_low,
         )

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +12,11 @@ from app.middleware.rls import get_db_with_rls
 from app.schemas.reports import (
     IncorrectAnswerDetailsPayload,
     QuestionResponseAnalysisPayload,
+    StandardSummaryFilters,
+    StandardSummaryPayload,
     StandardsDeepDivePayload,
+    StrandSummaryFilters,
+    StrandSummaryPayload,
     YearToDatePerformancePayload,
 )
 from app.services.report_service import ReportService
@@ -82,3 +88,65 @@ async def year_to_date_performance(
     """
     service = ReportService(db)
     return await service.build_year_to_date_performance()
+
+
+@router.get(
+    "/standard-summary",
+    response_model=StandardSummaryPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def standard_summary(
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StandardSummaryPayload:
+    """School-wide standards rollup (mirrors PBIX page #14).
+
+    Aggregates cube_standard_summary across all assessments in the
+    selected scope. All filter params optional; default = whole-school
+    rollup. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_standard_summary(
+        StandardSummaryFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+        )
+    )
+
+
+@router.get(
+    "/strand-summary",
+    response_model=StrandSummaryPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def strand_summary(
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StrandSummaryPayload:
+    """School-wide strand rollup (mirrors PBIX page #15).
+
+    Aggregates cube_question_summary by strand across all assessments in
+    the selected scope. All filter params optional; default = whole-school
+    rollup. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_strand_summary(
+        StrandSummaryFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+        )
+    )

@@ -366,6 +366,286 @@ class CubeRepository:
         result = await self.session.execute(sql, {"item_id": item_id})
         return [_row_to_dict(r) for r in result.all()]
 
+    # ────────────────────────────────────────────────────────────────────
+    # School-wide rollups (Standard Summary + Strand Summary)
+    # ────────────────────────────────────────────────────────────────────
+    async def get_school_wide_meta(self) -> Optional[Dict[str, Any]]:
+        """School name + logo + the predominant session label.
+
+        Returns the same shape as ``get_ytd_school_meta`` but exposed under
+        a more general name so the standard/strand summary endpoints can
+        share it with YTD without coupling.
+        """
+        sql = text(
+            """
+            SELECT
+                COALESCE(s.name, '')                          AS name,
+                COALESCE(s.logo_url, '')                      AS logo_url,
+                COALESCE(MAX(dsubj.session), '')              AS current_session
+            FROM dim_item di
+            LEFT JOIN dim_subject dsubj
+              ON dsubj.school_id = di.school_id
+             AND dsubj.subject_id = di.subject_id
+            LEFT JOIN public.schools s
+              ON s.school_id = di.school_id
+            GROUP BY s.name, s.logo_url
+            LIMIT 1
+            """
+        )
+        result = await self.session.execute(sql)
+        row = result.first()
+        return _row_to_dict(row) if row else None
+
+    async def get_school_total_students(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> int:
+        """Distinct students within the chosen filter scope."""
+        sql = text(
+            """
+            SELECT COUNT(DISTINCT cus.user_uid) AS total_students
+            FROM cube_user_summary cus
+            WHERE (CAST(:session_filter AS TEXT) IS NULL OR cus.session = CAST(:session_filter AS TEXT))
+              AND (CAST(:subject AS TEXT) IS NULL OR cus.subject = CAST(:subject AS TEXT))
+              AND (CAST(:grade AS TEXT) IS NULL OR cus.grade = CAST(:grade AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR cus.assessment_type = CAST(:category AS TEXT))
+              AND (
+                    CAST(:section AS TEXT) IS NULL
+                 OR EXISTS (
+                      SELECT 1 FROM dim_section dsec
+                      WHERE dsec.school_id = cus.school_id
+                        AND dsec.section_nid = cus.section_nid
+                        AND (
+                          dsec.section_name = CAST(:section AS TEXT)
+                       OR dsec.section_code = CAST(:section AS TEXT)
+                       OR dsec.section_nid  = CAST(:section AS TEXT)
+                        )
+                    )
+                  )
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            {
+                "session_filter": session_filter,
+                "subject": subject,
+                "grade": grade,
+                "category": category,
+                "section": section,
+            },
+        )
+        row = result.first()
+        return int(row._mapping["total_students"]) if row else 0
+
+    async def get_school_strand_rollup(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """One row per Strand aggregated across the filter scope.
+
+        Mirrors the per-item ``get_strand_rollup_for_item`` but operates
+        across all assessments matching the filter context. Filters are
+        applied directly on cube_question_summary which carries denormalised
+        session / subject / grade / assessment_type / section columns.
+        """
+        sql = text(
+            """
+            WITH scoped_qs AS (
+                SELECT DISTINCT
+                    qs.school_id,
+                    qs.ukey,
+                    qs.identifier,
+                    qs.item_id,
+                    qs.subject
+                FROM cube_question_summary qs
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qs.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR qs.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR qs.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR qs.assessment_type = CAST(:category AS TEXT))
+                  AND (
+                        CAST(:section AS TEXT) IS NULL
+                     OR qs.section = CAST(:section AS TEXT)
+                     OR EXISTS (
+                          SELECT 1 FROM dim_section dsec
+                          WHERE dsec.school_id = qs.school_id
+                            AND dsec.item_id = qs.item_id
+                            AND (
+                              dsec.section_name = CAST(:section AS TEXT)
+                           OR dsec.section_code = CAST(:section AS TEXT)
+                           OR dsec.section_nid  = CAST(:section AS TEXT)
+                            )
+                        )
+                      )
+            ),
+            strand_q AS (
+                SELECT DISTINCT
+                    ds.strand,
+                    sq.ukey,
+                    sq.identifier,
+                    sq.item_id,
+                    sq.subject
+                FROM scoped_qs sq
+                JOIN dim_strand ds
+                  ON ds.identifier = sq.identifier
+                WHERE ds.strand IS NOT NULL
+                  AND ds.strand <> ''
+            ),
+            qso_avg AS (
+                SELECT ukey, AVG(grade_average) AS grade_average
+                FROM cube_question_summary_overall
+                GROUP BY ukey
+            ),
+            strand_subjects AS (
+                SELECT strand, ARRAY_AGG(DISTINCT subject ORDER BY subject) AS subjects
+                FROM strand_q
+                WHERE subject IS NOT NULL AND subject <> ''
+                GROUP BY strand
+            )
+            SELECT
+                sq.strand                                          AS strand,
+                COUNT(DISTINCT sq.identifier)                      AS num_standards,
+                COUNT(DISTINCT sq.ukey)                            AS num_questions,
+                COUNT(DISTINCT sq.item_id)                         AS num_assessments,
+                AVG(COALESCE(qa.grade_average, 0))                 AS grade_average,
+                COALESCE(ss.subjects, ARRAY[]::text[])             AS subjects
+            FROM strand_q sq
+            LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
+            LEFT JOIN strand_subjects ss ON ss.strand = sq.strand
+            GROUP BY sq.strand, ss.subjects
+            ORDER BY sq.strand
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            {
+                "session_filter": session_filter,
+                "subject": subject,
+                "grade": grade,
+                "category": category,
+                "section": section,
+            },
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
+    async def get_school_standard_rollup(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+        strand: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """One row per cPalms_Standard aggregated across the filter scope.
+
+        Joins through dim_standard for cluster / cognitive_complexity /
+        description / curriculum subject / last-changed metadata. Used by
+        BOTH the Standard Summary and the Strand Summary's per-strand
+        drill table (the latter passes a strand filter).
+        """
+        sql = text(
+            """
+            WITH scoped_qs AS (
+                SELECT DISTINCT
+                    qs.school_id,
+                    qs.ukey,
+                    qs.identifier,
+                    qs.item_id
+                FROM cube_question_summary qs
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qs.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR qs.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR qs.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR qs.assessment_type = CAST(:category AS TEXT))
+                  AND (
+                        CAST(:section AS TEXT) IS NULL
+                     OR qs.section = CAST(:section AS TEXT)
+                     OR EXISTS (
+                          SELECT 1 FROM dim_section dsec
+                          WHERE dsec.school_id = qs.school_id
+                            AND dsec.item_id = qs.item_id
+                            AND (
+                              dsec.section_name = CAST(:section AS TEXT)
+                           OR dsec.section_code = CAST(:section AS TEXT)
+                           OR dsec.section_nid  = CAST(:section AS TEXT)
+                            )
+                        )
+                      )
+            ),
+            std_q AS (
+                SELECT DISTINCT
+                    iq.ukey,
+                    iq.identifier,
+                    iq.item_id,
+                    ds.strand,
+                    dst.cpalms_standard,
+                    dst.schoology_standard,
+                    dst.cluster,
+                    dst.cognitive_complexity_rating,
+                    dst.subject AS std_subject,
+                    dst.custom_cleaned_description,
+                    dst.description,
+                    dst.last_change_date_time
+                FROM scoped_qs iq
+                LEFT JOIN dim_strand ds
+                  ON ds.identifier = iq.identifier
+                LEFT JOIN LATERAL (
+                    SELECT cpalms_standard, schoology_standard, cluster,
+                           cognitive_complexity_rating, subject,
+                           custom_cleaned_description, description,
+                           last_change_date_time
+                    FROM dim_standard
+                    WHERE identifier = iq.identifier
+                    LIMIT 1
+                ) dst ON TRUE
+                WHERE COALESCE(NULLIF(dst.cpalms_standard, ''),
+                               NULLIF(dst.schoology_standard, ''), '') <> ''
+                  AND (CAST(:strand AS TEXT) IS NULL OR ds.strand = CAST(:strand AS TEXT))
+            ),
+            qso_avg AS (
+                SELECT ukey, AVG(grade_average) AS grade_average
+                FROM cube_question_summary_overall
+                GROUP BY ukey
+            )
+            SELECT
+                COALESCE(NULLIF(sq.cpalms_standard, ''), sq.schoology_standard, '') AS cpalms_standard,
+                COALESCE(sq.schoology_standard, '')                AS schoology_standard,
+                COALESCE(sq.strand, '')                            AS strand,
+                COALESCE(sq.cluster, '')                           AS cluster,
+                COALESCE(sq.cognitive_complexity_rating, '')       AS cognitive_complexity,
+                COALESCE(NULLIF(sq.custom_cleaned_description, ''),
+                         sq.description, '')                       AS description,
+                COALESCE(sq.std_subject, '')                       AS subject,
+                COUNT(DISTINCT sq.ukey)                            AS num_questions,
+                COUNT(DISTINCT sq.item_id)                         AS num_assessments,
+                AVG(COALESCE(qa.grade_average, 0))                 AS grade_average,
+                MAX(sq.last_change_date_time)                      AS last_change_date_time
+            FROM std_q sq
+            LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
+            GROUP BY 1, 2, 3, 4, 5, 6, 7
+            ORDER BY 3 NULLS LAST, 1
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            {
+                "session_filter": session_filter,
+                "subject": subject,
+                "grade": grade,
+                "category": category,
+                "section": section,
+                "strand": strand,
+            },
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
     async def get_all_standards_for_school(self) -> List[Dict[str, Any]]:
         sql = text(
             """
