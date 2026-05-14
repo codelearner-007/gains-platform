@@ -338,3 +338,142 @@ class IncorrectAnswerDetailsPayload(BaseModel):
     kpis: IadKpis
     distractors: List[IadDistractorRow]
     student_attempts: List[IadStudentAttempt]
+
+
+# ─── Standard Summary (school-wide, per-cPalms_Standard grain) ─────────────
+
+
+class StandardSummaryFilters(BaseModel):
+    """Echo of the query params applied so the client can re-render chips."""
+
+    session: Optional[str] = None
+    subject: Optional[str] = None
+    grade: Optional[str] = None
+    category: Optional[str] = None
+    section: Optional[str] = None
+
+
+class StandardSummaryKpis(BaseModel):
+    """Five KPI cards rendered at the top of the Standard Summary page."""
+
+    total_standards: int
+    total_questions: int
+    total_students: int
+    at_target_pct: float
+    at_target_pct_str: str
+    grade_average: float
+    grade_average_pct: str
+
+
+class StandardSummaryRollupRow(BaseModel):
+    """One card per cPalms_Standard aggregated across the filter scope."""
+
+    cpalms_standard: str
+    schoology_standard: str
+    strand: str
+    cluster: str
+    cognitive_complexity: str
+    description: str
+    subject: str
+    num_questions: int
+    num_assessments: int
+    grade_average: float
+    grade_average_pct: str
+    perf_color: str
+    last_change_date_time: Optional[str] = None
+
+
+class StandardSummaryStrandCount(BaseModel):
+    """Auxiliary distribution: # of standards per strand for the bar chart."""
+
+    strand: str
+    num_standards: int
+    num_questions: int
+    grade_average: float
+
+
+class StandardSummaryPayload(BaseModel):
+    """School-wide standards rollup (mirrors PBIX page #14)."""
+
+    school: YTDSchoolInfo
+    filters_applied: StandardSummaryFilters
+    kpis: StandardSummaryKpis
+    standards: List[StandardSummaryRollupRow]
+    strand_counts: List[StandardSummaryStrandCount]
+
+
+# ─── Strand Summary (school-wide, per-Strand grain) ────────────────────────
+
+
+class StrandSummaryFilters(BaseModel):
+    """Echo of the query params applied so the client can re-render chips."""
+
+    session: Optional[str] = None
+    subject: Optional[str] = None
+    grade: Optional[str] = None
+    category: Optional[str] = None
+    section: Optional[str] = None
+
+
+class StrandSummaryKpis(BaseModel):
+    """Top-of-page KPIs for the Strand Summary."""
+
+    total_strands: int
+    total_standards: int
+    total_questions: int
+    total_assessments: int
+    total_students: int
+    grade_average: float
+    grade_average_pct: str
+    worst_strand: str
+    worst_strand_pct: str
+
+
+class StrandSummaryRollupRow(BaseModel):
+    """One row per Strand for the school-wide rollup."""
+
+    strand: str
+    num_standards: int
+    num_questions: int
+    num_assessments: int
+    grade_average: float
+    grade_average_pct: str
+    incorrect_pct: float
+    perf_color: str
+    subjects: List[str]
+
+
+class StrandSummaryStandardRow(BaseModel):
+    """One row per (strand, cPalms_Standard) for the drill table."""
+
+    strand: str
+    cpalms_standard: str
+    schoology_standard: str
+    cluster: str
+    num_questions: int
+    num_assessments: int
+    grade_average: float
+    grade_average_pct: str
+    perf_color: str
+
+
+class StrandSummaryBandRow(BaseModel):
+    """Band-shaped row for the 100%-stacked-bars panels."""
+
+    strand: str
+    num_standards: int
+    num_questions: int
+    grade_average: float
+
+
+class StrandSummaryPayload(BaseModel):
+    """School-wide strand rollup (mirrors PBIX page #15)."""
+
+    school: YTDSchoolInfo
+    filters_applied: StrandSummaryFilters
+    kpis: StrandSummaryKpis
+    strands_rollup: List[StrandSummaryRollupRow]
+    standards_rollup: List[StrandSummaryStandardRow]
+    band_high: List[StrandSummaryBandRow]
+    band_mid: List[StrandSummaryBandRow]
+    band_low: List[StrandSummaryBandRow]

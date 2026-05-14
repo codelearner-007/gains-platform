@@ -322,3 +322,118 @@ export interface IncorrectAnswerDetailsPayload {
   distractors: IadDistractorRow[];
   student_attempts: IadStudentAttempt[];
 }
+
+// ─── Standard Summary (school-wide, per-cPalms_Standard grain) ───────────
+
+export interface StandardSummaryFilters {
+  session?: string;
+  subject?: string;
+  grade?: string;
+  category?: string;
+  section?: string;
+}
+
+export interface StandardSummaryKpis {
+  total_standards: number;
+  total_questions: number;
+  total_students: number;
+  at_target_pct: number;
+  at_target_pct_str: string;
+  grade_average: number;
+  grade_average_pct: string;
+}
+
+export interface StandardSummaryRollupRow {
+  cpalms_standard: string;
+  schoology_standard: string;
+  strand: string;
+  cluster: string;
+  cognitive_complexity: string;
+  description: string;
+  subject: string;
+  num_questions: number;
+  num_assessments: number;
+  grade_average: number;
+  grade_average_pct: string;
+  perf_color: string;
+  last_change_date_time: string | null;
+}
+
+export interface StandardSummaryStrandCount {
+  strand: string;
+  num_standards: number;
+  num_questions: number;
+  grade_average: number;
+}
+
+export interface StandardSummaryPayload {
+  school: YTDSchoolInfo;
+  filters_applied: StandardSummaryFilters;
+  kpis: StandardSummaryKpis;
+  standards: StandardSummaryRollupRow[];
+  strand_counts: StandardSummaryStrandCount[];
+}
+
+// ─── Strand Summary (school-wide, per-Strand grain) ──────────────────────
+
+export interface StrandSummaryFilters {
+  session?: string;
+  subject?: string;
+  grade?: string;
+  category?: string;
+  section?: string;
+}
+
+export interface StrandSummaryKpis {
+  total_strands: number;
+  total_standards: number;
+  total_questions: number;
+  total_assessments: number;
+  total_students: number;
+  grade_average: number;
+  grade_average_pct: string;
+  worst_strand: string;
+  worst_strand_pct: string;
+}
+
+export interface StrandSummaryRollupRow {
+  strand: string;
+  num_standards: number;
+  num_questions: number;
+  num_assessments: number;
+  grade_average: number;
+  grade_average_pct: string;
+  incorrect_pct: number;
+  perf_color: string;
+  subjects: string[];
+}
+
+export interface StrandSummaryStandardRow {
+  strand: string;
+  cpalms_standard: string;
+  schoology_standard: string;
+  cluster: string;
+  num_questions: number;
+  num_assessments: number;
+  grade_average: number;
+  grade_average_pct: string;
+  perf_color: string;
+}
+
+export interface StrandSummaryBandRow {
+  strand: string;
+  num_standards: number;
+  num_questions: number;
+  grade_average: number;
+}
+
+export interface StrandSummaryPayload {
+  school: YTDSchoolInfo;
+  filters_applied: StrandSummaryFilters;
+  kpis: StrandSummaryKpis;
+  strands_rollup: StrandSummaryRollupRow[];
+  standards_rollup: StrandSummaryStandardRow[];
+  band_high: StrandSummaryBandRow[];
+  band_mid: StrandSummaryBandRow[];
+  band_low: StrandSummaryBandRow[];
+}
