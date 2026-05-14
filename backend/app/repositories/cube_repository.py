@@ -18,6 +18,50 @@ def _row_to_dict(row: Any) -> Dict[str, Any]:
     return dict(row._mapping)
 
 
+# Shared filter fragment for school-wide rollup queries that scope by
+# session / subject / grade / assessment_type / section against
+# cube_question_summary (alias ``qs``). Inlined into the WITH-clause WHERE
+# of get_school_strand_rollup + get_school_standard_rollup so both queries
+# stay byte-identical and only need bind-dict params from
+# ``_school_filter_params``.
+_QS_SCHOOL_FILTER_SQL = """\
+(CAST(:session_filter AS TEXT) IS NULL OR qs.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR qs.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR qs.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR qs.assessment_type = CAST(:category AS TEXT))
+                  AND (
+                        CAST(:section AS TEXT) IS NULL
+                     OR qs.section = CAST(:section AS TEXT)
+                     OR EXISTS (
+                          SELECT 1 FROM dim_section dsec
+                          WHERE dsec.school_id = qs.school_id
+                            AND dsec.item_id = qs.item_id
+                            AND (
+                              dsec.section_name = CAST(:section AS TEXT)
+                           OR dsec.section_code = CAST(:section AS TEXT)
+                           OR dsec.section_nid  = CAST(:section AS TEXT)
+                            )
+                        )
+                      )"""
+
+
+def _school_filter_params(
+    session_filter: Optional[str],
+    subject: Optional[str],
+    grade: Optional[str],
+    category: Optional[str],
+    section: Optional[str],
+) -> Dict[str, Any]:
+    """Bind-dict for the shared 5-filter WHERE clause."""
+    return {
+        "session_filter": session_filter,
+        "subject": subject,
+        "grade": grade,
+        "category": category,
+        "section": section,
+    }
+
+
 class CubeRepository:
     """Reads from the cube_* and supporting fact tables."""
 
@@ -430,13 +474,7 @@ class CubeRepository:
         )
         result = await self.session.execute(
             sql,
-            {
-                "session_filter": session_filter,
-                "subject": subject,
-                "grade": grade,
-                "category": category,
-                "section": section,
-            },
+            _school_filter_params(session_filter, subject, grade, category, section),
         )
         row = result.first()
         return int(row._mapping["total_students"]) if row else 0
@@ -457,7 +495,7 @@ class CubeRepository:
         session / subject / grade / assessment_type / section columns.
         """
         sql = text(
-            """
+            f"""
             WITH scoped_qs AS (
                 SELECT DISTINCT
                     qs.school_id,
@@ -466,24 +504,7 @@ class CubeRepository:
                     qs.item_id,
                     qs.subject
                 FROM cube_question_summary qs
-                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qs.session = CAST(:session_filter AS TEXT))
-                  AND (CAST(:subject AS TEXT) IS NULL OR qs.subject = CAST(:subject AS TEXT))
-                  AND (CAST(:grade AS TEXT) IS NULL OR qs.grade = CAST(:grade AS TEXT))
-                  AND (CAST(:category AS TEXT) IS NULL OR qs.assessment_type = CAST(:category AS TEXT))
-                  AND (
-                        CAST(:section AS TEXT) IS NULL
-                     OR qs.section = CAST(:section AS TEXT)
-                     OR EXISTS (
-                          SELECT 1 FROM dim_section dsec
-                          WHERE dsec.school_id = qs.school_id
-                            AND dsec.item_id = qs.item_id
-                            AND (
-                              dsec.section_name = CAST(:section AS TEXT)
-                           OR dsec.section_code = CAST(:section AS TEXT)
-                           OR dsec.section_nid  = CAST(:section AS TEXT)
-                            )
-                        )
-                      )
+                WHERE {_QS_SCHOOL_FILTER_SQL}
             ),
             strand_q AS (
                 SELECT DISTINCT
@@ -525,13 +546,7 @@ class CubeRepository:
         )
         result = await self.session.execute(
             sql,
-            {
-                "session_filter": session_filter,
-                "subject": subject,
-                "grade": grade,
-                "category": category,
-                "section": section,
-            },
+            _school_filter_params(session_filter, subject, grade, category, section),
         )
         return [_row_to_dict(r) for r in result.all()]
 
@@ -552,7 +567,7 @@ class CubeRepository:
         drill table (the latter passes a strand filter).
         """
         sql = text(
-            """
+            f"""
             WITH scoped_qs AS (
                 SELECT DISTINCT
                     qs.school_id,
@@ -560,24 +575,7 @@ class CubeRepository:
                     qs.identifier,
                     qs.item_id
                 FROM cube_question_summary qs
-                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qs.session = CAST(:session_filter AS TEXT))
-                  AND (CAST(:subject AS TEXT) IS NULL OR qs.subject = CAST(:subject AS TEXT))
-                  AND (CAST(:grade AS TEXT) IS NULL OR qs.grade = CAST(:grade AS TEXT))
-                  AND (CAST(:category AS TEXT) IS NULL OR qs.assessment_type = CAST(:category AS TEXT))
-                  AND (
-                        CAST(:section AS TEXT) IS NULL
-                     OR qs.section = CAST(:section AS TEXT)
-                     OR EXISTS (
-                          SELECT 1 FROM dim_section dsec
-                          WHERE dsec.school_id = qs.school_id
-                            AND dsec.item_id = qs.item_id
-                            AND (
-                              dsec.section_name = CAST(:section AS TEXT)
-                           OR dsec.section_code = CAST(:section AS TEXT)
-                           OR dsec.section_nid  = CAST(:section AS TEXT)
-                            )
-                        )
-                      )
+                WHERE {_QS_SCHOOL_FILTER_SQL}
             ),
             std_q AS (
                 SELECT DISTINCT
@@ -636,11 +634,9 @@ class CubeRepository:
         result = await self.session.execute(
             sql,
             {
-                "session_filter": session_filter,
-                "subject": subject,
-                "grade": grade,
-                "category": category,
-                "section": section,
+                **_school_filter_params(
+                    session_filter, subject, grade, category, section
+                ),
                 "strand": strand,
             },
         )
