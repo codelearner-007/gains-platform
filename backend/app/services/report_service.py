@@ -81,13 +81,19 @@ _PERF_PINK = "#FFCCFF"
 _PERF_YELLOW = "#FFFF00"
 _PERF_GREEN = "#00FF06"
 
+# PBIX-mandated band thresholds (Performance Color* DAX measures): a strand
+# or standard is "at target" at >=80%, "approaching" at 70–80%, and "needs
+# attention" below 70%.
+_BAND_HIGH_THRESHOLD = 0.8
+_BAND_MID_THRESHOLD = 0.7
+
 
 def _perf_color(grade: float) -> str:
     if grade is None or grade <= 0:
         return ""
-    if grade < 0.7:
+    if grade < _BAND_MID_THRESHOLD:
         return _PERF_PINK
-    if grade < 0.8:
+    if grade < _BAND_HIGH_THRESHOLD:
         return _PERF_YELLOW
     return _PERF_GREEN
 
@@ -405,7 +411,8 @@ class ReportService:
         )
 
         # ─── Performance bands (3 × 100% stacked bar charts) ──────────────
-        # PBIX traffic-light: green ≥0.8, yellow [0.7, 0.8), pink <0.7.
+        # PBIX traffic-light bucketing: green at-target, yellow approaching,
+        # pink needs-attention (see _BAND_*_THRESHOLD constants).
         band_high: list[SddBandStrandRow] = []
         band_mid: list[SddBandStrandRow] = []
         band_low: list[SddBandStrandRow] = []
@@ -416,9 +423,9 @@ class ReportService:
                 num_questions=s.num_questions,
                 grade_average=s.grade_average,
             )
-            if s.grade_average >= 0.8:
+            if s.grade_average >= _BAND_HIGH_THRESHOLD:
                 band_high.append(row)
-            elif s.grade_average >= 0.7:
+            elif s.grade_average >= _BAND_MID_THRESHOLD:
                 band_mid.append(row)
             else:
                 band_low.append(row)
@@ -751,7 +758,7 @@ class ReportService:
             )
             grade_sum += grade_avg
             total_questions_acc += num_q
-            if grade_avg >= 0.8:
+            if grade_avg >= _BAND_HIGH_THRESHOLD:
                 at_target += 1
             bucket = strand_counts_acc.setdefault(
                 strand,
@@ -878,9 +885,9 @@ class ReportService:
                 num_questions=num_questions,
                 grade_average=round(grade_avg, 6),
             )
-            if grade_avg >= 0.8:
+            if grade_avg >= _BAND_HIGH_THRESHOLD:
                 band_high.append(band_row)
-            elif grade_avg >= 0.7:
+            elif grade_avg >= _BAND_MID_THRESHOLD:
                 band_mid.append(band_row)
             else:
                 band_low.append(band_row)
