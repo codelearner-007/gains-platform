@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
 import type { StrandSummaryFilters } from '@/lib/reports/types';
+import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
@@ -16,59 +17,31 @@ import StrandRollupTable from '@/components/app/modules/reports/strand-summary/S
 import StrandStandardsTable from '@/components/app/modules/reports/strand-summary/StrandStandardsTable';
 import BandBars from '@/components/app/modules/reports/strand-summary/BandBars';
 
-const FILTER_KEYS = [
-  'session',
-  'subject',
-  'grade',
-  'category',
-  'section',
-] as const;
-
+const BASE_PATH = '/app/reports/strand-summary';
 const SELECTED_PARAM = 'strand';
-
-function readFilters(params: URLSearchParams): StrandSummaryFilters {
-  const out: StrandSummaryFilters = {};
-  for (const k of FILTER_KEYS) {
-    const v = params.get(k);
-    if (v) (out as Record<string, string>)[k] = v;
-  }
-  return out;
-}
 
 export default function StrandSummaryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const filters = useMemo(() => readFilters(searchParams), [searchParams]);
   const selectedStrand = searchParams.get(SELECTED_PARAM) || null;
 
-  const setFilters = useCallback(
-    (next: StrandSummaryFilters) => {
-      const params = new URLSearchParams();
-      for (const k of FILTER_KEYS) {
-        const v = next[k];
-        if (v) params.set(k, v);
-      }
-      // Preserve the strand selection across filter changes
-      if (selectedStrand) params.set(SELECTED_PARAM, selectedStrand);
-      router.replace(
-        params.size > 0
-          ? `/app/reports/strand-summary?${params.toString()}`
-          : '/app/reports/strand-summary',
-      );
-    },
-    [router, selectedStrand],
+  // Preserve the strand selection across filter changes via the
+  // useSummaryFilters preserveParams hook contract.
+  const preserveParams = useMemo(
+    () => ({ [SELECTED_PARAM]: selectedStrand }),
+    [selectedStrand],
   );
+  const { filters, setFilters } = useSummaryFilters<StrandSummaryFilters>({
+    basePath: BASE_PATH,
+    preserveParams,
+  });
 
   const setSelectedStrand = useCallback(
     (strand: string | null) => {
       const params = new URLSearchParams(searchParams.toString());
       if (strand) params.set(SELECTED_PARAM, strand);
       else params.delete(SELECTED_PARAM);
-      router.replace(
-        params.size > 0
-          ? `/app/reports/strand-summary?${params.toString()}`
-          : '/app/reports/strand-summary',
-      );
+      router.replace(params.size > 0 ? `${BASE_PATH}?${params.toString()}` : BASE_PATH);
     },
     [router, searchParams],
   );

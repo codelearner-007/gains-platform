@@ -1,10 +1,9 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
 import type { StandardSummaryFilters } from '@/lib/reports/types';
+import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
@@ -15,43 +14,10 @@ import StandardCard from '@/components/app/modules/reports/std-summary/StandardC
 import StandardsTable from '@/components/app/modules/reports/std-summary/StandardsTable';
 import StandardsByStrandChart from '@/components/app/modules/reports/std-summary/StandardsByStrandChart';
 
-const FILTER_KEYS = [
-  'session',
-  'subject',
-  'grade',
-  'category',
-  'section',
-] as const;
-
-function readFilters(params: URLSearchParams): StandardSummaryFilters {
-  const out: StandardSummaryFilters = {};
-  for (const k of FILTER_KEYS) {
-    const v = params.get(k);
-    if (v) (out as Record<string, string>)[k] = v;
-  }
-  return out;
-}
-
 export default function StandardSummaryPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const filters = useMemo(() => readFilters(searchParams), [searchParams]);
-
-  const setFilters = useCallback(
-    (next: StandardSummaryFilters) => {
-      const params = new URLSearchParams();
-      for (const k of FILTER_KEYS) {
-        const v = next[k];
-        if (v) params.set(k, v);
-      }
-      router.replace(
-        params.size > 0
-          ? `/app/reports/standard-summary?${params.toString()}`
-          : '/app/reports/standard-summary',
-      );
-    },
-    [router],
-  );
+  const { filters, setFilters } = useSummaryFilters<StandardSummaryFilters>({
+    basePath: '/app/reports/standard-summary',
+  });
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: reportsKeys.standardSummary(filters),
