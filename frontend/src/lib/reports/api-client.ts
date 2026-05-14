@@ -6,7 +6,11 @@ import type {
   QuestionResponseAnalysisPayload,
   SectionRow,
   SessionRow,
+  StandardSummaryFilters,
+  StandardSummaryPayload,
   StandardsDeepDivePayload,
+  StrandSummaryFilters,
+  StrandSummaryPayload,
   SubjectRow,
   YearToDatePerformancePayload,
 } from './types';
@@ -56,6 +60,16 @@ export const reportsApi = {
     fetch('/api/v1/reports/year-to-date-performance', {
       credentials: 'include',
     }).then(handleResponse<YearToDatePerformancePayload>),
+
+  standardSummary: (filters?: StandardSummaryFilters) =>
+    fetch(`/api/v1/reports/standard-summary${buildQuery(filters)}`, {
+      credentials: 'include',
+    }).then(handleResponse<StandardSummaryPayload>),
+
+  strandSummary: (filters?: StrandSummaryFilters) =>
+    fetch(`/api/v1/reports/strand-summary${buildQuery(filters)}`, {
+      credentials: 'include',
+    }).then(handleResponse<StrandSummaryPayload>),
 
   iad: (itemId: string, questionId: string) =>
     fetch(

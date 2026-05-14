@@ -3,7 +3,14 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { BarChart3, FileBarChart, Layers, LineChart } from 'lucide-react';
+import {
+  BarChart3,
+  FileBarChart,
+  GraduationCap,
+  Layers,
+  LineChart,
+  Network,
+} from 'lucide-react';
 
 const ITEM_ID_STORAGE_KEY = 'gains.lastItemId';
 
@@ -30,6 +37,18 @@ const items = [
     name: 'Year-To-Date Performance',
     href: '/app/reports/year-to-date-performance',
     icon: LineChart,
+    requiresItem: false,
+  },
+  {
+    name: 'Standard Summary',
+    href: '/app/reports/standard-summary',
+    icon: GraduationCap,
+    requiresItem: false,
+  },
+  {
+    name: 'Strand Summary',
+    href: '/app/reports/strand-summary',
+    icon: Network,
     requiresItem: false,
   },
 ];
