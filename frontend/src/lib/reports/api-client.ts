@@ -2,6 +2,7 @@ import type {
   AssessmentFilters,
   AssessmentListRow,
   GradeRow,
+  IncorrectAnswerDetailsPayload,
   QuestionResponseAnalysisPayload,
   SectionRow,
   SessionRow,
@@ -55,6 +56,12 @@ export const reportsApi = {
     fetch('/api/v1/reports/year-to-date-performance', {
       credentials: 'include',
     }).then(handleResponse<YearToDatePerformancePayload>),
+
+  iad: (itemId: string, questionId: string) =>
+    fetch(
+      `/api/v1/reports/incorrect-answer-details/${encodeURIComponent(itemId)}/${encodeURIComponent(questionId)}`,
+      { credentials: 'include' },
+    ).then(handleResponse<IncorrectAnswerDetailsPayload>),
 
   assessments: (filters?: AssessmentFilters) =>
     fetch(`/api/v1/assessments${buildQuery(filters)}`, {

@@ -269,3 +269,72 @@ class YearToDatePerformancePayload(BaseModel):
     grade_distribution: List[YTDGradeDistribution]
     student_progression: List[YTDStudentScatter]
     strand_heatmap: List[YTDHeatmapCell]
+
+
+# ─── Incorrect Answer Details (drill-through from QRA) ─────────────────────
+
+
+class IadQuestionContext(BaseModel):
+    """The single question being analysed on the IAD page."""
+
+    question_id: str
+    question_no: str
+    position_number: str
+    question: str
+    question_type: str
+    correct_answer: str
+    standards: str
+    strand: str
+    description: str
+    grade_average: float
+    grade_average_pct: str
+    total_possible_point: float
+    total_score: float
+
+
+class IadKpis(BaseModel):
+    """Compact KPI strip for one question."""
+
+    total_attempts: int
+    correct_count: int
+    incorrect_count: int
+    correct_pct: str
+    incorrect_pct: str
+    distinct_answers: int
+    top_wrong_answer: str
+    top_wrong_count: int
+    top_wrong_pct: str
+
+
+class IadDistractorRow(BaseModel):
+    """One row of the per-answer-choice distractor breakdown table."""
+
+    answer_submission: str
+    students_count: int
+    share_of_attempts: float
+    share_pct: str
+    is_correct: bool
+
+
+class IadStudentAttempt(BaseModel):
+    """One student × this question row."""
+
+    user_uid: str
+    user_name: str
+    answer_submission: str
+    correct_answer: str
+    is_correct: bool
+    points_received: float
+    points_possible: float
+    score_pct: float
+    latest_attempt: str
+
+
+class IncorrectAnswerDetailsPayload(BaseModel):
+    """Drill-through endpoint payload for the IAD page (one question)."""
+
+    assessment: AssessmentMeta
+    question: IadQuestionContext
+    kpis: IadKpis
+    distractors: List[IadDistractorRow]
+    student_attempts: List[IadStudentAttempt]

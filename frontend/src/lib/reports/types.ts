@@ -264,3 +264,61 @@ export interface YearToDatePerformancePayload {
   student_progression: YTDStudentScatter[];
   strand_heatmap: YTDHeatmapCell[];
 }
+
+// ─── Incorrect Answer Details (drill-through from QRA) ───────────────────
+
+export interface IadQuestionContext {
+  question_id: string;
+  question_no: string;
+  position_number: string;
+  question: string;
+  question_type: string;
+  correct_answer: string;
+  standards: string;
+  strand: string;
+  description: string;
+  grade_average: number;
+  grade_average_pct: string;
+  total_possible_point: number;
+  total_score: number;
+}
+
+export interface IadKpis {
+  total_attempts: number;
+  correct_count: number;
+  incorrect_count: number;
+  correct_pct: string;
+  incorrect_pct: string;
+  distinct_answers: number;
+  top_wrong_answer: string;
+  top_wrong_count: number;
+  top_wrong_pct: string;
+}
+
+export interface IadDistractorRow {
+  answer_submission: string;
+  students_count: number;
+  share_of_attempts: number;
+  share_pct: string;
+  is_correct: boolean;
+}
+
+export interface IadStudentAttempt {
+  user_uid: string;
+  user_name: string;
+  answer_submission: string;
+  correct_answer: string;
+  is_correct: boolean;
+  points_received: number;
+  points_possible: number;
+  score_pct: number;
+  latest_attempt: string;
+}
+
+export interface IncorrectAnswerDetailsPayload {
+  assessment: AssessmentMeta;
+  question: IadQuestionContext;
+  kpis: IadKpis;
+  distractors: IadDistractorRow[];
+  student_attempts: IadStudentAttempt[];
+}

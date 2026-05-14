@@ -5,6 +5,8 @@ export const reportsKeys = {
   qra: (itemId: string) => [...reportsKeys.all, 'qra', itemId] as const,
   sdd: (itemId: string) => [...reportsKeys.all, 'sdd', itemId] as const,
   ytd: () => [...reportsKeys.all, 'ytd'] as const,
+  iad: (itemId: string, questionId: string) =>
+    [...reportsKeys.all, 'iad', itemId, questionId] as const,
   assessments: (filters?: AssessmentFilters) =>
     [...reportsKeys.all, 'assessments', filters ?? {}] as const,
   sessions: () => [...reportsKeys.all, 'dim', 'sessions'] as const,
