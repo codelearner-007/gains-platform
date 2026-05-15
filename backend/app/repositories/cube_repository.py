@@ -414,7 +414,7 @@ class CubeRepository:
     # School-wide rollups (Standard Summary + Strand Summary)
     # ────────────────────────────────────────────────────────────────────
     async def get_school_wide_meta(self) -> Optional[Dict[str, Any]]:
-        """School name + logo + the predominant session label.
+        """School id + name + logo + the predominant session label.
 
         Returns the same shape as ``get_ytd_school_meta`` but exposed under
         a more general name so the standard/strand summary endpoints can
@@ -423,6 +423,7 @@ class CubeRepository:
         sql = text(
             """
             SELECT
+                di.school_id::text                            AS school_id,
                 COALESCE(s.name, '')                          AS name,
                 COALESCE(s.logo_url, '')                      AS logo_url,
                 COALESCE(MAX(dsubj.session), '')              AS current_session
@@ -432,7 +433,7 @@ class CubeRepository:
              AND dsubj.subject_id = di.subject_id
             LEFT JOIN public.schools s
               ON s.school_id = di.school_id
-            GROUP BY s.name, s.logo_url
+            GROUP BY di.school_id, s.name, s.logo_url
             LIMIT 1
             """
         )
@@ -669,6 +670,132 @@ class CubeRepository:
                 LIMIT 1
             ) ds_std ON TRUE
             ORDER BY ds_strand.strand NULLS LAST, cs.identifier
+            """
+        )
+        result = await self.session.execute(sql)
+        return [_row_to_dict(r) for r in result.all()]
+
+    # ────────────────────────────────────────────────────────────────────
+    # Standards-alignment data quality
+    # ────────────────────────────────────────────────────────────────────
+    #
+    # When the Schoology Test/Quiz "Export Stats" CSV ships zero Standards
+    # columns (because instructors never aligned questions to learning
+    # objectives in Schoology), dim_question_data.standard / identifier
+    # stay NULL and every downstream join silently drops the row. The
+    # methods below quantify that gap so the UI can render a precise
+    # empty state and an admin can find the items that need alignment.
+    # Counted at the (item_id, question_id) grain so we're not biased by
+    # answer-option multiplicity.
+
+    async def get_alignment_quality_for_item(
+        self, item_id: str
+    ) -> Dict[str, int]:
+        """Count distinct questions vs. distinct aligned-questions for one item."""
+        sql = text(
+            """
+            SELECT
+                COUNT(DISTINCT question_id) AS questions_total,
+                COUNT(DISTINCT question_id)
+                  FILTER (WHERE identifier IS NOT NULL)
+                  AS questions_with_alignment
+            FROM dim_question_data
+            WHERE item_id = :item_id
+            """
+        )
+        row = (await self.session.execute(sql, {"item_id": item_id})).first()
+        if row is None:
+            return {"questions_total": 0, "questions_with_alignment": 0}
+        d = _row_to_dict(row)
+        return {
+            "questions_total": int(d.get("questions_total") or 0),
+            "questions_with_alignment": int(d.get("questions_with_alignment") or 0),
+        }
+
+    async def get_school_alignment_quality(
+        self,
+        *,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> Dict[str, int]:
+        """Aggregate alignment coverage across all items matching the filters."""
+        sql = text(
+            """
+            WITH per_item AS (
+                SELECT
+                    dqd.item_id,
+                    COUNT(DISTINCT dqd.question_id) AS qs_total,
+                    COUNT(DISTINCT dqd.question_id)
+                      FILTER (WHERE dqd.identifier IS NOT NULL) AS qs_aligned
+                FROM dim_question_data dqd
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR dqd.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR dqd.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR dqd.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR dqd.assessment_type = CAST(:category AS TEXT))
+                  AND (CAST(:section AS TEXT) IS NULL OR dqd.section = CAST(:section AS TEXT))
+                GROUP BY dqd.item_id
+            )
+            SELECT
+                COUNT(*)                                       AS items_total,
+                COUNT(*) FILTER (WHERE qs_aligned > 0)         AS items_with_alignment,
+                COALESCE(SUM(qs_total), 0)                     AS questions_total,
+                COALESCE(SUM(qs_aligned), 0)                   AS questions_with_alignment
+            FROM per_item
+            """
+        )
+        params = _school_filter_params(
+            session_filter, subject, grade, category, section
+        )
+        row = (await self.session.execute(sql, params)).first()
+        if row is None:
+            return {
+                "items_total": 0,
+                "items_with_alignment": 0,
+                "questions_total": 0,
+                "questions_with_alignment": 0,
+            }
+        d = _row_to_dict(row)
+        return {
+            "items_total": int(d.get("items_total") or 0),
+            "items_with_alignment": int(d.get("items_with_alignment") or 0),
+            "questions_total": int(d.get("questions_total") or 0),
+            "questions_with_alignment": int(d.get("questions_with_alignment") or 0),
+        }
+
+    async def list_alignment_quality_by_item(self) -> List[Dict[str, Any]]:
+        """Per-item alignment-coverage rows for the admin DQ list.
+
+        Joins ``dim_question_data`` to ``dim_item`` for the item_name +
+        item_type display fields. ``subject`` / ``grade`` come from
+        ``dim_question_data`` (already overridden / normalised at staging).
+        """
+        sql = text(
+            """
+            WITH per_item AS (
+                SELECT
+                    dqd.item_id,
+                    MAX(dqd.subject) AS subject,
+                    MAX(dqd.grade)   AS grade,
+                    COUNT(DISTINCT dqd.question_id) AS qs_total,
+                    COUNT(DISTINCT dqd.question_id)
+                      FILTER (WHERE dqd.identifier IS NOT NULL) AS qs_aligned
+                FROM dim_question_data dqd
+                GROUP BY dqd.item_id
+            )
+            SELECT
+                pi.item_id,
+                COALESCE(di.item_name, '') AS item_name,
+                di.item_type,
+                pi.subject,
+                pi.grade,
+                pi.qs_total::int          AS questions_total,
+                pi.qs_aligned::int        AS questions_with_alignment
+            FROM per_item pi
+            LEFT JOIN dim_item di USING (item_id)
+            ORDER BY pi.qs_aligned, di.item_name
             """
         )
         result = await self.session.execute(sql)

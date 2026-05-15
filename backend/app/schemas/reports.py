@@ -7,9 +7,38 @@ the TypeScript interfaces exactly.
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
+
+
+class AlignmentDataQuality(BaseModel):
+    """Standards-alignment coverage for a report payload.
+
+    Surfaces when the underlying Schoology Test/Quiz CSV ships fewer
+    ``Standards{N}`` columns than there are questions — e.g. when teachers
+    haven't aligned questions to learning objectives in Schoology. Attached
+    to SDD / Strand Summary / Standard Summary payloads so the UI can
+    render an explanatory empty state instead of blank charts.
+
+    ``alignment_status`` semantics:
+      * ``"full"``    — every question has at least one resolvable alignment
+      * ``"partial"`` — some aligned, some missing; reports may render
+        partial charts plus a banner
+      * ``"missing"`` — zero alignments resolved; reports should render
+        an empty-state card
+
+    ``items_total`` / ``items_with_alignment`` are populated for school-wide
+    reports (Standard / Strand Summary). For per-assessment payloads
+    (SDD) they equal ``1`` / ``0`` or ``1`` respectively.
+    """
+
+    alignment_status: Literal["full", "partial", "missing"]
+    questions_total: int
+    questions_with_alignment: int
+    items_total: int
+    items_with_alignment: int
+    remediation_hint: str
 
 
 class AssessmentMeta(BaseModel):
@@ -182,6 +211,7 @@ class StandardsDeepDivePayload(BaseModel):
     band_high: List[SddBandStrandRow]
     band_mid: List[SddBandStrandRow]
     band_low: List[SddBandStrandRow]
+    data_quality: Optional[AlignmentDataQuality] = None
 
 
 class QuestionResponseAnalysisPayload(BaseModel):
@@ -400,6 +430,7 @@ class StandardSummaryPayload(BaseModel):
     kpis: StandardSummaryKpis
     standards: List[StandardSummaryRollupRow]
     strand_counts: List[StandardSummaryStrandCount]
+    data_quality: Optional[AlignmentDataQuality] = None
 
 
 # ─── Strand Summary (school-wide, per-Strand grain) ────────────────────────
@@ -477,3 +508,39 @@ class StrandSummaryPayload(BaseModel):
     band_high: List[StrandSummaryBandRow]
     band_mid: List[StrandSummaryBandRow]
     band_low: List[StrandSummaryBandRow]
+    data_quality: Optional[AlignmentDataQuality] = None
+
+
+# ─── Standards-alignment Data Quality (admin) ──────────────────────────────
+
+
+class AlignmentItemRow(BaseModel):
+    """Per-assessment alignment-coverage row for the admin DQ list.
+
+    Built from ``dim_question_data`` joined to ``dim_item``: counts how
+    many distinct questions on the assessment do / do not resolve to a
+    ``dim_standard.identifier`` through the substring join in
+    ``dim_question_data.sql``. The ratio drives the admin DQ dashboard.
+    """
+
+    item_id: str
+    item_name: str
+    item_type: Optional[str] = None
+    subject: Optional[str] = None
+    grade: Optional[str] = None
+    questions_total: int
+    questions_with_alignment: int
+    pct_aligned: float
+    alignment_status: Literal["full", "partial", "missing"]
+
+
+class AlignmentDataQualityReport(BaseModel):
+    """Tenant-scoped alignment-coverage report."""
+
+    school_id: str
+    school_name: str
+    items_total: int
+    items_with_alignment: int
+    items_missing_alignment: int
+    items_partial_alignment: int
+    items: List[AlignmentItemRow]

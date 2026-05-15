@@ -29,6 +29,9 @@ from app.repositories.cube_repository import CubeRepository
 from app.repositories.dim_repository import DimRepository
 from app.utils.coercion import safe_str, to_float, to_int
 from app.schemas.reports import (
+    AlignmentDataQuality,
+    AlignmentDataQualityReport,
+    AlignmentItemRow,
     AssessmentMeta,
     IadDistractorRow,
     IadKpis,
@@ -67,6 +70,26 @@ from app.schemas.reports import (
     YTDStudentSummary,
     YTDTimelinePoint,
 )
+
+
+_ALIGNMENT_REMEDIATION = (
+    "Open this assessment in Schoology, edit each question, and use "
+    '"Align Learning Objective" to attach the relevant standards. '
+    "Re-ingest after the next Export Stats download."
+)
+
+
+def _classify_alignment(
+    questions_total: int, questions_with_alignment: int
+) -> str:
+    """Map question-level coverage onto the alignment_status enum."""
+    if questions_total == 0:
+        return "missing"
+    if questions_with_alignment == 0:
+        return "missing"
+    if questions_with_alignment == questions_total:
+        return "full"
+    return "partial"
 
 logger = logging.getLogger(__name__)
 
@@ -439,6 +462,18 @@ class ReportService:
             else:
                 band_low.append(row)
 
+        quality = await self.cube.get_alignment_quality_for_item(item_id)
+        q_total = quality["questions_total"]
+        q_aligned = quality["questions_with_alignment"]
+        data_quality = AlignmentDataQuality(
+            alignment_status=_classify_alignment(q_total, q_aligned),
+            questions_total=q_total,
+            questions_with_alignment=q_aligned,
+            items_total=1,
+            items_with_alignment=1 if q_aligned > 0 else 0,
+            remediation_hint=_ALIGNMENT_REMEDIATION,
+        )
+
         return StandardsDeepDivePayload(
             assessment=assessment,
             kpis=kpis,
@@ -447,6 +482,7 @@ class ReportService:
             band_high=band_high,
             band_mid=band_mid,
             band_low=band_low,
+            data_quality=data_quality,
         )
 
     # ────────────────────────────────────────────────────────────────────
@@ -821,12 +857,31 @@ class ReportService:
             current_session=safe_str(meta.get("current_session")),
         )
 
+        quality = await self.cube.get_school_alignment_quality(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+        data_quality = AlignmentDataQuality(
+            alignment_status=_classify_alignment(
+                quality["questions_total"], quality["questions_with_alignment"]
+            ),
+            questions_total=quality["questions_total"],
+            questions_with_alignment=quality["questions_with_alignment"],
+            items_total=quality["items_total"],
+            items_with_alignment=quality["items_with_alignment"],
+            remediation_hint=_ALIGNMENT_REMEDIATION,
+        )
+
         return StandardSummaryPayload(
             school=school,
             filters_applied=filters,
             kpis=kpis,
             standards=standards,
             strand_counts=strand_counts,
+            data_quality=data_quality,
         )
 
     # ────────────────────────────────────────────────────────────────────
@@ -964,6 +1019,24 @@ class ReportService:
             current_session=safe_str(meta.get("current_session")),
         )
 
+        quality = await self.cube.get_school_alignment_quality(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+        data_quality = AlignmentDataQuality(
+            alignment_status=_classify_alignment(
+                quality["questions_total"], quality["questions_with_alignment"]
+            ),
+            questions_total=quality["questions_total"],
+            questions_with_alignment=quality["questions_with_alignment"],
+            items_total=quality["items_total"],
+            items_with_alignment=quality["items_with_alignment"],
+            remediation_hint=_ALIGNMENT_REMEDIATION,
+        )
+
         return StrandSummaryPayload(
             school=school,
             filters_applied=filters,
@@ -973,4 +1046,54 @@ class ReportService:
             band_high=band_high,
             band_mid=band_mid,
             band_low=band_low,
+            data_quality=data_quality,
+        )
+
+    # ────────────────────────────────────────────────────────────────────
+    # Data Quality — Standards alignment coverage (admin)
+    # ────────────────────────────────────────────────────────────────────
+    async def build_alignment_data_quality(self) -> AlignmentDataQualityReport:
+        """Tenant-scoped report listing alignment coverage per assessment."""
+        meta = await self.cube.get_school_wide_meta() or {}
+        rows = await self.cube.list_alignment_quality_by_item()
+
+        items: list[AlignmentItemRow] = []
+        items_total = 0
+        items_full = 0
+        items_partial = 0
+        items_missing = 0
+        for r in rows:
+            qs_total = to_int(r.get("questions_total"))
+            qs_aligned = to_int(r.get("questions_with_alignment"))
+            status = _classify_alignment(qs_total, qs_aligned)
+            pct = (qs_aligned / qs_total) if qs_total else 0.0
+            items.append(
+                AlignmentItemRow(
+                    item_id=safe_str(r.get("item_id")),
+                    item_name=safe_str(r.get("item_name")),
+                    item_type=safe_str(r.get("item_type")) or None,
+                    subject=safe_str(r.get("subject")) or None,
+                    grade=safe_str(r.get("grade")) or None,
+                    questions_total=qs_total,
+                    questions_with_alignment=qs_aligned,
+                    pct_aligned=round(pct, 6),
+                    alignment_status=status,
+                )
+            )
+            items_total += 1
+            if status == "full":
+                items_full += 1
+            elif status == "partial":
+                items_partial += 1
+            else:
+                items_missing += 1
+
+        return AlignmentDataQualityReport(
+            school_id=safe_str(meta.get("school_id")),
+            school_name=safe_str(meta.get("name")),
+            items_total=items_total,
+            items_with_alignment=items_full + items_partial,
+            items_missing_alignment=items_missing,
+            items_partial_alignment=items_partial,
+            items=items,
         )
