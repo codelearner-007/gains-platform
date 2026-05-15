@@ -45,6 +45,7 @@ export default function ReportPageHeader({
           height={80}
           priority
           unoptimized={isRemoteLogo(finalLogo)}
+          style={{ width: 80, height: 80 }}
           className="object-contain"
         />
       </div>
