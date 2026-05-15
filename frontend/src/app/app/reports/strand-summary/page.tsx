@@ -20,6 +20,7 @@ import StrandTreemap from '@/components/app/modules/reports/strand-summary/Stran
 import StrandRollupTable from '@/components/app/modules/reports/strand-summary/StrandRollupTable';
 import StrandStandardsTable from '@/components/app/modules/reports/strand-summary/StrandStandardsTable';
 import BandBars from '@/components/app/modules/reports/strand-summary/BandBars';
+import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 
 const BASE_PATH = '/app/reports/strand-summary';
 const SELECTED_PARAM = 'strand';
@@ -96,36 +97,45 @@ export default function StrandSummaryPage() {
         <KpiStrip kpis={data.kpis} />
       </div>
 
-      <div className="mb-2">
-        <StrandTreemap
-          rows={data.strands_rollup}
-          selectedStrand={selectedStrand}
-          onSelectStrand={setSelectedStrand}
+      {data.data_quality?.alignment_status === 'missing' ? (
+        <AlignmentEmptyState
+          quality={data.data_quality}
+          reportLabel="Strand Summary"
         />
-      </div>
+      ) : (
+        <>
+          <div className="mb-2">
+            <StrandTreemap
+              rows={data.strands_rollup}
+              selectedStrand={selectedStrand}
+              onSelectStrand={setSelectedStrand}
+            />
+          </div>
 
-      <div className="mb-2">
-        <StrandRollupTable
-          strands={data.strands_rollup}
-          selectedStrand={selectedStrand}
-          onSelectStrand={setSelectedStrand}
-        />
-      </div>
+          <div className="mb-2">
+            <StrandRollupTable
+              strands={data.strands_rollup}
+              selectedStrand={selectedStrand}
+              onSelectStrand={setSelectedStrand}
+            />
+          </div>
 
-      <div className="mb-2">
-        <BandBars
-          bandHigh={data.band_high}
-          bandMid={data.band_mid}
-          bandLow={data.band_low}
-        />
-      </div>
+          <div className="mb-2">
+            <BandBars
+              bandHigh={data.band_high}
+              bandMid={data.band_mid}
+              bandLow={data.band_low}
+            />
+          </div>
 
-      <div>
-        <StrandStandardsTable
-          standards={data.standards_rollup}
-          selectedStrand={selectedStrand}
-        />
-      </div>
+          <div>
+            <StrandStandardsTable
+              standards={data.standards_rollup}
+              selectedStrand={selectedStrand}
+            />
+          </div>
+        </>
+      )}
     </ReportCanvas>
   );
 }

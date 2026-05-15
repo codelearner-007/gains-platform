@@ -15,6 +15,8 @@ export const reportsKeys = {
     [...reportsKeys.all, 'standardSummary', filters ?? {}] as const,
   strandSummary: (filters?: StrandSummaryFilters) =>
     [...reportsKeys.all, 'strandSummary', filters ?? {}] as const,
+  alignmentDataQuality: () =>
+    [...reportsKeys.all, 'dq', 'standards-alignment'] as const,
   assessments: (filters?: AssessmentFilters) =>
     [...reportsKeys.all, 'assessments', filters ?? {}] as const,
   sessions: () => [...reportsKeys.all, 'dim', 'sessions'] as const,

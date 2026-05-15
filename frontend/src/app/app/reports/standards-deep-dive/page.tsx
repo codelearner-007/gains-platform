@@ -19,6 +19,7 @@ import PerformanceBandBars from '@/components/app/modules/reports/sdd/CorrectInc
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
+import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 
 export default function StandardsDeepDivePage() {
   const router = useRouter();
@@ -72,22 +73,31 @@ export default function StandardsDeepDivePage() {
         <KpiStrip kpis={data.kpis} />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        <StrandTreemap strands={data.strands_rollup} />
-        <PerformanceBandBars
-          bandHigh={data.band_high}
-          bandMid={data.band_mid}
-          bandLow={data.band_low}
+      {data.data_quality?.alignment_status === 'missing' ? (
+        <AlignmentEmptyState
+          quality={data.data_quality}
+          reportLabel="Standards Deep Dive"
         />
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <StrandTreemap strands={data.strands_rollup} />
+            <PerformanceBandBars
+              bandHigh={data.band_high}
+              bandMid={data.band_mid}
+              bandLow={data.band_low}
+            />
+          </div>
 
-      <div className="mb-2">
-        <StrandsRollupTable strands={data.strands_rollup} />
-      </div>
+          <div className="mb-2">
+            <StrandsRollupTable strands={data.strands_rollup} />
+          </div>
 
-      <div>
-        <StandardsRollupTable standards={data.standards_rollup} />
-      </div>
+          <div>
+            <StandardsRollupTable standards={data.standards_rollup} />
+          </div>
+        </>
+      )}
     </ReportCanvas>
   );
 }

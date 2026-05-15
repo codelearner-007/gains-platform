@@ -1,4 +1,5 @@
 import type {
+  AlignmentDataQualityReport,
   AssessmentFilters,
   AssessmentListRow,
   GradeRow,
@@ -70,6 +71,11 @@ export const reportsApi = {
     fetch(`/api/v1/reports/strand-summary${buildQuery(filters)}`, {
       credentials: 'include',
     }).then(handleResponse<StrandSummaryPayload>),
+
+  alignmentDataQuality: () =>
+    fetch('/api/v1/reports/data-quality/standards-alignment', {
+      credentials: 'include',
+    }).then(handleResponse<AlignmentDataQualityReport>),
 
   iad: (itemId: string, questionId: string) =>
     fetch(

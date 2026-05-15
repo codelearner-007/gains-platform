@@ -17,6 +17,7 @@ import KpiStrip from '@/components/app/modules/reports/std-summary/KpiStrip';
 import StandardCard from '@/components/app/modules/reports/std-summary/StandardCard';
 import StandardsTable from '@/components/app/modules/reports/std-summary/StandardsTable';
 import StandardsByStrandChart from '@/components/app/modules/reports/std-summary/StandardsByStrandChart';
+import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 
 export default function StandardSummaryPage() {
   const { filters, setFilters } = useSummaryFilters<StandardSummaryFilters>({
@@ -69,30 +70,39 @@ export default function StandardSummaryPage() {
         <KpiStrip kpis={data.kpis} />
       </div>
 
-      <div className="mb-2">
-        <StandardsByStrandChart rows={data.strand_counts} />
-      </div>
+      {data.data_quality?.alignment_status === 'missing' ? (
+        <AlignmentEmptyState
+          quality={data.data_quality}
+          reportLabel="Standard Summary"
+        />
+      ) : (
+        <>
+          <div className="mb-2">
+            <StandardsByStrandChart rows={data.strand_counts} />
+          </div>
 
-      <div className="mb-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-          {data.standards.length === 0 ? (
-            <div className="col-span-full bg-white border border-border rounded p-6 text-center text-sm text-muted-foreground">
-              No standards match the current filters.
+          <div className="mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {data.standards.length === 0 ? (
+                <div className="col-span-full bg-white border border-border rounded p-6 text-center text-sm text-muted-foreground">
+                  No standards match the current filters.
+                </div>
+              ) : (
+                data.standards.map((std, idx) => (
+                  <StandardCard
+                    key={`${std.cpalms_standard}-${std.schoology_standard}-${std.strand}-${idx}`}
+                    std={std}
+                  />
+                ))
+              )}
             </div>
-          ) : (
-            data.standards.map((std, idx) => (
-              <StandardCard
-                key={`${std.cpalms_standard}-${std.schoology_standard}-${std.strand}-${idx}`}
-                std={std}
-              />
-            ))
-          )}
-        </div>
-      </div>
+          </div>
 
-      <div>
-        <StandardsTable standards={data.standards} />
-      </div>
+          <div>
+            <StandardsTable standards={data.standards} />
+          </div>
+        </>
+      )}
     </ReportCanvas>
   );
 }

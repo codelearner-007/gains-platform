@@ -128,6 +128,24 @@ export interface SddBandStrandRow {
   grade_average: number;
 }
 
+/**
+ * Standards-alignment coverage for a report payload.
+ *
+ * Populated when the underlying Schoology Test/Quiz CSV ships fewer
+ * `Standards{N}` columns than there are questions — typically because
+ * instructors never aligned the questions to learning objectives in
+ * Schoology. The page renders an explanatory empty-state card when
+ * `alignment_status === "missing"`.
+ */
+export interface AlignmentDataQuality {
+  alignment_status: "full" | "partial" | "missing";
+  questions_total: number;
+  questions_with_alignment: number;
+  items_total: number;
+  items_with_alignment: number;
+  remediation_hint: string;
+}
+
 export interface StandardsDeepDivePayload {
   assessment: AssessmentMeta;
   kpis: SddKpis;
@@ -136,6 +154,7 @@ export interface StandardsDeepDivePayload {
   band_high: SddBandStrandRow[];
   band_mid: SddBandStrandRow[];
   band_low: SddBandStrandRow[];
+  data_quality?: AlignmentDataQuality | null;
 }
 
 export interface QuestionResponseAnalysisPayload {
@@ -372,6 +391,7 @@ export interface StandardSummaryPayload {
   kpis: StandardSummaryKpis;
   standards: StandardSummaryRollupRow[];
   strand_counts: StandardSummaryStrandCount[];
+  data_quality?: AlignmentDataQuality | null;
 }
 
 // ─── Strand Summary (school-wide, per-Strand grain) ──────────────────────
@@ -436,4 +456,29 @@ export interface StrandSummaryPayload {
   band_high: StrandSummaryBandRow[];
   band_mid: StrandSummaryBandRow[];
   band_low: StrandSummaryBandRow[];
+  data_quality?: AlignmentDataQuality | null;
+}
+
+// ─── Data Quality — Standards alignment (admin) ──────────────────────────
+
+export interface AlignmentItemRow {
+  item_id: string;
+  item_name: string;
+  item_type?: string | null;
+  subject?: string | null;
+  grade?: string | null;
+  questions_total: number;
+  questions_with_alignment: number;
+  pct_aligned: number;
+  alignment_status: "full" | "partial" | "missing";
+}
+
+export interface AlignmentDataQualityReport {
+  school_id: string;
+  school_name: string;
+  items_total: number;
+  items_with_alignment: number;
+  items_missing_alignment: number;
+  items_partial_alignment: number;
+  items: AlignmentItemRow[];
 }
