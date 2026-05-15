@@ -10,6 +10,28 @@ interface Props {
   crumbs: BreadcrumbCrumb[];
 }
 
+const REPORTS_HREF = '/app/reports';
+
+export function assessmentCrumbs(
+  item: BreadcrumbCrumb,
+  trailing?: BreadcrumbCrumb,
+): BreadcrumbCrumb[] {
+  const base: BreadcrumbCrumb[] = [
+    { label: 'Reports', href: REPORTS_HREF },
+    { label: 'Assessment Reports', href: REPORTS_HREF },
+    item,
+  ];
+  return trailing ? [...base, trailing] : base;
+}
+
+export function programCrumbs(title: string): BreadcrumbCrumb[] {
+  return [
+    { label: 'Reports', href: REPORTS_HREF },
+    { label: 'Program Reports', href: REPORTS_HREF },
+    { label: title },
+  ];
+}
+
 export default function ReportBreadcrumb({ crumbs }: Props) {
   return (
     <nav

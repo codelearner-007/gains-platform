@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
 import AssessmentReportHeader from '@/components/app/modules/reports/shared/AssessmentReportHeader';
-import ReportBreadcrumb from '@/components/app/modules/reports/shared/ReportBreadcrumb';
+import ReportBreadcrumb, {
+  assessmentCrumbs,
+} from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
@@ -49,9 +51,7 @@ export default function IncorrectAnswerDetailsPage() {
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2">
         <ReportBreadcrumb
-          crumbs={[
-            { label: 'Reports', href: '/app/reports' },
-            { label: 'Assessment Reports', href: '/app/reports' },
+          crumbs={assessmentCrumbs(
             {
               label: data.assessment.item_name || data.assessment.item_id,
               href: `/app/reports/question-response-analysis?item_id=${itemId}`,
@@ -59,7 +59,7 @@ export default function IncorrectAnswerDetailsPage() {
             {
               label: `Question ${data.question.question_no || data.question.position_number}`,
             },
-          ]}
+          )}
         />
         <ReportTypeSwitcher
           group="assessment"

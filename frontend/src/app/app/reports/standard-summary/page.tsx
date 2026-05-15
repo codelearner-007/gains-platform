@@ -9,7 +9,9 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportFilters from '@/components/app/modules/reports/shared/ReportFilters';
-import ReportBreadcrumb from '@/components/app/modules/reports/shared/ReportBreadcrumb';
+import ReportBreadcrumb, {
+  programCrumbs,
+} from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import KpiStrip from '@/components/app/modules/reports/std-summary/KpiStrip';
 import StandardCard from '@/components/app/modules/reports/std-summary/StandardCard';
@@ -46,13 +48,7 @@ export default function StandardSummaryPage() {
   return (
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2">
-        <ReportBreadcrumb
-          crumbs={[
-            { label: 'Reports', href: '/app/reports' },
-            { label: 'Program Reports', href: '/app/reports' },
-            { label: 'Standard Summary' },
-          ]}
-        />
+        <ReportBreadcrumb crumbs={programCrumbs('Standard Summary')} />
         <ReportTypeSwitcher group="program" />
       </div>
 

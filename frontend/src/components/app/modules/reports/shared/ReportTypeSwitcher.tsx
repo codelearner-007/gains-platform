@@ -22,21 +22,14 @@ type ProgramReportSlug =
   | 'standard-summary'
   | 'strand-summary';
 
-interface AssessmentTab {
-  slug: AssessmentReportSlug;
+interface TabDef<S extends string> {
+  slug: S;
   label: string;
   shortLabel: string;
   icon: LucideIcon;
 }
 
-interface ProgramTab {
-  slug: ProgramReportSlug;
-  label: string;
-  shortLabel: string;
-  icon: LucideIcon;
-}
-
-const ASSESSMENT_TABS: AssessmentTab[] = [
+const ASSESSMENT_TABS: TabDef<AssessmentReportSlug>[] = [
   {
     slug: 'question-response-analysis',
     label: 'Question Response',
@@ -51,14 +44,14 @@ const ASSESSMENT_TABS: AssessmentTab[] = [
   },
 ];
 
-const IAD_TAB: AssessmentTab = {
+const IAD_TAB: TabDef<AssessmentReportSlug> = {
   slug: 'incorrect-answer-details',
   label: 'Incorrect Answers',
   shortLabel: 'IAD',
   icon: ListChecks,
 };
 
-const PROGRAM_TABS: ProgramTab[] = [
+const PROGRAM_TABS: TabDef<ProgramReportSlug>[] = [
   {
     slug: 'year-to-date-performance',
     label: 'Year-To-Date Performance',
@@ -92,60 +85,68 @@ type Props =
 export default function ReportTypeSwitcher(props: Props) {
   const pathname = usePathname();
 
-  const tabs: AssessmentTab[] =
-    props.group === 'assessment'
-      ? // Show IAD as a tab only when the user is currently on IAD — it is
-        // otherwise only reachable as a per-question drill-through from QRA.
-        pathname.endsWith('/incorrect-answer-details')
-        ? [...ASSESSMENT_TABS, IAD_TAB]
-        : ASSESSMENT_TABS
-      : [];
+  if (props.group === 'program') {
+    return (
+      <SwitcherShell label="Program report types">
+        {PROGRAM_TABS.map((tab) => (
+          <SwitcherChip
+            key={tab.slug}
+            href={`/app/reports/${tab.slug}`}
+            active={pathname.endsWith(`/${tab.slug}`)}
+            icon={tab.icon}
+            label={tab.label}
+            shortLabel={tab.shortLabel}
+          />
+        ))}
+      </SwitcherShell>
+    );
+  }
 
-  const programTabs: ProgramTab[] =
-    props.group === 'program' ? PROGRAM_TABS : [];
+  // Show IAD as a tab only when the user is currently on IAD — it is
+  // otherwise only reachable as a per-question drill-through from QRA.
+  const onIad = pathname.endsWith('/incorrect-answer-details');
+  const tabs = onIad ? [...ASSESSMENT_TABS, IAD_TAB] : ASSESSMENT_TABS;
 
+  return (
+    <SwitcherShell label="Assessment report types">
+      {tabs.map((tab) => {
+        // IAD tab is only "navigable" via the QRA question table; when
+        // visible in the switcher it represents the current page and is
+        // intentionally non-interactive on other tabs.
+        const isDrillThroughOnly = tab.slug === 'incorrect-answer-details';
+        return (
+          <SwitcherChip
+            key={tab.slug}
+            href={
+              isDrillThroughOnly
+                ? undefined
+                : buildAssessmentHref(tab.slug, props.itemId, props.questionId)
+            }
+            active={pathname.endsWith(`/${tab.slug}`)}
+            icon={tab.icon}
+            label={tab.label}
+            shortLabel={tab.shortLabel}
+          />
+        );
+      })}
+    </SwitcherShell>
+  );
+}
+
+function SwitcherShell({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div
       role="tablist"
-      aria-label={
-        props.group === 'assessment'
-          ? 'Assessment report types'
-          : 'Program report types'
-      }
+      aria-label={label}
       className="flex flex-wrap items-center gap-1 rounded-md bg-muted/50 p-1 w-fit max-w-full"
     >
-      {props.group === 'assessment'
-        ? tabs.map((tab) => {
-            const href = buildAssessmentHref(tab.slug, props.itemId, props.questionId);
-            const active = pathname.endsWith(`/${tab.slug}`);
-            // IAD tab is only "navigable" via the QRA question table; when
-            // visible in the switcher it represents the current page and is
-            // intentionally non-interactive on other tabs.
-            const isDrillThroughOnly = tab.slug === 'incorrect-answer-details';
-            return (
-              <SwitcherChip
-                key={tab.slug}
-                href={isDrillThroughOnly ? undefined : href}
-                active={active}
-                icon={tab.icon}
-                label={tab.label}
-                shortLabel={tab.shortLabel}
-              />
-            );
-          })
-        : programTabs.map((tab) => {
-            const active = pathname.endsWith(`/${tab.slug}`);
-            return (
-              <SwitcherChip
-                key={tab.slug}
-                href={`/app/reports/${tab.slug}`}
-                active={active}
-                icon={tab.icon}
-                label={tab.label}
-                shortLabel={tab.shortLabel}
-              />
-            );
-          })}
+      {children}
     </div>
   );
 }

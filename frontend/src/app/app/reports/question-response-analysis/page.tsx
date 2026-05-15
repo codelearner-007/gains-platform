@@ -6,7 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
 import KpiStrip from '@/components/app/modules/reports/qra/KpiStrip';
 import AssessmentReportHeader from '@/components/app/modules/reports/shared/AssessmentReportHeader';
-import ReportBreadcrumb from '@/components/app/modules/reports/shared/ReportBreadcrumb';
+import ReportBreadcrumb, {
+  assessmentCrumbs,
+} from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import InstructorCard from '@/components/app/modules/reports/qra/InstructorCard';
 import QuestionDetailTable from '@/components/app/modules/reports/qra/QuestionDetailTable';
@@ -53,11 +55,9 @@ export default function QuestionResponseAnalysisPage() {
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2">
         <ReportBreadcrumb
-          crumbs={[
-            { label: 'Reports', href: '/app/reports' },
-            { label: 'Assessment Reports', href: '/app/reports' },
-            { label: data.assessment.item_name || data.assessment.item_id },
-          ]}
+          crumbs={assessmentCrumbs({
+            label: data.assessment.item_name || data.assessment.item_id,
+          })}
         />
         <ReportTypeSwitcher group="assessment" itemId={itemId} />
       </div>

@@ -3,13 +3,33 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { FileBarChart, Layers } from 'lucide-react';
+import { FileBarChart, Layers, type LucideIcon } from 'lucide-react';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { Button } from '@/components/ui/button';
 import ReportFilters from './shared/ReportFilters';
 import ErrorState from './shared/ErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const ROW_ACTIONS: Array<{
+  pathname: string;
+  label: string;
+  ariaPrefix: string;
+  icon: LucideIcon;
+}> = [
+  {
+    pathname: '/app/reports/question-response-analysis',
+    label: 'QRA',
+    ariaPrefix: 'Open Question Response Analysis for',
+    icon: FileBarChart,
+  },
+  {
+    pathname: '/app/reports/standards-deep-dive',
+    label: 'SDD',
+    ariaPrefix: 'Open Standards Deep Dive for',
+    icon: Layers,
+  },
+];
 
 export default function AssessmentBrowser() {
   const [filters, setFilters] = useState<AssessmentFilters>({});
@@ -82,30 +102,30 @@ export default function AssessmentBrowser() {
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
-                  <Button asChild size="sm" variant="ghost" className="h-8 gap-1.5">
-                    <Link
-                      href={{
-                        pathname: '/app/reports/question-response-analysis',
-                        query: { item_id: row.item_id },
-                      }}
-                      aria-label={`Open Question Response Analysis for ${row.item_name ?? row.item_id}`}
-                    >
-                      <FileBarChart className="h-3.5 w-3.5" />
-                      QRA
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="ghost" className="h-8 gap-1.5">
-                    <Link
-                      href={{
-                        pathname: '/app/reports/standards-deep-dive',
-                        query: { item_id: row.item_id },
-                      }}
-                      aria-label={`Open Standards Deep Dive for ${row.item_name ?? row.item_id}`}
-                    >
-                      <Layers className="h-3.5 w-3.5" />
-                      SDD
-                    </Link>
-                  </Button>
+                  {ROW_ACTIONS.map((action) => {
+                    const Icon = action.icon;
+                    const name = row.item_name ?? row.item_id;
+                    return (
+                      <Button
+                        key={action.pathname}
+                        asChild
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 gap-1.5"
+                      >
+                        <Link
+                          href={{
+                            pathname: action.pathname,
+                            query: { item_id: row.item_id },
+                          }}
+                          aria-label={`${action.ariaPrefix} ${name}`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          {action.label}
+                        </Link>
+                      </Button>
+                    );
+                  })}
                 </div>
               </li>
             ))}
