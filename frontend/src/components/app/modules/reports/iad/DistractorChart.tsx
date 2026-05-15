@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import type { IadDistractorRow } from '@/lib/reports/types';
 import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
+import { sanitizeShortAnswer } from '@/lib/reports/format';
 import { distractorFill, maxIncorrectShareOf } from './distractorFill';
 
 interface Props {
@@ -47,14 +48,17 @@ export default function DistractorChart({ rows }: Props) {
       (a, b) => b.students_count - a.students_count,
     );
     const maxIncorrectShare = maxIncorrectShareOf(sorted);
-    return sorted.map((r) => ({
-      label: truncate(r.answer_submission, TRUNCATE_AT),
-      fullAnswer: r.answer_submission || '(blank)',
-      count: r.students_count,
-      share: r.share_of_attempts,
-      isCorrect: r.is_correct,
-      fill: distractorFill(r, maxIncorrectShare),
-    }));
+    return sorted.map((r) => {
+      const clean = sanitizeShortAnswer(r.answer_submission);
+      return {
+        label: truncate(clean, TRUNCATE_AT),
+        fullAnswer: clean || '(blank)',
+        count: r.students_count,
+        share: r.share_of_attempts,
+        isCorrect: r.is_correct,
+        fill: distractorFill(r, maxIncorrectShare),
+      };
+    });
   }, [rows]);
 
   // Match SDD's per-row sizing pattern: ~28px per row, min 220px.

@@ -16,6 +16,7 @@ import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
 } from '../shared/tableStyles';
+import { sanitizeShortAnswer } from '@/lib/reports/format';
 
 interface Props {
   attempts: IadStudentAttempt[];
@@ -124,8 +125,10 @@ export default function StudentAttemptTable({ attempts }: Props) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((a) => (
-              <tr key={a.user_uid} className="hover:bg-neutral-50">
+            {filtered.map((a, idx) => (
+              // user_uid is per-student; a single student can have multiple
+              // attempts on the same question, so composite-key on idx too.
+              <tr key={`${a.user_uid}-${idx}`} className="hover:bg-neutral-50">
                 <td style={{ ...cellBase, fontWeight: 600 }}>{a.user_name}</td>
                 <td
                   style={{
@@ -134,7 +137,7 @@ export default function StudentAttemptTable({ attempts }: Props) {
                     wordBreak: 'break-word',
                   }}
                 >
-                  {a.answer_submission || '—'}
+                  {sanitizeShortAnswer(a.answer_submission) || '—'}
                 </td>
                 <td
                   style={{

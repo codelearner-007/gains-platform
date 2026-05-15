@@ -134,7 +134,7 @@ export default function PerformanceBandBars({
   bandLow,
 }: PerformanceBandBarsProps) {
   return (
-    <div className="grid grid-cols-3 gap-2 h-full">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 h-full">
       <BandPanel
         title="At Target (≥80%)"
         rows={bandHigh}

@@ -1,5 +1,6 @@
 import type { IadKpis } from '@/lib/reports/types';
 import KpiCard from '@/components/app/modules/reports/shared/KpiCard';
+import { sanitizeShortAnswer } from '@/lib/reports/format';
 
 const IAD_CARD_CLASSNAME = 'min-h-[100px]';
 const IAD_VALUE_CLASSNAME = 'text-[24px]';
@@ -40,7 +41,7 @@ function TopWrongValue({
 
 export default function KpiStrip({ kpis }: Props) {
   return (
-    <div className="grid grid-cols-5 gap-2 w-full h-full">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 w-full h-full">
       <KpiCard
         className={IAD_CARD_CLASSNAME}
         valueClassName={IAD_VALUE_CLASSNAME}
@@ -89,7 +90,7 @@ export default function KpiStrip({ kpis }: Props) {
         label="Most Common Wrong"
         value={
           <TopWrongValue
-            answer={kpis.top_wrong_answer}
+            answer={sanitizeShortAnswer(kpis.top_wrong_answer)}
             count={kpis.top_wrong_count}
             pct={kpis.top_wrong_pct}
           />

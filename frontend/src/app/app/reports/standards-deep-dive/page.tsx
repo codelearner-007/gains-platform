@@ -80,7 +80,7 @@ export default function StandardsDeepDivePage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2 mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
             <StrandTreemap strands={data.strands_rollup} />
             <PerformanceBandBars
               bandHigh={data.band_high}

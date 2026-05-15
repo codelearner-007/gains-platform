@@ -3,6 +3,7 @@ import { HEADER_BAR_BG, LAYOUT_BORDER, cellColor } from '@/lib/reports/colors';
 import {
   formatCorrectAnswer,
   formatQuestionHtml,
+  sanitizeShortAnswer,
 } from '@/lib/reports/format';
 
 interface Props {
@@ -16,7 +17,9 @@ interface Props {
  * uses the PBIX traffic-light thresholds (Performance Color).
  */
 export default function QuestionContextCard({ question }: Props) {
-  const correctLines = formatCorrectAnswer(question.correct_answer);
+  const correctLines = formatCorrectAnswer(question.correct_answer).map(
+    sanitizeShortAnswer,
+  );
   const standards = question.standards || question.strand || '—';
   const pctBg = cellColor(question.grade_average);
 

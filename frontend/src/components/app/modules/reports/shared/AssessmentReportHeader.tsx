@@ -15,7 +15,11 @@ interface Props {
 }
 
 export default function AssessmentReportHeader({ assessment, title }: Props) {
-  const subtitle = `Grade ${assessment.grade}: ${assessment.item_name}`;
+  // `assessment.grade` already contains "Grade <N>" (e.g. "Grade 8") for K-12
+  // sections, but lower grades come through as the bare label "K". Strip a
+  // leading "Grade " so we never produce "Grade Grade 8".
+  const gradeLabel = assessment.grade.replace(/^Grade\s+/i, '');
+  const subtitle = `Grade ${gradeLabel}: ${assessment.item_name}`;
   const meta = deriveAssessmentLabel(assessment.assessment_type);
   return (
     <ReportPageHeader

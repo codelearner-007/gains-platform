@@ -26,7 +26,7 @@ function InstructorsValue({ instructors }: { instructors: string[] }) {
 
 export default function KpiStrip({ kpis }: KpiStripProps) {
   return (
-    <div className="grid grid-cols-5 gap-2 w-full h-full">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 w-full h-full">
       <KpiCard
         className={SDD_CARD_CLASSNAME}
         valueClassName={SDD_VALUE_CLASSNAME}

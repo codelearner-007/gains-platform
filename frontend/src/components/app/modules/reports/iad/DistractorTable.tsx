@@ -15,6 +15,7 @@ import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
 } from '../shared/tableStyles';
+import { sanitizeShortAnswer } from '@/lib/reports/format';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -109,7 +110,7 @@ export default function DistractorTable({ rows }: Props) {
                       wordBreak: 'break-word',
                     }}
                   >
-                    {r.answer_submission || '(blank)'}
+                    {sanitizeShortAnswer(r.answer_submission) || '(blank)'}
                   </td>
                   <td
                     style={{

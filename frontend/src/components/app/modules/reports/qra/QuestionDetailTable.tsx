@@ -9,6 +9,7 @@ import {
   formatCorrectAnswer,
   formatPercent,
   formatQuestionHtml,
+  sanitizeShortAnswer,
 } from '@/lib/reports/format';
 import {
   tableCellStyleLarge as cellBase,
@@ -86,11 +87,15 @@ export default function QuestionDetailTable({
             {rows.map((q, idx) => {
               const ga = q.grade_average;
               const pctBg = cellColor(ga);
-              const correctLines = formatCorrectAnswer(q.correct_answer);
-              const incorrectChoice =
-                ga >= 1 ? '' : q.incorrect_choice_details ?? '';
-              const incorrectNames =
-                ga >= 1 ? '' : q.incorrect_details_name ?? '';
+              const correctLines = formatCorrectAnswer(q.correct_answer).map(
+                sanitizeShortAnswer,
+              );
+              const incorrectChoice = sanitizeShortAnswer(
+                ga >= 1 ? '' : q.incorrect_choice_details,
+              );
+              const incorrectNames = sanitizeShortAnswer(
+                ga >= 1 ? '' : q.incorrect_details_name,
+              );
               const standards = q.standards || q.strand || '—';
 
               return (

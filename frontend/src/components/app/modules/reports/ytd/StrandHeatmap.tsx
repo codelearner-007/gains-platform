@@ -18,6 +18,17 @@ function decodeStrand(s: string): string {
   return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 }
 
+// "2026-04-21" → "Apr 21"; "2026-04-21T…" tolerated; non-ISO inputs return as-is.
+function formatHeatmapHeader(raw: string): string {
+  const iso = raw.length >= 10 ? raw.slice(0, 10) : raw;
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 export default function StrandHeatmap({ cells }: Props) {
   const { strands, dates, lookup } = useMemo(() => {
     const strandSet = new Set<string>();
@@ -90,25 +101,18 @@ export default function StrandHeatmap({ cells }: Props) {
                       top: 0,
                       backgroundColor: '#FFFFFF',
                       zIndex: 2,
-                      minWidth: 80,
-                      padding: '6px 8px',
+                      minWidth: 72,
+                      padding: '6px 6px',
                       fontSize: 11,
                       fontWeight: 700,
                       color: '#000',
                       borderBottom: `1px solid ${GRID_LINE}`,
                       whiteSpace: 'nowrap',
+                      textAlign: 'center',
                     }}
+                    title={d}
                   >
-                    <div
-                      style={{
-                        transform: 'rotate(-45deg)',
-                        transformOrigin: 'left bottom',
-                        display: 'inline-block',
-                        marginBottom: 4,
-                      }}
-                    >
-                      {d}
-                    </div>
+                    {formatHeatmapHeader(d)}
                   </th>
                 ))}
               </tr>

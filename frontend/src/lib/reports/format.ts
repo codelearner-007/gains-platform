@@ -60,3 +60,35 @@ export function deriveAssessmentLabel(raw: string): string {
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
+
+// ── Schoology image-answer placeholder ─────────────────────────────────────
+// Schoology answer choices for image-based questions arrive as text like
+//   "c. <https://app.schoology.com/system/files/.../page_embeds/m/2023-03-15/Screenshot.png>"
+// The QRA question summary table, IAD distractor table / chart axis, and the
+// IAD per-student attempts table display these short labels inline (not as
+// rendered HTML), so they leak the raw URL into the UI. `formatQuestionHtml`
+// already handles the *question stem* path by converting to <img>; this helper
+// covers the inline-label path by replacing each URL with "[image]" while
+// preserving the leading letter prefix when present.
+
+const SHORT_ANSWER_URL_IN_BRACKETS = /<https?:\/\/[^>\s]+>/g;
+const SHORT_ANSWER_BARE_URL = /^https?:\/\/[^\s]+$/;
+
+/**
+ * Normalise a short answer label for inline display:
+ *   - "c. <https://…>"            → "c. [image]"
+ *   - "https://…"                 → "[image]"
+ *   - "[a. <https://…>]"          → "[a. [image]]"
+ *   - everything else             → trimmed, unchanged
+ *
+ * Returns "" when the input is empty/null. Always returns a string (never
+ * HTML); safe to render as text. Multiple URLs in the same string are each
+ * replaced with `[image]`.
+ */
+export function sanitizeShortAnswer(raw: string | null | undefined): string {
+  if (!raw) return '';
+  const trimmed = String(raw).trim();
+  if (!trimmed) return '';
+  if (SHORT_ANSWER_BARE_URL.test(trimmed)) return '[image]';
+  return trimmed.replace(SHORT_ANSWER_URL_IN_BRACKETS, '[image]');
+}
