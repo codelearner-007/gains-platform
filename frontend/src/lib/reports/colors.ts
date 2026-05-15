@@ -7,8 +7,9 @@ export const PERF_YELLOW = 'yellow';
 export const PERF_GREEN = '#00FF06';
 
 // ── Layout / chrome colors (PBIX-mandated, shared across reports) ───────────
-// Centralized here so the three report views (QRA, SDD, YTD) stay visually
-// consistent and we never grep-replace inline hex literals across components.
+// Centralized here so all report views (QRA, SDD, YTD, IAD, Standard
+// Summary, Strand Summary) stay visually consistent and we never
+// grep-replace inline hex literals across components.
 export const KPI_CARD_BG = '#B8DBFF'; // PBIX-style KPI tile background
 export const HEADER_BAR_BG = '#B8DBFF'; // section header bars (same hue, different role)
 export const LAYOUT_BORDER = '#B3B3B3'; // standard report border

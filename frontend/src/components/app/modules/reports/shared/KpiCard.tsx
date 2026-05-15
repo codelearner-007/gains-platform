@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { KPI_CARD_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 
 /**
- * Shared KPI card used in QRA, SDD, and YTD report KPI strips.
+ * Shared KPI card used in every report's KPI strip (QRA, SDD, YTD,
+ * IAD, Standard Summary, Strand Summary).
  *
  * The card has three customisation points (instead of a hard-coded variant):
  *   - `className`         — outer container overrides (e.g. `min-h-[100px]`).

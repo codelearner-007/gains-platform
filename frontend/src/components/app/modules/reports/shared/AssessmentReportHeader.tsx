@@ -3,9 +3,9 @@ import { deriveAssessmentLabel } from '@/lib/reports/format';
 import ReportPageHeader from './ReportPageHeader';
 
 /**
- * Per-assessment report header used by the QRA and SDD pages.
+ * Per-assessment report header used by the QRA, SDD, and IAD pages.
  *
- * The two reports share the same logo + subtitle shape and differ only in
+ * These reports share the same logo + subtitle shape and differ only in
  * the title string, so the caller passes that explicitly.
  */
 

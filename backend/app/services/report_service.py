@@ -1,5 +1,14 @@
-"""Composes the Question-Response-Analysis (QRA) and Standards-Deep-Dive
-report payloads from the cube_* / dim_* tables.
+"""Composes the report payloads from the cube_* / dim_* tables.
+
+Each ``build_*`` method on :class:`ReportService` corresponds to one
+endpoint in :mod:`app.api.v1.reports`:
+
+* ``build_question_response_analysis``  → /reports/question-response-analysis
+* ``build_standards_deep_dive``         → /reports/standards-deep-dive
+* ``build_incorrect_answer_details``    → /reports/incorrect-answer-details
+* ``build_year_to_date_performance``    → /reports/year-to-date-performance
+* ``build_standard_summary``            → /reports/standard-summary
+* ``build_strand_summary``              → /reports/strand-summary
 
 The shapes returned here MUST match the TypeScript interfaces in
 ``frontend/src/lib/reports/types.ts``. Field names are intentionally

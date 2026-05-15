@@ -5,7 +5,8 @@ interface ReportCanvasProps {
 }
 
 /**
- * Standard page frame used by every report page (QRA, SDD, YTD).
+ * Standard page frame used by every report page (QRA, SDD, YTD, IAD,
+ * Standard Summary, Strand Summary).
  *
  * Centers a fixed-max-width canvas with the PBIX-style outer chrome
  * (`#CACEDA` background, drop shadow, 12px padding). Each caller controls

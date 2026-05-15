@@ -1,4 +1,10 @@
-"""Composed report endpoints (Question-Response-Analysis, Standards Deep Dive)."""
+"""Composed report endpoints.
+
+Each route here delegates to a single ``ReportService.build_*`` method.
+The currently exposed reports are: Question-Response-Analysis,
+Standards Deep Dive, Incorrect Answer Details, Year-To-Date
+Performance, Standard Summary, and Strand Summary.
+"""
 
 from __future__ import annotations
 
