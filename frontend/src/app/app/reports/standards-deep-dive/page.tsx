@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
 import AssessmentReportHeader from '@/components/app/modules/reports/shared/AssessmentReportHeader';
+import ReportBreadcrumb from '@/components/app/modules/reports/shared/ReportBreadcrumb';
+import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import KpiStrip from '@/components/app/modules/reports/sdd/KpiStrip';
 import StrandTreemap from '@/components/app/modules/reports/sdd/StrandTreemap';
 import {
@@ -48,6 +50,17 @@ export default function StandardsDeepDivePage() {
 
   return (
     <ReportCanvas>
+      <div className="mb-3 flex flex-col gap-2">
+        <ReportBreadcrumb
+          crumbs={[
+            { label: 'Reports', href: '/app/reports' },
+            { label: 'Assessment Reports', href: '/app/reports' },
+            { label: data.assessment.item_name || data.assessment.item_id },
+          ]}
+        />
+        <ReportTypeSwitcher group="assessment" itemId={itemId} />
+      </div>
+
       <div className="mb-2">
         <AssessmentReportHeader
           assessment={data.assessment}

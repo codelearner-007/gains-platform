@@ -5,10 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
 import AssessmentReportHeader from '@/components/app/modules/reports/shared/AssessmentReportHeader';
+import ReportBreadcrumb from '@/components/app/modules/reports/shared/ReportBreadcrumb';
+import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
-import BackToQraLink from '@/components/app/modules/reports/iad/BackToQraLink';
 import QuestionContextCard from '@/components/app/modules/reports/iad/QuestionContextCard';
 import KpiStrip from '@/components/app/modules/reports/iad/KpiStrip';
 import DistractorTable from '@/components/app/modules/reports/iad/DistractorTable';
@@ -46,8 +47,25 @@ export default function IncorrectAnswerDetailsPage() {
 
   return (
     <ReportCanvas>
-      <div className="mb-2">
-        <BackToQraLink itemId={itemId} />
+      <div className="mb-3 flex flex-col gap-2">
+        <ReportBreadcrumb
+          crumbs={[
+            { label: 'Reports', href: '/app/reports' },
+            { label: 'Assessment Reports', href: '/app/reports' },
+            {
+              label: data.assessment.item_name || data.assessment.item_id,
+              href: `/app/reports/question-response-analysis?item_id=${itemId}`,
+            },
+            {
+              label: `Question ${data.question.question_no || data.question.position_number}`,
+            },
+          ]}
+        />
+        <ReportTypeSwitcher
+          group="assessment"
+          itemId={itemId}
+          questionId={questionId}
+        />
       </div>
 
       <div className="mb-2">
