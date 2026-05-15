@@ -44,7 +44,7 @@ export default function QuestionContextCard({ question }: Props) {
           </div>
         </div>
 
-        <div className="col-span-6 min-w-0">
+        <div className="col-span-6 min-w-0 overflow-hidden">
           <div className="text-[11px] uppercase tracking-wide text-neutral-600">
             Question
           </div>
@@ -56,12 +56,12 @@ export default function QuestionContextCard({ question }: Props) {
           />
         </div>
 
-        <div className="col-span-2 flex flex-col items-start">
+        <div className="col-span-2 min-w-0 flex flex-col items-start">
           <div className="text-[11px] uppercase tracking-wide text-neutral-600">
             Correct Answer
           </div>
           <div
-            className="text-[13px] text-black mt-1 leading-snug"
+            className="text-[13px] text-black mt-1 leading-snug break-words"
             style={{ whiteSpace: 'pre-line' }}
           >
             {correctLines.join('\n')}
@@ -80,11 +80,11 @@ export default function QuestionContextCard({ question }: Props) {
           </div>
         </div>
 
-        <div className="col-span-2 flex flex-col items-start">
+        <div className="col-span-2 min-w-0 flex flex-col items-start">
           <div className="text-[11px] uppercase tracking-wide text-neutral-600">
             Standards
           </div>
-          <div className="text-[13px] text-black mt-1 leading-snug break-words">
+          <div className="text-[13px] text-black mt-1 leading-snug break-all">
             {standards}
           </div>
         </div>
