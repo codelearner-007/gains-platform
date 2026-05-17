@@ -151,34 +151,83 @@ class CubeRepository:
         return [_row_to_dict(r) for r in result.all()]
 
     async def get_questions_overall_for_item(self, item_id: str) -> List[Dict[str, Any]]:
-        """cube_question_summary_overall slice for one assessment.
+        """One row per (item_id, question_id) for an assessment.
 
-        cube_qso is keyed by subject_id (cross-section overall) so we resolve
-        ``ukey`` via cube_question_summary which is item-scoped.
+        ``cube_question_summary`` carries one row per (question × sub-question)
+        and ``cube_question_summary_overall`` carries one row per (school × ukey
+        × section/replication) — a naive LEFT JOIN multiplies the result set
+        (Q1 → 4 rows, Q13 → 16, etc.). We pre-aggregate both sides:
+
+        * ``qs_agg`` picks the first sub-question row per question_id (text
+          fields) and ``qs_num`` AVGs/SUMs the numerics across sub-questions.
+        * ``qso_agg`` picks one row per (school_id, ukey) and ``qso_num``
+          AVGs/SUMs the per-section numerics. This mirrors the
+          ``AVG(grade_average)`` aggregation the strand/standard rollup
+          queries already use against the same table.
         """
         sql = text(
             """
+            WITH qs_agg AS (
+                SELECT DISTINCT ON (item_id, question_id)
+                    school_id, item_id, question_id, ukey, question_no,
+                    position_number, question, question_type, correct_answer,
+                    standard
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                ORDER BY item_id, question_id,
+                         NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                         position_number
+            ),
+            qs_num AS (
+                SELECT item_id, question_id,
+                       AVG(grade_average)                AS grade_average,
+                       AVG(percentage_incorrect_answers) AS percentage_incorrect,
+                       SUM(total_possible_point)         AS total_possible_point,
+                       SUM(total_score)                  AS total_score,
+                       MAX(NULLIF(incorrect_choice_details, '')) AS incorrect_choice_details,
+                       MAX(NULLIF(incorrect_details_name, ''))   AS incorrect_details_name,
+                       MAX(NULLIF(standards, ''))                AS standards
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                GROUP BY item_id, question_id
+            ),
+            qso_agg AS (
+                SELECT DISTINCT ON (school_id, ukey)
+                    school_id, ukey, question_no, question, correct_answer,
+                    incorrect_choice_details, incorrect_details_name,
+                    standards, description
+                FROM cube_question_summary_overall
+                ORDER BY school_id, ukey
+            ),
+            qso_num AS (
+                SELECT school_id, ukey,
+                       AVG(grade_average)                AS grade_average,
+                       AVG(percentage_incorrect_answers) AS percentage_incorrect,
+                       SUM(total_possible_point)         AS total_possible_point,
+                       SUM(total_score)                  AS total_score
+                FROM cube_question_summary_overall
+                GROUP BY school_id, ukey
+            )
             SELECT
                 qs.question_id,
-                COALESCE(qso.question_no, qs.question_no)         AS question_no,
+                COALESCE(qso.question_no, qs.question_no)                       AS question_no,
                 qs.position_number,
-                COALESCE(qso.question, qs.question)               AS question,
+                COALESCE(qso.question, qs.question)                             AS question,
                 qs.question_type,
-                COALESCE(qso.correct_answer, qs.correct_answer)   AS correct_answer,
-                COALESCE(qso.total_possible_point, qs.total_possible_point) AS total_possible_point,
-                COALESCE(qso.total_score, qs.total_score)         AS total_score,
-                COALESCE(qso.grade_average, qs.grade_average)     AS grade_average,
-                COALESCE(qso.percentage_incorrect_answers, qs.percentage_incorrect_answers) AS percentage_incorrect,
-                COALESCE(qso.incorrect_choice_details, qs.incorrect_choice_details, '') AS incorrect_choice_details,
-                COALESCE(qso.incorrect_details_name, qs.incorrect_details_name, '')     AS incorrect_details_name,
-                COALESCE(qso.standards, qs.standards, '')         AS standards,
-                qs.standard                                       AS strand_raw,
-                COALESCE(qso.description, '')                     AS description
-            FROM cube_question_summary qs
-            LEFT JOIN cube_question_summary_overall qso
-              ON qso.school_id = qs.school_id
-             AND qso.ukey = qs.ukey
-            WHERE qs.item_id = :item_id
+                COALESCE(qso.correct_answer, qs.correct_answer)                 AS correct_answer,
+                COALESCE(qsn.total_possible_point, qson.total_possible_point)   AS total_possible_point,
+                COALESCE(qsn.total_score, qson.total_score)                     AS total_score,
+                COALESCE(qsn.grade_average, qson.grade_average)                 AS grade_average,
+                COALESCE(qsn.percentage_incorrect, qson.percentage_incorrect)   AS percentage_incorrect,
+                COALESCE(qso.incorrect_choice_details, qsn.incorrect_choice_details, '') AS incorrect_choice_details,
+                COALESCE(qso.incorrect_details_name, qsn.incorrect_details_name, '')     AS incorrect_details_name,
+                COALESCE(qso.standards, qsn.standards, '')                      AS standards,
+                qs.standard                                                     AS strand_raw,
+                COALESCE(qso.description, '')                                   AS description
+            FROM qs_agg qs
+            LEFT JOIN qs_num  qsn  ON qsn.item_id   = qs.item_id   AND qsn.question_id = qs.question_id
+            LEFT JOIN qso_agg qso  ON qso.school_id = qs.school_id AND qso.ukey        = qs.ukey
+            LEFT JOIN qso_num qson ON qson.school_id = qs.school_id AND qson.ukey      = qs.ukey
             ORDER BY NULLIF(regexp_replace(qs.question_no, '[^0-9]', '', 'g'), '')::int NULLS LAST,
                      qs.question_no
             """
@@ -1130,28 +1179,71 @@ class CubeRepository:
     async def get_question_overall(
         self, item_id: str, question_id: str
     ) -> Optional[Dict[str, Any]]:
-        """One question's overall metadata (joined to qso for description)."""
+        """One question's overall metadata (joined to qso for description).
+
+        Same dedup pattern as :meth:`get_questions_overall_for_item` to avoid
+        the qs × qso cartesian product when a question has multiple
+        sub-question rows or qso has multiple per-section rows.
+        """
         sql = text(
             """
+            WITH qs_pick AS (
+                SELECT school_id, item_id, question_id, ukey, position_number,
+                       question_type, standard
+                FROM cube_question_summary
+                WHERE item_id = :item_id AND question_id = :question_id
+                ORDER BY NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                         position_number
+                LIMIT 1
+            ),
+            qs_agg AS (
+                SELECT item_id, question_id,
+                       MAX(question)                                  AS question,
+                       MAX(correct_answer)                            AS correct_answer,
+                       MAX(NULLIF(standards, ''))                     AS standards,
+                       AVG(grade_average)                             AS grade_average,
+                       SUM(total_possible_point)                      AS total_possible_point,
+                       SUM(total_score)                               AS total_score,
+                       MIN(NULLIF(question_no, ''))                   AS question_no
+                FROM cube_question_summary
+                WHERE item_id = :item_id AND question_id = :question_id
+                GROUP BY item_id, question_id
+            ),
+            qso_pick AS (
+                SELECT DISTINCT ON (school_id, ukey)
+                       school_id, ukey, question_no, question, correct_answer,
+                       standards, description
+                FROM cube_question_summary_overall
+                ORDER BY school_id, ukey
+            ),
+            qso_num AS (
+                SELECT school_id, ukey,
+                       AVG(grade_average)        AS grade_average,
+                       SUM(total_possible_point) AS total_possible_point,
+                       SUM(total_score)          AS total_score
+                FROM cube_question_summary_overall
+                GROUP BY school_id, ukey
+            )
             SELECT
-                qs.question_id,
-                COALESCE(qso.question_no, qs.question_no)         AS question_no,
-                COALESCE(qs.position_number, '')                  AS position_number,
-                COALESCE(qso.question, qs.question)               AS question,
-                COALESCE(qs.question_type, '')                    AS question_type,
-                COALESCE(qso.correct_answer, qs.correct_answer)   AS correct_answer,
-                COALESCE(qso.total_possible_point, qs.total_possible_point) AS total_possible_point,
-                COALESCE(qso.total_score, qs.total_score)         AS total_score,
-                COALESCE(qso.grade_average, qs.grade_average)     AS grade_average,
-                COALESCE(qso.standards, qs.standards, '')         AS standards,
-                COALESCE(qs.standard, '')                         AS strand_raw,
-                COALESCE(qso.description, '')                     AS description
-            FROM cube_question_summary qs
-            LEFT JOIN cube_question_summary_overall qso
-              ON qso.school_id = qs.school_id
-             AND qso.ukey = qs.ukey
-            WHERE qs.item_id = :item_id
-              AND qs.question_id = :question_id
+                qsp.question_id,
+                COALESCE(qso.question_no, qsa.question_no)                  AS question_no,
+                COALESCE(qsp.position_number, '')                           AS position_number,
+                COALESCE(qso.question, qsa.question)                        AS question,
+                COALESCE(qsp.question_type, '')                             AS question_type,
+                COALESCE(qso.correct_answer, qsa.correct_answer)            AS correct_answer,
+                COALESCE(qsa.total_possible_point, qson.total_possible_point) AS total_possible_point,
+                COALESCE(qsa.total_score, qson.total_score)                 AS total_score,
+                COALESCE(qsa.grade_average, qson.grade_average)             AS grade_average,
+                COALESCE(qso.standards, qsa.standards, '')                  AS standards,
+                COALESCE(qsp.standard, '')                                  AS strand_raw,
+                COALESCE(qso.description, '')                               AS description
+            FROM qs_pick qsp
+            JOIN qs_agg qsa
+              ON qsa.item_id = qsp.item_id AND qsa.question_id = qsp.question_id
+            LEFT JOIN qso_pick qso
+              ON qso.school_id = qsp.school_id AND qso.ukey = qsp.ukey
+            LEFT JOIN qso_num qson
+              ON qson.school_id = qsp.school_id AND qson.ukey = qsp.ukey
             LIMIT 1
             """
         )

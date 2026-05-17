@@ -93,7 +93,10 @@ def _classify_alignment(
 
 logger = logging.getLogger(__name__)
 
-_HTML_TAG_RE = re.compile(r"<[^>]+>")
+# Match HTML tags while *preserving* Schoology's `<https://…>` image-URL
+# placeholders. The negative lookahead skips `<` followed by a URL scheme so
+# the frontend's formatQuestionHtml can still convert it into an <img>.
+_HTML_TAG_RE = re.compile(r"<(?!https?://)[^>]+>")
 
 
 def _strip_html(s: Optional[str]) -> str:
@@ -106,12 +109,12 @@ def _format_pct(v: float) -> str:
     return f"{v * 100:.1f}%"
 
 
-# PBIX 70/80 traffic-light hexes (see lib/reports/colors.ts). Matched here so
-# the server can stamp the perf-color directly into the payload — saves the
-# client from recomputing for every row.
-_PERF_PINK = "#FFCCFF"
-_PERF_YELLOW = "#FFFF00"
-_PERF_GREEN = "#00FF06"
+# PBIX 70/80 traffic-light hexes. Kept in sync with frontend
+# ``lib/reports/colors.ts`` so the server can stamp the perf-color directly
+# into the payload — saves the client from recomputing for every row.
+_PERF_PINK = "#FFB3D9"
+_PERF_YELLOW = "#FFF066"
+_PERF_GREEN = "#7BE38C"
 
 # PBIX-mandated band thresholds (Performance Color* DAX measures): a strand
 # or standard is "at target" at >=80%, "approaching" at 70–80%, and "needs
