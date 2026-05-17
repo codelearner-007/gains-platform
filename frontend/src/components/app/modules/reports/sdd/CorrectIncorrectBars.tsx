@@ -73,11 +73,11 @@ function BandPanel({
             {emptyMessage}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={Math.max(rowHeight, 220)}>
+          <ResponsiveContainer width="100%" height={Math.max(rowHeight, 240)}>
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 4, right: 8, left: 4, bottom: 4 }}
+              margin={{ top: 6, right: 12, left: 6, bottom: 6 }}
               stackOffset="expand"
             >
               <CartesianGrid strokeDasharray="3 3" />
@@ -85,13 +85,13 @@ function BandPanel({
                 type="number"
                 domain={[0, 1]}
                 tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
-                tick={{ fontSize: 10, fill: '#000' }}
+                tick={{ fontSize: 11, fill: '#000' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={{ fontSize: 10, fill: '#000' }}
-                width={120}
+                tick={{ fontSize: 12, fill: '#000' }}
+                width={180}
                 interval={0}
               />
               <Tooltip
@@ -133,8 +133,11 @@ export default function PerformanceBandBars({
   bandMid,
   bandLow,
 }: PerformanceBandBarsProps) {
+  // Stack panels on narrower viewports (≤ lg) so the YAxis labels for
+  // multi-word strand names aren't crammed into a ~120 px column where they
+  // wrap vertically and overlap. Each panel keeps its own scroll bounds.
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
       <BandPanel
         title="At Target (≥80%)"
         rows={bandHigh}

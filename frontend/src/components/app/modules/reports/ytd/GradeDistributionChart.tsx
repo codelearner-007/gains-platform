@@ -75,19 +75,19 @@ export default function GradeDistributionChart({ data }: Props) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: '#000' }}
+                tick={{ fontSize: 12, fill: '#000' }}
                 interval={0}
                 angle={-30}
                 textAnchor="end"
                 height={50}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: '#000' }}
+                tick={{ fontSize: 12, fill: '#000' }}
                 domain={[0, 100]}
                 tickFormatter={(v: number) => `${v}%`}
               />
               <Tooltip content={<DistTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
               <Area
                 type="monotone"
                 dataKey="low"

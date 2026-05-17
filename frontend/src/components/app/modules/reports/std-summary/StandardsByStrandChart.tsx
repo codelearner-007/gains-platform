@@ -73,7 +73,7 @@ export default function StandardsByStrandChart({ rows }: Props) {
       >
         # of Standards by Strand
       </div>
-      <div className="p-2" style={{ height: 240 }}>
+      <div className="p-2" style={{ height: 280 }}>
         {data.length === 0 ? (
           <div className="h-full flex items-center justify-center text-sm text-neutral-500">
             No strand data available
@@ -83,19 +83,19 @@ export default function StandardsByStrandChart({ rows }: Props) {
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 4, right: 24, left: 4, bottom: 4 }}
+              margin={{ top: 4, right: 32, left: 4, bottom: 4 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 type="number"
                 allowDecimals={false}
-                tick={{ fontSize: 10, fill: '#000' }}
+                tick={{ fontSize: 11, fill: '#000' }}
               />
               <YAxis
                 type="category"
                 dataKey="strand"
-                width={160}
-                tick={{ fontSize: 10, fill: '#000' }}
+                width={200}
+                tick={{ fontSize: 12, fill: '#000' }}
                 interval={0}
               />
               <Tooltip content={<ChartTooltip />} />

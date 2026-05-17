@@ -70,11 +70,11 @@ function BandPanel({
             {emptyMessage}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={Math.max(rowHeight, 220)}>
+          <ResponsiveContainer width="100%" height={Math.max(rowHeight, 240)}>
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 4, right: 8, left: 4, bottom: 4 }}
+              margin={{ top: 6, right: 12, left: 6, bottom: 6 }}
               stackOffset="expand"
             >
               <CartesianGrid strokeDasharray="3 3" />
@@ -82,13 +82,13 @@ function BandPanel({
                 type="number"
                 domain={[0, 1]}
                 tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
-                tick={{ fontSize: 10, fill: '#000' }}
+                tick={{ fontSize: 11, fill: '#000' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
-                tick={{ fontSize: 10, fill: '#000' }}
-                width={140}
+                tick={{ fontSize: 12, fill: '#000' }}
+                width={200}
                 interval={0}
               />
               <Tooltip
@@ -126,8 +126,10 @@ interface Props {
 }
 
 export default function BandBars({ bandHigh, bandMid, bandLow }: Props) {
+  // Same stacking rationale as SDD/CorrectIncorrectBars — three-up grid only
+  // at lg+; below that, panels stack so long strand names stay legible.
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
       <BandPanel
         title="At Target (≥80%)"
         rows={bandHigh}

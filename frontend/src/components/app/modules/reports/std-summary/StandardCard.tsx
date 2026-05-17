@@ -21,7 +21,7 @@ import {
   STRAND_CHIP_FG,
 } from '@/lib/reports/colors';
 
-const DESC_TRUNC = 240;
+const DESC_TRUNC = 320;
 
 interface StandardCardProps {
   std: StandardSummaryRollupRow;

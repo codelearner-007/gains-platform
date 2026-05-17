@@ -72,7 +72,7 @@ export default function StudentProgressionChart({ data }: Props) {
                 type="number"
                 dataKey="x"
                 name="First avg"
-                tick={{ fontSize: 11, fill: '#000' }}
+                tick={{ fontSize: 12, fill: '#000' }}
                 domain={[0, 100]}
                 tickFormatter={(v: number) => `${v}%`}
                 label={{
@@ -86,7 +86,7 @@ export default function StudentProgressionChart({ data }: Props) {
                 type="number"
                 dataKey="y"
                 name="Latest avg"
-                tick={{ fontSize: 11, fill: '#000' }}
+                tick={{ fontSize: 12, fill: '#000' }}
                 domain={[0, 100]}
                 tickFormatter={(v: number) => `${v}%`}
                 label={{

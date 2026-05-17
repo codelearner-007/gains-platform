@@ -32,7 +32,7 @@ interface TabDef<S extends string> {
 const ASSESSMENT_TABS: TabDef<AssessmentReportSlug>[] = [
   {
     slug: 'question-response-analysis',
-    label: 'Question Response',
+    label: 'Question Response Analysis',
     shortLabel: 'QRA',
     icon: FileBarChart,
   },
@@ -46,7 +46,7 @@ const ASSESSMENT_TABS: TabDef<AssessmentReportSlug>[] = [
 
 const IAD_TAB: TabDef<AssessmentReportSlug> = {
   slug: 'incorrect-answer-details',
-  label: 'Incorrect Answers',
+  label: 'Incorrect Answer Details',
   shortLabel: 'IAD',
   icon: ListChecks,
 };

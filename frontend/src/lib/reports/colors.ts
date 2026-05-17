@@ -1,10 +1,17 @@
 // PBIX-mandated traffic-light thresholds. Do NOT replace with semantic tokens.
 // Source: data/_pbix_extract/04_dax_measures.dax (Performance Color* measures)
 // and data/_pbix_extract/30_qra_interactive.json (per-visual conditional formatting).
+//
+// PBIX uses #ff2800 / #faff00 / #00ff06 (intense red / bright yellow / vivid
+// green). The platform softens the low band to a pink users called out as the
+// preferred semantic colour ("pink = needs improvement"), keeps yellow for
+// 70–80% and uses the same vivid green for ≥80%. Three-band semantics are
+// preserved across every report (QRA cells, SDD/Strand treemaps, summary
+// chips), so a viewer can read traffic-light meaning at a glance.
 
-export const PERF_PINK = '#FFCCFF';
-export const PERF_YELLOW = 'yellow';
-export const PERF_GREEN = '#00FF06';
+export const PERF_PINK = '#FFB3D9'; // legible on white, still reads as pink
+export const PERF_YELLOW = '#FFF066'; // less harsh than pure yellow at large sizes
+export const PERF_GREEN = '#7BE38C'; // softer green for chart fills + chips
 
 // ── Layout / chrome colors (PBIX-mandated, shared across reports) ───────────
 // Centralized here so all report views (QRA, SDD, YTD, IAD, Standard
@@ -46,14 +53,10 @@ export function performanceColor(grade: number): string {
   return PERF_GREEN;
 }
 
-// For the "Question Response Analysis" simple page, low-score cells stay white
-// (no pink fill). Used for the per-question table cell #3 and the strands /
-// standards summary tables.
-export function cellColor(grade: number): string {
-  if (grade < 0.7) return 'transparent';
-  if (grade < 0.8) return PERF_YELLOW;
-  return PERF_GREEN;
-}
+// Cell-background colour for grade-coloured percentage cells (QRA per-question
+// table, strands / standards summary tables). Mirrors PBIX semantics so the
+// pink/yellow/green traffic light is consistent across every report.
+export const cellColor = performanceColor;
 
 export function performanceTextColor(): string {
   return '#000000';

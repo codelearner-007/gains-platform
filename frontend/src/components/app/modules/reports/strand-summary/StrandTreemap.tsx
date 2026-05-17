@@ -128,6 +128,11 @@ function TreemapNode(props: NodeProps) {
   } = props;
   const fill = color || PERF_PINK;
   if (width <= 0 || height <= 0) return null;
+  const lines = wrapLabel(name, Math.max(6, Math.floor(width / 7)), 3);
+  const fontSize = width > 220 && height > 80 ? 14 : 12;
+  const lineHeight = fontSize + 2;
+  const totalHeight = lines.length * lineHeight;
+  const startY = y + height / 2 - totalHeight / 2 + fontSize / 2;
   return (
     <g
       style={{ cursor: onClick ? 'pointer' : 'default' }}
@@ -144,26 +149,55 @@ function TreemapNode(props: NodeProps) {
           strokeWidth: selected ? 3 : 2,
         }}
       />
-      {width > 60 && height > 24 && (
-        <text
-          x={x + width / 2}
-          y={y + height / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={12}
-          fill="#000"
-          fontWeight={selected ? 700 : 600}
-        >
-          {truncate(name, Math.max(6, Math.floor(width / 8)))}
-        </text>
-      )}
+      {width > 60 && height > 26 &&
+        lines.map((line, i) => (
+          <text
+            key={i}
+            x={x + width / 2}
+            y={startY + i * lineHeight}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={fontSize}
+            fill="#000"
+            fontWeight={selected ? 700 : 600}
+            stroke="#fff"
+            strokeWidth={3}
+            paintOrder="stroke"
+            strokeLinejoin="round"
+          >
+            {line}
+          </text>
+        ))}
     </g>
   );
 }
 
-function truncate(s: string, max: number): string {
-  if (s.length <= max) return s;
-  return `${s.slice(0, Math.max(1, max - 1))}…`;
+function wrapLabel(s: string, maxChars: number, maxLines: number): string[] {
+  if (!s) return [''];
+  const words = s.split(/\s+/);
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const candidate = cur ? `${cur} ${w}` : w;
+    if (candidate.length <= maxChars || !cur) {
+      cur = candidate;
+    } else {
+      lines.push(cur);
+      cur = w;
+      if (lines.length >= maxLines - 1) break;
+    }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) lines.length = maxLines;
+  const lastIdx = lines.length - 1;
+  const consumed = lines.slice(0, lastIdx + 1).join(' ').length;
+  if (consumed < s.length) {
+    lines[lastIdx] =
+      lines[lastIdx].length > maxChars - 1
+        ? `${lines[lastIdx].slice(0, Math.max(1, maxChars - 1))}…`
+        : `${lines[lastIdx]}…`;
+  }
+  return lines;
 }
 
 interface TooltipProps {
