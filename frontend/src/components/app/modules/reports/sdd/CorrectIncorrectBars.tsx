@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { SddBandStrandRow } from '@/lib/reports/types';
+import type { SddBandStandardRow } from '@/lib/reports/types';
 import {
   HEADER_BAR_BG,
   INCORRECT_GREY,
@@ -27,7 +27,7 @@ const BAND_COLORS = {
 
 interface BandPanelProps {
   title: string;
-  rows: SddBandStrandRow[];
+  rows: SddBandStandardRow[];
   correctColor: string;
   emptyMessage: string;
 }
@@ -36,6 +36,8 @@ interface ChartRow {
   name: string;
   correct: number;
   incorrect: number;
+  num_questions: number;
+  grade_average: number;
 }
 
 function BandPanel({
@@ -49,9 +51,11 @@ function BandPanel({
     .map((r) => {
       const correct = Math.max(0, Math.min(100, r.grade_average * 100));
       return {
-        name: r.strand,
+        name: r.cpalms_standard,
         correct: Math.round(correct * 10) / 10,
         incorrect: Math.round((100 - correct) * 10) / 10,
+        num_questions: r.num_questions,
+        grade_average: r.grade_average,
       };
     });
   const rowHeight = data.length === 0 ? 0 : Math.max(180, data.length * 28);
@@ -95,9 +99,15 @@ function BandPanel({
                 interval={0}
               />
               <Tooltip
-                formatter={(v) =>
-                  typeof v === 'number' ? `${v.toFixed(1)}%` : String(v)
-                }
+                formatter={(v, name, ctx) => {
+                  const payload = ctx?.payload as ChartRow | undefined;
+                  const pct =
+                    typeof v === 'number' ? `${v.toFixed(1)}%` : String(v);
+                  if (payload && name === 'Correct') {
+                    return [`${pct} (${payload.num_questions} questions)`, name];
+                  }
+                  return [pct, name];
+                }}
                 contentStyle={{ fontSize: 12 }}
               />
               <Bar
@@ -123,9 +133,9 @@ function BandPanel({
 }
 
 interface PerformanceBandBarsProps {
-  bandHigh: SddBandStrandRow[];
-  bandMid: SddBandStrandRow[];
-  bandLow: SddBandStrandRow[];
+  bandHigh: SddBandStandardRow[];
+  bandMid: SddBandStandardRow[];
+  bandLow: SddBandStandardRow[];
 }
 
 export default function PerformanceBandBars({
@@ -134,27 +144,28 @@ export default function PerformanceBandBars({
   bandLow,
 }: PerformanceBandBarsProps) {
   // Stack panels on narrower viewports (≤ lg) so the YAxis labels for
-  // multi-word strand names aren't crammed into a ~120 px column where they
-  // wrap vertically and overlap. Each panel keeps its own scroll bounds.
+  // cpalms standards (e.g. "MAFS.912.A-REI.2.4.a") aren't crammed into a
+  // ~120 px column where they wrap vertically and overlap. Each panel
+  // keeps its own scroll bounds.
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
       <BandPanel
         title="At Target (≥80%)"
         rows={bandHigh}
         correctColor={BAND_COLORS.high}
-        emptyMessage="No strands at target"
+        emptyMessage="No standards at target"
       />
       <BandPanel
         title="Approaching (70%–80%)"
         rows={bandMid}
         correctColor={BAND_COLORS.mid}
-        emptyMessage="No strands in approaching band"
+        emptyMessage="No standards in approaching band"
       />
       <BandPanel
         title="Needs Attention (<70%)"
         rows={bandLow}
         correctColor={BAND_COLORS.low}
-        emptyMessage="No strands need attention"
+        emptyMessage="No standards need attention"
       />
     </div>
   );

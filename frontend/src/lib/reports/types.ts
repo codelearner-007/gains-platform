@@ -121,9 +121,16 @@ export interface SddStandardRow {
   grade_average_pct: string;
 }
 
-export interface SddBandStrandRow {
+/**
+ * One cpalms-standard bucket within a performance band (high/mid/low).
+ *
+ * Per PBIX spec the 3 × 100%-stacked bar charts on the SDD page are keyed
+ * on `dim_standard.cPalms_Standard` (one bar per standard), not per strand.
+ * `strand` is carried alongside for tooltip context.
+ */
+export interface SddBandStandardRow {
+  cpalms_standard: string;
   strand: string;
-  num_standards: number;
   num_questions: number;
   grade_average: number;
 }
@@ -151,9 +158,9 @@ export interface StandardsDeepDivePayload {
   kpis: SddKpis;
   strands_rollup: SddStrandRow[];
   standards_rollup: SddStandardRow[];
-  band_high: SddBandStrandRow[];
-  band_mid: SddBandStrandRow[];
-  band_low: SddBandStrandRow[];
+  band_high: SddBandStandardRow[];
+  band_mid: SddBandStandardRow[];
+  band_low: SddBandStandardRow[];
   data_quality?: AlignmentDataQuality | null;
 }
 
@@ -166,6 +173,7 @@ export interface QuestionResponseAnalysisPayload {
   raw_question_options: RawQuestionOption[];
   strands_rollup: SddStrandRow[];
   standards_rollup: SddStandardRow[];
+  data_quality?: AlignmentDataQuality | null;
 }
 
 export interface AssessmentListRow {

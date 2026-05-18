@@ -127,3 +127,60 @@ async def test_qra_requires_reports_read_permission(
         f"/api/v1/reports/question-response-analysis/{known_item_id}"
     )
     assert response.status_code == 403
+
+
+_CHAPTER9_ITEM_ID = "8359960427"
+
+
+@pytest.mark.anyio
+async def test_qra_standards_rollup_has_multiple_strands_and_standards_for_chapter9(
+    admin_client: AsyncClient,
+) -> None:
+    """Strands/standards rollups must source from cube_standard_summary (RCA Layer A1).
+
+    The Chapter-9 fixture has 6 real strands and 12 distinct cpalms
+    standard rows. The pre-fix substring chain collapsed both down to 4.
+    """
+    response = await admin_client.get(
+        f"/api/v1/reports/question-response-analysis/{_CHAPTER9_ITEM_ID}"
+    )
+    if response.status_code == 404:
+        pytest.skip(
+            "Chapter 9 fixture item missing — pipeline not run for this DB."
+        )
+    assert response.status_code == 200, response.text
+    payload = QuestionResponseAnalysisPayload.model_validate(response.json())
+
+    assert len(payload.strands_rollup) >= 5, (
+        f"expected ≥5 strands for {_CHAPTER9_ITEM_ID}, got "
+        f"{len(payload.strands_rollup)}: "
+        f"{[s.strand for s in payload.strands_rollup]}"
+    )
+    assert len(payload.standards_rollup) >= 10, (
+        f"expected ≥10 cpalms standard rows for {_CHAPTER9_ITEM_ID}, got "
+        f"{len(payload.standards_rollup)}"
+    )
+
+
+@pytest.mark.anyio
+async def test_qra_payload_includes_data_quality(
+    admin_client: AsyncClient, known_item_id: str
+) -> None:
+    """QRA payload must expose data_quality so the page can gate the empty state.
+
+    Mirrors the SDD page contract — when an assessment has zero aligned
+    questions the QRA page renders the explanatory ``<AlignmentEmptyState>``
+    card instead of the sentinel "(All Questions)" fallback row (RCA Layer
+    A5).
+    """
+    response = await admin_client.get(
+        f"/api/v1/reports/question-response-analysis/{known_item_id}"
+    )
+    assert response.status_code == 200, response.text
+    payload = QuestionResponseAnalysisPayload.model_validate(response.json())
+
+    assert payload.data_quality is not None
+    assert payload.data_quality.alignment_status in {"full", "partial", "missing"}
+    assert payload.data_quality.questions_total >= 0
+    assert payload.data_quality.questions_with_alignment >= 0
+    assert payload.data_quality.remediation_hint  # non-empty hint

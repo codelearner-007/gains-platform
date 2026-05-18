@@ -20,6 +20,7 @@ import {
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
+import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 
 export default function QuestionResponseAnalysisPage() {
   const router = useRouter();
@@ -81,22 +82,34 @@ export default function QuestionResponseAnalysisPage() {
         </div>
       </div>
 
-      <div className="mb-0">
-        <SummaryByStandardsHeader />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        <StrandsTable kpis={data.kpis} strands={data.strands_rollup} />
-        <StandardsTable kpis={data.kpis} standards={data.standards_rollup} />
-      </div>
-
-      <div>
-        <QuestionDetailTable
-          questions={data.questions_overall}
-          incorrectChoices={data.incorrect_choices}
-          itemId={itemId}
+      {data.data_quality?.alignment_status === 'missing' ? (
+        <AlignmentEmptyState
+          quality={data.data_quality}
+          reportLabel="Question Response Analysis"
         />
-      </div>
+      ) : (
+        <>
+          <div className="mb-0">
+            <SummaryByStandardsHeader />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <StrandsTable kpis={data.kpis} strands={data.strands_rollup} />
+            <StandardsTable
+              kpis={data.kpis}
+              standards={data.standards_rollup}
+            />
+          </div>
+
+          <div>
+            <QuestionDetailTable
+              questions={data.questions_overall}
+              incorrectChoices={data.incorrect_choices}
+              itemId={itemId}
+            />
+          </div>
+        </>
+      )}
     </ReportCanvas>
   );
 }

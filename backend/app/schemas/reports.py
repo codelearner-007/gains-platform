@@ -192,11 +192,16 @@ class SddStandardRow(BaseModel):
     grade_average_pct: str
 
 
-class SddBandStrandRow(BaseModel):
-    """One strand bucket within a performance band (high/mid/low)."""
+class SddBandStandardRow(BaseModel):
+    """One cpalms-standard bucket within a performance band (high/mid/low).
 
+    Per PBIX spec (``50_sdd_spec.md`` §4.4) the 3 × 100%-stacked bar charts
+    are keyed on ``dim_standard.cPalms_Standard`` (one bar per standard),
+    not per strand. ``strand`` is carried alongside for tooltip context.
+    """
+
+    cpalms_standard: str
     strand: str
-    num_standards: int
     num_questions: int
     grade_average: float
 
@@ -208,9 +213,9 @@ class StandardsDeepDivePayload(BaseModel):
     kpis: SddKpis
     strands_rollup: List[SddStrandRow]
     standards_rollup: List[SddStandardRow]
-    band_high: List[SddBandStrandRow]
-    band_mid: List[SddBandStrandRow]
-    band_low: List[SddBandStrandRow]
+    band_high: List[SddBandStandardRow]
+    band_mid: List[SddBandStandardRow]
+    band_low: List[SddBandStandardRow]
     data_quality: Optional[AlignmentDataQuality] = None
 
 
@@ -219,6 +224,10 @@ class QuestionResponseAnalysisPayload(BaseModel):
 
     The ``strands_rollup`` and ``standards_rollup`` arrays use the same
     shape as Standards Deep Dive so a single helper computes both.
+
+    ``data_quality`` is the standards-alignment block; the QRA page gates
+    on ``alignment_status === "missing"`` to render the explanatory
+    empty-state card (mirrors SDD page behaviour).
     """
 
     assessment: AssessmentMeta
@@ -229,6 +238,7 @@ class QuestionResponseAnalysisPayload(BaseModel):
     raw_question_options: List[RawQuestionOption]
     strands_rollup: List[SddStrandRow] = []
     standards_rollup: List[SddStandardRow] = []
+    data_quality: Optional[AlignmentDataQuality] = None
 
 
 # ─── Year-To-Date Performance ──────────────────────────────────────────────

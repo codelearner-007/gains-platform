@@ -43,7 +43,7 @@ from app.schemas.reports import (
     QuestionOverall,
     QuestionResponseAnalysisPayload,
     RawQuestionOption,
-    SddBandStrandRow,
+    SddBandStandardRow,
     SddKpis,
     SddStandardRow,
     SddStrandRow,
@@ -198,6 +198,27 @@ class ReportService:
             if t and t not in seen:
                 seen[t] = None
         return list(seen)
+
+    async def _build_alignment_data_quality_for_item(
+        self, item_id: str
+    ) -> AlignmentDataQuality:
+        """Build the per-assessment AlignmentDataQuality block.
+
+        Extracted from ``build_standards_deep_dive`` so the QRA composer
+        can reuse it (so the QRA page can gate on
+        ``alignment_status === "missing"`` the same way SDD does).
+        """
+        quality = await self.cube.get_alignment_quality_for_item(item_id)
+        q_total = quality["questions_total"]
+        q_aligned = quality["questions_with_alignment"]
+        return AlignmentDataQuality(
+            alignment_status=_classify_alignment(q_total, q_aligned),
+            questions_total=q_total,
+            questions_with_alignment=q_aligned,
+            items_total=1,
+            items_with_alignment=1 if q_aligned > 0 else 0,
+            remediation_hint=_ALIGNMENT_REMEDIATION,
+        )
 
     async def _build_strand_standard_rollups(
         self, item_id: str
@@ -379,6 +400,11 @@ class ReportService:
             item_id
         )
 
+        # Surface the standards-alignment block so the QRA page can render
+        # the AlignmentEmptyState card when the assessment has no aligned
+        # questions (mirrors SDD behaviour).
+        data_quality = await self._build_alignment_data_quality_for_item(item_id)
+
         return QuestionResponseAnalysisPayload(
             assessment=assessment,
             kpis=kpis,
@@ -388,6 +414,7 @@ class ReportService:
             raw_question_options=raw_question_options,
             strands_rollup=strands_rollup,
             standards_rollup=standards_rollup,
+            data_quality=data_quality,
         )
 
     # ────────────────────────────────────────────────────────────────────
@@ -412,25 +439,15 @@ class ReportService:
         )
 
         # ─── KPI strip values ─────────────────────────────────────────────
+        # Per spec §3 (50_sdd_spec.md:64-70) the 5 KPI cards correspond
+        # 1:1 to cube_school_summary columns already populated by the
+        # pipeline. Avoid deriving from strands_rollup — that path was
+        # double-counting via the many-to-many dim_strand join.
         school_summary = await self.cube.get_school_summary_for_item(item_id)
         total_students = to_int((school_summary or {}).get("total_students"))
-
-        # Number of Questions / Standards per spec §3 use DISTINCTCOUNT on
-        # cube_question_summary_overall, which after our strand-aware
-        # aggregation reduces to summing the strand-level counts (each
-        # ukey is unique across strands for an item once we drop NULL
-        # strand rows).
-        total_questions = sum(s.num_questions for s in strands_rollup)
-        total_standards = sum(s.num_standards for s in strands_rollup)
-
-        # Grade Average across the standards within this assessment
-        # (Measure.Grade_Average_Standard_Measure).
-        if standards_rollup:
-            grade_average = sum(s.grade_average for s in standards_rollup) / len(
-                standards_rollup
-            )
-        else:
-            grade_average = to_float((school_summary or {}).get("grade_average"))
+        total_questions = to_int((school_summary or {}).get("total_questions"))
+        total_standards = to_int((school_summary or {}).get("total_standards"))
+        grade_average = to_float((school_summary or {}).get("grade_average"))
 
         instructors = self._split_instructors(
             safe_str(meta_row.get("section_instructors"))
@@ -446,36 +463,33 @@ class ReportService:
         )
 
         # ─── Performance bands (3 × 100% stacked bar charts) ──────────────
-        # PBIX traffic-light bucketing: green at-target, yellow approaching,
-        # pink needs-attention (see _BAND_*_THRESHOLD constants).
-        band_high: list[SddBandStrandRow] = []
-        band_mid: list[SddBandStrandRow] = []
-        band_low: list[SddBandStrandRow] = []
-        for s in strands_rollup:
-            row = SddBandStrandRow(
-                strand=s.strand,
-                num_standards=s.num_standards,
-                num_questions=s.num_questions,
-                grade_average=s.grade_average,
+        # Per spec §4.4 (50_sdd_spec.md:143-184) each band panel renders
+        # one bar per ``dim_standard.cPalms_Standard`` filtered to the
+        # band; bucketing uses the same 70/80 thresholds the perf-color
+        # DAX uses.
+        band_rows = await self.cube.get_standard_bands_for_item(item_id)
+        band_high: list[SddBandStandardRow] = []
+        band_mid: list[SddBandStandardRow] = []
+        band_low: list[SddBandStandardRow] = []
+        for r in band_rows:
+            cpalms = safe_str(r.get("cpalms_standard"))
+            if not cpalms:
+                continue
+            grade = to_float(r.get("grade_average"))
+            row = SddBandStandardRow(
+                cpalms_standard=cpalms,
+                strand=_decode_html(safe_str(r.get("strand"))),
+                num_questions=to_int(r.get("num_questions")),
+                grade_average=round(grade, 6),
             )
-            if s.grade_average >= _BAND_HIGH_THRESHOLD:
+            if grade >= _BAND_HIGH_THRESHOLD:
                 band_high.append(row)
-            elif s.grade_average >= _BAND_MID_THRESHOLD:
+            elif grade >= _BAND_MID_THRESHOLD:
                 band_mid.append(row)
             else:
                 band_low.append(row)
 
-        quality = await self.cube.get_alignment_quality_for_item(item_id)
-        q_total = quality["questions_total"]
-        q_aligned = quality["questions_with_alignment"]
-        data_quality = AlignmentDataQuality(
-            alignment_status=_classify_alignment(q_total, q_aligned),
-            questions_total=q_total,
-            questions_with_alignment=q_aligned,
-            items_total=1,
-            items_with_alignment=1 if q_aligned > 0 else 0,
-            remediation_hint=_ALIGNMENT_REMEDIATION,
-        )
+        data_quality = await self._build_alignment_data_quality_for_item(item_id)
 
         return StandardsDeepDivePayload(
             assessment=assessment,
