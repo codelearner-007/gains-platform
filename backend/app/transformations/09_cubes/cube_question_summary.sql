@@ -297,12 +297,24 @@ LEFT JOIN totals
   ON totals.school_id   = f_meta.school_id
  AND totals.item_id     = f_meta.item_id
  AND totals.question_id = f_meta.question_id
-LEFT JOIN qd
-  ON qd.school_id       = f_meta.school_id
- AND qd.question_id     = f_meta.question_id
- AND COALESCE(qd.position_number, '__NULL__')
-     = COALESCE(f_meta.position_number, '__NULL__')
- AND qd.identifier IS NOT DISTINCT FROM f_meta.identifier
+-- The (question_id, position_number) pair uniquely identifies a question's
+-- presentational metadata (question text, question_no, correct_answer, etc.);
+-- those are invariant across standards alignment. dim_question_data is
+-- deduplicated by qkey (which includes standards_val), so a single source
+-- question can have multiple qd rows with different identifiers. We pick
+-- one deterministically rather than constraining the JOIN on
+-- f_meta.identifier — that would leave the alternate-identifier rows
+-- introduced by the grain change with NULL question text.
+LEFT JOIN LATERAL (
+  SELECT q.*
+  FROM qd q
+  WHERE q.school_id   = f_meta.school_id
+    AND q.question_id = f_meta.question_id
+    AND COALESCE(q.position_number, '__NULL__')
+        = COALESCE(f_meta.position_number, '__NULL__')
+  ORDER BY q.identifier NULLS LAST
+  LIMIT 1
+) qd ON TRUE
 LEFT JOIN di
   ON di.school_id       = f_meta.school_id
  AND di.item_id         = f_meta.item_id

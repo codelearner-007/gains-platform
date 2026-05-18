@@ -156,10 +156,24 @@ joined AS (
   -- distinct schoology codes in the audited corpus are exact matches against
   -- `dim_standard.schoology_standard`; non-match category labels like
   -- `Social Studies` correctly resolve to NULL identifier.
-  LEFT JOIN dim_standard ds
-    ON ds.schoology_standard IS NOT NULL
-   AND qd.standard           IS NOT NULL
-   AND qd.standard           = ds.schoology_standard
+  --
+  -- The seed `dim_standard.csv` contains a small number of rows where two
+  -- distinct identifier UUIDs carry the same schoology_standard (e.g. both
+  -- `3cd52b67…` and `3cdd2b67…` map `MA.912.AR.3.1`). Those are CSV
+  -- pollution: the second UUID's other cpalms aliases (e.g. `AR.3.10`)
+  -- belong to an unrelated standard. LATERAL pins the join to one
+  -- identifier per (schoology_standard) — the lexically smallest — so the
+  -- fact row count stays at one per (submission, question, standard)
+  -- rather than fanning out by the seed-CSV multiplicity.
+  LEFT JOIN LATERAL (
+    SELECT identifier
+    FROM dim_standard
+    WHERE schoology_standard IS NOT NULL
+      AND qd.standard         IS NOT NULL
+      AND schoology_standard = qd.standard
+    ORDER BY identifier
+    LIMIT 1
+  ) ds ON TRUE
   LEFT JOIN dim_strand dst
     ON dst.identifier = ds.identifier
   WHERE d.rn = 1
