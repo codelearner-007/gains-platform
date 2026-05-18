@@ -68,16 +68,33 @@ qd_filtered AS (
   WHERE question_id IS NOT NULL
 ),
 qd_with_standard AS (
-  -- Substring join — notebook line 989, see 40_schoology_py_spec.md §4.5.
-  -- Matches multiple identifiers per question for prefix-overlapping codes.
+  -- Exact-equality identifier match — notebook used Spark's substring
+  -- contains (`Standard.contains(Schoology_Standard)`), which the original
+  -- SQL port transliterated as `standards_val ILIKE '%' || schoology_standard
+  -- || '%'`. That substring match collides on dotted-prefix codes: a question
+  -- with `AI.MA.912.AR.1.7` matches BOTH `MA.912.AR.1.7` AND the cluster code
+  -- `MA.912.AR.1` (prefix), causing DISTINCT-ON lexicographic tiebreak to
+  -- stamp the WRONG identifier (Q11 in item 8359960427 was getting AR.1.3's
+  -- identifier `3cc52b67...` instead of AR.1.7's `3cc92b67...`).
+  --
+  -- Empirical check (see audit): every distinct `standards_val` produced by
+  -- staging is an exact match for at least one `schoology_standard` row in
+  -- `dim_standard` (27 / 28 distinct codes in the corpus; the one non-match
+  -- is the literal text `Social Studies`, which is a category label, not a
+  -- standard code, and rightfully maps to no identifier). Exact equality is
+  -- therefore strictly sufficient AND avoids both the prefix-collision and
+  -- the POSIX-regex escape-class footguns.
+  --
+  -- See `.hermes/report-parity/pipeline-audit-2026-05-18.md §B1`.
   SELECT
     q.*,
-    ds.identifier AS standard_identifier
+    ds.identifier         AS standard_identifier,
+    ds.schoology_standard AS matched_schoology_standard
   FROM qd_filtered q
   LEFT JOIN dim_standard ds
     ON ds.schoology_standard IS NOT NULL
    AND q.standards_val IS NOT NULL
-   AND q.standards_val ILIKE '%' || ds.schoology_standard || '%'
+   AND q.standards_val = ds.schoology_standard
 ),
 qd_keys AS (
   SELECT
@@ -112,9 +129,14 @@ qd_keys AS (
   FROM qd_with_standard
 ),
 deduped AS (
-  -- Substring join can yield >1 rows per (school_id, qkey). Pick the row
-  -- with a real identifier first (NULLS LAST), then deterministic tiebreak
-  -- by identifier text.
+  -- Word-boundary join can still yield >1 rows per (school_id, qkey) when a
+  -- dim_standard identifier has multiple equivalent schoology codes (e.g.
+  -- `MA.912.AR.1.7` and `AI.MA.912.AR.1.7` both belong to identifier
+  -- `3cc92b67…`). All such rows resolve to the same identifier — the dedupe
+  -- below picks the row whose `schoology_standard` matched longest, which
+  -- guarantees the most specific code wins if the schema ever ships two
+  -- identifiers whose codes are mutual prefixes despite the word-boundary
+  -- guard. See `.hermes/report-parity/pipeline-audit-2026-05-18.md §B1`.
   SELECT DISTINCT ON (school_id, qkey)
     qkey, school_id, ukey, question, position_number, item_id, item_name,
     standards_val,
@@ -125,7 +147,12 @@ deduped AS (
     standards_val AS standard,
     standard_identifier AS identifier
   FROM qd_keys
-  ORDER BY school_id, qkey, standard_identifier NULLS LAST
+  ORDER BY
+    school_id,
+    qkey,
+    standard_identifier NULLS LAST,
+    COALESCE(length(matched_schoology_standard), 0) DESC,
+    matched_schoology_standard
 )
 SELECT
   qkey, school_id, ukey, question, position_number, item_id, item_name,

@@ -23,19 +23,26 @@ TRUNCATE TABLE dim_strand RESTART IDENTITY;
 
 INSERT INTO dim_strand (id, identifier, strand, strand_id)
 WITH joined AS (
-  -- Notebook: standard.Schoology_Standard.contains(question_data.Standard)
-  -- ILIKE preserves case-insensitivity (notebook is on Spark, which is also
-  -- case-sensitive — but we follow the substring-join convention used
-  -- elsewhere in the pipeline for consistency with dim_question_data above).
+  -- Exact-identifier join — the notebook joins via reverse substring
+  -- (`Schoology_Standard.contains(Standard)`), which has the same
+  -- prefix-collision class of bug as dim_question_data.standard's forward
+  -- substring (see `.hermes/report-parity/pipeline-audit-2026-05-18.md §B3`).
+  -- After §B1's word-boundary fix in `dim_question_data.sql`,
+  -- `dim_question_data.identifier` is stamped correctly per question. We can
+  -- therefore project (identifier, strand) directly from
+  -- `dim_question_data ⨝ dim_standard` ON identifier, which avoids the
+  -- substring asymmetry entirely (some long-form identifiers had no row in
+  -- dim_strand because the reverse substring failed — fact rows survived but
+  -- with `strand_id IS NULL`).
   SELECT DISTINCT
     ds.identifier,
     ds.strand
   FROM dim_question_data dqd
   JOIN dim_standard ds
-    ON dqd.standard IS NOT NULL
-   AND ds.schoology_standard ILIKE '%' || dqd.standard || '%'
+    ON ds.identifier = dqd.identifier
   WHERE ds.identifier IS NOT NULL
     AND ds.strand     IS NOT NULL
+    AND ds.strand     <> ''
 )
 SELECT
   ROW_NUMBER() OVER (ORDER BY identifier, strand) AS id,

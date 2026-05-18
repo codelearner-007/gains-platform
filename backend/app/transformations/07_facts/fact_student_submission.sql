@@ -148,22 +148,30 @@ joined AS (
   FROM deduped d
   LEFT JOIN qd_standard qd
     ON qd.question_id = d.question_id
-  -- Substring join: notebook 1259 uses `Schoology_Standard.contains(Standard)`
-  -- where Standards in dim_standard is the SHORT code and Standard on the
-  -- question is the LONG string. Postgres equivalent: q.standard ILIKE
-  -- '%' || ds.schoology_standard || '%'.
+  -- Exact-equality identifier match — see
+  -- `.hermes/report-parity/pipeline-audit-2026-05-18.md §B1`. Originally
+  -- `qd.standard ILIKE '%' || ds.schoology_standard || '%'` which had the
+  -- same prefix-collision problem as `dim_question_data.sql` (and produced
+  -- 2 spurious wrong-substring identifiers for item 8359960427). All 12
+  -- distinct schoology codes in the audited corpus are exact matches against
+  -- `dim_standard.schoology_standard`; non-match category labels like
+  -- `Social Studies` correctly resolve to NULL identifier.
   LEFT JOIN dim_standard ds
     ON ds.schoology_standard IS NOT NULL
    AND qd.standard           IS NOT NULL
-   AND qd.standard ILIKE '%' || ds.schoology_standard || '%'
+   AND qd.standard           = ds.schoology_standard
   LEFT JOIN dim_strand dst
     ON dst.identifier = ds.identifier
   WHERE d.rn = 1
 ),
 final_dedupe AS (
-  -- Substring join may yield multiple identifiers per row. DISTINCT ON the
-  -- synthetic PK with NULLS-LAST identifier ordering picks the row with a
-  -- real identifier when one exists.
+  -- Word-boundary join (after §B1) yields exactly one identifier per
+  -- (question_id, standard) row, but multiple distinct STANDARDS can still
+  -- share an identifier (e.g. `MA.912.AR.3.1` and `AI.MA.912.AR.3.1` both
+  -- map to `3cd52b67…`). Including `std` in the dedupe key preserves every
+  -- distinct (question, identifier, standard) triple, so downstream cubes
+  -- never blindly drop a standard alias.
+  -- See `.hermes/report-parity/pipeline-audit-2026-05-18.md §B4`.
   SELECT DISTINCT ON (
     COALESCE(school_id::text, 'DEFAULT_SCHOOLID')          || '-' ||
     COALESCE(user_uid, 'DEFAULT_USER')                     || '-' ||
@@ -172,7 +180,8 @@ final_dedupe AS (
     COALESCE(answer_submission, 'DEFAULT_ANSWER_SUBMISSION')|| '-' ||
     COALESCE(points_possible::text, 'DEFAULT_POINTS_REC')  || '-' ||
     COALESCE(submission::text, 'Submission')               || '-' ||
-    COALESCE(ident, 'DEFAULT_STANDARD')
+    COALESCE(ident, 'DEFAULT_STANDARD')                    || '-' ||
+    COALESCE(std,   'DEFAULT_STANDARD_TEXT')
   )
     school_id, user_uid, first_name, last_name, user_role_id, user_school_id,
     course_nid, section_nid, section_code, item_id, item_name, first_access,
@@ -189,12 +198,18 @@ final_dedupe AS (
     COALESCE(answer_submission, 'DEFAULT_ANSWER_SUBMISSION')|| '-' ||
     COALESCE(points_possible::text, 'DEFAULT_POINTS_REC')  || '-' ||
     COALESCE(submission::text, 'Submission')               || '-' ||
-    COALESCE(ident, 'DEFAULT_STANDARD'),
+    COALESCE(ident, 'DEFAULT_STANDARD')                    || '-' ||
+    COALESCE(std,   'DEFAULT_STANDARD_TEXT'),
     ident NULLS LAST,
-    sid   NULLS LAST
+    sid   NULLS LAST,
+    std   NULLS LAST
 )
 SELECT
-  -- Synthetic 8-part PK (notebook 1270).
+  -- Synthetic 9-part PK — extends the notebook's 8-part PK with `std` so
+  -- distinct standard aliases that share an identifier (e.g. `MA.912.AR.3.1`
+  -- and `AI.MA.912.AR.3.1` both `3cd52b67…`) survive as separate rows.
+  -- Matches the dedupe key above.
+  -- See `.hermes/report-parity/pipeline-audit-2026-05-18.md §B4`.
   COALESCE(school_id::text, 'DEFAULT_SCHOOLID')          || '-' ||
   COALESCE(user_uid, 'DEFAULT_USER')                     || '-' ||
   COALESCE(question_id, 'DEFAULT_QID')                   || '-' ||
@@ -202,7 +217,8 @@ SELECT
   COALESCE(answer_submission, 'DEFAULT_ANSWER_SUBMISSION')|| '-' ||
   COALESCE(points_possible::text, 'DEFAULT_POINTS_REC')  || '-' ||
   COALESCE(submission::text, 'Submission')               || '-' ||
-  COALESCE(ident, 'DEFAULT_STANDARD')                    AS user_id_ques_id_stand,
+  COALESCE(ident, 'DEFAULT_STANDARD')                    || '-' ||
+  COALESCE(std,   'DEFAULT_STANDARD_TEXT')               AS user_id_ques_id_stand,
   school_id,
   user_uid,
   -- User_Name = First_Name + ' ' + Last_Name (notebook 1235). NULL fallback

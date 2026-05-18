@@ -170,10 +170,12 @@ choices_per_question AS (
   GROUP BY school_id, question_id, position_number
 ),
 qd AS (
-  -- DISTINCT ON (school_id, question_id, position_number) so dim_question_data
-  -- contributes exactly one row of metadata per question/position. Prefer
-  -- rows with an identifier set.
-  SELECT DISTINCT ON (school_id, question_id, position_number)
+  -- DISTINCT ON (school_id, question_id, position_number, identifier) — one
+  -- row per (question, identifier) so multi-standard questions retain ALL
+  -- their (standard, identifier) pairs instead of collapsing to the
+  -- lexicographically smallest identifier. See
+  -- `.hermes/report-parity/pipeline-audit-2026-05-18.md §B2`.
+  SELECT DISTINCT ON (school_id, question_id, position_number, identifier)
     school_id, question_id, position_number,
     item_id, item_name, question, question_no, question_type,
     associated_question_id, total_points, least_points_earned,
@@ -210,6 +212,11 @@ section_per_item AS (
   GROUP BY school_id, item_id
 )
 SELECT
+  -- Digest extends the legacy 7-part PK with `identifier` because the grain
+  -- now emits one row per (question, identifier) — multiple identifiers can
+  -- share the same `standard` text (e.g. duplicate dim_standard rows where
+  -- the same schoology_standard appears under two different identifiers).
+  -- See `.hermes/report-parity/pipeline-audit-2026-05-18.md §B2`.
   encode(digest(
     COALESCE(f_meta.school_id::text,'DEFAULT_SCHOOL_ID')      ||
     COALESCE(f_meta.item_id,        'DEFAULT_ITEM_ID')        ||
@@ -217,7 +224,8 @@ SELECT
     COALESCE(f_meta.question_id,    'DEFAULT_QUESTION_ID')    ||
     COALESCE(f_meta.position_number,'DEFAULT_POSITION')       ||
     COALESCE(qd.standard,           'DEFAULT_STANDARD')       ||
-    COALESCE(qd.correct_answer,     'DEFAULT_CORRECT_ANSWER'),
+    COALESCE(qd.correct_answer,     'DEFAULT_CORRECT_ANSWER') ||
+    COALESCE(f_meta.identifier,     'DEFAULT_IDENTIFIER'),
     'sha256'
   ), 'hex')                                                    AS id,
   f_meta.school_id,
@@ -271,12 +279,15 @@ SELECT
   cpq.incorrect_details_name_hash,
   ds.teacher_name_hash
 FROM (
-  -- Per-output-grain key. The notebook output grain is one row per
-  -- (school_id, item_id, question_id, position_number) — we fetch metadata
-  -- from qd (which is at that grain) and totals from totals (per question).
-  -- DISTINCT ON the grain key with NULLS-LAST identifier ordering picks the
-  -- row with a real identifier when one exists.
-  SELECT DISTINCT ON (school_id, item_id, question_id, position_number)
+  -- Per-output-grain key. The previous grain was
+  -- (school_id, item_id, question_id, position_number) which dropped every
+  -- identifier but one per question. We add `identifier` to the grain so
+  -- each (question, identifier) pair emits a row — restoring the 11
+  -- distinct identifiers per item that fact and dim_standard_summary
+  -- already carry. The cube_question_summary.id digest already includes
+  -- `standard`, so rows still have unique primary keys.
+  -- See `.hermes/report-parity/pipeline-audit-2026-05-18.md §B2`.
+  SELECT DISTINCT ON (school_id, item_id, question_id, position_number, identifier)
     school_id, school_id_csv, item_id, item_name, question_id,
     position_number, subject_id, identifier
   FROM fact_student_submission
@@ -291,6 +302,7 @@ LEFT JOIN qd
  AND qd.question_id     = f_meta.question_id
  AND COALESCE(qd.position_number, '__NULL__')
      = COALESCE(f_meta.position_number, '__NULL__')
+ AND qd.identifier IS NOT DISTINCT FROM f_meta.identifier
 LEFT JOIN di
   ON di.school_id       = f_meta.school_id
  AND di.item_id         = f_meta.item_id
