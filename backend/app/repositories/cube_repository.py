@@ -69,6 +69,134 @@ class CubeRepository:
         self.session = session
 
     # ────────────────────────────────────────────────────────────────────
+    # Canonical KPI helper for one assessment.
+    #
+    # Single source of truth for the KPI strip shown on QRA + SDD (and any
+    # future per-assessment report). Replicates the legacy PBIX DAX
+    # semantics that the read-only audit (see
+    # ``.hermes/report-parity/FRESH-RCA-2026-05-18-stable-formulas.md``)
+    # identified, namely:
+    #
+    #   * Total Students   = ``cube_school_summary.total_students``.
+    #   * Total Questions  = ``DISTINCTCOUNT(Question_No)`` over the
+    #     per-question canonical CTE (one row per question_id).
+    #   * Total Standards  = ``COUNT(DISTINCT standard)`` over
+    #     ``dim_question_data`` for the item — counts raw long-form
+    #     ``standards_val`` labels, matching legacy
+    #     ``DISTINCTCOUNT(cube_question_summary_overall[Standards])``.
+    #   * Grade Average / Min / Max = computed from per-(question, user)
+    #     collapsed scores on ``fact_student_submission``. The fact is
+    #     deduped per ``(user_uid, question_id, position_number)`` first
+    #     so the 9-part PK's standard-alias fan-out (an architectural
+    #     choice that inflates fact 2.43×) does not bias the average.
+    #     Each question's average is then taken across students,
+    #     followed by AVG/MIN/MAX across questions. Mirrors the legacy
+    #     DAX ``AVERAGE / MAXX / MINX VALUES(Question_No)`` semantics
+    #     with a per-user collapse to undo the alias fan-out.
+    #   * total_possible_point / total_score pass through from
+    #     ``cube_school_summary``.
+    #
+    # Both QRA and SDD MUST call this helper for their KPI strips so
+    # they cannot diverge. Per-assessment regression tests assert
+    # this for item ``8359960427`` (12 standards / ~65.4% / ~96.3% /
+    # ~27.8%) and the single-strand control ``7892351049``.
+    # ────────────────────────────────────────────────────────────────────
+    async def get_canonical_kpis_for_item(
+        self, item_id: str
+    ) -> Optional[Dict[str, Any]]:
+        sql = text(
+            """
+            WITH fact_dedup AS (
+                SELECT DISTINCT ON (user_uid, question_id, position_number)
+                       user_uid, question_id, position_number,
+                       points_received, points_possible
+                FROM fact_student_submission
+                WHERE item_id = :item_id
+                  AND points_possible IS NOT NULL
+                  AND points_possible > 0
+                ORDER BY user_uid, question_id, position_number, identifier NULLS LAST
+            ),
+            per_user_q AS (
+                SELECT question_id, user_uid,
+                       SUM(points_received)::numeric
+                         / NULLIF(SUM(points_possible), 0) AS pct
+                FROM fact_dedup
+                GROUP BY question_id, user_uid
+            ),
+            per_q AS (
+                SELECT question_id, AVG(pct) AS qga
+                FROM per_user_q
+                GROUP BY question_id
+            ),
+            school AS (
+                SELECT total_students, total_possible_point, total_score
+                FROM cube_school_summary
+                WHERE item_id = :item_id
+                LIMIT 1
+            ),
+            std AS (
+                SELECT COUNT(DISTINCT standard) AS total_standards
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND standard IS NOT NULL
+                  AND standard NOT IN ('', 'null')
+            )
+            SELECT
+                (SELECT total_students FROM school)        AS total_students,
+                (SELECT COUNT(*) FROM per_q)               AS total_questions,
+                (SELECT total_standards FROM std)          AS total_standards,
+                (SELECT AVG(qga) FROM per_q)               AS grade_average,
+                (SELECT MAX(qga) FROM per_q)               AS grade_max,
+                (SELECT MIN(qga) FROM per_q)               AS grade_min,
+                (SELECT total_possible_point FROM school)  AS total_possible_point,
+                (SELECT total_score FROM school)           AS total_score
+            """
+        )
+        result = await self.session.execute(sql, {"item_id": item_id})
+        row = result.first()
+        return _row_to_dict(row) if row else None
+
+    async def get_canonical_per_question_grades(
+        self, item_id: str
+    ) -> List[Dict[str, Any]]:
+        """Per-question grade_average using the canonical per-user collapse.
+
+        Used to override the per-question grade on the QRA question table
+        for multi-select / multi-position questions whose
+        ``cube_question_summary.grade_average`` reflects row-grain
+        SUM/SUM (e.g. Q12 = 35/146 = 23.97%) rather than per-student
+        average (27.78%). This matches the KPI strip's per-question grain
+        so the per-question table cannot disagree with the Lowest/Highest
+        KPI for the same item.
+        """
+        sql = text(
+            """
+            WITH fact_dedup AS (
+                SELECT DISTINCT ON (user_uid, question_id, position_number)
+                       user_uid, question_id, position_number,
+                       points_received, points_possible
+                FROM fact_student_submission
+                WHERE item_id = :item_id
+                  AND points_possible IS NOT NULL
+                  AND points_possible > 0
+                ORDER BY user_uid, question_id, position_number, identifier NULLS LAST
+            ),
+            per_user_q AS (
+                SELECT question_id, user_uid,
+                       SUM(points_received)::numeric
+                         / NULLIF(SUM(points_possible), 0) AS pct
+                FROM fact_dedup
+                GROUP BY question_id, user_uid
+            )
+            SELECT question_id, AVG(pct) AS grade_average
+            FROM per_user_q
+            GROUP BY question_id
+            """
+        )
+        result = await self.session.execute(sql, {"item_id": item_id})
+        return [_row_to_dict(r) for r in result.all()]
+
+    # ────────────────────────────────────────────────────────────────────
     # School-level summary for one assessment (cube_school_summary)
     # ────────────────────────────────────────────────────────────────────
     async def get_school_summary_for_item(self, item_id: str) -> Optional[Dict[str, Any]]:
@@ -363,30 +491,28 @@ class CubeRepository:
         plain SUM of per-identifier totals would double-count those
         questions.
 
-        Restricts identifiers via the same source-chain CTE as
-        ``get_standard_rollup_for_item`` so unaligned assessments
-        (``dim_question_data.standard IS NULL``) yield zero strand rows
-        rather than picking up catch-all "Other" identifiers attached to
-        unaligned cube rows.
+        Restricts identifiers via an exact-match join on the item's
+        ``dim_question_data.standard`` set (the raw ``standards_val``
+        codes) so unaligned assessments yield zero strand rows. We
+        deliberately do NOT walk the cpalms↔schoology chain — that walk
+        pulls in extra MAFS-prefixed aliases that legacy DAX excludes
+        (see ``FRESH-RCA-2026-05-18-stable-formulas.md`` §3 row 2 and
+        §4 ``standards_rollup row count``).
         """
         sql = text(
             """
-            WITH RECURSIVE item_chain AS (
+            WITH item_codes AS (
                 SELECT DISTINCT standard AS code
                 FROM dim_question_data
-                WHERE item_id = :item_id AND standard IS NOT NULL
-                UNION
-                SELECT ds.cpalms_standard
-                FROM dim_standard ds
-                JOIN item_chain ic ON ds.schoology_standard = ic.code
-                WHERE ds.cpalms_standard IS NOT NULL
-                  AND ds.cpalms_standard <> ''
+                WHERE item_id = :item_id
+                  AND standard IS NOT NULL
+                  AND standard NOT IN ('', 'null')
             ),
             valid_identifiers AS (
                 SELECT DISTINCT ds.identifier
                 FROM dim_standard ds
-                WHERE ds.cpalms_standard IN (SELECT code FROM item_chain)
-                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                JOIN item_codes ic ON ds.schoology_standard = ic.code
+                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
             )
             SELECT
                 ds.strand                              AS strand,
@@ -413,43 +539,34 @@ class CubeRepository:
     ) -> List[Dict[str, Any]]:
         """One row per visible cPalms label for a given assessment.
 
-        Mirrors the legacy display contract where each visible cPalms label
-        renders as its own row even when multiple labels share the same
-        underlying identifier (e.g. ``AR.3.1`` and ``912.AR.3.1`` both stem
-        from identifier ``3cd52b67…``).
+        Mirrors the legacy PBIX display contract where each cPalms label
+        that the assessment's ``standards_val`` set resolves to renders
+        as its own row (e.g. ``AR.3.1`` and ``912.AR.3.1`` both render
+        because the item has both schoology aliases ``MA.912.AR.3.1``
+        and ``AI.MA.912.AR.3.1``).
 
-        Restricts the cpalms alias set to those actually reachable from
-        ``dim_question_data`` for this assessment via the dim_standard
-        ``schoology_standard → cpalms_standard`` chain. This filters out
-        seed-CSV pollution (cpalms codes mistakenly sharing an identifier
-        UUID with an unrelated standard, e.g. ``AR.3.10`` under the same
-        UUID as ``AR.3.1``).
+        Restricts the output to exact-match dim_standard rows whose
+        ``schoology_standard`` appears in
+        ``dim_question_data.standard`` for this item. We deliberately do
+        NOT walk the recursive cpalms↔schoology chain — that walk pulled
+        in MAFS-prefixed aliases the legacy report excludes
+        (15 modern rows vs 12 legacy rows). The exact-match join
+        produces ``DISTINCTCOUNT(standards_val) = 12`` rows for the
+        audit assessment (``8359960427``), matching legacy precisely.
 
-        ``num_questions`` is ``COUNT(DISTINCT question_no)`` from
-        ``cube_question_summary`` for the matched identifier (per-standard
-        ``Total Question Standard`` measure in ``50_sdd_spec.md`` §4.5).
-        ``grade_average`` is the simple per-question AVG.
+        ``num_questions`` = ``COUNT(DISTINCT question_no)`` per matched
+        identifier (legacy ``Total Question Standard`` measure).
+        ``grade_average`` = AVG of per-question grade_average from
+        ``cube_question_summary`` for the identifier.
         """
         sql = text(
             """
-            WITH RECURSIVE item_chain AS (
+            WITH item_codes AS (
                 SELECT DISTINCT standard AS code
                 FROM dim_question_data
-                WHERE item_id = :item_id AND standard IS NOT NULL
-                UNION
-                SELECT ds.cpalms_standard
-                FROM dim_standard ds
-                JOIN item_chain ic ON ds.schoology_standard = ic.code
-                WHERE ds.cpalms_standard IS NOT NULL
-                  AND ds.cpalms_standard <> ''
-            ),
-            -- Restrict to identifiers that have at least one row in
-            -- cube_question_summary for this item AND a cpalms label that
-            -- appears in the source chain.
-            item_identifiers AS (
-                SELECT DISTINCT identifier
-                FROM cube_question_summary
-                WHERE item_id = :item_id AND identifier IS NOT NULL
+                WHERE item_id = :item_id
+                  AND standard IS NOT NULL
+                  AND standard NOT IN ('', 'null')
             ),
             labeled AS (
                 SELECT DISTINCT
@@ -458,9 +575,10 @@ class CubeRepository:
                     COALESCE(ds.schoology_standard, '') AS schoology_standard,
                     ds.strand
                 FROM dim_standard ds
-                JOIN item_identifiers ii ON ii.identifier = ds.identifier
-                WHERE ds.cpalms_standard IN (SELECT code FROM item_chain)
-                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                JOIN item_codes ic ON ds.schoology_standard = ic.code
+                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND ds.cpalms_standard IS NOT NULL
+                  AND ds.cpalms_standard <> ''
             ),
             per_identifier AS (
                 SELECT
@@ -497,27 +615,19 @@ class CubeRepository:
         buckets the returned rows into high/mid/low based on the standard
         70/80 thresholds.
 
-        Uses the same recursive-chain restriction as
+        Uses the same exact-match restriction as
         ``get_standard_rollup_for_item`` so band bars and the per-standard
-        table render the same set of cpalms labels.
+        table render the same set of cpalms labels (12 for the audit
+        assessment vs the chain-walked 15 previously produced).
         """
         sql = text(
             """
-            WITH RECURSIVE item_chain AS (
+            WITH item_codes AS (
                 SELECT DISTINCT standard AS code
                 FROM dim_question_data
-                WHERE item_id = :item_id AND standard IS NOT NULL
-                UNION
-                SELECT ds.cpalms_standard
-                FROM dim_standard ds
-                JOIN item_chain ic ON ds.schoology_standard = ic.code
-                WHERE ds.cpalms_standard IS NOT NULL
-                  AND ds.cpalms_standard <> ''
-            ),
-            item_identifiers AS (
-                SELECT DISTINCT identifier
-                FROM cube_question_summary
-                WHERE item_id = :item_id AND identifier IS NOT NULL
+                WHERE item_id = :item_id
+                  AND standard IS NOT NULL
+                  AND standard NOT IN ('', 'null')
             ),
             labeled AS (
                 SELECT DISTINCT
@@ -525,9 +635,10 @@ class CubeRepository:
                     ds.cpalms_standard,
                     ds.strand
                 FROM dim_standard ds
-                JOIN item_identifiers ii ON ii.identifier = ds.identifier
-                WHERE ds.cpalms_standard IN (SELECT code FROM item_chain)
-                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                JOIN item_codes ic ON ds.schoology_standard = ic.code
+                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND ds.cpalms_standard IS NOT NULL
+                  AND ds.cpalms_standard <> ''
             ),
             per_identifier AS (
                 SELECT

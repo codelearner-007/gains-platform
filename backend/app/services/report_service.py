@@ -199,6 +199,57 @@ class ReportService:
                 seen[t] = None
         return list(seen)
 
+    async def _compute_canonical_kpis_for_item(
+        self, item_id: str
+    ) -> dict[str, Any]:
+        """Single source of truth for per-assessment KPI strip values.
+
+        Returns a dict consumed by BOTH
+        :meth:`build_question_response_analysis` and
+        :meth:`build_standards_deep_dive` to guarantee they cannot
+        diverge for the same item. See
+        :meth:`CubeRepository.get_canonical_kpis_for_item` for the SQL
+        and the FRESH-RCA at
+        ``.hermes/report-parity/FRESH-RCA-2026-05-18-stable-formulas.md``
+        §4 for the formula-to-DAX correspondence.
+
+        Values returned:
+
+        ``total_students`` — distinct student count from
+        ``cube_school_summary``.
+
+        ``total_questions`` — distinct question_id count from the
+        per-(question, user) collapsed fact (matches legacy
+        ``DISTINCTCOUNT(cqso.Question_No)``).
+
+        ``total_standards`` — ``COUNT(DISTINCT standard)`` over
+        ``dim_question_data`` for the item — counts the raw long-form
+        ``standards_val`` strings (matches legacy
+        ``DISTINCTCOUNT(cqso.Standards)`` which is a string column,
+        NOT identifier UUID).
+
+        ``grade_average`` / ``grade_min`` / ``grade_max`` — per-question
+        grade averages computed by collapsing the standard-alias fan-out
+        in the fact (DISTINCT ON ``(user_uid, question_id,
+        position_number)``), averaging per-user pcts per question, then
+        AVG/MIN/MAX across questions. Mirrors the legacy DAX
+        ``AVERAGE / MAXX / MINX VALUES(Question_No)`` semantics.
+
+        ``total_possible_point`` / ``total_score`` — pass-through from
+        ``cube_school_summary``.
+        """
+        row = await self.cube.get_canonical_kpis_for_item(item_id) or {}
+        return {
+            "total_students": to_int(row.get("total_students")),
+            "total_questions": to_int(row.get("total_questions")),
+            "total_standards": to_int(row.get("total_standards")),
+            "grade_average": to_float(row.get("grade_average")),
+            "grade_min": to_float(row.get("grade_min")),
+            "grade_max": to_float(row.get("grade_max")),
+            "total_possible_point": to_float(row.get("total_possible_point")),
+            "total_score": to_float(row.get("total_score")),
+        }
+
     async def _build_alignment_data_quality_for_item(
         self, item_id: str
     ) -> AlignmentDataQuality:
@@ -260,8 +311,6 @@ class ReportService:
         if not meta_row:
             raise ResourceNotFoundError("Assessment", item_id)
 
-        school_summary = await self.cube.get_school_summary_for_item(item_id)
-        grade_summary = await self.cube.get_grade_summary_for_item(item_id)
         question_rows = await self.cube.get_questions_overall_for_item(item_id)
         incorrect_rows = await self.cube.get_incorrect_choices_for_item(item_id)
         student_rows = await self.cube.get_students_for_item(item_id)
@@ -275,25 +324,28 @@ class ReportService:
             meta_row, first_access, latest_attempt
         )
 
-        # ─── KPIs ──────────────────────────────────────────────────────────
-        # Prefer cube_school_summary's pre-aggregated values; fall back to
-        # cube_grade_summary for min/max.
-        total_questions = to_int((school_summary or {}).get("total_questions"))
-        total_standards = to_int((school_summary or {}).get("total_standards"))
-        total_students = to_int((school_summary or {}).get("total_students"))
-        total_possible_point = to_float(
-            (school_summary or {}).get("total_possible_point")
-        )
-        total_score = to_float((school_summary or {}).get("total_score"))
-        grade_average = to_float((school_summary or {}).get("grade_average"))
+        # ─── KPIs (canonical, legacy-DAX-equivalent) ──────────────────────
+        # Both QRA and SDD compute KPIs through this helper so the strip
+        # values can never disagree for the same item.
+        canon = await self._compute_canonical_kpis_for_item(item_id)
 
-        # Min/max from grade summary; if absent, fall back to per-question stats
-        grade_min = to_float((grade_summary or {}).get("grade_min"))
-        grade_max = to_float((grade_summary or {}).get("grade_max"))
-        if not grade_summary and question_rows:
-            qa_values = [to_float(q.get("grade_average")) for q in question_rows]
-            grade_min = min(qa_values, default=0.0)
-            grade_max = max(qa_values, default=0.0)
+        # Override per-question grade_average in the QRA question table
+        # with the canonical per-user-collapsed value so the Lowest /
+        # Highest KPIs and the per-question table report the same number
+        # for the same question (fixes multi-select questions like Q12
+        # where cube row-grain SUM/SUM gives 23.97% but per-student
+        # collapsed gives 27.78%, matching the canonical KPI).
+        canon_per_q = await self.cube.get_canonical_per_question_grades(item_id)
+        canon_q_by_id = {
+            safe_str(r.get("question_id")): to_float(r.get("grade_average"))
+            for r in canon_per_q
+        }
+        for q in question_rows:
+            qid = safe_str(q.get("question_id"))
+            if qid in canon_q_by_id:
+                ga = canon_q_by_id[qid]
+                q["grade_average"] = ga
+                q["percentage_incorrect"] = max(0.0, min(1.0, 1.0 - ga))
 
         instructors = self._split_instructors(
             safe_str(meta_row.get("section_instructors"))
@@ -301,17 +353,17 @@ class ReportService:
 
         kpis = KPIs(
             instructors=instructors,
-            grade_average=round(grade_average, 6),
-            grade_average_pct=_format_pct(grade_average),
-            total_questions=total_questions,
-            total_standards=total_standards,
-            total_students=total_students,
-            grade_min=round(grade_min, 6),
-            grade_max=round(grade_max, 6),
-            grade_min_pct=_format_pct(grade_min),
-            grade_max_pct=_format_pct(grade_max),
-            total_possible_point=round(total_possible_point, 4),
-            total_score=round(total_score, 4),
+            grade_average=round(canon["grade_average"], 6),
+            grade_average_pct=_format_pct(canon["grade_average"]),
+            total_questions=canon["total_questions"],
+            total_standards=canon["total_standards"],
+            total_students=canon["total_students"],
+            grade_min=round(canon["grade_min"], 6),
+            grade_max=round(canon["grade_max"], 6),
+            grade_min_pct=_format_pct(canon["grade_min"]),
+            grade_max_pct=_format_pct(canon["grade_max"]),
+            total_possible_point=round(canon["total_possible_point"], 4),
+            total_score=round(canon["total_score"], 4),
         )
 
         # ─── Students ──────────────────────────────────────────────────────
@@ -438,16 +490,13 @@ class ReportService:
             item_id
         )
 
-        # ─── KPI strip values ─────────────────────────────────────────────
-        # Per spec §3 (50_sdd_spec.md:64-70) the 5 KPI cards correspond
-        # 1:1 to cube_school_summary columns already populated by the
-        # pipeline. Avoid deriving from strands_rollup — that path was
-        # double-counting via the many-to-many dim_strand join.
-        school_summary = await self.cube.get_school_summary_for_item(item_id)
-        total_students = to_int((school_summary or {}).get("total_students"))
-        total_questions = to_int((school_summary or {}).get("total_questions"))
-        total_standards = to_int((school_summary or {}).get("total_standards"))
-        grade_average = to_float((school_summary or {}).get("grade_average"))
+        # ─── KPI strip values (canonical, shared with QRA) ────────────────
+        # Both QRA and SDD compute KPIs through the same canonical helper
+        # so they cannot disagree for the same item. See
+        # ``_compute_canonical_kpis_for_item`` for the formula contract
+        # (matches legacy PBIX DAX semantics for # Standards, Grade Avg,
+        # Highest/Lowest at per-question grain).
+        canon = await self._compute_canonical_kpis_for_item(item_id)
 
         instructors = self._split_instructors(
             safe_str(meta_row.get("section_instructors"))
@@ -455,11 +504,11 @@ class ReportService:
 
         kpis = SddKpis(
             instructors=instructors,
-            total_students=total_students,
-            total_questions=total_questions,
-            total_standards=total_standards,
-            grade_average=round(grade_average, 6),
-            grade_average_pct=_format_pct(grade_average),
+            total_students=canon["total_students"],
+            total_questions=canon["total_questions"],
+            total_standards=canon["total_standards"],
+            grade_average=round(canon["grade_average"], 6),
+            grade_average_pct=_format_pct(canon["grade_average"]),
         )
 
         # ─── Performance bands (3 × 100% stacked bar charts) ──────────────

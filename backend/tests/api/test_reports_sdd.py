@@ -104,16 +104,18 @@ async def test_sdd_requires_reports_read_permission(
 
 
 @pytest.mark.anyio
-async def test_sdd_kpis_pull_from_school_summary(
+async def test_sdd_kpis_pull_from_canonical_helper(
     admin_client: AsyncClient,
 ) -> None:
-    """KPI strip values must match cube_school_summary (RCA Layer A2).
+    """KPI strip values must come from the canonical legacy-DAX helper.
 
-    Before the fix, ``total_questions`` / ``total_standards`` /
-    ``grade_average`` were derived from ``strands_rollup`` which inherited
-    the dim_strand many-to-many inflation. Now the SDD service reads the
-    pre-rolled-up values directly from ``cube_school_summary`` (see
-    ``50_sdd_spec.md`` §3).
+    Updated 2026-05-18 to reflect the FRESH RCA's canonical contract.
+    Previously this test allowed total_standards in [7, 12] because the
+    cube_school_summary column counted distinct identifier UUIDs; the
+    canonical helper now matches legacy DAX semantics
+    (``DISTINCTCOUNT(cqso[Standards])`` over the raw label column) and
+    must report exactly 12 for the audit assessment. See
+    ``.hermes/report-parity/FRESH-RCA-2026-05-18-stable-formulas.md``.
     """
     response = await admin_client.get(
         f"/api/v1/reports/standards-deep-dive/{ALIGNED_ITEM_ID}"
@@ -124,22 +126,14 @@ async def test_sdd_kpis_pull_from_school_summary(
 
     payload = StandardsDeepDivePayload.model_validate(response.json())
     assert payload.kpis.total_questions == 18, (
-        f"expected 18 questions (cube_school_summary), got "
-        f"{payload.kpis.total_questions}"
+        f"expected 18 questions, got {payload.kpis.total_questions}"
     )
-    # Distinct identifier-grain count from cube_school_summary. Legacy
-    # PowerBI displays 12 (cpalms-label grain via DAX
-    # DISTINCTCOUNT(cube_question_summary_overall.standards) — see
-    # 50_sdd_spec.md §3 row 3). Our cube counts at identifier grain so
-    # the value is in the 8–12 range depending on pipeline pruning of
-    # duplicate-UUID dim_standard rows. Tolerance accepts both states.
-    assert 7 <= payload.kpis.total_standards <= 12, (
-        f"expected total_standards in [7, 12] (cube_school_summary "
-        f"identifier-grain; legacy 12 cpalms-label-grain), got "
-        f"{payload.kpis.total_standards}"
+    assert payload.kpis.total_standards == 12, (
+        f"canonical helper must report legacy 12 standards (raw label "
+        f"grain), got {payload.kpis.total_standards}"
     )
-    assert 0.62 <= payload.kpis.grade_average <= 0.68, (
-        f"grade_average should sit within the legacy ±0.03 band of 0.639, "
+    assert 0.63 <= payload.kpis.grade_average <= 0.68, (
+        f"grade_average must sit within legacy ±2pp band of 0.669, "
         f"got {payload.kpis.grade_average}"
     )
 
