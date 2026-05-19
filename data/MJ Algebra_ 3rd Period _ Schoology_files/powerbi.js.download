@@ -1,0 +1,71 @@
+
+ function renderPowerBIReport(id, token, embedUrl, name) {
+    const params = new URLSearchParams(window.location.search)
+    console.log(id, token, embedUrl, name)
+    var embedConfiguration = {
+        type: 'report',
+        tokenType: 'Embed',
+        accessToken: token,
+        embedUrl: embedUrl,
+        id: id,
+        permissions: 'All',
+        settings: {
+            panes: {
+                filters: {
+                    expanded: false,
+                    visible: true
+                }
+            }
+        }
+    };
+    const embedConfig = {
+        type: 'report',
+        id: id,
+        embedUrl: embedUrl,
+        accessToken: token,
+        tokenType: 1
+    };
+
+    var reportContainer = document.getElementById('reportContainer');
+    var report = powerbi.embed(reportContainer, embedConfig);
+    var host = window.location.hostname;
+    if (host == 'gains.edvancelearning.us') {
+        reportContainer.style.height = '640px';
+    }
+};
+
+
+window.renderPowerBIDashboard = function (id, token, embedUrl, name) {
+    const params = new URLSearchParams(window.location.search)
+    console.log(id, token, embedUrl, name, "aa")
+    var embedConfiguration = {
+        type: 'report',
+        tokenType: 'Embed',
+        accessToken: token,
+        embedUrl: embedUrl,
+        id: id,
+        permissions: 'All',
+        settings: {
+            panes: {
+                filters: {
+                    expanded: false,
+                    visible: true
+                }
+            }
+        }
+    };
+    const embedConfig = {
+        type: 'dashboard',
+        id: id,
+        embedUrl: embedUrl,
+        accessToken: token,
+        tokenType: 1
+    };
+
+    var reportContainer = document.getElementById('dashboardContainer');
+    var reportContainertext = document.getElementById('dashboardname');
+    reportContainertext.innerText = name;
+    var report = powerbi.embed(reportContainer, embedConfig);
+
+};
+

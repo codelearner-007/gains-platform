@@ -1,0 +1,196 @@
+@font-face {
+  font-family: "Open Sans";
+  src: url("../fonts/open-sans-all-400-normal.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; }
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("../fonts/open-sans-all-300-normal.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap; }
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("../fonts/open-sans-all-600-normal.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap; }
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("../fonts/open-sans-all-600-italic.woff") format("woff");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap; }
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("../fonts/open-sans-all-400-italic.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap; }
+
+@font-face {
+  font-family: "Karla";
+  src: url("../fonts/karla-latin-700.woff2") format("woff2"), url("../fonts/karla-latin-700.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; }
+
+.pds-text-size-fine {
+  font-size: 9px; }
+
+.pds-text-size-default {
+  font-size: 14px; }
+
+.pds-text-size-small {
+  font-size: 10px; }
+
+.pds-text-size-default {
+  font-size: 14px; }
+
+.pds-notification-badge-content {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box; }
+  .pds-notification-badge-content .pds-notification-badge-circle {
+    font-family: Open Sans, sans-serif;
+    margin: 0;
+    -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+    background-color: #0075DB;
+    text-align: center;
+    min-width: 24px;
+    border-radius: 9px;
+    padding: 3px 5px;
+    line-height: 12px; }
+    .pds-notification-badge-content .pds-notification-badge-circle.pds-has-count {
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 12px; }
+    .pds-notification-badge-content .pds-notification-badge-circle.pds-missing-notification-count {
+      min-width: inherit;
+      border-radius: 50%;
+      height: 10px;
+      width: 10px; }
+    .pds-notification-badge-content .pds-notification-badge-circle.pds-additional-styles {
+      background-color: #EB1313; }
+  .pds-notification-badge-content.pds-is-elevated .pds-notification-badge-circle {
+    background-color: #EB1313; }
+
+template {
+  display: none !important; }
+
+/**
+  This file is NOT the place to go make styles for the polymer components. This is just something to give
+  the root elements a display value so they will take up space in the DOM.
+
+  Occasionally there will be an exception such as pds-icon needs to set a default height and width on the element.
+ */
+pds-activity-feed-notification,
+pds-announce-text,
+pds-app-nav,
+pds-assignment-template-notification,
+pds-chat-quick-message,
+pds-checkbox-widget,
+pds-circular-progress,
+pds-class-block,
+pds-class-picker,
+pds-communication-notification,
+pds-date-picker-dialog,
+pds-date-widget,
+pds-dialog,
+pds-dynamic-select,
+pds-global-create-menu,
+pds-help-menu,
+pds-user-menu,
+pds-icon,
+pds-loader,
+pds-notification-badge,
+pds-notification-indicator,
+pds-assignment-return-notification,
+pds-number-widget,
+pds-numbered-slider,
+pds-overlay-dropdown,
+pds-progress-bar-widget,
+pds-radio-button-widget,
+pds-reporting-term-selector,
+pds-rich-text-editor,
+pds-search,
+pds-select-widget,
+pds-text-widget,
+pds-textarea-widget,
+pds-time-widget,
+pds-file-picker-widget,
+pds-parsed-html-content,
+pds-banner,
+pds-grid-widget-sort-fields,
+pds-calendar,
+pds-calendar-legend,
+pds-calendar-event-form,
+pds-grid-widget-pagination-control,
+pds-detail-select-widget {
+  display: block; }
+
+pds-user-avatar {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex; }
+  pds-user-avatar pds-img {
+    display: block; }
+
+pds-rich-text-display,
+pds-app-switcher,
+pds-pop-over {
+  display: inline-block; }
+
+pds-format-time,
+pds-format-number,
+pds-format-date {
+  display: inline; }
+
+pds-icon {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  fill: #677274;
+  -webkit-box-flex: 0;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto; }
+  pds-icon svg {
+    height: 26px;
+    width: 26px;
+    pointer-events: none; }
+
+pds-app-nav {
+  -webkit-box-flex: 0;
+      -ms-flex: 0 0 110px;
+          flex: 0 0 110px; }
+  @media (max-width: 768px) {
+    pds-app-nav {
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-orient: vertical;
+      -webkit-box-direction: normal;
+          -ms-flex-direction: column;
+              flex-direction: column;
+      -ms-flex-preferred-size: 50px;
+          flex-basis: 50px;
+      min-width: 50px; } }
+
+pds-app-switcher {
+  height: 100%; }
+
+.pds-icon-sprite {
+  display: none !important; }

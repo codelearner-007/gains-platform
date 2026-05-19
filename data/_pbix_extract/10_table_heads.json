@@ -1,0 +1,313 @@
+{
+  "Drill Through Report": {
+    "rows": 12,
+    "cols": [
+      "Page",
+      "Report Name",
+      "Report Catergory",
+      "Report",
+      "Sort",
+      "Type",
+      "Report Short Name",
+      "Sort 2"
+    ]
+  },
+  "Measure": {
+    "rows": 1,
+    "cols": [
+      "Measure"
+    ]
+  },
+  "Report Short Name": {
+    "rows": 2,
+    "cols": [
+      "Page",
+      "Report Name",
+      "Report Category",
+      "Report",
+      "Sort",
+      "Type",
+      "Report Short Name",
+      "Sort 2"
+    ]
+  },
+  "SchoolLogo_Parameter": {
+    "rows": 1,
+    "cols": [
+      "SchoolLogo_Parameter"
+    ]
+  },
+  "SchoolName_Parameter": {
+    "rows": 1,
+    "cols": [
+      "SchoolName_Parameter"
+    ]
+  },
+  "Titles": {
+    "rows": 1,
+    "cols": [
+      "Titles"
+    ]
+  },
+  "cube_grade_summary": {
+    "rows": 16747,
+    "cols": [
+      "School_ID",
+      "Subject_ID",
+      "Item_ID",
+      "Grade_Average",
+      "Percentage_InCorrect_Answers",
+      "Grade_Min",
+      "Grade_Max",
+      "ID"
+    ]
+  },
+  "cube_question_summary": {
+    "rows": 125775,
+    "cols": [
+      "Question_ID",
+      "Total_Possible_Point",
+      "Total_Score",
+      "Grade_Average",
+      "Percentage_InCorrect_Answers",
+      "ID",
+      "Item_ID",
+      "Incorrect_Choice_Details",
+      "Incorrect_Details_Name",
+      "Question",
+      "Position_Number",
+      "Item_Name",
+      "School_ID",
+      "Standard",
+      "Question_No",
+      "Least_Points_Earned",
+      "Correct_Answer",
+      "Question_Type",
+      "Average_Points_Earned",
+      "Associated_Question_ID",
+      "Total_Points",
+      "Most_Points_Earned",
+      "Correctly_Answered",
+      "Sub-Question",
+      "Session",
+      "Assessment_type",
+      "Subject",
+      "Grade",
+      "Section",
+      "Identifier",
+      "Standards",
+      "Qkey",
+      "Ukey",
+      "Subject_ID",
+      "assessment_date",
+      "Section_Name",
+      "Section_Instructors",
+      "Item_Type",
+      "Question_no_url",
+      "Incorrect_Choice_Details_Hash",
+      "Incorrect_Details_Name_Hash",
+      "TeacherName_Hash"
+    ]
+  },
+  "cube_question_summary_overall": {
+    "rows": 72968,
+    "cols": [
+      "Question_No",
+      "Question",
+      "Correct_Answer",
+      "Total_Possible_Point",
+      "Total_Score",
+      "Grade_Average",
+      "Percentage_InCorrect_Answers",
+      "Incorrect_Choice_Details",
+      "Incorrect_Details_Name",
+      "ID",
+      "Subject_ID",
+      "Standards",
+      "uKey",
+      "Question_no_url",
+      "Sorting Question_No",
+      "Position_Number",
+      "Description",
+      "Trimmed_Standard",
+      "Section_Instructors",
+      "Incorrect_Choice_Details_Hash",
+      "Incorrect_Details_Name_Hash",
+      "TeacherName_Hash"
+    ]
+  },
+  "cube_questionincorrectchoice_summary": {
+    "rows": 440811,
+    "cols": [
+      "Question_ID",
+      "Answer_Submission",
+      "Total_Student",
+      "Total_Possible_Point",
+      "Total_Score",
+      "Grade_Average",
+      "Percentage_InCorrect_Answers",
+      "ID",
+      "UKey"
+    ]
+  },
+  "cube_school_summary": {
+    "rows": 16747,
+    "cols": [
+      "School_ID",
+      "Subject_ID",
+      "Item_ID",
+      "Total_Questions",
+      "Total_Standards",
+      "Total_Students",
+      "Total_Possible_Point",
+      "Total_Score",
+      "Grade_Average",
+      "Percentage_InCorrect_Answers",
+      "ID"
+    ]
+  },
+  "cube_standard_summary": {
+    "rows": 62375,
+    "cols": [
+      "Strand_ID",
+      "Identifier",
+      "Total_Questions",
+      "Total_Standards",
+      "Total_Possible_Point",
+      "Total_Score",
+      "Grade_Average",
+      "Percentage_InCorrect_Answers",
+      "ID",
+      "Item_ID"
+    ]
+  },
+  "dim_item": {
+    "rows": 3758,
+    "cols": [
+      "Item_ID",
+      "Subject_ID",
+      "Item_Type",
+      "Item_Name",
+      "School_ID",
+      "Section_Name",
+      "Section_Instructors",
+      "assessment_date"
+    ]
+  },
+  "dim_question_data": {
+    "rows": 0,
+    "cols": [
+      "Question",
+      "Position_Number",
+      "Item_ID",
+      "Item_Name",
+      "School_ID",
+      "Standards",
+      "Question_ID",
+      "Question_No",
+      "Least_Points_Earned",
+      "Correct_Answer",
+      "Question_Type",
+      "Average_Points_Earned",
+      "Associated_Question_ID",
+      "Total_Points",
+      "Most_Points_Earned",
+      "Correctly_Answered",
+      "Sub-Question",
+      "Session",
+      "Assessment_type",
+      "Subject",
+      "Grade",
+      "Section",
+      "Qkey",
+      "Ukey",
+      "Standard",
+      "Identifier"
+    ]
+  },
+  "dim_standard": {
+    "rows": 7958,
+    "cols": [
+      "Cognitive_Complexity_Rating",
+      "Direct_Link",
+      "Grader",
+      "Identifier",
+      "Language",
+      "Schoology_Standard",
+      "Standard_New",
+      "Strand",
+      "Subject",
+      "cPalms_Standard",
+      "cluster",
+      "description",
+      "lastChangeDateTime",
+      "rundate",
+      "Custom.CleanedDescription",
+      "uniquesID"
+    ]
+  },
+  "dim_strand": {
+    "rows": 7071,
+    "cols": [
+      "Identifier",
+      "Strand",
+      "strand_ID",
+      "ID"
+    ]
+  },
+  "dim_subject": {
+    "rows": 2034,
+    "cols": [
+      "Subject_ID",
+      "School_ID",
+      "Subject",
+      "Assessment_type",
+      "Grade",
+      "Session",
+      "Item_Name",
+      "GradeSort",
+      "ShowHistorySubject",
+      "Grade_no"
+    ]
+  },
+  "fact_student_submission": {
+    "rows": 0,
+    "cols": [
+      "Identifier",
+      "Question_ID",
+      "User_UID",
+      "User_Role_ID",
+      "School_ID",
+      "Course_NID",
+      "Section_NID",
+      "Section_Code",
+      "Item_ID",
+      "Item_Name",
+      "First_Access",
+      "Latest_Attempt",
+      "Total_Time",
+      "Submission_Grade",
+      "Submission",
+      "Session",
+      "Assessment_type",
+      "Subject",
+      "Grade",
+      "Section",
+      "File_Name",
+      "Position_Number",
+      "Sub-Question",
+      "Answer_Submission",
+      "Correct_Answer",
+      "Points_Received",
+      "Points_Possible",
+      "User_id_ques_id",
+      "Grade_ID",
+      "Assessment_ID",
+      "Subject_ID",
+      "strand_ID",
+      "User_Name",
+      "Standard",
+      "User_id_ques_id_stand"
+    ]
+  }
+}

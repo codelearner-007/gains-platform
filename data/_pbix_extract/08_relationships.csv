@@ -1,0 +1,15 @@
+FromTableName,FromColumnName,ToTableName,ToColumnName,IsActive,Cardinality,CrossFilteringBehavior,FromKeyCount,ToKeyCount,RelyOnReferentialIntegrity
+cube_standard_summary,Item_ID,dim_item,Item_ID,1,M:1,Single,5303.0,,0
+cube_question_summary,Item_ID,dim_item,Item_ID,1,M:1,Single,5204.0,,0
+cube_grade_summary,Item_ID,dim_item,Item_ID,1,M:1,Single,5495.0,,0
+cube_school_summary,Item_ID,dim_item,Item_ID,1,M:1,Single,5495.0,,0
+dim_standard,Identifier,dim_strand,Identifier,1,M:M,Both,,,0
+dim_item,Subject_ID,dim_subject,Subject_ID,1,M:1,Both,1844.0,,0
+Report Short Name,Page,Drill Through Report,Page,1,1:1,Both,5.0,15.0,0
+cube_questionincorrectchoice_summary,Question_ID,cube_question_summary,Question_ID,1,M:M,Both,,,0
+fact_student_submission,Question_ID,cube_questionincorrectchoice_summary,Question_ID,1,M:M,Both,,,0
+cube_question_summary_overall,uKey,cube_question_summary,Ukey,1,M:M,Both,,,0
+cube_question_summary_overall,Standards,dim_standard,Schoology_Standard,1,M:M,Both,,,0
+cube_standard_summary,Identifier,dim_standard,Identifier,1,M:M,Single,,,0
+cube_standard_summary,Strand_ID,dim_strand,strand_ID,0,M:M,Single,,,0
+fact_student_submission,Answer_Submission,cube_questionincorrectchoice_summary,Answer_Submission,0,M:M,Both,,,0

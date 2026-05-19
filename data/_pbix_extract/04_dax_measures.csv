@@ -1,0 +1,925 @@
+TableName,Name,Expression,DisplayFolder,Description
+Measure,Performance Color,"
+VAR High = 0.8
+VAR Low = 0.7
+
+VAR Selectedattribute = Round('Measure'[Grade_Average_Standard_Measure],4)
+
+VAR Result = 
+        SWITCH(TRUE(),
+        Selectedattribute>=High, ""#00FF06"", //longitudinal green
+        AND(Selectedattribute<Low,Selectedattribute>0), ""#FFCCFF"",
+     //   Selectedattribute<Low, ""Red"",
+        ANd(Selectedattribute>=Low,Selectedattribute<High), ""Yellow""
+        )
+
+Return
+Result",,
+Measure,Grade_Average_Measure,"
+    VAR AvgGrade = AVERAGE('cube_standard_summary'[Grade_Average])
+    RETURN AvgGrade",,
+Measure,_Data Bar - Grade Average,"
+VAR MaxValue = 1
+VAR CurrentValue = 'Measure'[Grade_Average_Standard_Measure]
+VAR BarWidth = 250 * CurrentValue / MaxValue
+VAR AvgValue = AVERAGEX(ALLSELECTED('cube_school_summary'), [Grade_Average])
+VAR MarkerPosition = 250 * AvgValue / MaxValue
+VAR Percentage = FORMAT(CurrentValue * 100, ""0.0"") & ""%""
+VAR color = [Performance Color]
+
+RETURN
+IF(
+    ISINSCOPE('dim_item'[Item_Name]), 
+    ""data:image/svg+xml;utf8,<svg width='500' height='25' xmlns='http://www.w3.org/2000/svg'>
+        <rect width='"" & FORMAT(BarWidth, ""0"") & ""' height='25' fill='"" & color & ""' />
+        <line x1='"" & FORMAT(MarkerPosition, ""0"") & ""' y1='0' x2='"" & FORMAT(MarkerPosition, ""0"") & ""' y2='25' stroke='blue' stroke-width='2' stroke-dasharray='3'/>
+        <text x='"" & (BarWidth + 5) & ""' y='18' font-family='Segoe UI' font-size='13' fill='black'>"" & Percentage & ""</text>
+    </svg>"", 
+    BLANK()
+
+)",,
+Measure,Grade Min,"
+    // VAR AvgGrade = 
+    //     CALCULATE(
+    //         MIN('cube_question_summary_overall'[Grade_Average]),
+    //         NOT(ISBLANK('cube_grade_summary'[Item_Id]))
+    //     )
+    // RETURN 
+    
+
+     MINX(
+    VALUES('cube_question_summary_overall'[Question_No]),
+    CALCULATE(AVERAGE('cube_question_summary_overall'[Grade_Average]))
+)
+
+// VAR AvgPerQuestion =
+//     ADDCOLUMNS(
+//         SUMMARIZE(
+//             'cube_question_summary_overall',
+//             'cube_question_summary_overall'[Question_No]
+//         ),
+//         ""AvgGrade"", 
+//         AVERAGEX(
+//             FILTER(
+//                 'cube_question_summary_overall',
+//                 'cube_question_summary_overall'[Question_No] = EARLIER('cube_question_summary_overall'[Question_No])
+//             ),
+//             'cube_question_summary_overall'[Grade_Average]
+//         )
+//     )
+// RETURN
+//     MINX(AvgPerQuestion, [AvgGrade])
+
+// VAR MaxPerQuestion =
+//     ADDCOLUMNS(
+//         SUMMARIZE(
+//             'cube_question_summary_overall',
+//             'cube_question_summary_overall'[Question_No]
+//         ),
+//         ""MaxGrade"",
+//         CALCULATE(
+//             MAX('cube_question_summary_overall'[Grade_Average])
+//         )
+//     )
+// RETURN
+//     MINX(MaxPerQuestion, [MaxGrade])
+
+
+
+
+",,
+Measure,Grade Max,"
+//  VAR AvgGrade = 
+//         CALCULATE(
+//             MAX('cube_question_summary_overall'[Grade_Average]),
+//             NOT(ISBLANK('cube_grade_summary'[Item_Id]))
+//         )
+//     RETURN AvgGrade
+
+MAXX(
+    VALUES('cube_question_summary_overall'[Question_No]),
+    CALCULATE(AVERAGE('cube_question_summary_overall'[Grade_Average]))
+)",,
+Measure,Total Student,"SUMX(
+    SUMMARIZE(
+        'cube_school_summary',
+        'cube_school_summary'[Item_ID],
+        ""UniqueTotalQuestions"", MAX('cube_school_summary'[Total_Students])
+    ),
+    [UniqueTotalQuestions]
+)",,
+Measure,Total Question,"
+
+// MAX('cube_standard_summary'[Total_Questions])
+
+DISTINCTCOUNT('cube_question_summary_overall'[Question_No])",,
+Measure,Total Standard,"
+// MAX('cube_standard_summary'[Total_Standards])
+DISTINCTCOUNT('cube_question_summary_overall'[Standards])",,
+Measure,Grade Average,"
+//     VAR AvgGrade = AVERAGE('cube_standard_summary'[Grade_Average])
+//     RETURN FORMAT(AvgGrade,""Percent"")
+
+
+    // AVERAGE('cube_standard_summary'[Grade_Average])
+AVERAGE('cube_question_summary_overall'[Grade_Average])",,
+Measure,Performance Color Strand,"
+VAR High = 0.8
+VAR Low = 0.7
+
+VAR Selectedattribute = 'Measure'[Grade_Average_Standard_Measure]
+
+VAR Result = 
+        SWITCH(TRUE(),
+        Selectedattribute>=High, ""#00FF06"", //longitudinal green
+        AND(Selectedattribute<Low,Selectedattribute>0), ""#FFCCFF"",
+     //   Selectedattribute<Low, ""Red"",
+        ANd(Selectedattribute>Low,Selectedattribute<High), ""Yellow""
+        )
+
+Return
+Result",,
+Measure,Grade_Average_Strand_Measure,"
+    VAR AvgGrade = 
+        CALCULATE(
+            AVERAGE('cube_question_summary_overall'[Grade_Average])
+        )
+    RETURN AvgGrade",,
+Measure,Grade_Average_Standard_Measure,"
+    // VAR AvgGrade = 
+    //     CALCULATE(
+    //         AVERAGE('cube_standard_summary'[Grade_Average]),
+    //         NOT(ISBLANK('cube_standard_summary'[Identifier]))
+    //     )
+    // RETURN AvgGrade
+
+    //    VAR AvgGrade = 
+    //     CALCULATE(
+    //         AVERAGE('cube_question_summary_overall'[Grade_Average])
+    //     )
+    // RETURN AvgGrade
+
+//     AVERAGEX(
+//     SUMMARIZE(
+//         FILTER(
+//             'cube_question_summary_overall',
+//             NOT ISBLANK('cube_question_summary_overall'[Standards])
+//         ),
+//         'cube_question_summary_overall'[Standards],
+//         'cube_question_summary_overall'[Question_No],
+//         ""GradeAvg"", AVERAGE('cube_question_summary_overall'[Grade_Average])
+//     ),
+//     [GradeAvg]
+// )
+
+AVERAGE('cube_question_summary_overall'[Grade_Average])
+",,
+Measure,Performance Color Standard,"
+VAR High = 0.8
+VAR Low = 0.7
+
+VAR Selectedattribute = AVERAGE('cube_question_summary_overall'[Grade_Average])
+
+VAR Result = 
+        SWITCH(TRUE(),
+        Selectedattribute>=High, ""#00FF06"", //longitudinal green
+        AND(Selectedattribute<Low,Selectedattribute>=0), ""#FFCCFF"",
+     //   Selectedattribute<Low, ""Red"",
+        ANd(Selectedattribute>=Low,Selectedattribute<High), ""Yellow""
+        )
+
+Return
+Result",,
+Titles,H3 - Total Students,"""Total Students: ""&'Measure'[Total Student]",,
+Titles,Instructor(s):,"
+ CONCATENATEX(
+    DISTINCT('dim_Item'[Section_Instructors]),
+    'dim_Item'[Section_Instructors],
+    UNICHAR(10)
+)
+
+",,
+Titles,H3 - # of  questions,"
+""Number of Questions: ""&
+CALCULATE('Measure'[Total Question])",,
+Titles,H3 - # of standards,"
+""Number of Standards: ""&
+CALCULATE('Measure'[Total Standard])",,
+Titles,H3 - Grade Average,"
+""Grade Average: ""&
+FORMAT([Grade Average2],""Percent"")",,
+Titles,H2 - Assessment Type,"
+VAR _fieldValue = VALUES(dim_subject[Assessment_type])
+VAR _trimmedValues = 
+    SELECTCOLUMNS(
+        _fieldValue,
+        ""TrimmedAssessment"", TRIM(SUBSTITUTE(dim_subject[Assessment_type], ""  "", "" ""))
+    )
+RETURN
+CONCATENATEX(
+    DISTINCT(_trimmedValues),
+    [TrimmedAssessment],
+    "", ""
+)
+",,
+Titles,H2 - Course and Unit,"
+var _Title = ""Course: ""
+var _fieldValue = VALUES('dim_subject'[Grade])
+var _fieldValue2 = VALUES('dim_item'[Item_Name])
+var _field = MIN('dim_subject'[Grade])
+Return
+
+CONCATENATEX (
+_fieldValue,
+'dim_subject'[Grade],
+"", ""
+)&
+"": ""&
+CONCATENATEX (
+_fieldValue2,
+'dim_item'[Item_Name],
+"", ""
+)",,
+Titles,__Title,"""Assessments Dashboard""",,
+Measure,Total Question Standard,"
+// MAXX(
+//     SUMMARIZE(
+//         FILTER(
+//             'cube_question_summary_overall',
+//             NOT(ISBLANK('cube_question_summary_overall'[Standards])) &&
+//             CALCULATE(COUNTROWS('cube_question_summary_overall')) > 0
+//         ),
+//         'cube_question_summary_overall'[Standards],
+//         ""UniqueTotalQuestions"", DISTINCTCOUNT('cube_question_summary_overall'[Question_No])
+//     ),
+//     [UniqueTotalQuestions]
+// )
+
+CALCULATE(
+    COUNTROWS(
+        SUMMARIZE(
+            FILTER(
+                'cube_question_summary_overall',
+                NOT(ISBLANK('cube_question_summary_overall'[Standards])) &&
+                CALCULATE(COUNTROWS('cube_question_summary_overall')) > 0
+            ),
+            'cube_question_summary_overall'[Standards],
+            'cube_question_summary_overall'[Question_No]
+        )
+    )
+)
+",,
+Measure,Total Question Strand,"
+// SUMX(
+//     SUMMARIZE(
+//         FILTER(
+//             'cube_standard_summary',
+//             NOT(ISBLANK('cube_standard_summary'[Identifier]))
+//         ),
+//         'cube_standard_summary'[Identifier],
+//         ""UniqueTotalQuestions"", MAX('cube_standard_summary'[Total_Questions])
+//     ),
+//     [UniqueTotalQuestions]
+// )
+
+MAXX(
+    ADDCOLUMNS(
+        VALUES('dim_standard'[Strand]),
+        ""UniqueTotalQuestions"", CALCULATE(DISTINCTCOUNT('cube_question_summary_overall'[Question_No]))
+    ),
+    [UniqueTotalQuestions]
+)
+ ",,
+Measure,Total Standard by Strand,"SUMX(
+    SUMMARIZE(
+        'cube_standard_summary',
+        'cube_standard_summary'[Strand_ID],
+        ""UniqueTotalQuestions"", MAX('cube_standard_summary'[Total_Standards])
+    ),
+    [UniqueTotalQuestions]
+)",,
+Measure,Possible Point,"SUMX(
+    SUMMARIZE(
+        'cube_questionincorrectchoice_summary',
+        'cube_questionincorrectchoice_summary'[Question_ID],
+        'cube_questionincorrectchoice_summary'[Answer_Submission],
+        ""UniqueTotalQuestions"", MAX('cube_questionincorrectchoice_summary'[Total_Possible_Point])
+    ),
+    [UniqueTotalQuestions]
+)",,
+Measure,Total Possible Point,"SUMX(
+    SUMMARIZE(
+        'cube_question_summary',
+        'cube_question_summary'[Question_ID],
+        ""UniqueTotalQuestions"", MAX('cube_question_summary'[Total_Possible_Point])
+    ),
+    [UniqueTotalQuestions]
+)",,
+Measure,% Correct Answer,AVERAGE('cube_question_summary_overall'[Grade_Average]),,
+Measure,Score,SUM('cube_questionincorrectchoice_summary'[Total_Score]),,
+Measure,Incorrect Choice details,"
+VAR TotalPoints = [Total Possible Point]
+VAR CorrectPerc = [% Correct Answer]
+VAR IncorrectSubmissions = ADDCOLUMNS ( FILTER(VALUES ( 'cube_questionincorrectchoice_summary'[Answer_Submission]),[Score]=0), ""TotalPoints"", TotalPoints )
+VAR IncorrectPerc = ADDCOLUMNS ( IncorrectSubmissions, ""Perc"", DIVIDE ( [Possible Point], TotalPoints ) )
+// - DIVIDE([Score],CALCULATE([Possible Points], ALLSELECTED('Student Submissions'[Answer Submission])))
+VAR Results = ADDCOLUMNS (
+    IncorrectPerc,
+    ""Result"", FORMAT ( [Perc], ""0.00%"" ) &"" chose ["" & 'cube_questionincorrectchoice_summary'[Answer_Submission] & ""]""
+)
+RETURN
+IF (
+    TotalPoints > 0,
+    CONCATENATEX (
+        SELECTCOLUMNS (
+            TOPN ( 1, Results, [TotalPoints] ),
+            ""Result"", [Result]
+        ),
+        [Result],
+        CONCATENATE ( "","", UNICHAR ( 10 ) )
+    )
+)",,
+Measure,Incorrect Details Name,"
+VAR FilteredStudents = 
+    FILTER(
+        'fact_student_submission',
+        'fact_student_submission'[Points_Received] <> ""1""
+    )
+VAR GroupedData = 
+    SUMMARIZE(
+        FilteredStudents,
+        'fact_student_submission'[Answer_Submission],
+        ""StudentNames"", CONCATENATEX(
+            FILTER(
+                FilteredStudents,
+                'fact_student_submission'[Answer_Submission] = EARLIER('fact_student_submission'[Answer_Submission])
+            ),
+            'fact_student_submission'[User_Name],
+            "", ""
+        )
+    )
+RETURN
+    CONCATENATEX(
+        GroupedData,
+        ""["" & 'fact_student_submission'[Answer_Submission] & ""]: "" & UNICHAR(10) & ""("" & [StudentNames] & "")"",
+        UNICHAR(10) & UNICHAR(10),
+        'fact_student_submission'[Answer_Submission]
+    )
+
+",,
+Measure,Incorrect_Grade_Average_Standard_Measure,"
+    // VAR AvgGrade = 
+    //     CALCULATE(
+    //         AVERAGE('cube_standard_summary'[Percentage_InCorrect_Answers]),
+    //         NOT(ISBLANK('cube_standard_summary'[Identifier]))
+    //     )
+    // RETURN AvgGrade
+//  AVERAGEX(
+//     SUMMARIZE(
+//         FILTER(
+//             'cube_question_summary_overall',
+//             NOT ISBLANK('cube_question_summary_overall'[Standards])
+//         ),
+//         'cube_question_summary_overall'[Standards],
+//         'cube_question_summary_overall'[Question_No],
+//         ""GradeAvg"", AVERAGE('cube_question_summary_overall'[Grade_Average])
+//     ),
+    1-[Grade_Average_Standard_Measure]
+",,
+Measure,Performance Color Question,"
+VAR High = 0.8
+VAR Low = 0.7
+
+VAR Selectedattribute = 'Measure'[% Correct Answer]
+
+VAR Result = 
+        SWITCH(TRUE(),
+        Selectedattribute>=High, ""#00FF06"", //longitudinal green
+        AND(Selectedattribute<Low,Selectedattribute>=0), ""#FFCCFF"",
+     //   Selectedattribute<Low, ""Red"",
+        ANd(Selectedattribute>=Low,Selectedattribute<High), ""Yellow""
+        )
+
+Return
+Result",,
+Measure,Total Incorrect Choices,CALCULATE(DISTINCTCOUNT('fact_student_submission'[Answer_Submission])),,
+Titles,H2 - Question Details,"""Incorrect Answer Details""",,
+Titles,H1 - Report Header,"""Grade Performance by Strand""",,
+Measure,% Correct Answer By Incorrect Choice,"DIVIDE([Possible Point],[Total Possible Point])",,
+Measure,Measure_Standard,"FIRSTNONBLANK('dim_question_data'[Standards],BLANK())
+",,
+Measure,Measure_Standards,"FIRSTNONBLANK('dim_standard'[Schoology_Standard],BLANK())
+",,
+dim_standard,blank,"""""",,
+Drill Through Report,Drillthrough Selection,SELECTEDVALUE('Drill Through Report'[Page]),,
+Titles,H1 - Longitudinal,"""Paginated PDF Report |""",,
+Measure,FormattedString,"
+VAR OriginalString = SELECTEDVALUE(cube_question_summary[Question]) // Gets the first non-blank value
+VAR ReplaceOpenTag = SUBSTITUTE(OriginalString, ""<"", ""<img width='30%' width='30%' src='"")
+VAR FinalString = SUBSTITUTE(ReplaceOpenTag, "">"", ""' />"")
+RETURN
+    FinalString
+",,
+fact_student_submission,# of students,DISTINCTCOUNT(fact_student_submission[User_UID]),,
+cube_question_summary_overall,CombineStandardsColumn,"
+CONCATENATEX(
+    DISTINCT(cube_question_summary_overall[Standards]), 
+    cube_question_summary_overall[Standards], 
+    "", "" 
+)
+",,
+cube_question_summary_overall,concateIncorrect_Choice_Details,"CONCATENATEX(
+    cube_question_summary_overall, 
+    cube_question_summary_overall[Incorrect_Choice_Details], 
+    "", "" 
+)
+",,
+cube_question_summary_overall,concateIncorrect_Details_Name,"CONCATENATEX(
+    cube_question_summary_overall, 
+    cube_question_summary_overall[Incorrect_Details_Name], 
+    "", "" 
+)",,
+cube_question_summary_overall,questionDax,"FIRSTNONBLANK(cube_question_summary_overall[Question],1)",,
+cube_question_summary_overall,__FirstFormatted_correct_,"
+
+// VAR CombinedDetails = 
+//     CONCATENATEX(
+//         FILTER(
+//             VALUES(cube_question_summary_overall[Position_Number]), 
+//             NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+//             cube_question_summary_overall[Position_Number] <> ""N/A""
+//         ),
+//         cube_question_summary_overall[Position_Number] & "":  "" & 
+//         FIRSTNONBLANK(cube_question_summary_overall[Correct_Answer], 1), 
+//         UNICHAR(10)  -- Line break
+//     )
+// RETURN 
+//     IF(
+//         ISBLANK(CombinedDetails),
+//         FIRSTNONBLANK(cube_question_summary_overall[Correct_Answer], 1), 
+//         CombinedDetails
+//     )
+
+VAR CombinedDetails = 
+    CONCATENATEX(
+        FILTER(
+            VALUES(cube_question_summary_overall[Position_Number]), 
+            NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+            cube_question_summary_overall[Position_Number] <> ""N/A"" &&
+            NOT(ISBLANK(FIRSTNONBLANK(cube_question_summary_overall[Correct_Answer], 1))) -- Ensure Correct_Answer is not blank
+        ),
+        VAR CorrectAns = FIRSTNONBLANK(cube_question_summary_overall[Correct_Answer], 1)
+        RETURN 
+            IF(
+                ISBLANK(CorrectAns), 
+                """",  -- If Correct_Answer is blank, return empty
+                cube_question_summary_overall[Position_Number] & "": "" & CorrectAns
+            ), 
+        UNICHAR(10),  -- Line break
+        VALUE(cube_question_summary_overall[Position_Number]),  -- Sorting column
+        ASC  -- Sort in ascending order
+    )
+
+RETURN 
+    IF(
+        ISBLANK(CombinedDetails),
+        FIRSTNONBLANK(cube_question_summary_overall[Correct_Answer], 1), 
+        CombinedDetails
+    )",,
+cube_question_summary_overall,__FirstFormatted_Incorrect_Choice_Details,"
+// VAR AllPositions = CONCATENATEX(
+//     DISTINCT(cube_question_summary_overall[Position_Number]), 
+//     cube_question_summary_overall[Position_Number], 
+//     "", ""
+// )
+// VAR FirstChoiceDetail = CONCATENATEX(
+//     DISTINCT(cube_question_summary_overall[Incorrect_Choice_Details]), 
+//     cube_question_summary_overall[Incorrect_Choice_Details], 
+//     "", ""
+// )
+// VAR FirstChoiceDetail1 = FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1)
+// RETURN 
+//     IF(
+//         ISBLANK(AllPositions) || AllPositions = ""N/A"",
+//         FirstChoiceDetail, 
+//         AllPositions & "". "" & FirstChoiceDetail
+//     )
+
+// VAR CombinedDetails = 
+//     CONCATENATEX(
+//         VALUES(cube_question_summary_overall[Position_Number]), 
+//         cube_question_summary_overall[Position_Number] & "". "" & 
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1), 
+//         "", ""
+//     )
+// RETURN 
+//     IF(
+//         ISBLANK(CombinedDetails) || CombinedDetails = ""N/A"",
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1), 
+//         CombinedDetails
+//     )
+
+// VAR CombinedDetails = 
+//     CONCATENATEX(
+//         FILTER(
+//             VALUES(cube_question_summary_overall[Position_Number]), 
+//             NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+//             cube_question_summary_overall[Position_Number] <> ""N/A""
+//         ),
+//         cube_question_summary_overall[Position_Number] & "". "" & 
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1), 
+//         "", ""
+//     )
+// RETURN 
+//     IF(
+//         ISBLANK(CombinedDetails),
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1), 
+//         CombinedDetails
+//     )
+
+// VAR CombinedDetails = 
+//     CONCATENATEX(
+//         FILTER(
+//             VALUES(cube_question_summary_overall[Position_Number]), 
+//             NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+//             cube_question_summary_overall[Position_Number] <> ""N/A"" &&
+//             NOT(ISBLANK(FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1))) -- Ensure Incorrect_Choice_Details is not blank
+//         ),
+//         VAR IncorrectDetail = FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1)
+//         RETURN 
+//             IF(
+//                 ISBLANK(IncorrectDetail), 
+//                 """",  -- If Incorrect_Choice_Details is blank, return empty
+//                 cube_question_summary_overall[Position_Number] & "": "" & IncorrectDetail
+//             ), 
+//         UNICHAR(10),  -- Line break
+//         cube_question_summary_overall[Position_Number],  -- Sorting column
+//         ASC  -- Sort in ascending order
+//     )
+
+// RETURN 
+//     IF(
+//         ISBLANK(CombinedDetails),
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1), 
+//         CombinedDetails
+//     )
+
+VAR GradeAverage = FIRSTNONBLANK(cube_question_summary_overall[Grade_Average], 1)
+
+RETURN 
+    IF(
+        GradeAverage = 1,  -- Grade_Average is 100% (since it's stored as a decimal)
+        BLANK(),  -- Return blank if Grade_Average is 100%
+        VAR CombinedDetails = 
+            CONCATENATEX(
+                FILTER(
+                    VALUES(cube_question_summary_overall[Position_Number]), 
+                    NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+                    cube_question_summary_overall[Position_Number] <> ""N/A"" &&
+                    NOT(ISBLANK(FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1))) -- Ensure Incorrect_Choice_Details is not blank
+                ),
+                VAR IncorrectDetail = FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1)
+                RETURN 
+                    IF(
+                        ISBLANK(IncorrectDetail), 
+                        """",  -- If Incorrect_Choice_Details is blank, return empty
+                        cube_question_summary_overall[Position_Number] & "": "" & IncorrectDetail
+                    ), 
+                UNICHAR(10),  -- Line break
+                VALUE(cube_question_summary_overall[Position_Number]),  -- Sorting column
+                ASC  -- Sort in ascending order
+            )
+        
+        RETURN 
+            IF(
+                ISBLANK(CombinedDetails),
+                FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Choice_Details], 1), 
+                CombinedDetails
+            )
+    )
+
+",,
+cube_question_summary_overall,__FirstFormatted_Incorrect_Details_Name,"
+// VAR AllPositions = CONCATENATEX(
+//     DISTINCT(cube_question_summary_overall[Position_Number]), 
+//     cube_question_summary_overall[Position_Number], 
+//     "", ""
+// )
+
+// VAR FirstDetailsName = CONCATENATEX(
+//     DISTINCT(cube_question_summary_overall[Incorrect_Details_Name]), 
+//     cube_question_summary_overall[Incorrect_Details_Name], 
+//     "", ""
+// )
+
+// VAR FirstDetailsName1 = FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1)
+// RETURN 
+//     IF(
+//         ISBLANK(AllPositions) || AllPositions = ""N/A"",
+//         FirstDetailsName, 
+//         AllPositions & "". "" & FirstDetailsName1
+//     )
+
+ 
+// VAR CombinedDetails = 
+//     CONCATENATEX(
+//         FILTER(
+//             VALUES(cube_question_summary_overall[Position_Number]), 
+//             NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+//             cube_question_summary_overall[Position_Number] <> ""N/A""
+//         ),
+//         cube_question_summary_overall[Position_Number] & "". "" & 
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1), 
+//         "", ""
+//     )
+// RETURN 
+//     IF(
+//         ISBLANK(CombinedDetails),
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1), 
+//         CombinedDetails
+//     )
+
+// VAR CombinedDetails = 
+//     CONCATENATEX(
+//         FILTER(
+//             VALUES(cube_question_summary_overall[Position_Number]), 
+//             NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+//             cube_question_summary_overall[Position_Number] <> ""N/A"" &&
+//             NOT(ISBLANK(FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1))) -- Ensure Incorrect_Choice_Details is not blank
+//         ),
+//         VAR IncorrectDetail = FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1)
+//         RETURN 
+//             IF(
+//                 ISBLANK(IncorrectDetail), 
+//                 """",  -- If Incorrect_Choice_Details is blank, return empty
+//                 cube_question_summary_overall[Position_Number] & "": "" & IncorrectDetail
+//             ), 
+//         UNICHAR(10),  -- Line break
+//         cube_question_summary_overall[Position_Number],  -- Sorting column
+//         ASC  -- Sort in ascending order
+//     )
+
+// RETURN 
+//     IF(
+//         ISBLANK(CombinedDetails),
+//         FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1), 
+//         CombinedDetails
+//     )
+
+VAR GradeAverage = MAX(cube_question_summary_overall[Grade_Average])
+ 
+RETURN
+IF (
+    GradeAverage = 1,  -- If 100%, return blank
+    BLANK(),
+   
+    VAR FilteredTable =
+        FILTER (
+            cube_question_summary_overall,
+            NOT ISBLANK(cube_question_summary_overall[Position_Number]) &&
+            cube_question_summary_overall[Position_Number] <> ""N/A"" &&
+            NOT ISBLANK(cube_question_summary_overall[Incorrect_Details_Name])
+        )
+ 
+    VAR DistinctCombined =
+        DISTINCT (
+            SELECTCOLUMNS (
+                FilteredTable,
+                ""ConcatValue"",
+                cube_question_summary_overall[Position_Number] & "": "" & cube_question_summary_overall[Incorrect_Details_Name],
+                ""SortOrder"", VALUE(cube_question_summary_overall[Position_Number])
+            )
+        )
+ 
+    VAR Result =
+        CONCATENATEX (
+            DistinctCombined,
+            [ConcatValue],
+            UNICHAR(10),
+            [SortOrder],
+            ASC
+        )
+ 
+    RETURN
+        IF (
+            ISBLANK(Result),
+            FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1),
+            Result
+        )
+)
+ 
+ 
+/*
+VAR GradeAverage = MAX(cube_question_summary_overall[Grade_Average])
+
+RETURN 
+    IF(
+        GradeAverage = 1,  -- Ensure Grade_Average is exactly 100%
+        BLANK(),  -- Return blank if Grade_Average is 100%
+        VAR CombinedDetails = 
+            CONCATENATEX(
+                FILTER(
+                    cube_question_summary_overall, 
+                    NOT(ISBLANK(cube_question_summary_overall[Position_Number])) && 
+                    cube_question_summary_overall[Position_Number] <> ""N/A"" &&
+                    NOT(ISBLANK(cube_question_summary_overall[Incorrect_Details_Name])) -- Ensure Incorrect_Details_Name is not blank
+                ),
+                cube_question_summary_overall[Position_Number] & "": "" & cube_question_summary_overall[Incorrect_Details_Name],
+                UNICHAR(10),  -- Line break
+                VALUE(cube_question_summary_overall[Position_Number]),  -- Sorting column
+                ASC  -- Sort in ascending order
+            )
+        
+        RETURN 
+            IF(
+                ISBLANK(CombinedDetails),
+                FIRSTNONBLANK(cube_question_summary_overall[Incorrect_Details_Name], 1), 
+                CombinedDetails
+            )
+    )
+    */
+",,
+Measure,Performance Color Standard2,"
+VAR High = 0.8
+VAR Low = 0.7
+ 
+VAR Selectedattribute = 'Measure'[Grade_Average_Standard_Measure]
+ 
+VAR Result =
+        SWITCH(TRUE(),
+        Selectedattribute>=High, ""#00FF06"", //longitudinal green
+        AND(Selectedattribute<Low,Selectedattribute>0), ""#FFCCFF"",
+     //   Selectedattribute<Low, ""Red"",
+        ANd(Selectedattribute>=Low,Selectedattribute<High), ""Yellow""
+        )
+ 
+Return
+Result",,
+Measure,Grade Average2,"
+     VAR AvgGrade = AVERAGE('cube_standard_summary'[Grade_Average])
+     RETURN FORMAT(AvgGrade, ""0.0%"")
+",,
+Measure,Treemap Color,"
+VAR strand = SELECTEDVALUE(dim_standard[Strand])
+
+-- Get numeric values from the first 3 characters
+VAR c1 = UNICODE(LEFT(strand, 1))
+VAR c2 = UNICODE(MID(strand, 2, 1))
+VAR c3 = UNICODE(MID(strand, 3, 1))
+
+-- Create a pseudo-random number from the characters
+VAR hash = c1 * 10000 + c2 * 100 + c3
+
+-- Generate light RGB values (between 200-255)
+VAR r = 200 + MOD(hash, 56)
+VAR g = 200 + MOD(INT(hash / 1000), 56)
+VAR b = 200 + MOD(INT(hash / 1000000), 56)
+
+-- Convert to hex
+RETURN
+    ""#"" & 
+    RIGHT(""0"" & FORMAT(r, ""X""), 2) &
+    RIGHT(""0"" & FORMAT(g, ""X""), 2) &
+    RIGHT(""0"" & FORMAT(b, ""X""), 2)
+",,
+cube_questionincorrectchoice_summary,test,"CALCULATE(
+    SUM(cube_questionincorrectchoice_summary[Total_Possible_Point]),
+    ALLEXCEPT(
+        cube_questionincorrectchoice_summary,
+        cube_questionincorrectchoice_summary[Question_ID]
+    )
+)",,
+cube_questionincorrectchoice_summary,Measure,"
+DIVIDE(
+    SUM('cube_questionincorrectchoice_summary'[Total_Possible_Point]),
+    CALCULATE(SUM('cube_questionincorrectchoice_summary'[Total_Possible_Point]), ALL('cube_questionincorrectchoice_summary'))
+)",,
+cube_questionincorrectchoice_summary,# of Students (Sum of Row-wise),"
+SUMX(
+    VALUES(fact_student_submission[Answer_Submission]),
+    CALCULATE(DISTINCTCOUNT(fact_student_submission[User_UID]))
+)",,
+fact_student_submission,% of All Answers,"DIVIDE(
+    SUMX('fact_student_submission', VALUE('fact_student_submission'[Points_Possible])),
+    CALCULATE(
+        SUMX('fact_student_submission', VALUE('fact_student_submission'[Points_Possible])),
+        ALL('fact_student_submission')
+    )
+)
+",,
+Measure,Grade_Average_Standard_Measure 3,"
+// AVERAGEX(
+//     SUMMARIZE(
+//         'cube_question_summary_overall',
+//         'cube_question_summary_overall'[Standards],
+//         ""AvgPerStandard"", CALCULATE(AVERAGE('cube_question_summary_overall'[Grade_Average]))
+//     ),
+//     [AvgPerStandard]
+// )
+AVERAGE('cube_question_summary_overall'[Grade_Average])",,
+Measure,Performance_Color_Standard 3,"
+VAR High = 0.8
+VAR Low = 0.7
+
+VAR StandardAverage = 
+    AVERAGEX(
+        SUMMARIZE(
+            'cube_question_summary_overall',
+            'cube_question_summary_overall'[Standards],
+            ""Standard_Avg"", CALCULATE(AVERAGE('cube_question_summary_overall'[Grade_Average]))
+        ),
+        [Standard_Avg]
+    )
+
+VAR Result = 
+    SWITCH(
+        TRUE(),
+        StandardAverage >= High, ""#00FF06"",         // Green
+        StandardAverage < Low && StandardAverage >= 0, ""#FFCCFF"", // Pink
+        StandardAverage >= Low && StandardAverage < High, ""Yellow""
+    )
+
+RETURN
+Result
+",,
+cube_question_summary_overall,CombineDescriptionsColumn,"
+// CONCATENATEX(
+//     DISTINCT(cube_question_summary_overall[Description]), 
+//     cube_question_summary_overall[Description], 
+//     UNICHAR(10) 
+// )
+
+
+
+// VAR FullStandards = 
+//     CONCATENATEX(
+//         DISTINCT(cube_question_summary_overall[Standards]), 
+//         cube_question_summary_overall[Standards], 
+//         "", ""
+//     )
+
+// VAR FirstStandard = 
+//     LEFT(FullStandards, 
+//         FIND("","", FullStandards & "","") - 1
+//     )
+
+// RETURN
+//     CALCULATE(
+//         MAX(cube_question_summary_overall[Description]),
+//         cube_question_summary_overall[Standards] = FirstStandard
+//     )
+
+VAR FullStandards =
+CONCATENATEX(
+        DISTINCT(cube_question_summary_overall[Standards]), 
+        cube_question_summary_overall[Standards], 
+        "", ""
+    )
+
+VAR FirstStandard = 
+    TRIM(LEFT(FullStandards, FIND("","", FullStandards & "","") - 1))
+
+VAR RemainingStandards = 
+    TRIM(
+        SUBSTITUTE(FullStandards, FirstStandard & "","", """")
+    )
+
+VAR ChosenStandard = 
+    IF(
+        LOWER(FirstStandard) = ""other"",
+        TRIM(LEFT(RemainingStandards, FIND("","", RemainingStandards & "","") - 1)),
+        FirstStandard
+    )
+
+RETURN
+    CALCULATE(
+        MAX(cube_question_summary_overall[Description]),
+        cube_question_summary_overall[Standards] = ChosenStandard
+    )
+
+
+ 
+ ",,
+Measure,Performance Color_subject,"
+VAR High = 0.8
+VAR Low = 0.7
+
+VAR Selectedattribute = AVERAGE('cube_standard_summary'[Grade_Average])
+
+VAR Result = 
+        SWITCH(TRUE(),
+        Selectedattribute>=High, ""#00FF06"", //longitudinal green
+        AND(Selectedattribute<Low,Selectedattribute>0), ""#FFCCFF"",
+     //   Selectedattribute<Low, ""Red"",
+        ANd(Selectedattribute>=Low,Selectedattribute<High), ""Yellow""
+        )
+
+Return
+Result",,
+Measure,subjectAvg,"
+IF (
+    ISBLANK ( AVERAGE ( cube_standard_summary[Grade_Average] ) ),
+    0,
+    AVERAGE ( cube_standard_summary[Grade_Average] )
+)
+",,

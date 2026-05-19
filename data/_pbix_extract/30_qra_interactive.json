@@ -1,0 +1,2456 @@
+{
+  "name": "Question Response Analysis Interactive",
+  "size": {
+    "width": 1280.0,
+    "height": 720.0
+  },
+  "background": "{\"relationships\":[{\"source\":\"1c5525b3e0c89399e142\",\"target\":\"ab5acad0a408d1416cec\",\"type\":1},{\"source\":\"ab5acad0a408d1416cec\",\"target\":\"1c5525b3e0c89399e142\",\"type\":1}],\"objects\":{\"outspace\":[{\"properties\":{\"color\":{\"solid\":{\"color\":{\"expr\":{\"Literal\":{\"Value\":\"'#CACEDA'\"}}}}}}}]},\"visibility\":1,\"type\":2}",
+  "visuals": [
+    {
+      "name": "687e7d1784b3aa5dded2",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 1000,
+        "width": 549.1413363785288,
+        "height": 201.50082904124838
+      },
+      "type": "barChart",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Standards",
+        "Key Measures"
+      ],
+      "roles": {
+        "Y": [
+          "Key Measures.% of Correct Answers"
+        ],
+        "Tooltips": [
+          "Key Measures.Total Questions"
+        ],
+        "Category": [
+          "Standards.Standard"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Key Measures.% of Correct Answers",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "% of Correct Answers"
+        },
+        {
+          "alias": "Key Measures.Total Questions",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Total Questions"
+        },
+        {
+          "alias": "Standards.Standard",
+          "native": null,
+          "kind": "Column",
+          "entity": "Standards",
+          "property": "Standard"
+        }
+      ],
+      "objects": {
+        "legend": {
+          "fontSize": "8D",
+          "showGradientLegend": "true",
+          "show": "true",
+          "position": "BottomCenter"
+        },
+        "dataPoint": {
+          "fill": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Conditional": {
+                    "Cases": [
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.7D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#ff2800'"
+                          }
+                        }
+                      },
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.7D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.8D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#faff00'"
+                          }
+                        }
+                      },
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.8D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "2D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#00ff06'"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "valueAxis": {
+          "show": "false",
+          "showAxisTitle": "false",
+          "end": "1D"
+        },
+        "categoryAxis": {
+          "show": "true",
+          "preferredCategoryWidth": "20D",
+          "maxMarginFactor": "25L",
+          "innerPadding": "21L",
+          "fontSize": "9D",
+          "showAxisTitle": "false",
+          "switchAxisPosition": "false",
+          "concatenateLabels": "true"
+        },
+        "labels": {
+          "show": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "showAll": "false",
+          "enableBackground": "false",
+          "labelOverflow": "false",
+          "labelPrecision": "1L",
+          "labelPosition": "InsideEnd",
+          "backgroundTransparency": "3L",
+          "showSeries": "true"
+        },
+        "totals": {
+          "show": "false"
+        },
+        "general": {
+          "responsive": "true"
+        }
+      }
+    },
+    {
+      "name": "0a186ed2ac98a248d3e8",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "width": 549.1413363785288,
+        "height": 201.50082904124838
+      },
+      "type": "clusteredBarChart",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Standards",
+        "Key Measures"
+      ],
+      "roles": {
+        "Tooltips": [
+          "Key Measures.Total Questions"
+        ],
+        "Y": [
+          "Key Measures.% of Incorrect Choice"
+        ],
+        "Category": [
+          "Standards.Standard"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Key Measures.Total Questions",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Total Questions"
+        },
+        {
+          "alias": "Key Measures.% of Incorrect Choice",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "% of Incorrect Choice"
+        },
+        {
+          "alias": "Standards.Standard",
+          "native": null,
+          "kind": "Column",
+          "entity": "Standards",
+          "property": "Standard"
+        }
+      ],
+      "objects": {
+        "legend": {
+          "fontSize": "8D",
+          "showGradientLegend": "true",
+          "show": "true",
+          "position": "BottomCenter"
+        },
+        "dataPoint": {
+          "fill": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": -0.3
+                  }
+                }
+              }
+            }
+          }
+        },
+        "valueAxis": {
+          "show": "false",
+          "showAxisTitle": "false",
+          "end": "0.09D"
+        },
+        "categoryAxis": {
+          "show": "true",
+          "preferredCategoryWidth": "20D",
+          "maxMarginFactor": "25L",
+          "innerPadding": "21L",
+          "fontSize": "9D",
+          "showAxisTitle": "false",
+          "switchAxisPosition": "false",
+          "concatenateLabels": "true"
+        },
+        "labels": {
+          "show": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "showAll": "false",
+          "enableBackground": "false",
+          "labelOverflow": "false",
+          "labelPrecision": "1L",
+          "labelPosition": "InsideEnd",
+          "fontSize": "8D"
+        },
+        "general": {
+          "responsive": "true"
+        }
+      }
+    },
+    {
+      "name": "547271f52b4284082416",
+      "position": {
+        "x": 8,
+        "y": 0,
+        "z": 0,
+        "width": 855,
+        "height": 31
+      },
+      "type": "textbox",
+      "title": null,
+      "background_color": null,
+      "tables": [],
+      "roles": {},
+      "fields": [],
+      "objects": {
+        "general": {
+          "paragraphs": [
+            {
+              "textRuns": [
+                {
+                  "value": "Summary by Standards",
+                  "textStyle": {
+                    "fontWeight": "bold",
+                    "color": "#000000"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "cdbcfe3a080e3959a870",
+      "position": {
+        "x": 479.87044534412956,
+        "y": 0,
+        "z": 2000,
+        "width": 293.31174089068827,
+        "height": 98.46153846153847
+      },
+      "type": "slicer",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Standards"
+      ],
+      "roles": {
+        "Values": [
+          "Standards.Short Strand"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Standards.Short Strand",
+          "native": null,
+          "kind": "Column",
+          "entity": "Standards",
+          "property": "Short Strand"
+        }
+      ],
+      "objects": {
+        "data": {
+          "mode": "Basic"
+        },
+        "general": {}
+      }
+    },
+    {
+      "name": "da32d1a9c53acaecb3bc",
+      "position": {
+        "x": 528.5505735140771,
+        "y": 0,
+        "z": 9000,
+        "width": 533.8894681960375,
+        "height": 48.05005213764338
+      },
+      "type": "multiRowCard",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Key Measures",
+        "Student Submissions"
+      ],
+      "roles": {
+        "Values": [
+          "Key Measures.Total Questions",
+          "Key Measures.Total Students",
+          "Key Measures.Score",
+          "Sum(Student Submissions.Points Possible)",
+          "Key Measures.% of Correct Answers"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Key Measures.Total Questions",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Total Questions"
+        },
+        {
+          "alias": "Key Measures.Total Students",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Total Students"
+        },
+        {
+          "alias": "Key Measures.Score",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Score"
+        },
+        {
+          "alias": "Key Measures.% of Correct Answers",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "% of Correct Answers"
+        },
+        {
+          "alias": "Sum(Student Submissions.Points Possible)",
+          "native": null,
+          "agg_function_id": 0,
+          "aggregated_kind": "Column",
+          "entity": "Student Submissions",
+          "property": "Points Possible"
+        }
+      ],
+      "objects": {}
+    },
+    {
+      "name": "38616d2d1c8546acad85",
+      "position": {
+        "x": 120,
+        "y": 11,
+        "z": 12000,
+        "width": 450,
+        "height": 22
+      },
+      "type": "textbox",
+      "title": null,
+      "background_color": null,
+      "tables": [],
+      "roles": {},
+      "fields": [],
+      "objects": {
+        "general": {
+          "paragraphs": [
+            {
+              "textRuns": [
+                {
+                  "value": ""
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "1c17c7187c981d3600b0",
+      "position": {
+        "x": 20,
+        "y": 12,
+        "z": 14000,
+        "width": 81.70212765957447,
+        "height": 86
+      },
+      "type": "actionButton",
+      "title": null,
+      "background_color": null,
+      "tables": [],
+      "roles": {},
+      "fields": [],
+      "objects": {
+        "icon": {
+          "shapeType": "blank",
+          "show": "false"
+        },
+        "outline": {
+          "show": "false"
+        },
+        "shape": {
+          "roundEdge": "0L"
+        }
+      }
+    },
+    {
+      "name": "87f80344110dc617d5c4",
+      "position": {
+        "x": 0,
+        "y": 15,
+        "z": 1000,
+        "width": 918,
+        "height": 20
+      },
+      "type": "basicShape",
+      "title": null,
+      "background_color": null,
+      "tables": [],
+      "roles": {},
+      "fields": [],
+      "objects": {
+        "general": {
+          "shapeType": "line"
+        },
+        "line": {
+          "lineColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 2,
+                    "Percent": 0.2
+                  }
+                }
+              }
+            }
+          },
+          "weight": "2D"
+        },
+        "rotation": {
+          "angle": "90D"
+        }
+      }
+    },
+    {
+      "name": "c45ee3839f7593fe5e29",
+      "position": {
+        "x": 27.736757624398074,
+        "y": 17.463884430176567,
+        "z": 13000,
+        "width": 76.01926163723917,
+        "height": 71.91011235955057
+      },
+      "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "SchoolLogo_Parameter"
+      ],
+      "roles": {
+        "imageURL": [
+          "SchoolLogo_Parameter.SchoolLogo_Parameter"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "SchoolLogo_Parameter.SchoolLogo_Parameter",
+          "native": "SchoolLogo_Parameter",
+          "kind": "Column",
+          "entity": "SchoolLogo_Parameter",
+          "property": "SchoolLogo_Parameter"
+        }
+      ],
+      "objects": {}
+    },
+    {
+      "name": "107e3e57dc4cd2950b06",
+      "position": {
+        "x": 1878.0160815221718,
+        "y": 20.890056524162087,
+        "z": 8000,
+        "width": 41.780113048324175,
+        "height": 37.60210174349176
+      },
+      "type": "actionButton",
+      "title": null,
+      "background_color": null,
+      "tables": [],
+      "roles": {},
+      "fields": [],
+      "objects": {
+        "icon": {
+          "shapeType": "reset",
+          "lineColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": -0.1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "c5e7ba63dc4052d4783a",
+      "position": {
+        "x": 121,
+        "y": 34,
+        "z": 10000,
+        "width": 728,
+        "height": 31
+      },
+      "type": "multiRowCard",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Titles"
+      ],
+      "roles": {
+        "Values": [
+          "Titles.H2 Course and Unit"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Titles.H2 Course and Unit",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Titles",
+          "property": "H2 - Course and Unit"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "fontSize": "10D",
+          "show": "false"
+        },
+        "cardTitle": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "fontSize": "16D"
+        },
+        "card": {
+          "barShow": "false",
+          "cardPadding": "20D"
+        }
+      }
+    },
+    {
+      "name": "9d384ab4b7c9702d23cb",
+      "position": {
+        "x": 121,
+        "y": 57,
+        "z": 11000,
+        "width": 331,
+        "height": 33
+      },
+      "type": "multiRowCard",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Titles"
+      ],
+      "roles": {
+        "Values": [
+          "Titles.H2 - Assessment Type"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Titles.H2 - Assessment Type",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Titles",
+          "property": "H2 - Assessment Type"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "fontSize": "10D",
+          "show": "false"
+        },
+        "cardTitle": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "fontSize": "14D"
+        },
+        "card": {
+          "barShow": "false",
+          "cardPadding": "20D"
+        }
+      }
+    },
+    {
+      "name": "0469f23ca003ecd1664c",
+      "position": {
+        "x": 18,
+        "y": 104,
+        "z": 23000,
+        "width": 185,
+        "height": 71.62270183852918
+      },
+      "type": "card",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Measure"
+      ],
+      "roles": {
+        "Values": [
+          "Measure.Total Student"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Measure.Total Student",
+          "native": "Total Student",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Total Student"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "show": "false"
+        },
+        "labels": {
+          "fontSize": "20D",
+          "bold": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "5c011f96c58601064415",
+      "position": {
+        "x": 219,
+        "y": 104,
+        "z": 22000,
+        "width": 185.19584332533972,
+        "height": 71.62270183852918
+      },
+      "type": "card",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Measure"
+      ],
+      "roles": {
+        "Values": [
+          "Measure.Total Question"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Measure.Total Question",
+          "native": "Total Question",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Total Question"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "show": "false"
+        },
+        "labels": {
+          "fontSize": "20D",
+          "bold": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "d80e5695b06b85282080",
+      "position": {
+        "x": 420,
+        "y": 104,
+        "z": 21000,
+        "width": 198.49720223820944,
+        "height": 71.62270183852918
+      },
+      "type": "card",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Measure"
+      ],
+      "roles": {
+        "Values": [
+          "Measure.Total Standard"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Measure.Total Standard",
+          "native": "Total Standard",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Total Standard"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "show": "false"
+        },
+        "labels": {
+          "fontSize": "20D",
+          "bold": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "7e576f80b2be20e7470b",
+      "position": {
+        "x": 634,
+        "y": 104,
+        "z": 20000,
+        "width": 198.49720223820944,
+        "height": 71.62270183852918
+      },
+      "type": "card",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Measure"
+      ],
+      "roles": {
+        "Values": [
+          "Measure.Grade_Average_Standard_Measure"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Measure.Grade_Average_Standard_Measure",
+          "native": "Grade_Average_Standard_Measure",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Grade_Average_Standard_Measure"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "show": "false"
+        },
+        "labels": {
+          "fontSize": "20D",
+          "bold": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "aa945ed804a262c2c88c",
+      "position": {
+        "x": 848,
+        "y": 104,
+        "z": 19000,
+        "width": 198.49720223820944,
+        "height": 71.62270183852918
+      },
+      "type": "card",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Measure"
+      ],
+      "roles": {
+        "Values": [
+          "Measure.Grade Max"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Measure.Grade Max",
+          "native": "Grade Max",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Grade Max"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "show": "false"
+        },
+        "labels": {
+          "fontSize": "20D",
+          "bold": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "d5a1a72a6e457c4c0c03",
+      "position": {
+        "x": 1062.062350119904,
+        "y": 104,
+        "z": 18000,
+        "width": 198.49720223820944,
+        "height": 71.62270183852918
+      },
+      "type": "card",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Measure"
+      ],
+      "roles": {
+        "Values": [
+          "Measure.Grade Min"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Measure.Grade Min",
+          "native": "Grade Min",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Grade Min"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "show": "false"
+        },
+        "labels": {
+          "fontSize": "20D",
+          "bold": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "38da0170bd166946091d",
+      "position": {
+        "x": 428.34645669291336,
+        "y": 125.98425196850394,
+        "z": 3000,
+        "width": 552.3149606299213,
+        "height": 203.59055118110237
+      },
+      "type": "treemap",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Standards",
+        "Key Measures"
+      ],
+      "roles": {
+        "Group": [
+          "Standards.Short Strand"
+        ],
+        "Values": [
+          "Key Measures.Total Questions"
+        ],
+        "Details": [
+          "Standards.Standard"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Standards.Short Strand",
+          "native": null,
+          "kind": "Column",
+          "entity": "Standards",
+          "property": "Short Strand"
+        },
+        {
+          "alias": "Key Measures.Total Questions",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Total Questions"
+        },
+        {
+          "alias": "Standards.Standard",
+          "native": null,
+          "kind": "Column",
+          "entity": "Standards",
+          "property": "Standard"
+        }
+      ],
+      "objects": {
+        "general": {},
+        "legend": {
+          "show": "false",
+          "position": "BottomCenter",
+          "fontSize": "8D"
+        },
+        "dataPoint": {
+          "fill": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Conditional": {
+                    "Cases": [
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.7D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#ff2800'"
+                          }
+                        }
+                      },
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.7D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.8D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#faff00'"
+                          }
+                        }
+                      },
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.8D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "2D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#00ff06'"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "labels": {
+          "show": "true",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "5e7f284828ccd0c50c31",
+      "position": {
+        "x": 774.9227309196277,
+        "y": 127.10628394103956,
+        "z": 1000,
+        "width": 498.2750582750583,
+        "height": 181.01010101010098
+      },
+      "type": "hundredPercentStackedBarChart",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Key Measures",
+        "Questions Data"
+      ],
+      "roles": {
+        "Y": [
+          "Key Measures.% of Correct Answers",
+          "Key Measures.% of incorrect answer"
+        ],
+        "Category": [
+          "Questions Data.Standards"
+        ],
+        "Tooltips": [
+          "Key Measures.Total Questions"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Key Measures.% of Correct Answers",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "% of Correct Answers"
+        },
+        {
+          "alias": "Questions Data.Standards",
+          "native": null,
+          "kind": "Column",
+          "entity": "Questions Data",
+          "property": "Standards"
+        },
+        {
+          "alias": "Key Measures.% of incorrect answer",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "% of Incorrect Answers"
+        },
+        {
+          "alias": "Key Measures.Total Questions",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Total Questions"
+        }
+      ],
+      "objects": {
+        "legend": {
+          "fontSize": "8D",
+          "showGradientLegend": "true",
+          "show": "true",
+          "position": "BottomCenter"
+        },
+        "labels": {
+          "show": "true",
+          "showAll": "true",
+          "enableBackground": "false",
+          "labelOverflow": "false",
+          "labelPosition": "InsideCenter",
+          "enableValueDataLabel": "false",
+          "enableDetailDataLabel": "true",
+          "detailContentType": "Percent of total",
+          "detailColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "detailLabelPrecision": "1L",
+          "showSeries": "true"
+        },
+        "dataPoint": {
+          "fill": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#ff2800'"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "valueAxis": {
+          "show": "false",
+          "showAxisTitle": "false"
+        },
+        "categoryAxis": {
+          "show": "true",
+          "preferredCategoryWidth": "20D",
+          "maxMarginFactor": "25L",
+          "innerPadding": "21L",
+          "fontSize": "9D",
+          "showAxisTitle": "false",
+          "switchAxisPosition": "false",
+          "concatenateLabels": "true"
+        }
+      }
+    },
+    {
+      "name": "c35fd2705046aca4c421",
+      "position": {
+        "x": 427.87023977433,
+        "y": 127.27785613540196,
+        "z": 6000,
+        "width": 288.8575458392101,
+        "height": 203.10296191819464
+      },
+      "type": "funnel",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Standards",
+        "Key Measures"
+      ],
+      "roles": {
+        "Y": [
+          "Key Measures.Total Questions"
+        ],
+        "Category": [
+          "Standards.Standard"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Key Measures.Total Questions",
+          "native": null,
+          "kind": "Measure",
+          "entity": "Key Measures",
+          "property": "Total Questions"
+        },
+        {
+          "alias": "Standards.Standard",
+          "native": null,
+          "kind": "Column",
+          "entity": "Standards",
+          "property": "Standard"
+        }
+      ],
+      "objects": {
+        "categoryAxis": {
+          "show": "true",
+          "fontSize": "9D"
+        },
+        "dataPoint": {
+          "fill": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Conditional": {
+                    "Cases": [
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.7D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#ff2800'"
+                          }
+                        }
+                      },
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.7D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.8D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#faff00'"
+                          }
+                        }
+                      },
+                      {
+                        "Condition": {
+                          "And": {
+                            "Left": {
+                              "Comparison": {
+                                "ComparisonKind": 2,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "0.8D"
+                                  }
+                                }
+                              }
+                            },
+                            "Right": {
+                              "Comparison": {
+                                "ComparisonKind": 3,
+                                "Left": {
+                                  "Measure": {
+                                    "Expression": {
+                                      "SourceRef": {
+                                        "Entity": "Key Measures"
+                                      }
+                                    },
+                                    "Property": "% of Correct Answers"
+                                  }
+                                },
+                                "Right": {
+                                  "Literal": {
+                                    "Value": "2D"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Value": {
+                          "Literal": {
+                            "Value": "'#00FF06'"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "showAllDataPoints": "false"
+        },
+        "labels": {
+          "show": "true",
+          "labelPosition": "InsideCenter",
+          "funnelLabelStyle": "Data",
+          "labelDisplayUnits": "1D",
+          "fontSize": "9D",
+          "fontFamily": "Segoe UI'', wf_segoe-ui_normal, helvetica, arial, sans-serif"
+        },
+        "percentBarLabel": {
+          "show": "false"
+        }
+      }
+    },
+    {
+      "name": "467d134060d51b7cae0e",
+      "position": {
+        "x": 723.0465444287729,
+        "y": 127.27785613540196,
+        "z": 4000,
+        "width": 549.7320169252467,
+        "height": 201.29760225669955
+      },
+      "type": "467d134060d51b7cae0e",
+      "title": null,
+      "background_color": null,
+      "tables": [],
+      "roles": {},
+      "fields": [],
+      "objects": {}
+    },
+    {
+      "name": "d8767445735262b0b0c0",
+      "position": {
+        "x": 353,
+        "y": 179,
+        "z": 7000,
+        "width": 918,
+        "height": 35
+      },
+      "type": "d8767445735262b0b0c0",
+      "title": null,
+      "background_color": null,
+      "tables": [],
+      "roles": {},
+      "fields": [],
+      "objects": {}
+    },
+    {
+      "name": "cc35b1b00087d6d6424a",
+      "position": {
+        "x": 18.41726618705036,
+        "y": 201.56674660271784,
+        "z": 17000,
+        "width": 330,
+        "height": 142
+      },
+      "type": "card",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Titles"
+      ],
+      "roles": {
+        "Values": [
+          "Titles.Instructor(s):"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Titles.Instructor(s):",
+          "native": "Instructor(s):1",
+          "kind": "Measure",
+          "entity": "Titles",
+          "property": "Instructor(s):"
+        }
+      ],
+      "objects": {
+        "categoryLabels": {
+          "show": "false"
+        },
+        "labels": {
+          "fontSize": "15D",
+          "bold": "false",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "1c5525b3e0c89399e142",
+      "position": {
+        "x": 805,
+        "y": 206,
+        "z": 0,
+        "width": 456,
+        "height": 141
+      },
+      "type": "tableEx",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "cube_question_summary_overall",
+        "Measure"
+      ],
+      "roles": {
+        "Values": [
+          "cube_question_summary_overall.Standards",
+          "Measure.Total Question Standard",
+          "Measure.Grade_Average_Standard_Measure"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "cube_question_summary_overall.Standards",
+          "native": "Standards",
+          "kind": "Column",
+          "entity": "cube_question_summary_overall",
+          "property": "Standards"
+        },
+        {
+          "alias": "Measure.Grade_Average_Standard_Measure",
+          "native": "% per Standard",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Grade_Average_Standard_Measure"
+        },
+        {
+          "alias": "Measure.Total Question Standard",
+          "native": "# of Questions",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Total Question Standard"
+        }
+      ],
+      "objects": {
+        "total": {
+          "totals": "false"
+        },
+        "grid": {
+          "gridHorizontalColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#B3B3B3'"
+                  }
+                }
+              }
+            }
+          },
+          "gridVertical": "true",
+          "gridVerticalColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#B3B3B3'"
+                  }
+                }
+              }
+            }
+          },
+          "outlineColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#808080'"
+                  }
+                }
+              }
+            }
+          },
+          "rowPadding": "4.5D"
+        },
+        "values": {
+          "fontColorPrimary": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "fontColorSecondary": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "backColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Measure": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "Measure"
+                      }
+                    },
+                    "Property": "Performance Color Standard"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "columnHeaders": {
+          "fontColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "bold": "true",
+          "backColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#A0D1FF'"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "columnFormatting": {
+          "styleHeader": "true",
+          "alignment": "Center"
+        },
+        "columnWidth": {
+          "value": "233.4D"
+        }
+      }
+    },
+    {
+      "name": "ab5acad0a408d1416cec",
+      "position": {
+        "x": 363,
+        "y": 207,
+        "z": 5000,
+        "width": 430,
+        "height": 142
+      },
+      "type": "tableEx",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "Measure",
+        "dim_standard"
+      ],
+      "roles": {
+        "Values": [
+          "dim_standard.Strand",
+          "Measure.Total Standard",
+          "Measure.Grade_Average_Standard_Measure"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Measure.Total Standard",
+          "native": "# of Standards",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Total Standard"
+        },
+        {
+          "alias": "dim_standard.Strand",
+          "native": "Strand1",
+          "kind": "Column",
+          "entity": "dim_standard",
+          "property": "Strand"
+        },
+        {
+          "alias": "Measure.Grade_Average_Standard_Measure",
+          "native": "% per Strand",
+          "kind": "Measure",
+          "entity": "Measure",
+          "property": "Grade_Average_Standard_Measure"
+        }
+      ],
+      "objects": {
+        "columnWidth": {
+          "value": "106.13734856610245D"
+        },
+        "values": {
+          "backColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Measure": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "Measure"
+                      }
+                    },
+                    "Property": "Performance Color Standard"
+                  }
+                }
+              }
+            }
+          },
+          "fontColorPrimary": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "fontColorSecondary": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "total": {
+          "totals": "false"
+        },
+        "columnHeaders": {
+          "backColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#A0D1FF'"
+                  }
+                }
+              }
+            }
+          },
+          "outlineStyle": "4D",
+          "fontColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "bold": "true",
+          "alignment": "Left"
+        },
+        "grid": {
+          "gridHorizontalColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#B3B3B3'"
+                  }
+                }
+              }
+            }
+          },
+          "gridVertical": "true",
+          "gridVerticalColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": -0.3
+                  }
+                }
+              }
+            }
+          },
+          "outlineColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#808080'"
+                  }
+                }
+              }
+            }
+          },
+          "outlineStyle": "0D",
+          "rowPadding": "4.5D"
+        },
+        "columnFormatting": {
+          "styleHeader": "true",
+          "alignment": "Center"
+        }
+      }
+    },
+    {
+      "name": "77aec2a698300003cc17",
+      "position": {
+        "x": 11,
+        "y": 360,
+        "z": 15000,
+        "width": 1258,
+        "height": 350
+      },
+      "type": "cardVisual",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "dim_subject"
+      ],
+      "roles": {
+        "Data": [
+          "Min(dim_subject.Subject)"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Min(dim_subject.Subject)",
+          "native": "First Subject",
+          "agg_function_id": 3,
+          "aggregated_kind": "Column",
+          "entity": "dim_subject",
+          "property": "Subject"
+        }
+      ],
+      "objects": {
+        "shapeCustomRectangle": {
+          "tileShape": "rectangleRoundedByPixel",
+          "rectangleRoundedCurve": "19L"
+        },
+        "outline": {
+          "show": "false"
+        },
+        "shadowCustom": {
+          "show": "true",
+          "shadowPositionPreset": "custom",
+          "angle": "90D",
+          "shadowDistance": "0D",
+          "shadowSpread": "0D",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#8089A1'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": "90D",
+          "shadowBlur": "30D"
+        },
+        "accentBar": {
+          "show": "false",
+          "width": "40L",
+          "position": "Right",
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#212A43'"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fillCustom": {
+          "image": {
+            "image": {
+              "name": {
+                "expr": {
+                  "Literal": {
+                    "Value": "''"
+                  }
+                }
+              },
+              "url": {
+                "expr": {
+                  "Literal": {
+                    "Value": "''"
+                  }
+                }
+              }
+            }
+          },
+          "fillColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "transparency": "0D",
+          "show": "true"
+        },
+        "padding": {
+          "paddingSelection": "Custom",
+          "leftMargin": "47L",
+          "topMargin": "40L",
+          "rightMargin": "50L"
+        },
+        "referenceLabel": {
+          "backgroundShow": "false"
+        },
+        "referenceLabelLayout": {
+          "arrangement": "columns",
+          "horizontalAlignment": "center",
+          "outerPadding": "20D",
+          "customizePadding": "true",
+          "paddingBeforeDivider": "20D",
+          "paddingAfterDivider": "20D",
+          "verticalAlignment": "top",
+          "position": "below"
+        },
+        "referenceLabelTitle": {
+          "titleContentType": "custom",
+          "titleText": "Brakes",
+          "titleFontSize": "12D",
+          "titleFontColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#6476AB'"
+                  }
+                }
+              }
+            }
+          },
+          "titleTransparency": "20D",
+          "titleFontFamily": "Segoe UI'', wf_segoe-ui_normal, helvetica, arial, sans-serif"
+        },
+        "divider": {
+          "dividerColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#303D57'"
+                  }
+                }
+              }
+            }
+          },
+          "dividerTransparency": "85D"
+        },
+        "referenceLabelDetail": {
+          "show": "false"
+        },
+        "referenceLabelValue": {
+          "valueFontFamily": "wf_standard-font, helvetica, arial, sans-serif",
+          "valueFontSize": "18D",
+          "showBlankAs": "",
+          "valueTransparency": "0D"
+        },
+        "value": {
+          "show": "false"
+        },
+        "label": {
+          "show": "false"
+        }
+      }
+    },
+    {
+      "name": "bd8b529ab690c4210db7",
+      "position": {
+        "x": 40,
+        "y": 397,
+        "z": 16000,
+        "width": 1200,
+        "height": 290
+      },
+      "type": "tableEx",
+      "title": null,
+      "background_color": null,
+      "tables": [
+        "cube_question_summary_overall"
+      ],
+      "roles": {
+        "Values": [
+          "Sum(cube_question_summary_overall.Sorting Question_No)",
+          "cube_question_summary_overall.questionDax",
+          "Sum(cube_question_summary_overall.Grade_Average)",
+          "cube_question_summary_overall.__FirstFormatted_correct_",
+          "cube_question_summary_overall.__FirstFormatted_Incorrect_Choice_Details",
+          "cube_question_summary_overall.__FirstFormatted_Incorrect_Details_Name",
+          "cube_question_summary_overall.CombineStandardsColumn",
+          "cube_question_summary_overall.CombineDescriptionsColumn"
+        ]
+      },
+      "fields": [
+        {
+          "alias": "Sum(cube_question_summary_overall.Grade_Average)",
+          "native": "Average of Grade_Average",
+          "agg_function_id": 1,
+          "aggregated_kind": "Column",
+          "entity": "cube_question_summary_overall",
+          "property": "Grade_Average"
+        },
+        {
+          "alias": "cube_question_summary_overall.CombineStandardsColumn",
+          "native": "Standards",
+          "kind": "Measure",
+          "entity": "cube_question_summary_overall",
+          "property": "CombineStandardsColumn"
+        },
+        {
+          "alias": "Sum(cube_question_summary_overall.Sorting Question_No)",
+          "native": "Sorting Question_No",
+          "kind": "Column",
+          "entity": "cube_question_summary_overall",
+          "property": "Sorting Question_No"
+        },
+        {
+          "alias": "cube_question_summary_overall.__FirstFormatted_Incorrect_Choice_Details",
+          "native": "Incorrect Choice Details",
+          "kind": "Measure",
+          "entity": "cube_question_summary_overall",
+          "property": "__FirstFormatted_Incorrect_Choice_Details"
+        },
+        {
+          "alias": "cube_question_summary_overall.__FirstFormatted_Incorrect_Details_Name",
+          "native": "Incorrect Details Name",
+          "kind": "Measure",
+          "entity": "cube_question_summary_overall",
+          "property": "__FirstFormatted_Incorrect_Details_Name"
+        },
+        {
+          "alias": "cube_question_summary_overall.questionDax",
+          "native": "Question",
+          "kind": "Measure",
+          "entity": "cube_question_summary_overall",
+          "property": "questionDax"
+        },
+        {
+          "alias": "cube_question_summary_overall.__FirstFormatted_correct_",
+          "native": "Correct Answer",
+          "kind": "Measure",
+          "entity": "cube_question_summary_overall",
+          "property": "__FirstFormatted_correct_"
+        },
+        {
+          "alias": "cube_question_summary_overall.CombineDescriptionsColumn",
+          "native": "CombineDescriptionsColumn",
+          "kind": "Measure",
+          "entity": "cube_question_summary_overall",
+          "property": "CombineDescriptionsColumn"
+        }
+      ],
+      "objects": {
+        "columnHeaders": {
+          "autoSizeColumnWidth": "false",
+          "fontSize": "10D",
+          "alignment": "Left",
+          "wordWrap": "true",
+          "backColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "fontColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 1,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "total": {
+          "totals": "false"
+        },
+        "grid": {
+          "gridVertical": "true",
+          "gridVerticalColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": -0.1
+                  }
+                }
+              }
+            }
+          },
+          "gridHorizontal": "false",
+          "rowPadding": "1D",
+          "textSize": "12D"
+        },
+        "values": {
+          "fontSize": "12D",
+          "backColorSecondary": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "ThemeDataColor": {
+                    "ColorId": 0,
+                    "Percent": 0
+                  }
+                }
+              }
+            }
+          },
+          "backColor": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Measure": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "Measure"
+                      }
+                    },
+                    "Property": "Performance Color Question"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "columnWidth": {
+          "value": "277.1430277980423D"
+        },
+        "columnFormatting": {
+          "alignment": "Center"
+        }
+      }
+    }
+  ]
+}

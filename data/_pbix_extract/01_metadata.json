@@ -1,0 +1,10 @@
+[
+  {
+    "Name": "__PBI_TimeIntelligenceEnabled",
+    "Value": "0"
+  },
+  {
+    "Name": "PBI_QueryOrder",
+    "Value": "[\"cube_question_summary\",\"cube_questionincorrectchoice_summary\",\"cube_standard_summary\",\"dim_item\",\"dim_subject\",\"dim_question_data\",\"dim_strand\",\"Measure\",\"Report Short Name\",\"fact_student_submission\",\"dim_standard\",\"Titles\",\"cube_grade_summary\",\"cube_school_summary\",\"cube_question_summary_overall\",\"Drill Through Report\",\"School_Name\",\"SchoolLogo\",\"SchoolName_Parameter\",\"SchoolLogo_Parameter\",\"SchoolID\",\"FilterExpression\",\"Errors in cube_question_summary_overall\",\"Errors in cube_question_summary_overall (2)\",\"Errors in cube_question_summary_overall (3)\",\"Errors in cube_question_summary_overall (4)\",\"Errors in cube_question_summary_overall (5)\",\"Errors in cube_question_summary_overall (6)\",\"Errors in cube_question_summary_overall (7)\",\"Errors in cube_question_summary_overall (8)\",\"Errors in cube_question_summary_overall (9)\",\"Errors in cube_question_summary_overall (10)\",\"Errors in cube_question_summary_overall (11)\",\"Errors in cube_question_summary_overall (12)\",\"Errors in cube_question_summary_overall (13)\",\"Errors in cube_question_summary_overall (14)\",\"Errors in cube_question_summary_overall (15)\",\"Errors in cube_question_summary_overall (16)\",\"Errors in cube_question_summary_overall (17)\",\"Errors in cube_question_summary_overall (18)\",\"Errors in cube_question_summary_overall (19)\",\"Errors in cube_question_summary_overall (20)\",\"Errors in cube_question_summary_overall (21)\"]"
+  }
+]

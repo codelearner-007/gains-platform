@@ -67,8 +67,8 @@ Tasks
 !.cursorrules
 !.windsurfrules
 
-# Local research artifacts — raw scraper output, PBIX file, extracts. Never commit.
-data/
+# Data artifacts required for report parity and source-of-truth validation.
+
 
 # Planning, audit, and internal todo docs — orchestration scratch space, not source code.
 tasks/
@@ -76,3 +76,6 @@ docs/superpowers/
 docs/_research/
 *.plan.md
 *.audit.md
+
+# Raw PowerBI binary stays local; extracted breakdown under data/_pbix_extract is tracked.
+data/Assessment Analysis Dashboard.pbix

@@ -1,0 +1,44 @@
+// table: dim_subject
+COLUMN [ShowHistorySubject] =
+
+SWITCH(
+    TRUE(),
+    AND(dim_subject[Grade] = "Grade 6", dim_subject[Subject] = "History"), "World History",
+    AND(dim_subject[Grade] = "Grade 7", dim_subject[Subject] = "History"), "US History",
+    dim_subject[Subject]
+)
+
+---
+
+// table: dim_subject
+COLUMN [Grade_no] =
+right(dim_subject[Grade],1)
+
+---
+
+// table: cube_question_summary_overall
+COLUMN [Sorting Question_No] =
+INT('cube_question_summary_overall'[Question_No]) 
+
+---
+
+// table: cube_question_summary_overall
+COLUMN [Trimmed_Standard] =
+
+VAR FullText = TRIM(cube_question_summary_overall[Standards])
+VAR DotCount = LEN(FullText) - LEN(SUBSTITUTE(FullText, ".", ""))
+VAR FirstDot = IF(DotCount >= 1, SEARCH(".", FullText, 1), -1)
+VAR SecondDot = IF(DotCount >= 2, SEARCH(".", FullText, FirstDot ), -1)
+VAR FinalText = 
+    IF(
+        DotCount >= 2,
+        MID(FullText, SecondDot + 2, LEN(FullText)),
+        FullText
+    )
+RETURN 
+    -- Remove leading dot if present
+    IF(LEFT(FinalText,1) = ".", RIGHT(FinalText, LEN(FinalText) - 1), FinalText)
+
+
+
+---

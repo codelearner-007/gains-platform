@@ -1,0 +1,20 @@
+[
+  "Drill Through Report",
+  "Measure",
+  "Report Short Name",
+  "SchoolLogo_Parameter",
+  "SchoolName_Parameter",
+  "Titles",
+  "cube_grade_summary",
+  "cube_question_summary",
+  "cube_question_summary_overall",
+  "cube_questionincorrectchoice_summary",
+  "cube_school_summary",
+  "cube_standard_summary",
+  "dim_item",
+  "dim_question_data",
+  "dim_standard",
+  "dim_strand",
+  "dim_subject",
+  "fact_student_submission"
+]

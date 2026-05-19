@@ -1,0 +1,152 @@
+# Field/Measure usage across all pages
+
+## Tables, by visuals using them
+- Titles: 51
+- Key Measures: 33
+- dim_standard: 29
+- Measure: 29
+- dim_subject: 25
+- SchoolLogo_Parameter: 16
+- Standards: 15
+- Student Submissions: 14
+- dim_item: 10
+- Assessments: 6
+- Sales Measures: 6
+- cube_standard_summary: 5
+- cube_question_summary_overall: 5
+- Date: 5
+- Drill Through Report: 4
+- Products: 3
+- Questions Data: 3
+- Report Short Name: 2
+- Clustered chart: 2
+- Color: 2
+- Standards related measures: 2
+- fact_student_submission: 2
+- cube_users_summary: 1
+- Drillthrough_Pages: 1
+- dim_strand: 1
+- SchoolName_Parameter: 1
+- cube_question_summary: 1
+
+## Fields/Measures, by reference count
+- Key Measures.Total Questions: 27
+- Key Measures.% of Correct Answers: 19
+- Key Measures.Total Students: 16
+- SchoolLogo_Parameter.SchoolLogo_Parameter: 16
+- Titles.H2 - Assessment Type: 14
+- dim_standard.cPalms_Standard: 13
+- dim_subject.Subject: 13
+- Titles.H2 Course and Unit: 13
+- dim_subject.Grade: 13
+- Measure.Grade_Average_Standard_Measure: 12
+- Key Measures.Score: 12
+- Sum(Student Submissions.Points Possible): 12
+- Titles.H1 - Longitudinal: 11
+- dim_subject.Assessment_type: 11
+- Standards.Standard: 10
+- dim_item.Item_Name: 9
+- dim_subject.Session: 9
+- dim_standard.blank: 8
+- Measure.Incorrect_Grade_Average_Standard_Measure: 6
+- Standards.Short Strand: 6
+- dim_item.Item_ID: 5
+- Assessments.Grade: 5
+- Date.Month: 5
+- Measure.Total Standard: 5
+- Sum(cube_standard_summary.Total_Questions): 4
+- dim_standard.Strand: 4
+- dim_item.assessment_date: 4
+- Min(dim_subject.Subject): 4
+- dim_subject.School_ID: 3
+- Titles.H3 - Teachers: 3
+- Measure.Total Student: 3
+- Key Measures.Total Standards: 3
+- Measure.Total Question Standard: 3
+- Key Measures.% of Incorrect Choice: 3
+- Titles.H3 - # of  questions: 2
+- Min(dim_standard.lastChangeDateTime): 2
+- dim_subject.Grade_no: 2
+- Measure.FormattedString: 2
+- cube_question_summary_overall.Subject_ID: 2
+- Query1._Data Bar - Grade Average: 2
+- Products.Product Category: 2
+- Key Measures.Grade Average: 2
+- Questions Data.Item Name: 2
+- Clustered chart.Clustered columns: 2
+- Clustered chart.Legend: 2
+- Color.Color: 2
+- Key Measures.Grae Avg: 2
+- Titles.Instructor(s):: 2
+- Measure.Total Question: 2
+- Measure.Total Question Strand: 2
+- Standards related measures.No. of Sub Standards: 2
+- Sum(cube_question_summary_overall.Sorting Question_No): 2
+- cube_question_summary_overall.questionDax: 2
+- Sum(cube_question_summary_overall.Grade_Average): 2
+- cube_question_summary_overall.__FirstFormatted_correct_: 2
+- cube_question_summary_overall.__FirstFormatted_Incorrect_Choice_Details: 2
+- cube_question_summary_overall.CombineDescriptionsColumn: 2
+- Student Submissions.Answer Submission: 2
+- Key Measures.% of all answers: 2
+- fact_student_submission.Answer_Submission: 2
+- Min(dim_standard.Custom.CleanedDescription): 1
+- Min(dim_standard.Strand): 1
+- Titles.H3 - # of standards: 1
+- Sum(cube_standard_summary.Percentage_InCorrect_Answers): 1
+- Sum(cube_standard_summary.Grade_Average): 1
+- cube_users_summary.Grade: 1
+- cube_users_summary.Item_ID: 1
+- cube_users_summary.Item_Name: 1
+- cube_users_summary.Subject: 1
+- cube_users_summary.Session: 1
+- cube_users_summary.Assessment_type: 1
+- Drill Through Report.Type: 1
+- Drill Through Report.Report Short Name: 1
+- Drill Through Report.Report Catergory: 1
+- Titles.__Title: 1
+- dim_item.Section_Instructors: 1
+- Products.Color: 1
+- Min(Products.Color_sort): 1
+- Min(Products.Product Category): 1
+- Min(Assessments.Subject): 1
+- Drillthrough_Pages.Report Catergory: 1
+- Drillthrough_Pages.Report Name: 1
+- Report Short Name.Type: 1
+- Titles.H3 - Assessment Date: 1
+- Key Measures._Data Bar - Grade Average: 1
+- Key Measures.Grade Min: 1
+- Key Measures.Grade Max: 1
+- Sales Measures.Rib_Ele_03: 1
+- Sales Measures.Rib_Ele_01: 1
+- Sales Measures.Rib_Ele_02: 1
+- Sales Measures.Rib_Ele_04: 1
+- Sales Measures.Rib_green_04: 1
+- Sales Measures.Rib_green_01: 1
+- Sales Measures.Rib_green_02: 1
+- Sales Measures.Rib_green_03: 1
+- Sales Measures.Rib_pink_01: 1
+- Sales Measures.Rib_pink_02: 1
+- Sales Measures.Rib_pink_03: 1
+- Sales Measures.Rib_pink_04: 1
+- Sales Measures.Rib_yellow_01: 1
+- Sales Measures.Rib_yellow_02: 1
+- Sales Measures.Rib_yellow_03: 1
+- Sales Measures.Rib_yellow_04: 1
+- Sales Measures.Rib_purple_01 ★: 1
+- Sales Measures.Rib_green_01 ★: 1
+- Sales Measures.Rib_pink_01 ★: 1
+- Sales Measures.Rib_yellow_01 ★: 1
+- Sales Measures.100%_blank: 1
+- Sales Measures.100%_green_01 ★: 1
+- Sales Measures.100%_green_02: 1
+- Sales Measures.100%_green_03: 1
+- Sales Measures.100%_green_04: 1
+- Sales Measures.100%_pink_02: 1
+- Sales Measures.100%_pink_03: 1
+- Sales Measures.100%_pink_04: 1
+- Sales Measures.100%_pink_01 ★: 1
+- Sales Measures.100%_yellow_04: 1
+- Sales Measures.100%_yellow_01 ★: 1
+- Sales Measures.100%_yellow_02: 1
+- Sales Measures.100%_yellow_03: 1

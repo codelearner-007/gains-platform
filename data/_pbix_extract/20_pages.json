@@ -1,0 +1,4689 @@
+[
+  {
+    "name": "Standard Summary",
+    "ordinal": 14,
+    "size": "320.0x240.0",
+    "visual_count": 23,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "# of standard",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H3 - # of  questions",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Description",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Min(dim_standard.Custom.CleanedDescription)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "Text box",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "Standard",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "2ca6d33504829e750a95",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Min(dim_standard.lastChangeDateTime)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "e712919d449c265390ee",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Subject",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Grade_no",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "10c98baa69d0e9b906e0",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "barChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "clusteredBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "cube_standard_summary",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Sum(cube_standard_summary.Total_Questions)",
+            1
+          ],
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ],
+          [
+            "Measure.Incorrect_Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "8d6cc76fae14ecdc6090",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Min(dim_standard.Strand)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Strand Summary",
+    "ordinal": 15,
+    "size": "320.0x240.0",
+    "visual_count": 24,
+    "visuals": [
+      {
+        "type": "barChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Measure.Incorrect_Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "# of standard",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H3 - # of  questions",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "# of standard",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H3 - # of standards",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "Standard",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.Strand",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "37f0f48d6dc927d61479",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Min(dim_standard.lastChangeDateTime)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "4a0e0aedd03c7d221ca3",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "columnChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "cube_standard_summary",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ],
+          [
+            "Sum(cube_standard_summary.Percentage_InCorrect_Answers)",
+            1
+          ],
+          [
+            "Sum(cube_standard_summary.Grade_Average)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "columnChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "d2d373f10348244a6b33",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Subject",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Grade_no",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "b45a8b9ed650cb0da334",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "clusteredBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "barChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ],
+          [
+            "Measure.Incorrect_Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 2
+      },
+      {
+        "type": "555e8cb5cb39da5da08d",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "",
+        "tables": [
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.blank",
+            1
+          ]
+        ],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "QuestionView",
+    "ordinal": 19,
+    "size": "320.0x240.0",
+    "visual_count": 2,
+    "visuals": [
+      {
+        "type": "htmlContent443BE3AD55E043BF878BED274D3A6855",
+        "title": "",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.FormattedString",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "htmlContent443BE3AD55E043BF878BED274D3A6855",
+        "title": "",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.FormattedString",
+            1
+          ]
+        ],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Summary Report",
+    "ordinal": 6,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Summary Report",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_item.Item_ID",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Summary Report - teacher subtotal",
+    "ordinal": 7,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Summary Report - Teacher Subtotal",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_item.Item_ID",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Year To Date - Longitudinal Report",
+    "ordinal": 8,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "textbox",
+        "title": "Longitudinal Report - Year To Date",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.School_ID",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Year To Date - Longitudinal Report 2",
+    "ordinal": 9,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "textbox",
+        "title": "Longitudinal Report - Year To Date 2",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "dim_subject.School_ID",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Year To Date - Longitudinal Report 3",
+    "ordinal": 10,
+    "size": "1280.0x720.0",
+    "visual_count": 9,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Longitudinal Report - Year To Date 3",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "dim_subject.School_ID",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Response Analysis",
+    "ordinal": 11,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Response Analysis",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter",
+          "Titles",
+          "cube_question_summary_overall",
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_item.assessment_date",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "cube_question_summary_overall.Subject_ID",
+            1
+          ],
+          [
+            "Titles.H3 - Teachers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Response Analysis by Teacher",
+    "ordinal": 12,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Response Analysis - By Teacher",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_item.Item_ID",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Response Analysis by Standard and Teacher",
+    "ordinal": 13,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Response Analysis - By Standard and Teacher",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_item.Item_ID",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Summary Report - header highlights",
+    "ordinal": 16,
+    "size": "1280.0x720.0",
+    "visual_count": 9,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Summary Report - header highlights",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_item.Item_ID",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Session",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Summary Report redacted",
+    "ordinal": 17,
+    "size": "1280.0x720.0",
+    "visual_count": 9,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Summary Report - names redacted",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "cube_users_summary"
+        ],
+        "fields": [
+          [
+            "cube_users_summary.Grade",
+            1
+          ],
+          [
+            "cube_users_summary.Item_ID",
+            1
+          ],
+          [
+            "cube_users_summary.Item_Name",
+            1
+          ],
+          [
+            "cube_users_summary.Subject",
+            1
+          ],
+          [
+            "cube_users_summary.Session",
+            1
+          ],
+          [
+            "cube_users_summary.Assessment_type",
+            1
+          ]
+        ],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Question Response Analysis redacted",
+    "ordinal": 18,
+    "size": "1280.0x720.0",
+    "visual_count": 8,
+    "visuals": [
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H1 - Longitudinal",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Response Analysis - names redacted",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "rdlVisual",
+        "title": "",
+        "tables": [
+          "Titles",
+          "cube_question_summary_overall",
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_item.assessment_date",
+            1
+          ],
+          [
+            "dim_subject.Assessment_type",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ],
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_subject.Subject",
+            1
+          ],
+          [
+            "cube_question_summary_overall.Subject_ID",
+            1
+          ],
+          [
+            "Titles.H3 - Teachers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Home",
+    "ordinal": null,
+    "size": "1280.0x720.0",
+    "visual_count": 73,
+    "visuals": [
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "bookmarkNavigator",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "slicer",
+        "title": "",
+        "tables": [
+          "Drill Through Report"
+        ],
+        "fields": [
+          [
+            "Drill Through Report.Type",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "bookmarkNavigator",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "bookmarkNavigator",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "slicer",
+        "title": "Report Variation",
+        "tables": [
+          "Drill Through Report"
+        ],
+        "fields": [
+          [
+            "Drill Through Report.Report Short Name",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "slicer",
+        "title": "",
+        "tables": [
+          "Drill Through Report"
+        ],
+        "fields": [
+          [
+            "Drill Through Report.Report Catergory",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "image",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "cardVisual",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.__Title",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "cardVisual",
+        "title": "My activity",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "Min(dim_subject.Subject)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "advancedSlicerVisual",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Grade",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "advancedSlicerVisual",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Subject",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "slicer",
+        "title": "Academic Year",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Session",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "tableEx",
+        "title": "Assessments Summary",
+        "tables": [
+          "Measure",
+          "dim_item",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_item.assessment_date",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ],
+          [
+            "Measure.Total Student",
+            1
+          ],
+          [
+            "Query1._Data Bar - Grade Average",
+            1
+          ]
+        ],
+        "filter_count": 3
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "1559a2b105361a0cc343",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "slicer",
+        "title": "",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Assessment_type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "slicer",
+        "title": "",
+        "tables": [
+          "dim_item"
+        ],
+        "fields": [
+          [
+            "dim_item.Section_Instructors",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "advancedSlicerVisual",
+        "title": "",
+        "tables": [
+          "Products"
+        ],
+        "fields": [
+          [
+            "Products.Color",
+            1
+          ],
+          [
+            "Min(Products.Color_sort)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "advancedSlicerVisual",
+        "title": "",
+        "tables": [
+          "Assessments"
+        ],
+        "fields": [
+          [
+            "Assessments.Grade",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "advancedSlicerVisual",
+        "title": "TYPE",
+        "tables": [
+          "Products"
+        ],
+        "fields": [
+          [
+            "Products.Product Category",
+            1
+          ],
+          [
+            "Min(Products.Product Category)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "cardVisual",
+        "title": "Key Performance Indicators",
+        "tables": [
+          "Assessments",
+          "Sales Measures",
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Min(Assessments.Subject)",
+            1
+          ],
+          [
+            "Titles.H3 - Teachers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "bookmarkNavigator",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "pivotTable",
+        "title": "Sales points",
+        "tables": [
+          "Drillthrough_Pages",
+          "Key Measures",
+          "Sales Measures"
+        ],
+        "fields": [
+          [
+            "Key Measures.Grade Average",
+            1
+          ],
+          [
+            "Drillthrough_Pages.Report Catergory",
+            1
+          ],
+          [
+            "Drillthrough_Pages.Report Name",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "This report serves as a reference to showcase various ways the new features can be applied.",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "slicer",
+        "title": "",
+        "tables": [
+          "Report Short Name"
+        ],
+        "fields": [
+          [
+            "Report Short Name.Type",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "cardVisual",
+        "title": "My activity",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "Min(dim_subject.Subject)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "db844137966ae0926530",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "5cef5ce02628b71ab890",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "tableEx",
+        "title": "Assessments Summary",
+        "tables": [
+          "Assessments",
+          "Key Measures",
+          "Questions Data",
+          "Standards",
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Assessments.Grade",
+            1
+          ],
+          [
+            "Titles.H3 - Assessment Date",
+            1
+          ],
+          [
+            "Questions Data.Item Name",
+            1
+          ],
+          [
+            "Standards.Short Strand",
+            1
+          ],
+          [
+            "Key Measures.Total Standards",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures._Data Bar - Grade Average",
+            1
+          ]
+        ],
+        "filter_count": 3
+      },
+      {
+        "type": "pivotTable",
+        "title": "Avg by Strands",
+        "tables": [
+          "Assessments",
+          "Key Measures",
+          "Sales Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Assessments.Grade",
+            1
+          ],
+          [
+            "Standards.Short Strand",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Total Standards",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Grade Min",
+            1
+          ],
+          [
+            "Key Measures.Grade Max",
+            1
+          ],
+          [
+            "Key Measures.Grade Average",
+            1
+          ]
+        ],
+        "filter_count": 8
+      },
+      {
+        "type": "clusteredColumnChart",
+        "title": "",
+        "tables": [
+          "Clustered chart",
+          "Color",
+          "Date"
+        ],
+        "fields": [
+          [
+            "Clustered chart.Clustered columns",
+            1
+          ],
+          [
+            "Clustered chart.Legend",
+            1
+          ],
+          [
+            "Color.Color",
+            1
+          ],
+          [
+            "Date.Month",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "actionButton",
+        "title": "Top Button ON",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "lineChart",
+        "title": "",
+        "tables": [
+          "Clustered chart",
+          "Color",
+          "Date"
+        ],
+        "fields": [
+          [
+            "Color.Color",
+            1
+          ],
+          [
+            "Date.Month",
+            1
+          ],
+          [
+            "Clustered chart.Clustered columns",
+            1
+          ],
+          [
+            "Clustered chart.Legend",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "actionButton",
+        "title": "Down Gray Button OFF",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Top Gray Button OFF",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Down Button ON",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Chart Green",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Chart Grey",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Table Green",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Table Grey",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "clusteredBarChart",
+        "title": "",
+        "tables": [
+          "Assessments",
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Assessments.Grade",
+            1
+          ],
+          [
+            "Standards.Short Strand",
+            1
+          ],
+          [
+            "Key Measures.Grae Avg",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "eef4265a56e9ac67a3b5",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Top Gray Button OFF",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Top Button ON",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Down Gray Button OFF",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Down Button ON",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "columnChart",
+        "title": "",
+        "tables": [
+          "Date",
+          "Sales Measures"
+        ],
+        "fields": [
+          [
+            "Date.Month",
+            1
+          ],
+          [
+            "Sales Measures.Rib_Ele_03",
+            1
+          ],
+          [
+            "Sales Measures.Rib_Ele_01",
+            1
+          ],
+          [
+            "Sales Measures.Rib_Ele_02",
+            1
+          ],
+          [
+            "Sales Measures.Rib_Ele_04",
+            1
+          ],
+          [
+            "Sales Measures.Rib_green_04",
+            1
+          ],
+          [
+            "Sales Measures.Rib_green_01",
+            1
+          ],
+          [
+            "Sales Measures.Rib_green_02",
+            1
+          ],
+          [
+            "Sales Measures.Rib_green_03",
+            1
+          ],
+          [
+            "Sales Measures.Rib_pink_01",
+            1
+          ],
+          [
+            "Sales Measures.Rib_pink_02",
+            1
+          ],
+          [
+            "Sales Measures.Rib_pink_03",
+            1
+          ],
+          [
+            "Sales Measures.Rib_pink_04",
+            1
+          ],
+          [
+            "Sales Measures.Rib_yellow_01",
+            1
+          ],
+          [
+            "Sales Measures.Rib_yellow_02",
+            1
+          ],
+          [
+            "Sales Measures.Rib_yellow_03",
+            1
+          ],
+          [
+            "Sales Measures.Rib_yellow_04",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "areaChart",
+        "title": "",
+        "tables": [
+          "Date",
+          "Products",
+          "Sales Measures"
+        ],
+        "fields": [
+          [
+            "Date.Month",
+            1
+          ],
+          [
+            "Sales Measures.Rib_purple_01 \u2605",
+            1
+          ],
+          [
+            "Sales Measures.Rib_green_01 \u2605",
+            1
+          ],
+          [
+            "Sales Measures.Rib_pink_01 \u2605",
+            1
+          ],
+          [
+            "Sales Measures.Rib_yellow_01 \u2605",
+            1
+          ],
+          [
+            "Products.Product Category",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "shape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Sort 1",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Sort 2",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "33dcf5e70068c700d86a",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Top Gray Button OFF",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Top Button ON",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Down Gray Button OFF",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Chart Grey",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Table Green",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "Down Button ON",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Table Grey",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "1 Chart Green",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "clusteredBarChart",
+        "title": "Grade Average by Assessment",
+        "tables": [
+          "Assessments",
+          "Key Measures",
+          "Questions Data"
+        ],
+        "fields": [
+          [
+            "Assessments.Grade",
+            1
+          ],
+          [
+            "Questions Data.Item Name",
+            1
+          ],
+          [
+            "Key Measures.Grae Avg",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Total Standards",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "hundredPercentStackedAreaChart",
+        "title": "",
+        "tables": [
+          "Date",
+          "Sales Measures"
+        ],
+        "fields": [
+          [
+            "Date.Month",
+            1
+          ],
+          [
+            "Sales Measures.100%_blank",
+            1
+          ],
+          [
+            "Sales Measures.100%_green_01 \u2605",
+            1
+          ],
+          [
+            "Sales Measures.100%_green_02",
+            1
+          ],
+          [
+            "Sales Measures.100%_green_03",
+            1
+          ],
+          [
+            "Sales Measures.100%_green_04",
+            1
+          ],
+          [
+            "Sales Measures.100%_pink_02",
+            1
+          ],
+          [
+            "Sales Measures.100%_pink_03",
+            1
+          ],
+          [
+            "Sales Measures.100%_pink_04",
+            1
+          ],
+          [
+            "Sales Measures.100%_pink_01 \u2605",
+            1
+          ],
+          [
+            "Sales Measures.100%_yellow_04",
+            1
+          ],
+          [
+            "Sales Measures.100%_yellow_01 \u2605",
+            1
+          ],
+          [
+            "Sales Measures.100%_yellow_02",
+            1
+          ],
+          [
+            "Sales Measures.100%_yellow_03",
+            1
+          ],
+          [
+            "Sales Measures.100%_purple_03",
+            1
+          ],
+          [
+            "Sales Measures.100%_purple_04",
+            1
+          ],
+          [
+            "Sales Measures.100%_purple_01 \u2605",
+            1
+          ],
+          [
+            "Sales Measures.100%_purple_02",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "bookmarkNavigator",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "slicer",
+        "title": "",
+        "tables": [
+          "Drill Through Report"
+        ],
+        "fields": [
+          [
+            "Drill Through Report.Sort 2",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "slicer",
+        "title": "Report Variation",
+        "tables": [
+          "Report Short Name"
+        ],
+        "fields": [
+          [
+            "Report Short Name.Report Short Name",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "tableEx",
+        "title": "Assessments Summary",
+        "tables": [
+          "Measure",
+          "dim_item",
+          "dim_strand",
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "dim_subject.Grade",
+            1
+          ],
+          [
+            "dim_strand.Strand",
+            1
+          ],
+          [
+            "Measure.Total Standard by Strand",
+            1
+          ],
+          [
+            "Measure.Total Question Standard",
+            1
+          ],
+          [
+            "Query1._Data Bar - Grade Average",
+            1
+          ],
+          [
+            "dim_item.assessment_date",
+            1
+          ],
+          [
+            "dim_item.Item_Name",
+            1
+          ]
+        ],
+        "filter_count": 4
+      }
+    ]
+  },
+  {
+    "name": "Standards Deep Dive interactive",
+    "ordinal": 1,
+    "size": "1280.0x720.0",
+    "visual_count": 39,
+    "visuals": [
+      {
+        "type": "card",
+        "title": "Instructor(s):",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.Instructor(s):",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Grade Average",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Number of Standards",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Total Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Number of Questions",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Total Question",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Total Students",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Total Student",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "Standards Deep Dive",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "funnel",
+        "title": "Standards by # of Questions",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "treemap",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Standards.Short Strand",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "treemap",
+        "title": "# of Standards by Strand",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.Strand",
+            1
+          ],
+          [
+            "Measure.Total Question Strand",
+            1
+          ]
+        ],
+        "filter_count": 6
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "tableEx",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Standards",
+          "Standards related measures"
+        ],
+        "fields": [
+          [
+            "Standards.Schoology Short Standard",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ],
+          [
+            "Key Measures.% of Incorrect Choice",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards related measures.No. of Sub Standards",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "da6d5ecab89312157de5",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Overall Lowest %",
+        "tables": [
+          "Key Measures"
+        ],
+        "fields": [
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "card",
+        "title": "Overall Highest %",
+        "tables": [
+          "Key Measures"
+        ],
+        "fields": [
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "a8d2ce8788ebecc45609",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "eba59b96c29ddb905415",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "barChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "clusteredBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.% of Incorrect Choice",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "6035005a2e385d0ec112",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "funnel",
+        "title": "Standards by # of Questions",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "clusteredBarChart",
+        "title": ".",
+        "tables": [
+          "Key Measures",
+          "Standards",
+          "Standards related measures"
+        ],
+        "fields": [
+          [
+            "Standards.Standard",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards related measures.No. of Sub Standards",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "8856b8d1306803cda030",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "hundredPercentStackedBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "cube_standard_summary",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Sum(cube_standard_summary.Total_Questions)",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "Measure.Incorrect_Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ]
+        ],
+        "filter_count": 3
+      },
+      {
+        "type": "0099551075094e5e0e30",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "5aa4cb84362de031a83c",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "hundredPercentStackedBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "cube_standard_summary",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Sum(cube_standard_summary.Total_Questions)",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "Measure.Incorrect_Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ]
+        ],
+        "filter_count": 3
+      },
+      {
+        "type": "6dbc92f024b199a41076",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "hundredPercentStackedBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Measure",
+          "cube_standard_summary",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Sum(cube_standard_summary.Total_Questions)",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "Measure.Incorrect_Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "dim_standard.cPalms_Standard",
+            1
+          ]
+        ],
+        "filter_count": 5
+      },
+      {
+        "type": "charticulatorVisualCommunity_VIEW",
+        "title": "",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.Strand",
+            1
+          ],
+          [
+            "Measure.Total Standard",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ],
+          [
+            "Measure.Performance Color Strand",
+            1
+          ],
+          [
+            "Measure.Total Question Strand",
+            1
+          ]
+        ],
+        "filter_count": 4
+      },
+      {
+        "type": "charticulatorVisualCommunity_VIEW",
+        "title": "",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.cPalms_Standard",
+            2
+          ],
+          [
+            "Measure.Total Standard",
+            1
+          ],
+          [
+            "Measure.Performance Color Standard2",
+            1
+          ],
+          [
+            "Measure.Total Question Standard",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 3
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      }
+    ]
+  },
+  {
+    "name": "Question Response Analysis Interactive",
+    "ordinal": 2,
+    "size": "1280.0x720.0",
+    "visual_count": 28,
+    "visuals": [
+      {
+        "type": "card",
+        "title": "Instructor(s):",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.Instructor(s):",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Overall Lowest %",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Grade Min",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Overall Highest %",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Grade Max",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Grade Average",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Number of Standards",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Total Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Number of Questions",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Total Question",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Total Students",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Total Student",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "tableEx",
+        "title": "  Correct % by Standards",
+        "tables": [
+          "Measure",
+          "cube_question_summary_overall"
+        ],
+        "fields": [
+          [
+            "cube_question_summary_overall.Standards",
+            1
+          ],
+          [
+            "Measure.Total Question Standard",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "tableEx",
+        "title": "",
+        "tables": [
+          "cube_question_summary_overall"
+        ],
+        "fields": [
+          [
+            "Sum(cube_question_summary_overall.Sorting Question_No)",
+            1
+          ],
+          [
+            "cube_question_summary_overall.questionDax",
+            1
+          ],
+          [
+            "Sum(cube_question_summary_overall.Grade_Average)",
+            1
+          ],
+          [
+            "cube_question_summary_overall.__FirstFormatted_correct_",
+            1
+          ],
+          [
+            "cube_question_summary_overall.__FirstFormatted_Incorrect_Choice_Details",
+            1
+          ],
+          [
+            "cube_question_summary_overall.__FirstFormatted_Incorrect_Details_Name",
+            1
+          ],
+          [
+            "cube_question_summary_overall.CombineStandardsColumn",
+            1
+          ],
+          [
+            "cube_question_summary_overall.CombineDescriptionsColumn",
+            1
+          ]
+        ],
+        "filter_count": 11
+      },
+      {
+        "type": "cardVisual",
+        "title": "Question Summary Report",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "Min(dim_subject.Subject)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.Score",
+            1
+          ],
+          [
+            "Sum(Student Submissions.Points Possible)",
+            1
+          ],
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "Question Response Analysis",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "hundredPercentStackedBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Key Measures",
+          "Questions Data"
+        ],
+        "fields": [
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ],
+          [
+            "Key Measures.% of incorrect answer",
+            1
+          ],
+          [
+            "Questions Data.Standards",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "slicer",
+        "title": "",
+        "tables": [
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Standards.Short Strand",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "treemap",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Standards.Short Strand",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "tableEx",
+        "title": "  Correct % by Strands",
+        "tables": [
+          "Measure",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "dim_standard.Strand",
+            1
+          ],
+          [
+            "Measure.Total Standard",
+            1
+          ],
+          [
+            "Measure.Grade_Average_Standard_Measure",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "funnel",
+        "title": "Standards by # of Questions",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "d8767445735262b0b0c0",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "basicShape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "467d134060d51b7cae0e",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "barChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Key Measures.% of Correct Answers",
+            1
+          ],
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "clusteredBarChart",
+        "title": "Correct and Incorrect % by Standards",
+        "tables": [
+          "Key Measures",
+          "Standards"
+        ],
+        "fields": [
+          [
+            "Key Measures.Total Questions",
+            1
+          ],
+          [
+            "Key Measures.% of Incorrect Choice",
+            1
+          ],
+          [
+            "Standards.Standard",
+            1
+          ]
+        ],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Selected Assessment",
+    "ordinal": 3,
+    "size": "320.0x240.0",
+    "visual_count": 1,
+    "visuals": [
+      {
+        "type": "cardVisual",
+        "title": "Selected Assessment(s)",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "Min(dim_subject.ShowHistorySubject)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Selected Strand",
+    "ordinal": 4,
+    "size": "320.0x240.0",
+    "visual_count": 1,
+    "visuals": [
+      {
+        "type": "cardVisual",
+        "title": "Selected Assessment(s)",
+        "tables": [
+          "dim_subject"
+        ],
+        "fields": [
+          [
+            "Min(dim_subject.Subject)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      }
+    ]
+  },
+  {
+    "name": "Incorrect Answer Details",
+    "ordinal": 5,
+    "size": "1280.0x720.0",
+    "visual_count": 17,
+    "visuals": [
+      {
+        "type": "tableEx",
+        "title": "",
+        "tables": [
+          "cube_question_summary_overall",
+          "dim_standard"
+        ],
+        "fields": [
+          [
+            "Sum(cube_question_summary_overall.Sorting Question_No)",
+            1
+          ],
+          [
+            "cube_question_summary_overall.questionDax",
+            1
+          ],
+          [
+            "Sum(cube_question_summary_overall.Grade_Average)",
+            1
+          ],
+          [
+            "cube_question_summary_overall.__FirstFormatted_correct_",
+            1
+          ],
+          [
+            "cube_question_summary_overall.__FirstFormatted_Incorrect_Choice_Details",
+            1
+          ],
+          [
+            "cube_question_summary_overall.CombineDescriptionsColumn",
+            1
+          ]
+        ],
+        "filter_count": 10
+      },
+      {
+        "type": "simpleImageEBC4593F96F1425FB3D84C5BF02B5075",
+        "title": "",
+        "tables": [
+          "SchoolLogo_Parameter"
+        ],
+        "fields": [
+          [
+            "SchoolLogo_Parameter.SchoolLogo_Parameter",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "card",
+        "title": "Description",
+        "tables": [
+          "SchoolName_Parameter"
+        ],
+        "fields": [
+          [
+            "Min(SchoolName_Parameter.SchoolName_Parameter)",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "pivotTable",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Student Submissions.Answer Submission",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.% of all answers",
+            1
+          ],
+          [
+            "Key Measures.% Incorrect all",
+            1
+          ],
+          [
+            "Key Measures.Possible Points",
+            1
+          ],
+          [
+            "Key Measures.Total Possible",
+            1
+          ],
+          [
+            "Key Measures.Total Incorrect Choices",
+            1
+          ]
+        ],
+        "filter_count": 2
+      },
+      {
+        "type": "tableEx",
+        "title": "",
+        "tables": [
+          "fact_student_submission"
+        ],
+        "fields": [
+          [
+            "fact_student_submission.Answer_Submission",
+            1
+          ],
+          [
+            "fact_student_submission.# of students",
+            1
+          ],
+          [
+            "fact_student_submission.test3",
+            1
+          ]
+        ],
+        "filter_count": 3
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Measure"
+        ],
+        "fields": [
+          [
+            "Measure.Total Incorrect Choices",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "shape",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "cube_question_summary"
+        ],
+        "fields": [
+          [
+            "cube_question_summary.Subject",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Assessment Type",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 Course and Unit",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "tableEx",
+        "title": "",
+        "tables": [
+          "fact_student_submission"
+        ],
+        "fields": [
+          [
+            "fact_student_submission.Answer_Submission",
+            1
+          ],
+          [
+            "fact_student_submission.User_Name",
+            1
+          ]
+        ],
+        "filter_count": 2
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.Report Header",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "multiRowCard",
+        "title": "",
+        "tables": [
+          "Titles"
+        ],
+        "fields": [
+          [
+            "Titles.H2 - Question Details",
+            1
+          ]
+        ],
+        "filter_count": 0
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "treemap",
+        "title": "",
+        "tables": [
+          "Key Measures",
+          "Student Submissions"
+        ],
+        "fields": [
+          [
+            "Student Submissions.Answer Submission",
+            1
+          ],
+          [
+            "Key Measures.Total Students",
+            1
+          ],
+          [
+            "Key Measures.% of all answers",
+            1
+          ]
+        ],
+        "filter_count": 1
+      },
+      {
+        "type": "textbox",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      },
+      {
+        "type": "actionButton",
+        "title": "",
+        "tables": [],
+        "fields": [],
+        "filter_count": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,1510 @@
+{
+  "Standard Summary": {
+    "tables": [],
+    "fields": [
+      [
+        "dim_standard.blank",
+        4
+      ],
+      [
+        "dim_standard.cPalms_Standard",
+        3
+      ],
+      [
+        "Titles.H3 - # of  questions",
+        1
+      ],
+      [
+        "Min(dim_standard.Custom.CleanedDescription)",
+        1
+      ],
+      [
+        "Min(dim_standard.lastChangeDateTime)",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.Grade_no",
+        1
+      ],
+      [
+        "Measure.Grade_Average_Standard_Measure",
+        1
+      ],
+      [
+        "Sum(cube_standard_summary.Total_Questions)",
+        1
+      ],
+      [
+        "Measure.Incorrect_Grade_Average_Standard_Measure",
+        1
+      ],
+      [
+        "Min(dim_standard.Strand)",
+        1
+      ]
+    ]
+  },
+  "Strand Summary": {
+    "tables": [],
+    "fields": [
+      [
+        "dim_standard.cPalms_Standard",
+        5
+      ],
+      [
+        "dim_standard.blank",
+        4
+      ],
+      [
+        "Measure.Incorrect_Grade_Average_Standard_Measure",
+        2
+      ],
+      [
+        "Measure.Grade_Average_Standard_Measure",
+        2
+      ],
+      [
+        "Titles.H3 - # of  questions",
+        1
+      ],
+      [
+        "Titles.H3 - # of standards",
+        1
+      ],
+      [
+        "dim_standard.Strand",
+        1
+      ],
+      [
+        "Min(dim_standard.lastChangeDateTime)",
+        1
+      ],
+      [
+        "Sum(cube_standard_summary.Percentage_InCorrect_Answers)",
+        1
+      ],
+      [
+        "Sum(cube_standard_summary.Grade_Average)",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.Grade_no",
+        1
+      ]
+    ]
+  },
+  "QuestionView": {
+    "tables": [],
+    "fields": [
+      [
+        "Measure.FormattedString",
+        2
+      ]
+    ]
+  },
+  "Question Summary Report": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_item.Item_ID",
+        1
+      ],
+      [
+        "dim_item.Item_Name",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Question Summary Report - teacher subtotal": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_item.Item_ID",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_item.Item_Name",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Year To Date - Longitudinal Report": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.School_ID",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Year To Date - Longitudinal Report 2": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.School_ID",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Year To Date - Longitudinal Report 3": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.School_ID",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Question Response Analysis": {
+    "tables": [],
+    "fields": [
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        2
+      ],
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_item.assessment_date",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_item.Item_Name",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "cube_question_summary_overall.Subject_ID",
+        1
+      ],
+      [
+        "Titles.H3 - Teachers",
+        1
+      ]
+    ]
+  },
+  "Question Response Analysis by Teacher": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_item.Item_ID",
+        1
+      ],
+      [
+        "dim_item.Item_Name",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Question Response Analysis by Standard and Teacher": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_item.Item_ID",
+        1
+      ],
+      [
+        "dim_item.Item_Name",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Question Summary Report - header highlights": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_item.Item_ID",
+        1
+      ],
+      [
+        "dim_item.Item_Name",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Question Summary Report redacted": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ],
+      [
+        "cube_users_summary.Grade",
+        1
+      ],
+      [
+        "cube_users_summary.Item_ID",
+        1
+      ],
+      [
+        "cube_users_summary.Item_Name",
+        1
+      ],
+      [
+        "cube_users_summary.Subject",
+        1
+      ],
+      [
+        "cube_users_summary.Session",
+        1
+      ],
+      [
+        "cube_users_summary.Assessment_type",
+        1
+      ]
+    ]
+  },
+  "Question Response Analysis redacted": {
+    "tables": [],
+    "fields": [
+      [
+        "Titles.H1 - Longitudinal",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.Total Questions",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        1
+      ],
+      [
+        "dim_item.assessment_date",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_item.Item_Name",
+        1
+      ],
+      [
+        "dim_subject.Grade",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "cube_question_summary_overall.Subject_ID",
+        1
+      ],
+      [
+        "Titles.H3 - Teachers",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ]
+    ]
+  },
+  "Home": {
+    "tables": [],
+    "fields": [
+      [
+        "Assessments.Grade",
+        5
+      ],
+      [
+        "Date.Month",
+        5
+      ],
+      [
+        "dim_subject.Grade",
+        3
+      ],
+      [
+        "Standards.Short Strand",
+        3
+      ],
+      [
+        "Key Measures.Total Standards",
+        3
+      ],
+      [
+        "Key Measures.Total Questions",
+        3
+      ],
+      [
+        "Min(dim_subject.Subject)",
+        2
+      ],
+      [
+        "dim_item.assessment_date",
+        2
+      ],
+      [
+        "dim_item.Item_Name",
+        2
+      ],
+      [
+        "Query1._Data Bar - Grade Average",
+        2
+      ],
+      [
+        "Products.Product Category",
+        2
+      ],
+      [
+        "Key Measures.Grade Average",
+        2
+      ],
+      [
+        "Questions Data.Item Name",
+        2
+      ],
+      [
+        "Key Measures.Total Students",
+        2
+      ],
+      [
+        "Clustered chart.Clustered columns",
+        2
+      ],
+      [
+        "Clustered chart.Legend",
+        2
+      ],
+      [
+        "Color.Color",
+        2
+      ],
+      [
+        "Key Measures.Grae Avg",
+        2
+      ],
+      [
+        "Drill Through Report.Type",
+        1
+      ],
+      [
+        "Drill Through Report.Report Short Name",
+        1
+      ],
+      [
+        "Drill Through Report.Report Catergory",
+        1
+      ],
+      [
+        "Titles.__Title",
+        1
+      ],
+      [
+        "dim_subject.Subject",
+        1
+      ],
+      [
+        "dim_subject.Session",
+        1
+      ],
+      [
+        "Measure.Total Student",
+        1
+      ],
+      [
+        "dim_subject.Assessment_type",
+        1
+      ],
+      [
+        "dim_item.Section_Instructors",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ],
+      [
+        "Products.Color",
+        1
+      ],
+      [
+        "Min(Products.Color_sort)",
+        1
+      ],
+      [
+        "Min(Products.Product Category)",
+        1
+      ],
+      [
+        "Min(Assessments.Subject)",
+        1
+      ],
+      [
+        "Titles.H3 - Teachers",
+        1
+      ],
+      [
+        "Drillthrough_Pages.Report Catergory",
+        1
+      ],
+      [
+        "Drillthrough_Pages.Report Name",
+        1
+      ],
+      [
+        "Report Short Name.Type",
+        1
+      ],
+      [
+        "Titles.H3 - Assessment Date",
+        1
+      ],
+      [
+        "Key Measures._Data Bar - Grade Average",
+        1
+      ],
+      [
+        "Key Measures.Grade Min",
+        1
+      ],
+      [
+        "Key Measures.Grade Max",
+        1
+      ],
+      [
+        "Sales Measures.Rib_Ele_03",
+        1
+      ],
+      [
+        "Sales Measures.Rib_Ele_01",
+        1
+      ],
+      [
+        "Sales Measures.Rib_Ele_02",
+        1
+      ],
+      [
+        "Sales Measures.Rib_Ele_04",
+        1
+      ],
+      [
+        "Sales Measures.Rib_green_04",
+        1
+      ],
+      [
+        "Sales Measures.Rib_green_01",
+        1
+      ],
+      [
+        "Sales Measures.Rib_green_02",
+        1
+      ],
+      [
+        "Sales Measures.Rib_green_03",
+        1
+      ],
+      [
+        "Sales Measures.Rib_pink_01",
+        1
+      ],
+      [
+        "Sales Measures.Rib_pink_02",
+        1
+      ],
+      [
+        "Sales Measures.Rib_pink_03",
+        1
+      ],
+      [
+        "Sales Measures.Rib_pink_04",
+        1
+      ],
+      [
+        "Sales Measures.Rib_yellow_01",
+        1
+      ],
+      [
+        "Sales Measures.Rib_yellow_02",
+        1
+      ],
+      [
+        "Sales Measures.Rib_yellow_03",
+        1
+      ],
+      [
+        "Sales Measures.Rib_yellow_04",
+        1
+      ],
+      [
+        "Sales Measures.Rib_purple_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.Rib_green_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.Rib_pink_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.Rib_yellow_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.100%_blank",
+        1
+      ],
+      [
+        "Sales Measures.100%_green_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.100%_green_02",
+        1
+      ],
+      [
+        "Sales Measures.100%_green_03",
+        1
+      ],
+      [
+        "Sales Measures.100%_green_04",
+        1
+      ],
+      [
+        "Sales Measures.100%_pink_02",
+        1
+      ],
+      [
+        "Sales Measures.100%_pink_03",
+        1
+      ],
+      [
+        "Sales Measures.100%_pink_04",
+        1
+      ],
+      [
+        "Sales Measures.100%_pink_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.100%_yellow_04",
+        1
+      ],
+      [
+        "Sales Measures.100%_yellow_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.100%_yellow_02",
+        1
+      ],
+      [
+        "Sales Measures.100%_yellow_03",
+        1
+      ],
+      [
+        "Sales Measures.100%_purple_03",
+        1
+      ],
+      [
+        "Sales Measures.100%_purple_04",
+        1
+      ],
+      [
+        "Sales Measures.100%_purple_01 \u2605",
+        1
+      ],
+      [
+        "Sales Measures.100%_purple_02",
+        1
+      ],
+      [
+        "Drill Through Report.Sort 2",
+        1
+      ],
+      [
+        "Report Short Name.Report Short Name",
+        1
+      ],
+      [
+        "dim_strand.Strand",
+        1
+      ],
+      [
+        "Measure.Total Standard by Strand",
+        1
+      ],
+      [
+        "Measure.Total Question Standard",
+        1
+      ]
+    ]
+  },
+  "Standards Deep Dive interactive": {
+    "tables": [],
+    "fields": [
+      [
+        "Key Measures.Total Questions",
+        7
+      ],
+      [
+        "Measure.Grade_Average_Standard_Measure",
+        6
+      ],
+      [
+        "Standards.Standard",
+        6
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        5
+      ],
+      [
+        "dim_standard.cPalms_Standard",
+        5
+      ],
+      [
+        "Measure.Total Standard",
+        3
+      ],
+      [
+        "Sum(cube_standard_summary.Total_Questions)",
+        3
+      ],
+      [
+        "Measure.Incorrect_Grade_Average_Standard_Measure",
+        3
+      ],
+      [
+        "dim_standard.Strand",
+        2
+      ],
+      [
+        "Measure.Total Question Strand",
+        2
+      ],
+      [
+        "Key Measures.% of Incorrect Choice",
+        2
+      ],
+      [
+        "Standards related measures.No. of Sub Standards",
+        2
+      ],
+      [
+        "Titles.Instructor(s):",
+        1
+      ],
+      [
+        "Measure.Total Question",
+        1
+      ],
+      [
+        "Measure.Total Student",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ],
+      [
+        "Standards.Short Strand",
+        1
+      ],
+      [
+        "Standards.Schoology Short Standard",
+        1
+      ],
+      [
+        "Measure.Performance Color Strand",
+        1
+      ],
+      [
+        "Measure.Performance Color Standard2",
+        1
+      ],
+      [
+        "Measure.Total Question Standard",
+        1
+      ],
+      [
+        "Titles.H2 - Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ]
+    ]
+  },
+  "Question Response Analysis Interactive": {
+    "tables": [],
+    "fields": [
+      [
+        "Key Measures.Total Questions",
+        6
+      ],
+      [
+        "Standards.Standard",
+        4
+      ],
+      [
+        "Measure.Grade_Average_Standard_Measure",
+        3
+      ],
+      [
+        "Key Measures.% of Correct Answers",
+        3
+      ],
+      [
+        "Measure.Total Standard",
+        2
+      ],
+      [
+        "Standards.Short Strand",
+        2
+      ],
+      [
+        "Titles.Instructor(s):",
+        1
+      ],
+      [
+        "Measure.Grade Min",
+        1
+      ],
+      [
+        "Measure.Grade Max",
+        1
+      ],
+      [
+        "Measure.Total Question",
+        1
+      ],
+      [
+        "Measure.Total Student",
+        1
+      ],
+      [
+        "cube_question_summary_overall.Standards",
+        1
+      ],
+      [
+        "Measure.Total Question Standard",
+        1
+      ],
+      [
+        "Sum(cube_question_summary_overall.Sorting Question_No)",
+        1
+      ],
+      [
+        "cube_question_summary_overall.questionDax",
+        1
+      ],
+      [
+        "Sum(cube_question_summary_overall.Grade_Average)",
+        1
+      ],
+      [
+        "cube_question_summary_overall.__FirstFormatted_correct_",
+        1
+      ],
+      [
+        "cube_question_summary_overall.__FirstFormatted_Incorrect_Choice_Details",
+        1
+      ],
+      [
+        "cube_question_summary_overall.__FirstFormatted_Incorrect_Details_Name",
+        1
+      ],
+      [
+        "cube_question_summary_overall.CombineStandardsColumn",
+        1
+      ],
+      [
+        "cube_question_summary_overall.CombineDescriptionsColumn",
+        1
+      ],
+      [
+        "Min(dim_subject.Subject)",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ],
+      [
+        "Key Measures.Total Students",
+        1
+      ],
+      [
+        "Key Measures.Score",
+        1
+      ],
+      [
+        "Sum(Student Submissions.Points Possible)",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Key Measures.% of incorrect answer",
+        1
+      ],
+      [
+        "Questions Data.Standards",
+        1
+      ],
+      [
+        "dim_standard.Strand",
+        1
+      ],
+      [
+        "Key Measures.% of Incorrect Choice",
+        1
+      ]
+    ]
+  },
+  "Selected Assessment": {
+    "tables": [],
+    "fields": [
+      [
+        "Min(dim_subject.ShowHistorySubject)",
+        1
+      ]
+    ]
+  },
+  "Selected Strand": {
+    "tables": [],
+    "fields": [
+      [
+        "Min(dim_subject.Subject)",
+        1
+      ]
+    ]
+  },
+  "Incorrect Answer Details": {
+    "tables": [],
+    "fields": [
+      [
+        "Student Submissions.Answer Submission",
+        2
+      ],
+      [
+        "Key Measures.Total Students",
+        2
+      ],
+      [
+        "Key Measures.% of all answers",
+        2
+      ],
+      [
+        "fact_student_submission.Answer_Submission",
+        2
+      ],
+      [
+        "Sum(cube_question_summary_overall.Sorting Question_No)",
+        1
+      ],
+      [
+        "cube_question_summary_overall.questionDax",
+        1
+      ],
+      [
+        "Sum(cube_question_summary_overall.Grade_Average)",
+        1
+      ],
+      [
+        "cube_question_summary_overall.__FirstFormatted_correct_",
+        1
+      ],
+      [
+        "cube_question_summary_overall.__FirstFormatted_Incorrect_Choice_Details",
+        1
+      ],
+      [
+        "cube_question_summary_overall.CombineDescriptionsColumn",
+        1
+      ],
+      [
+        "SchoolLogo_Parameter.SchoolLogo_Parameter",
+        1
+      ],
+      [
+        "Min(SchoolName_Parameter.SchoolName_Parameter)",
+        1
+      ],
+      [
+        "Key Measures.% Incorrect all",
+        1
+      ],
+      [
+        "Key Measures.Possible Points",
+        1
+      ],
+      [
+        "Key Measures.Total Possible",
+        1
+      ],
+      [
+        "Key Measures.Total Incorrect Choices",
+        1
+      ],
+      [
+        "fact_student_submission.# of students",
+        1
+      ],
+      [
+        "fact_student_submission.test3",
+        1
+      ],
+      [
+        "Measure.Total Incorrect Choices",
+        1
+      ],
+      [
+        "cube_question_summary.Subject",
+        1
+      ],
+      [
+        "Titles.H2 - Assessment Type",
+        1
+      ],
+      [
+        "Titles.H2 Course and Unit",
+        1
+      ],
+      [
+        "fact_student_submission.User_Name",
+        1
+      ],
+      [
+        "Titles.Report Header",
+        1
+      ],
+      [
+        "Titles.H2 - Question Details",
+        1
+      ]
+    ]
+  }
+}
