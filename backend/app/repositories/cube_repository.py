@@ -491,6 +491,17 @@ class CubeRepository:
         plain SUM of per-identifier totals would double-count those
         questions.
 
+        ``num_standards`` is counted at the **cpalms-label grain** — the
+        same visible-row grain rendered by ``get_standard_rollup_for_item``
+        — so the per-strand column sums to the school-level
+        ``DISTINCTCOUNT(cqso[Standards]) = 12`` legacy KPI and matches the
+        number of rows the standards rollup table renders for the strand.
+        Counting ``DISTINCT cqs.identifier`` instead would collapse
+        Florida CPALMS alias pairs (e.g. ``MA.912.AR.3.1`` and
+        ``AI.MA.912.AR.3.1`` share an identifier UUID) and understate the
+        per-strand count, contradicting the KPI tile and the standards
+        table.
+
         Restricts identifiers via an exact-match join on the item's
         ``dim_question_data.standard`` set (the raw ``standards_val``
         codes) so unaligned assessments yield zero strand rows. We
@@ -508,27 +519,47 @@ class CubeRepository:
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
             ),
-            valid_identifiers AS (
-                SELECT DISTINCT ds.identifier
+            labeled AS (
+                SELECT DISTINCT
+                    ds.identifier,
+                    ds.cpalms_standard,
+                    ds.strand
                 FROM dim_standard ds
                 JOIN item_codes ic ON ds.schoology_standard = ic.code
                 WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND ds.cpalms_standard IS NOT NULL
+                  AND ds.cpalms_standard <> ''
+            ),
+            strand_standards AS (
+                SELECT
+                    strand,
+                    COUNT(DISTINCT cpalms_standard) AS num_standards
+                FROM labeled
+                GROUP BY strand
+            ),
+            strand_metrics AS (
+                SELECT
+                    ds.strand                              AS strand,
+                    COUNT(DISTINCT cqs.question_no)        AS num_questions,
+                    AVG(cqs.grade_average)                 AS grade_average
+                FROM cube_question_summary cqs
+                JOIN dim_standard ds
+                  ON ds.identifier = cqs.identifier
+                JOIN labeled l
+                  ON l.identifier = cqs.identifier
+                WHERE cqs.item_id = :item_id
+                  AND ds.strand IS NOT NULL
+                  AND ds.strand <> ''
+                GROUP BY ds.strand
             )
             SELECT
-                ds.strand                              AS strand,
-                COUNT(DISTINCT cqs.identifier)         AS num_standards,
-                COUNT(DISTINCT cqs.question_no)        AS num_questions,
-                AVG(cqs.grade_average)                 AS grade_average
-            FROM cube_question_summary cqs
-            JOIN dim_standard ds
-              ON ds.identifier = cqs.identifier
-            JOIN valid_identifiers vi
-              ON vi.identifier = cqs.identifier
-            WHERE cqs.item_id = :item_id
-              AND ds.strand IS NOT NULL
-              AND ds.strand <> ''
-            GROUP BY ds.strand
-            ORDER BY ds.strand
+                sm.strand          AS strand,
+                ss.num_standards   AS num_standards,
+                sm.num_questions   AS num_questions,
+                sm.grade_average   AS grade_average
+            FROM strand_metrics sm
+            JOIN strand_standards ss ON ss.strand = sm.strand
+            ORDER BY sm.strand
             """
         )
         result = await self.session.execute(sql, {"item_id": item_id})
@@ -944,26 +975,94 @@ class CubeRepository:
     async def get_alignment_quality_for_item(
         self, item_id: str
     ) -> Dict[str, int]:
-        """Count distinct questions vs. distinct aligned-questions for one item."""
+        """Count distinct questions vs. distinct aligned-questions for one item.
+
+        Returns four counters at the (item_id, question_id) grain so the
+        service layer can distinguish *why* an item has zero alignment:
+
+        * ``questions_total`` — total distinct question rows on the item.
+        * ``questions_with_alignment`` — distinct questions whose ``standard``
+          label resolved to a ``dim_standard.identifier`` via the exact-match
+          join in ``dim_question_data``.
+        * ``nonempty_standards_count`` — distinct non-null, non-empty raw
+          standard labels seen in the source CSV. ``0`` means the Schoology
+          "Export Stats" CSV shipped zero ``Standards{N}`` columns (Category
+          A in the empty-state RCA: instructor never used "Align Learning
+          Objective"). ``>0`` with zero ``questions_with_alignment`` means
+          labels exist but none mapped (Category B: label like
+          ``"Social Studies"`` that isn't a real CPALMS code).
+        * ``distinct_unmatched_label_count`` — distinct raw labels that
+          failed the exact-match join (``identifier IS NULL``). Used to gate
+          the Category-B copy and to size the unmatched-label list in
+          ``_build_alignment_data_quality_for_item``.
+        """
         sql = text(
             """
             SELECT
                 COUNT(DISTINCT question_id) AS questions_total,
                 COUNT(DISTINCT question_id)
                   FILTER (WHERE identifier IS NOT NULL)
-                  AS questions_with_alignment
+                  AS questions_with_alignment,
+                COUNT(DISTINCT standard)
+                  FILTER (WHERE standard IS NOT NULL AND standard <> '')
+                  AS nonempty_standards_count,
+                COUNT(DISTINCT standard)
+                  FILTER (
+                    WHERE standard IS NOT NULL
+                      AND standard <> ''
+                      AND identifier IS NULL
+                  )
+                  AS distinct_unmatched_label_count
             FROM dim_question_data
             WHERE item_id = :item_id
             """
         )
         row = (await self.session.execute(sql, {"item_id": item_id})).first()
         if row is None:
-            return {"questions_total": 0, "questions_with_alignment": 0}
+            return {
+                "questions_total": 0,
+                "questions_with_alignment": 0,
+                "nonempty_standards_count": 0,
+                "distinct_unmatched_label_count": 0,
+            }
         d = _row_to_dict(row)
         return {
             "questions_total": int(d.get("questions_total") or 0),
             "questions_with_alignment": int(d.get("questions_with_alignment") or 0),
+            "nonempty_standards_count": int(d.get("nonempty_standards_count") or 0),
+            "distinct_unmatched_label_count": int(
+                d.get("distinct_unmatched_label_count") or 0
+            ),
         }
+
+    async def get_unmatched_alignment_labels_for_item(
+        self, item_id: str, limit: int = 5
+    ) -> List[str]:
+        """Return distinct raw standard labels that failed to map to a CPALMS code.
+
+        Used by ``_build_alignment_data_quality_for_item`` when
+        ``cause == "labels_not_mapped"`` so the empty-state card can list
+        the offending labels (e.g. ``"Social Studies"`` on a Grade K Math
+        assessment). Sorted alphabetically; capped at ``limit`` so a
+        pathological item with hundreds of malformed labels doesn't bloat
+        the payload.
+        """
+        sql = text(
+            """
+            SELECT DISTINCT standard
+            FROM dim_question_data
+            WHERE item_id = :item_id
+              AND standard IS NOT NULL
+              AND standard <> ''
+              AND identifier IS NULL
+            ORDER BY standard
+            LIMIT :limit
+            """
+        )
+        result = await self.session.execute(
+            sql, {"item_id": item_id, "limit": int(limit)}
+        )
+        return [str(r[0]) for r in result.all() if r[0] is not None]
 
     async def get_school_alignment_quality(
         self,

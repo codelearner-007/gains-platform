@@ -91,6 +91,53 @@ def _classify_alignment(
         return "full"
     return "partial"
 
+
+def _classify_alignment_cause(
+    questions_total: int,
+    questions_with_alignment: int,
+    nonempty_standards_count: int,
+    distinct_unmatched_label_count: int,
+) -> Optional[str]:
+    """Refine the alignment status into a specific cause for UI messaging.
+
+    Distinguishes the two flavours of "missing" empty state surfaced in the
+    2026-05-19 RCA (``.hermes/report-parity/missing-alignment-2026-05-19``):
+
+    * ``no_standards_in_source`` (Category A): the Schoology "Export Stats"
+      CSV had zero ``Standards{N}`` columns, so every
+      ``dim_question_data.standard`` is NULL. The fix is for the teacher
+      to use "Align Learning Objective" in Schoology.
+    * ``labels_not_mapped`` (Category B): the CSV contains labels but the
+      exact-match join against ``dim_standard.schoology_standard`` failed —
+      typically because the label is something like ``"Social Studies"``
+      rather than a real CPALMS code. The fix is to either correct the
+      label in Schoology or extend the standards dictionary.
+
+    Returns one of:
+      * ``"no_questions"``               — item has no question rows
+      * ``"full_alignment"``             — every question aligned
+      * ``"partial_teacher_alignment"``  — some aligned, some not
+      * ``"no_standards_in_source"``     — Category A
+      * ``"labels_not_mapped"``          — Category B
+      * ``None``                         — counts inconsistent; caller
+        should treat this as "cannot determine" and fall back to the
+        generic empty state rather than fabricating a cause.
+    """
+    if questions_total == 0:
+        return "no_questions"
+    if questions_with_alignment == questions_total:
+        return "full_alignment"
+    if questions_with_alignment > 0:
+        return "partial_teacher_alignment"
+    # questions_with_alignment == 0 from here — split A vs B.
+    if nonempty_standards_count == 0:
+        return "no_standards_in_source"
+    if distinct_unmatched_label_count > 0:
+        return "labels_not_mapped"
+    # Pathological: counts say "no aligned questions, no empty labels,
+    # no unmatched labels" simultaneously. Don't fabricate a cause.
+    return None
+
 logger = logging.getLogger(__name__)
 
 # Match HTML tags while *preserving* Schoology's `<https://…>` image-URL
@@ -258,10 +305,29 @@ class ReportService:
         Extracted from ``build_standards_deep_dive`` so the QRA composer
         can reuse it (so the QRA page can gate on
         ``alignment_status === "missing"`` the same way SDD does).
+
+        Sets ``cause`` to disambiguate the two flavours of empty state
+        (no Standards columns in CSV vs. labels that didn't map). When
+        ``cause == "labels_not_mapped"`` we also surface up to five of the
+        offending labels via ``unmatched_labels`` so the UI can render
+        them inline (e.g. ``"Social Studies"`` on a Grade K Math item).
         """
         quality = await self.cube.get_alignment_quality_for_item(item_id)
         q_total = quality["questions_total"]
         q_aligned = quality["questions_with_alignment"]
+        nonempty_count = quality["nonempty_standards_count"]
+        unmatched_count = quality["distinct_unmatched_label_count"]
+
+        cause = _classify_alignment_cause(
+            q_total, q_aligned, nonempty_count, unmatched_count
+        )
+        unmatched_labels: Optional[list[str]] = None
+        if cause == "labels_not_mapped":
+            labels = await self.cube.get_unmatched_alignment_labels_for_item(
+                item_id, limit=5
+            )
+            unmatched_labels = labels or None
+
         return AlignmentDataQuality(
             alignment_status=_classify_alignment(q_total, q_aligned),
             questions_total=q_total,
@@ -269,6 +335,8 @@ class ReportService:
             items_total=1,
             items_with_alignment=1 if q_aligned > 0 else 0,
             remediation_hint=_ALIGNMENT_REMEDIATION,
+            cause=cause,
+            unmatched_labels=unmatched_labels,
         )
 
     async def _build_strand_standard_rollups(

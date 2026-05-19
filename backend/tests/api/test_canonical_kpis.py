@@ -218,6 +218,84 @@ async def test_canonical_strands_rollup_chapter9_exact_6_strands(
 
 
 @pytest.mark.anyio
+async def test_canonical_strand_num_standards_matches_table_grain(
+    admin_client: AsyncClient,
+) -> None:
+    """Per-strand ``num_standards`` must sum to the school-level KPI.
+
+    Bug fix (2026-05-19): pre-fix
+    ``get_strand_rollup_for_item`` counted ``DISTINCT identifier`` per
+    strand. Florida CPALMS deliberately maps multiple raw label aliases
+    (e.g. ``MA.912.AR.3.1`` ↔ ``AI.MA.912.AR.3.1`` ↔ ``AR.3.1``) to the
+    same ``dim_standard.identifier`` UUID, so identifier-grain counting
+    understated each strand's "# of Standards" column. For
+    ``8359960427`` the strand column summed to 8 while
+    ``kpis.total_standards = 12`` and the standards rollup table
+    rendered 12 rows — an internal contradiction.
+
+    The fix counts ``DISTINCT cpalms_standard`` per strand from the same
+    ``labeled`` CTE that drives the standards rollup, guaranteeing the
+    strand column always sums to the standards-table row count and the
+    school-level KPI.
+    """
+    sdd = await _get_sdd(admin_client, _CHAPTER9_ITEM_ID)
+
+    # Structural: strand sum == standards table count == KPI.
+    sum_per_strand = sum(s.num_standards for s in sdd.strands_rollup)
+    assert sum_per_strand == len(sdd.standards_rollup), (
+        f"sum(strand.num_standards) = {sum_per_strand} must equal "
+        f"len(standards_rollup) = {len(sdd.standards_rollup)} — strand "
+        f"column and standards table disagree on visible cpalms count."
+    )
+    assert sum_per_strand == sdd.kpis.total_standards, (
+        f"sum(strand.num_standards) = {sum_per_strand} must equal "
+        f"kpis.total_standards = {sdd.kpis.total_standards} — strand "
+        f"column and KPI tile disagree."
+    )
+    assert sum_per_strand == 12, (
+        f"Legacy parity: total_standards should be 12, "
+        f"got {sum_per_strand}."
+    )
+
+    # Per-strand pin (cpalms-grain count drawn from the labeled CTE).
+    expected_per_strand = {
+        "Algebra: Creating Equations": 1,                     # MAFS.912.A-CED.1.1
+        "Algebra: Reasoning with Equations & Inequalities": 2,  # MAFS.912.A-REI.2.4.{a,b}
+        "Algebraic Reasoning": 5,                             # 912.AR.{1.7,3.1} + AR.{1.2,1.7,3.1}
+        "Number & Quantity: Quantities": 1,                   # MAFS.912.N-Q.1.3
+        "Number & Quantity: The Real Number System": 1,       # MAFS.912.N-RN.1.2
+        "Number Sense and Operations": 2,                     # 912.NSO.1.4 + NSO.1.4
+    }
+    actual_per_strand = {s.strand: s.num_standards for s in sdd.strands_rollup}
+    assert actual_per_strand == expected_per_strand, (
+        f"Per-strand num_standards drifted from legacy/cpalms-grain.\n"
+        f"Expected: {expected_per_strand}\nActual: {actual_per_strand}"
+    )
+
+
+@pytest.mark.anyio
+async def test_canonical_qra_strand_num_standards_matches_sdd(
+    admin_client: AsyncClient,
+) -> None:
+    """QRA and SDD must agree on per-strand num_standards.
+
+    Both reports consume ``_build_strand_standard_rollups`` which calls
+    the same ``get_strand_rollup_for_item`` repo method. Asserts the
+    structural guarantee that a future divergence between the two
+    reports' strand tables is caught.
+    """
+    qra = await _get_qra(admin_client, _CHAPTER9_ITEM_ID)
+    sdd = await _get_sdd(admin_client, _CHAPTER9_ITEM_ID)
+
+    qra_per_strand = {s.strand: s.num_standards for s in qra.strands_rollup}
+    sdd_per_strand = {s.strand: s.num_standards for s in sdd.strands_rollup}
+    assert qra_per_strand == sdd_per_strand, (
+        f"QRA and SDD strand num_standards diverged.\n"
+        f"QRA: {qra_per_strand}\nSDD: {sdd_per_strand}"
+    )
+
+
+@pytest.mark.anyio
 async def test_canonical_per_question_q12_matches_kpi_lowest(
     admin_client: AsyncClient,
 ) -> None:

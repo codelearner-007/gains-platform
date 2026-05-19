@@ -136,6 +136,27 @@ export interface SddBandStandardRow {
 }
 
 /**
+ * Refines a `"missing"` / `"partial"` `alignment_status` with the
+ * underlying reason so the UI can render a tailored empty-state message
+ * instead of the same generic copy for every empty report.
+ *
+ *   - `no_standards_in_source`    — Schoology export had zero `Standards{N}`
+ *                                   columns (teacher never aligned)
+ *   - `labels_not_mapped`         — teacher entered text labels that don't
+ *                                   match the CPALMS catalog (e.g. "Social
+ *                                   Studies"); see `unmatched_labels`
+ *   - `partial_teacher_alignment` — some questions aligned, others not
+ *   - `full_alignment`            — normal case (kept for symmetry)
+ *   - `no_questions`              — item has no question rows at all
+ */
+export type AlignmentCause =
+  | "no_standards_in_source"
+  | "labels_not_mapped"
+  | "partial_teacher_alignment"
+  | "full_alignment"
+  | "no_questions";
+
+/**
  * Standards-alignment coverage for a report payload.
  *
  * Populated when the underlying Schoology Test/Quiz CSV ships fewer
@@ -143,6 +164,12 @@ export interface SddBandStandardRow {
  * instructors never aligned the questions to learning objectives in
  * Schoology. The page renders an explanatory empty-state card when
  * `alignment_status === "missing"`.
+ *
+ * The optional `cause` / `unmatched_labels` fields were added so the UI
+ * can distinguish between teacher non-alignment, unrecognized labels,
+ * and other root causes. Both are nullable for backward-compat with
+ * older API responses; consumers should fall back to generic copy when
+ * absent.
  */
 export interface AlignmentDataQuality {
   alignment_status: "full" | "partial" | "missing";
@@ -151,6 +178,8 @@ export interface AlignmentDataQuality {
   items_total: number;
   items_with_alignment: number;
   remediation_hint: string;
+  cause?: AlignmentCause | null;
+  unmatched_labels?: string[] | null;
 }
 
 export interface StandardsDeepDivePayload {

@@ -15,7 +15,8 @@ import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
 } from '../shared/tableStyles';
-import { sanitizeShortAnswer } from '@/lib/reports/format';
+import { formatAnswerHtml } from '@/lib/reports/format';
+import RichReportHtml from '../shared/RichReportHtml';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -110,7 +111,14 @@ export default function DistractorTable({ rows }: Props) {
                       wordBreak: 'break-word',
                     }}
                   >
-                    {sanitizeShortAnswer(r.answer_submission) || '(blank)'}
+                    {r.answer_submission ? (
+                      <RichReportHtml
+                        className="pilot-answer-html"
+                        html={formatAnswerHtml(r.answer_submission, 'answer choice')}
+                      />
+                    ) : (
+                      '(blank)'
+                    )}
                   </td>
                   <td
                     style={{

@@ -6,11 +6,12 @@ import { ChevronRight } from 'lucide-react';
 import type { IncorrectChoice, QuestionOverall } from '@/lib/reports/types';
 import { cellColor, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import {
+  formatAnswerHtml,
   formatCorrectAnswer,
   formatPercent,
   formatQuestionHtml,
-  sanitizeShortAnswer,
 } from '@/lib/reports/format';
+import RichReportHtml from '../shared/RichReportHtml';
 import {
   tableCellStyleLarge as cellBase,
   tableHeaderStyleLarge as headerStyle,
@@ -87,15 +88,17 @@ export default function QuestionDetailTable({
             {rows.map((q, idx) => {
               const ga = q.grade_average;
               const pctBg = cellColor(ga);
-              const correctLines = formatCorrectAnswer(q.correct_answer).map(
-                sanitizeShortAnswer,
-              );
-              const incorrectChoice = sanitizeShortAnswer(
-                ga >= 1 ? '' : q.incorrect_choice_details,
-              );
-              const incorrectNames = sanitizeShortAnswer(
-                ga >= 1 ? '' : q.incorrect_details_name,
-              );
+              const correctHtml = formatCorrectAnswer(q.correct_answer)
+                .map((line) => formatAnswerHtml(line, 'correct answer'))
+                .join('<br />');
+              const incorrectChoiceHtml =
+                ga >= 1
+                  ? ''
+                  : formatAnswerHtml(q.incorrect_choice_details, 'incorrect choice');
+              const incorrectNamesHtml =
+                ga >= 1
+                  ? ''
+                  : formatAnswerHtml(q.incorrect_details_name, 'incorrect choice');
               const standards = q.standards || q.strand || '—';
 
               return (
@@ -128,11 +131,9 @@ export default function QuestionDetailTable({
                     )}
                   </td>
                   <td style={cellBase}>
-                    <div
+                    <RichReportHtml
                       className="pilot-question-html"
-                      dangerouslySetInnerHTML={{
-                        __html: formatQuestionHtml(q.question),
-                      }}
+                      html={formatQuestionHtml(q.question)}
                     />
                   </td>
                   <td
@@ -146,11 +147,22 @@ export default function QuestionDetailTable({
                     {formatPercent(ga, 1)}
                   </td>
                   <td style={{ ...cellBase, whiteSpace: 'pre-line' }}>
-                    {correctLines.join('\n')}
+                    <RichReportHtml
+                      className="pilot-answer-html"
+                      html={correctHtml}
+                    />
                   </td>
-                  <td style={cellBase}>{incorrectChoice}</td>
+                  <td style={cellBase}>
+                    <RichReportHtml
+                      className="pilot-answer-html"
+                      html={incorrectChoiceHtml}
+                    />
+                  </td>
                   <td style={{ ...cellBase, whiteSpace: 'pre-line' }}>
-                    {incorrectNames}
+                    <RichReportHtml
+                      className="pilot-answer-html"
+                      html={incorrectNamesHtml}
+                    />
                   </td>
                   <td style={{ ...cellBase, textAlign: 'center' }}>
                     {standards}

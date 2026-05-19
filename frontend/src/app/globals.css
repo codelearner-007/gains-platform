@@ -220,3 +220,63 @@
 .btn-glow:hover {
   box-shadow: var(--shadow-glow);
 }
+
+/* Report cells that contain Schoology stem/answer images and generated math SVGs. */
+.report-rich-html img {
+  display: inline-block;
+  height: auto;
+  vertical-align: middle;
+  object-fit: contain;
+  border-radius: 2px;
+  transition: opacity 140ms ease;
+}
+
+.report-rich-html img.report-image-loading {
+  min-width: 48px;
+  min-height: 36px;
+  opacity: 0.75;
+  background: linear-gradient(90deg, #eceff5 25%, #f8fafc 37%, #eceff5 63%);
+  background-size: 400% 100%;
+  animation: report-image-shimmer 1.15s ease-in-out infinite;
+}
+
+.report-image-fallback {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 6px;
+  border: 1px dashed #94a3b8;
+  border-radius: 4px;
+  color: #475569;
+  background: #f8fafc;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.pilot-question-html img {
+  width: auto;
+  max-width: min(100%, 320px);
+  max-height: 120px;
+}
+
+.pilot-question-html img.report-latex-image {
+  max-width: min(100%, 260px);
+  max-height: 40px;
+}
+
+.pilot-answer-html img {
+  width: auto;
+  max-width: min(100%, 128px);
+  max-height: 72px;
+  margin: 2px 4px;
+}
+
+.pilot-answer-html img.report-latex-image {
+  max-width: min(100%, 120px);
+  max-height: 32px;
+}
+
+@keyframes report-image-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}

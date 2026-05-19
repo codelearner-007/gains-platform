@@ -1,10 +1,11 @@
 import type { IadQuestionContext } from '@/lib/reports/types';
 import { HEADER_BAR_BG, LAYOUT_BORDER, cellColor } from '@/lib/reports/colors';
 import {
+  formatAnswerHtml,
   formatCorrectAnswer,
   formatQuestionHtml,
-  sanitizeShortAnswer,
 } from '@/lib/reports/format';
+import RichReportHtml from '../shared/RichReportHtml';
 
 interface Props {
   question: IadQuestionContext;
@@ -17,9 +18,9 @@ interface Props {
  * uses the PBIX traffic-light thresholds (Performance Color).
  */
 export default function QuestionContextCard({ question }: Props) {
-  const correctLines = formatCorrectAnswer(question.correct_answer).map(
-    sanitizeShortAnswer,
-  );
+  const correctHtml = formatCorrectAnswer(question.correct_answer)
+    .map((line) => formatAnswerHtml(line, 'correct answer'))
+    .join('<br />');
   const standards = question.standards || question.strand || '—';
   const pctBg = cellColor(question.grade_average);
 
@@ -48,11 +49,9 @@ export default function QuestionContextCard({ question }: Props) {
           <div className="text-[11px] uppercase tracking-wide text-neutral-600">
             Question
           </div>
-          <div
+          <RichReportHtml
             className="pilot-question-html text-[14px] text-black mt-1 leading-snug"
-            dangerouslySetInnerHTML={{
-              __html: formatQuestionHtml(question.question),
-            }}
+            html={formatQuestionHtml(question.question)}
           />
         </div>
 
@@ -60,12 +59,10 @@ export default function QuestionContextCard({ question }: Props) {
           <div className="text-[11px] uppercase tracking-wide text-neutral-600">
             Correct Answer
           </div>
-          <div
-            className="text-[13px] text-black mt-1 leading-snug break-words"
-            style={{ whiteSpace: 'pre-line' }}
-          >
-            {correctLines.join('\n')}
-          </div>
+          <RichReportHtml
+            className="pilot-answer-html text-[13px] text-black mt-1 leading-snug break-words"
+            html={correctHtml}
+          />
         </div>
 
         <div className="col-span-1 flex flex-col items-center justify-start">

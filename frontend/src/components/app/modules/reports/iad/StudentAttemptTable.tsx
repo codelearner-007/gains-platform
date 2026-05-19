@@ -16,7 +16,8 @@ import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
 } from '../shared/tableStyles';
-import { sanitizeShortAnswer } from '@/lib/reports/format';
+import { formatAnswerHtml } from '@/lib/reports/format';
+import RichReportHtml from '../shared/RichReportHtml';
 
 interface Props {
   attempts: IadStudentAttempt[];
@@ -137,7 +138,14 @@ export default function StudentAttemptTable({ attempts }: Props) {
                     wordBreak: 'break-word',
                   }}
                 >
-                  {sanitizeShortAnswer(a.answer_submission) || '—'}
+                  {a.answer_submission ? (
+                    <RichReportHtml
+                      className="pilot-answer-html"
+                      html={formatAnswerHtml(a.answer_submission, 'student answer')}
+                    />
+                  ) : (
+                    '—'
+                  )}
                 </td>
                 <td
                   style={{

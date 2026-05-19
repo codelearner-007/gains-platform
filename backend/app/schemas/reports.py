@@ -28,6 +28,25 @@ class AlignmentDataQuality(BaseModel):
       * ``"missing"`` — zero alignments resolved; reports should render
         an empty-state card
 
+    ``cause`` refines a ``"missing"`` / ``"partial"`` status with the
+    underlying reason so the UI can render a tailored empty-state message
+    instead of the same generic copy for every empty report:
+
+      * ``"full_alignment"``           — every question aligned
+      * ``"partial_teacher_alignment"`` — some aligned, some not
+      * ``"no_standards_in_source"``   — source CSV had zero Standards
+        columns (Category A in the empty-state RCA)
+      * ``"labels_not_mapped"``        — source had labels but none
+        matched a CPALMS code (Category B)
+      * ``"no_questions"``             — item has no question rows at all
+
+    ``unmatched_labels`` is populated only when ``cause ==
+    "labels_not_mapped"`` and lists up to five distinct raw labels that
+    failed to map (e.g. ``["Social Studies"]``). ``None`` otherwise.
+
+    Both fields are optional / nullable so existing clients that don't
+    consume them keep working — they are purely additive.
+
     ``items_total`` / ``items_with_alignment`` are populated for school-wide
     reports (Standard / Strand Summary). For per-assessment payloads
     (SDD) they equal ``1`` / ``0`` or ``1`` respectively.
@@ -39,6 +58,16 @@ class AlignmentDataQuality(BaseModel):
     items_total: int
     items_with_alignment: int
     remediation_hint: str
+    cause: Optional[
+        Literal[
+            "full_alignment",
+            "partial_teacher_alignment",
+            "no_standards_in_source",
+            "labels_not_mapped",
+            "no_questions",
+        ]
+    ] = None
+    unmatched_labels: Optional[List[str]] = None
 
 
 class AssessmentMeta(BaseModel):

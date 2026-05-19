@@ -1,6 +1,7 @@
 import type { IadKpis } from '@/lib/reports/types';
 import KpiCard from '@/components/app/modules/reports/shared/KpiCard';
-import { sanitizeShortAnswer } from '@/lib/reports/format';
+import { formatAnswerHtml } from '@/lib/reports/format';
+import RichReportHtml from '../shared/RichReportHtml';
 
 const IAD_CARD_CLASSNAME = 'min-h-[100px]';
 const IAD_VALUE_CLASSNAME = 'text-[24px]';
@@ -32,7 +33,10 @@ function TopWrongValue({
     <div className="flex flex-col items-center justify-center gap-0.5 leading-tight">
       <div className="text-[20px] font-bold text-black">{count}</div>
       <div className="text-[10px] text-neutral-700 text-center px-1 leading-tight line-clamp-2">
-        {answer}
+        <RichReportHtml
+          className="pilot-answer-html"
+          html={formatAnswerHtml(answer, 'most common wrong answer')}
+        />
       </div>
       <div className="text-[11px] font-semibold text-black mt-0.5">{pct}</div>
     </div>
@@ -90,7 +94,7 @@ export default function KpiStrip({ kpis }: Props) {
         label="Most Common Wrong"
         value={
           <TopWrongValue
-            answer={sanitizeShortAnswer(kpis.top_wrong_answer)}
+            answer={kpis.top_wrong_answer}
             count={kpis.top_wrong_count}
             pct={kpis.top_wrong_pct}
           />
