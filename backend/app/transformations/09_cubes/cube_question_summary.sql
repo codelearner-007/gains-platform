@@ -72,6 +72,29 @@ WITH fact_with_hash AS (
 totals AS (
   -- Per-question totals (notebook 1583-1591).
   -- school_id is included so multi-tenant facts do not blend.
+  --
+  -- Pre-aggregation: one row per (student, question, position, submission)
+  -- before SUM/SUM. In the fact table a single (user, question, position,
+  -- submission) cluster can carry multiple rows for two reasons:
+  --   1. Schoology emits one row per *selected option* for "Select All That
+  --      Apply" questions, repeating the same per-question fractional score
+  --      on every row.
+  --   2. The standards alias-fanout join multiplies each row by the number
+  --      of standard aliases registered for that question.
+  -- Both inflate SUM(points_received) and SUM(points_possible) by the same
+  -- per-cluster factor, but that factor varies *across students* (a student
+  -- who selected 5 options has 5× the weight of one who selected 2). Direct
+  -- SUM/SUM therefore under-weights students who selected fewer options,
+  -- producing a per-question average lower than Schoology's authoritative
+  -- value (legacy PySpark notebook has the same bug — verified against
+  -- 40_schoology_py_spec.md:606,673).
+  --
+  -- All rows in such a cluster carry identical (points_received,
+  -- points_possible) so MAX is a no-op for valid data. The intermediate
+  -- `per_student_question` CTE restores one row per (student, question,
+  -- position, submission) — matching Schoology's `Submission-Summary.Question N`
+  -- column, whose mean across students equals `Question-Data.Average Points
+  -- Earned`. See docs/audit/bug-research/01_q12_multiselect.md.
   SELECT
     school_id,
     item_id,
@@ -82,7 +105,15 @@ totals AS (
                          AS grade_average,
     1 - SUM(points_received)::numeric / NULLIF(SUM(points_possible), 0)
                          AS percentage_incorrect_answers
-  FROM fact_student_submission
+  FROM (
+    SELECT
+      school_id, item_id, question_id, user_uid, submission, position_number,
+      MAX(points_received) AS points_received,
+      MAX(points_possible) AS points_possible
+    FROM fact_student_submission
+    GROUP BY school_id, item_id, question_id, user_uid, submission,
+             position_number
+  ) per_student_question
   GROUP BY school_id, item_id, question_id
 ),
 total_submissions AS (

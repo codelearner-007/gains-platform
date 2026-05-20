@@ -96,6 +96,19 @@ latest_with_hash AS (
 ),
 totals AS (
   -- Per-output-grain totals (notebook 1996-2010).
+  --
+  -- Pre-aggregation: collapse to one row per (student, output-grain) before
+  -- SUM/SUM. `latest_with_hash` is already filtered to one (user, question)
+  -- per partition, but within a single (school, subject, ukey, question,
+  -- position, correct_answer, standard) group a student can still have
+  -- multiple rows from Schoology's multi-select option shred (one row per
+  -- selected option, each carrying the same per-question fractional score).
+  -- SUM/SUM across those rows weights students by `# options selected`,
+  -- under-counting students who selected fewer options. MAX collapses
+  -- identical-pr clusters to one row per student before the SUM, matching
+  -- Schoology's authoritative `Question-Data.Average Points Earned`.
+  -- Same bug as in cube_question_summary; see docs/audit/bug-research/
+  -- 01_q12_multiselect.md.
   SELECT
     school_id,
     subject_id,
@@ -111,7 +124,16 @@ totals AS (
                                 AS grade_average,
     1 - SUM(points_received)::numeric / NULLIF(SUM(points_possible), 0)
                                 AS percentage_incorrect_answers
-  FROM latest_with_hash
+  FROM (
+    SELECT
+      school_id, subject_id, ukey, question_no, question, position_number,
+      correct_answer, standard, user_uid,
+      MAX(points_received) AS points_received,
+      MAX(points_possible) AS points_possible
+    FROM latest_with_hash
+    GROUP BY school_id, subject_id, ukey, question_no, question, position_number,
+             correct_answer, standard, user_uid
+  ) per_student
   GROUP BY school_id, subject_id, ukey, question_no, question,
            position_number, correct_answer, standard
 ),
