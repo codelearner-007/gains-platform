@@ -11,6 +11,15 @@ interface AlignmentEmptyStateProps {
   quality: AlignmentDataQuality;
   /** Label of the report we're rendering inside ("Standards Deep Dive" etc.) — used in the headline. */
   reportLabel: string;
+  /**
+   * Layout mode. ``"block"`` (default) renders a large card that replaces
+   * the report body — used historically when the report could not render
+   * at all. ``"banner"`` renders a compact horizontal alert above a
+   * still-rendered report (legacy-PBIX parity: when alignment is missing
+   * the cube emits an ``"Other"`` bucket and the report still renders,
+   * with the banner explaining the data-quality limitation).
+   */
+  displayMode?: 'block' | 'banner';
 }
 
 /**
@@ -67,6 +76,7 @@ export function variantFor(
 export default function AlignmentEmptyState({
   quality,
   reportLabel,
+  displayMode = 'block',
 }: AlignmentEmptyStateProps) {
   const {
     questions_total,
@@ -86,17 +96,66 @@ export default function AlignmentEmptyState({
   const hasCause = cause !== undefined && cause !== null;
   const variant = variantFor(cause, reportLabel);
 
-  const headline = hasCause
-    ? variant.headline
-    : perItem
-      ? `${reportLabel} can't render — this assessment has no standards alignment.`
-      : `${reportLabel} can't render — no questions in scope are aligned to standards.`;
+  // In banner mode we soften the headline (the report DOES render — it's
+  // just a heads-up about data quality) so the wording matches the new
+  // legacy-parity behavior where missing alignment falls into an "Other"
+  // bucket instead of blocking the report.
+  const bannerHeadline = perItem
+    ? `Standards alignment is missing for this assessment — questions are grouped under "Other".`
+    : `Standards alignment is missing for some assessments in scope — those questions are grouped under "Other".`;
+
+  const headline =
+    displayMode === 'banner'
+      ? bannerHeadline
+      : hasCause
+        ? variant.headline
+        : perItem
+          ? `${reportLabel} can't render — this assessment has no standards alignment.`
+          : `${reportLabel} can't render — no questions in scope are aligned to standards.`;
 
   const remediation = hasCause ? variant.remediation : remediation_hint;
 
   const unmatched = (unmatched_labels ?? []).slice(0, 5);
   const showUnmatched =
     hasCause && variant.showUnmatched === true && unmatched.length > 0;
+
+  if (displayMode === 'banner') {
+    return (
+      <div
+        className="w-full bg-amber-50 border border-amber-300/60 rounded-lg p-4 flex items-start gap-3 shadow-sm mb-2"
+        role="status"
+        aria-live="polite"
+      >
+        <AlertTriangle
+          className="h-5 w-5 text-amber-500 shrink-0 mt-0.5"
+          aria-hidden="true"
+        />
+        <div className="flex flex-col gap-1 text-sm flex-1 min-w-0">
+          <p className="font-semibold text-foreground">{headline}</p>
+          <p className="text-muted-foreground">
+            {questions_with_alignment} of {questions_total} questions aligned
+            {!perItem
+              ? ` · ${items_with_alignment} of ${items_total} assessments with alignment`
+              : ''}
+            . {remediation}
+          </p>
+          {showUnmatched && (
+            <p className="text-muted-foreground">
+              Unrecognized labels:{' '}
+              {unmatched.map((label, i) => (
+                <span key={label}>
+                  <code className="font-mono bg-muted px-1 py-0.5 rounded text-foreground">
+                    {label}
+                  </code>
+                  {i < unmatched.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex justify-center">

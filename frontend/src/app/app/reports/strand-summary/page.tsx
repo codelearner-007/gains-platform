@@ -97,45 +97,44 @@ export default function StrandSummaryPage() {
         <KpiStrip kpis={data.kpis} />
       </div>
 
-      {data.data_quality?.alignment_status === 'missing' ? (
+      {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
           quality={data.data_quality}
           reportLabel="Strand Summary"
+          displayMode="banner"
         />
-      ) : (
-        <>
-          <div className="mb-2">
-            <StrandTreemap
-              rows={data.strands_rollup}
-              selectedStrand={selectedStrand}
-              onSelectStrand={setSelectedStrand}
-            />
-          </div>
-
-          <div className="mb-2">
-            <StrandRollupTable
-              strands={data.strands_rollup}
-              selectedStrand={selectedStrand}
-              onSelectStrand={setSelectedStrand}
-            />
-          </div>
-
-          <div className="mb-2">
-            <BandBars
-              bandHigh={data.band_high}
-              bandMid={data.band_mid}
-              bandLow={data.band_low}
-            />
-          </div>
-
-          <div>
-            <StrandStandardsTable
-              standards={data.standards_rollup}
-              selectedStrand={selectedStrand}
-            />
-          </div>
-        </>
       )}
+
+      <div className="mb-2">
+        <StrandTreemap
+          rows={data.strands_rollup}
+          selectedStrand={selectedStrand}
+          onSelectStrand={setSelectedStrand}
+        />
+      </div>
+
+      <div className="mb-2">
+        <StrandRollupTable
+          strands={data.strands_rollup}
+          selectedStrand={selectedStrand}
+          onSelectStrand={setSelectedStrand}
+        />
+      </div>
+
+      <div className="mb-2">
+        <BandBars
+          bandHigh={data.band_high}
+          bandMid={data.band_mid}
+          bandLow={data.band_low}
+        />
+      </div>
+
+      <div>
+        <StrandStandardsTable
+          standards={data.standards_rollup}
+          selectedStrand={selectedStrand}
+        />
+      </div>
     </ReportCanvas>
   );
 }

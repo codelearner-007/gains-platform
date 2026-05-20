@@ -3,10 +3,16 @@
 // brackets enclose a URL.
 //
 // Security: any other HTML (including <script>, <img onerror=...>, javascript:
-// URIs, etc.) is stripped/sanitized via DOMPurify. The captured URL is also
-// HTML-escaped before being interpolated into the src attribute so a URL
+// URIs, etc.) is stripped/sanitized via sanitize-html. The captured URL is
+// also HTML-escaped before being interpolated into the src attribute so a URL
 // containing `"` cannot break out of the attribute.
-import DOMPurify from 'isomorphic-dompurify';
+//
+// Why sanitize-html (not isomorphic-dompurify): the latter loads jsdom on the
+// server, and jsdom's transitive `@exodus/bytes` ships ESM-only while
+// `html-encoding-sniffer` still uses `require()`, so SSR errors with
+// ERR_REQUIRE_ESM and Next.js falls back to client rendering. sanitize-html
+// is a native Node implementation with no jsdom dependency.
+import sanitizeHtml from 'sanitize-html';
 
 const URL_IN_BRACKETS = /<(https?:\/\/[^>\s]+)>/g;
 
@@ -149,38 +155,40 @@ function renderUrlTokens(raw: string, alt: string): string {
   );
 }
 
+const QUESTION_TAGS = ['img', 'br', 'p', 'strong', 'em', 'b', 'i', 'span'];
+const ANSWER_TAGS = ['img', 'br', 'span'];
+const ALLOWED_ATTR_LIST = [
+  'src',
+  'alt',
+  'width',
+  'height',
+  'class',
+  'decoding',
+  'referrerpolicy',
+];
+
+function sanitizeFor(tags: string[], html: string): string {
+  return sanitizeHtml(html, {
+    allowedTags: tags,
+    allowedAttributes: { '*': ALLOWED_ATTR_LIST },
+    allowedSchemes: ['http', 'https', 'data'],
+    allowedSchemesByTag: { img: ['http', 'https', 'data'] },
+  });
+}
+
 export function formatQuestionHtml(raw: string): string {
   if (!raw) return '';
   const replaced = renderUrlTokens(raw, 'question');
-  return DOMPurify.sanitize(replaced.trim(), {
-    ALLOWED_TAGS: ['img', 'br', 'p', 'strong', 'em', 'b', 'i', 'span'],
-    ALLOWED_ATTR: [
-      'src',
-      'alt',
-      'width',
-      'height',
-      'class',
-      'decoding',
-      'referrerpolicy',
-    ],
-  });
+  return sanitizeFor(QUESTION_TAGS, replaced.trim());
 }
 
 export function formatAnswerHtml(raw: string, alt = 'answer'): string {
   if (!raw) return '';
   const replaced = renderUrlTokens(raw, alt);
-  return DOMPurify.sanitize(replaced.trim().replace(/\n/g, '<br />'), {
-    ALLOWED_TAGS: ['img', 'br', 'span'],
-    ALLOWED_ATTR: [
-      'src',
-      'alt',
-      'width',
-      'height',
-      'class',
-      'decoding',
-      'referrerpolicy',
-    ],
-  });
+  return sanitizeFor(
+    ANSWER_TAGS,
+    replaced.trim().replace(/\n/g, '<br />'),
+  );
 }
 
 // Multi-line correct-answer formatter. Rebuilds tokens from comma-joined string.

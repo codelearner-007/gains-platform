@@ -369,6 +369,51 @@ class ReportService:
         ]
         return strands_rollup, standards_rollup
 
+    @staticmethod
+    def _synthesize_other_rollups(
+        strands_rollup: list[SddStrandRow],
+        standards_rollup: list[SddStandardRow],
+        canon: dict,
+    ) -> tuple[list[SddStrandRow], list[SddStandardRow], bool]:
+        """Schoology / legacy-PBIX parity for unaligned assessments.
+
+        Legacy DAX queries ``cube_question_summary`` which has its own
+        ``NULL → 'Other'`` coercion (see ``Schoology_py.ipynb`` L1691-1700),
+        so the PBIX renders a single ``Other`` strand and ``Other`` standard
+        row at the assessment's overall grade_average when no question was
+        tagged. Our warehouse rollup queries require a successful
+        ``dim_question_data.standard → dim_standard`` join and therefore
+        return empty for the same case. Re-inject the synthetic row here so
+        QRA + SDD match Schoology screenshot-for-screenshot.
+
+        Only fires when BOTH rollups are empty AND the item has questions.
+        Partial-alignment items keep their real rollup (showing only the
+        aligned subset) — that matches today's behavior and avoids
+        double-counting unaligned questions twice.
+        """
+        if strands_rollup or standards_rollup:
+            return strands_rollup, standards_rollup, False
+        total_q = to_int(canon.get("total_questions"))
+        if total_q <= 0:
+            return strands_rollup, standards_rollup, False
+        grade = to_float(canon.get("grade_average"))
+        synthetic_strand = SddStrandRow(
+            strand="Other",
+            num_standards=1,
+            num_questions=total_q,
+            grade_average=round(grade, 6),
+            grade_average_pct=_format_pct(grade),
+        )
+        synthetic_standard = SddStandardRow(
+            cpalms_standard="Other",
+            schoology_standard="",
+            strand="Other",
+            num_questions=total_q,
+            grade_average=round(grade, 6),
+            grade_average_pct=_format_pct(grade),
+        )
+        return [synthetic_strand], [synthetic_standard], True
+
     # ────────────────────────────────────────────────────────────────────
     # Question-Response-Analysis (composed payload)
     # ────────────────────────────────────────────────────────────────────
@@ -397,6 +442,19 @@ class ReportService:
         # values can never disagree for the same item.
         canon = await self._compute_canonical_kpis_for_item(item_id)
 
+        # ─── Strands & Standards rollups (per assessment) ─────────────────
+        # Compute BEFORE building the KPI strip so the "Other" synthesis
+        # (Schoology / legacy PBIX parity for unaligned assessments) can
+        # bump ``canon["total_standards"]`` to 1 before the KPI is frozen.
+        strands_rollup, standards_rollup = await self._build_strand_standard_rollups(
+            item_id
+        )
+        strands_rollup, standards_rollup, synthesized_other = (
+            self._synthesize_other_rollups(strands_rollup, standards_rollup, canon)
+        )
+        if synthesized_other:
+            canon["total_standards"] = 1
+
         # Override per-question grade_average in the QRA question table
         # with the canonical per-user-collapsed value so the Lowest /
         # Highest KPIs and the per-question table report the same number
@@ -414,6 +472,13 @@ class ReportService:
                 ga = canon_q_by_id[qid]
                 q["grade_average"] = ga
                 q["percentage_incorrect"] = max(0.0, min(1.0, 1.0 - ga))
+
+        # Tag question rows with the synthetic "Other" standard label so
+        # the per-question "Standards" column matches Schoology when the
+        # source CSV shipped no Standards{N} columns.
+        if synthesized_other:
+            for q in question_rows:
+                q["standards"] = "Other"
 
         instructors = self._split_instructors(
             safe_str(meta_row.get("section_instructors"))
@@ -515,14 +580,10 @@ class ReportService:
             for r in raw_options
         ]
 
-        # ─── Strands & Standards rollups (per assessment) ─────────────────
-        strands_rollup, standards_rollup = await self._build_strand_standard_rollups(
-            item_id
-        )
-
         # Surface the standards-alignment block so the QRA page can render
         # the AlignmentEmptyState card when the assessment has no aligned
-        # questions (mirrors SDD behaviour).
+        # questions (mirrors SDD behaviour). Rollups already computed above
+        # alongside the KPI synthesis.
         data_quality = await self._build_alignment_data_quality_for_item(item_id)
 
         return QuestionResponseAnalysisPayload(
@@ -553,11 +614,6 @@ class ReportService:
             meta_row, first_access, latest_attempt
         )
 
-        # ─── Strand + standard rollups (shared with QRA) ──────────────────
-        strands_rollup, standards_rollup = await self._build_strand_standard_rollups(
-            item_id
-        )
-
         # ─── KPI strip values (canonical, shared with QRA) ────────────────
         # Both QRA and SDD compute KPIs through the same canonical helper
         # so they cannot disagree for the same item. See
@@ -565,6 +621,19 @@ class ReportService:
         # (matches legacy PBIX DAX semantics for # Standards, Grade Avg,
         # Highest/Lowest at per-question grain).
         canon = await self._compute_canonical_kpis_for_item(item_id)
+
+        # ─── Strand + standard rollups (shared with QRA) ──────────────────
+        # Compute BEFORE building the KPI strip so the "Other" synthesis
+        # (Schoology / legacy PBIX parity for unaligned assessments) can
+        # bump ``canon["total_standards"]`` to 1 before the KPI is frozen.
+        strands_rollup, standards_rollup = await self._build_strand_standard_rollups(
+            item_id
+        )
+        strands_rollup, standards_rollup, synthesized_other = (
+            self._synthesize_other_rollups(strands_rollup, standards_rollup, canon)
+        )
+        if synthesized_other:
+            canon["total_standards"] = 1
 
         instructors = self._split_instructors(
             safe_str(meta_row.get("section_instructors"))
@@ -605,6 +674,25 @@ class ReportService:
                 band_mid.append(row)
             else:
                 band_low.append(row)
+
+        # When the rollup is synthesized "Other", the band-rows query also
+        # returns empty (it filters on dim_standard joins). Inject one
+        # synthetic band row at the overall grade_average so the SDD page
+        # places "Other" in the right performance band — matches Schoology.
+        if synthesized_other:
+            grade = to_float(canon.get("grade_average"))
+            other_band_row = SddBandStandardRow(
+                cpalms_standard="Other",
+                strand="Other",
+                num_questions=to_int(canon.get("total_questions")),
+                grade_average=round(grade, 6),
+            )
+            if grade >= _BAND_HIGH_THRESHOLD:
+                band_high.append(other_band_row)
+            elif grade >= _BAND_MID_THRESHOLD:
+                band_mid.append(other_band_row)
+            else:
+                band_low.append(other_band_row)
 
         data_quality = await self._build_alignment_data_quality_for_item(item_id)
 

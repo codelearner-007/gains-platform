@@ -27,9 +27,13 @@ export function SummaryByStandardsHeader() {
 export function StrandsTable({
   kpis,
   strands,
+  selectedStrand,
+  onSelectStrand,
 }: {
   kpis: KPIs;
   strands?: SddStrandRow[];
+  selectedStrand?: string | null;
+  onSelectStrand?: (strand: string) => void;
 }) {
   const rows = useMemo(
     () =>
@@ -66,9 +70,13 @@ export function StrandsTable({
         </thead>
         <tbody>
           {fallback ? (
+            // Defensive fallback only — backend ``_synthesize_other_rollups``
+            // already emits an "Other" row for unaligned assessments so
+            // this branch should never render in production. Kept for
+            // robustness against stale payloads or future regressions.
             <tr>
-              <td style={cellStyle}>—</td>
-              <td style={{ ...cellStyle, textAlign: 'center' }}>0</td>
+              <td style={cellStyle}>Other</td>
+              <td style={{ ...cellStyle, textAlign: 'center' }}>1</td>
               <td
                 style={{
                   ...cellStyle,
@@ -81,24 +89,49 @@ export function StrandsTable({
               </td>
             </tr>
           ) : (
-            rows.map((row, i) => (
-              <tr key={`strand-${i}-${row.strand}`}>
-                <td style={cellStyle}>{row.strand}</td>
-                <td style={{ ...cellStyle, textAlign: 'center' }}>
-                  {row.num_standards}
-                </td>
-                <td
+            rows.map((row, i) => {
+              const isSelected = selectedStrand === row.strand;
+              const dim = !!selectedStrand && !isSelected;
+              return (
+                <tr
+                  key={`strand-${i}-${row.strand}`}
+                  onClick={() => onSelectStrand?.(row.strand)}
+                  role={onSelectStrand ? 'button' : undefined}
+                  tabIndex={onSelectStrand ? 0 : undefined}
+                  onKeyDown={(e) => {
+                    if (
+                      onSelectStrand &&
+                      (e.key === 'Enter' || e.key === ' ')
+                    ) {
+                      e.preventDefault();
+                      onSelectStrand(row.strand);
+                    }
+                  }}
+                  className={
+                    isSelected ? 'ring-2 ring-neutral-800 ring-inset' : undefined
+                  }
                   style={{
-                    ...cellStyle,
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    backgroundColor: cellColor(row.grade_average),
+                    cursor: onSelectStrand ? 'pointer' : 'default',
+                    opacity: dim ? 0.45 : 1,
                   }}
                 >
-                  {row.grade_average_pct}
-                </td>
-              </tr>
-            ))
+                  <td style={cellStyle}>{row.strand}</td>
+                  <td style={{ ...cellStyle, textAlign: 'center' }}>
+                    {row.num_standards}
+                  </td>
+                  <td
+                    style={{
+                      ...cellStyle,
+                      textAlign: 'center',
+                      fontWeight: 600,
+                      backgroundColor: cellColor(row.grade_average),
+                    }}
+                  >
+                    {row.grade_average_pct}
+                  </td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>
@@ -109,9 +142,13 @@ export function StrandsTable({
 export function StandardsTable({
   kpis,
   standards,
+  selectedStandard,
+  onSelectStandard,
 }: {
   kpis: KPIs;
   standards?: SddStandardRow[];
+  selectedStandard?: string | null;
+  onSelectStandard?: (cpalms_standard: string) => void;
 }) {
   const rows = useMemo(
     () =>
@@ -150,8 +187,9 @@ export function StandardsTable({
         </thead>
         <tbody>
           {fallback ? (
+            // Defensive fallback only — see StrandsTable above.
             <tr>
-              <td style={cellStyle}>(All Questions)</td>
+              <td style={cellStyle}>Other</td>
               <td style={{ ...cellStyle, textAlign: 'center' }}>
                 {kpis.total_questions}
               </td>
@@ -167,8 +205,32 @@ export function StandardsTable({
               </td>
             </tr>
           ) : (
-            rows.map((row, i) => (
-              <tr key={`standard-${i}-${row.cpalms_standard}-${row.strand}`}>
+            rows.map((row, i) => {
+              const isSelected = selectedStandard === row.cpalms_standard;
+              const dim = !!selectedStandard && !isSelected;
+              return (
+              <tr
+                key={`standard-${i}-${row.cpalms_standard}-${row.strand}`}
+                onClick={() => onSelectStandard?.(row.cpalms_standard)}
+                role={onSelectStandard ? 'button' : undefined}
+                tabIndex={onSelectStandard ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (
+                    onSelectStandard &&
+                    (e.key === 'Enter' || e.key === ' ')
+                  ) {
+                    e.preventDefault();
+                    onSelectStandard(row.cpalms_standard);
+                  }
+                }}
+                className={
+                  isSelected ? 'ring-2 ring-neutral-800 ring-inset' : undefined
+                }
+                style={{
+                  cursor: onSelectStandard ? 'pointer' : 'default',
+                  opacity: dim ? 0.45 : 1,
+                }}
+              >
                 <td style={cellStyle}>{row.cpalms_standard}</td>
                 <td style={{ ...cellStyle, textAlign: 'center' }}>
                   {row.num_questions}
@@ -184,7 +246,8 @@ export function StandardsTable({
                   {row.grade_average_pct}
                 </td>
               </tr>
-            ))
+              );
+            })
           )}
         </tbody>
       </table>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { ResponsiveContainer, Treemap, Tooltip } from 'recharts';
 import type { SddStrandRow } from '@/lib/reports/types';
 import {
@@ -12,6 +13,8 @@ import { formatPercent } from '@/lib/reports/format';
 
 interface StrandTreemapProps {
   strands: SddStrandRow[];
+  selectedStrand?: string | null;
+  onSelectStrand?: (strand: string) => void;
 }
 
 interface TreemapDatum {
@@ -23,16 +26,31 @@ interface TreemapDatum {
   [key: string]: string | number;
 }
 
-export default function StrandTreemap({ strands }: StrandTreemapProps) {
-  const data: TreemapDatum[] = strands
-    .filter((s) => s.num_questions > 0)
-    .map((s) => ({
-      name: s.strand,
-      size: s.num_questions,
-      color: performanceColor(s.grade_average),
-      percentage: s.grade_average,
-      numStandards: s.num_standards,
-    }));
+export default function StrandTreemap({
+  strands,
+  selectedStrand,
+  onSelectStrand,
+}: StrandTreemapProps) {
+  // Memoise — Recharts re-layouts when the data reference changes.
+  const data = useMemo<TreemapDatum[]>(
+    () =>
+      strands
+        .filter((s) => s.num_questions > 0)
+        .map((s) => ({
+          name: s.strand,
+          size: s.num_questions,
+          color: performanceColor(s.grade_average),
+          percentage: s.grade_average,
+          numStandards: s.num_standards,
+        })),
+    [strands],
+  );
+
+  const handleNodeClick = (node: unknown) => {
+    // Recharts spreads the leaf datum directly onto the click payload.
+    const n = node as Partial<TreemapDatum> | undefined;
+    if (n?.name && onSelectStrand) onSelectStrand(n.name);
+  };
 
   return (
     <div
@@ -57,7 +75,13 @@ export default function StrandTreemap({ strands }: StrandTreemapProps) {
               dataKey="size"
               stroke="#fff"
               isAnimationActive={false}
-              content={<TreemapNode />}
+              content={
+                <TreemapNode
+                  onSelect={onSelectStrand}
+                  selectedStrand={selectedStrand ?? null}
+                />
+              }
+              onClick={handleNodeClick}
             >
               <Tooltip content={<TreemapTooltip />} />
             </Treemap>
@@ -79,27 +103,60 @@ interface NodeProps {
   // So our `color` field arrives at this level, not under `payload`.
   color?: string;
   percentage?: number;
+  /** Injected by parent — used for the selection ring. */
+  selectedStrand?: string | null;
+  /** Injected by parent — clicking the tile cross-filters the dashboard. */
+  onSelect?: (strand: string) => void;
 }
 
 function TreemapNode(props: NodeProps) {
-  const { x = 0, y = 0, width = 0, height = 0, name, color } = props;
+  const {
+    x = 0,
+    y = 0,
+    width = 0,
+    height = 0,
+    name,
+    color,
+    percentage,
+    selectedStrand,
+    onSelect,
+  } = props;
   const fill = color || PERF_PINK;
   if (width <= 0 || height <= 0) return null;
+  const isSelected = !!name && selectedStrand === name;
   // Wrap long labels onto multiple lines so multi-word strands ("Algebra:
   // Reasoning with Equations & Inequalities") remain legible on narrow tiles.
   const lines = wrapLabel(name ?? '', Math.max(6, Math.floor(width / 7)), 3);
-  const fontSize = width > 220 && height > 80 ? 14 : 12;
-  const lineHeight = fontSize + 2;
-  const totalHeight = lines.length * lineHeight;
-  const startY = y + height / 2 - totalHeight / 2 + fontSize / 2;
+  const labelFontSize = width > 220 && height > 80 ? 14 : 12;
+  const pctFontSize = width > 220 && height > 80 ? 16 : 13;
+  const lineHeight = labelFontSize + 2;
+  // Show the % below the label when the tile is at least ~50px tall
+  // (matches Schoology — "Other 73.0%" rendered inside the tile).
+  const showPct = typeof percentage === 'number' && width > 60 && height > 50;
+  const labelBlockHeight = lines.length * lineHeight;
+  const totalHeight = showPct
+    ? labelBlockHeight + pctFontSize + 6
+    : labelBlockHeight;
+  const startY = y + height / 2 - totalHeight / 2 + labelFontSize / 2;
+  const handleTileClick = () => {
+    if (name && onSelect) onSelect(name);
+  };
   return (
-    <g>
+    <g
+      onClick={handleTileClick}
+      style={{ cursor: onSelect ? 'pointer' : 'default' }}
+    >
       <rect
         x={x}
         y={y}
         width={width}
         height={height}
-        style={{ fill, stroke: '#fff', strokeWidth: 2 }}
+        style={{
+          fill,
+          stroke: isSelected ? '#1f2937' : '#fff',
+          strokeWidth: isSelected ? 3 : 2,
+          opacity: selectedStrand && !isSelected ? 0.45 : 1,
+        }}
       />
       {width > 60 && height > 26 &&
         lines.map((line, i) => (
@@ -109,7 +166,7 @@ function TreemapNode(props: NodeProps) {
             y={startY + i * lineHeight}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontSize={fontSize}
+            fontSize={labelFontSize}
             fill="#000"
             fontWeight={600}
             // White halo guarantees legibility on every band color.
@@ -121,6 +178,23 @@ function TreemapNode(props: NodeProps) {
             {line}
           </text>
         ))}
+      {showPct && (
+        <text
+          x={x + width / 2}
+          y={startY + labelBlockHeight + pctFontSize}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={pctFontSize}
+          fill="#000"
+          fontWeight={700}
+          stroke="#fff"
+          strokeWidth={3}
+          paintOrder="stroke"
+          strokeLinejoin="round"
+        >
+          {formatPercent(percentage as number, 1)}
+        </text>
+      )}
     </g>
   );
 }

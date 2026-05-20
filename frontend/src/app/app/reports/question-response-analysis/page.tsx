@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
@@ -10,17 +10,19 @@ import ReportBreadcrumb, {
   assessmentCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
-import InstructorCard from '@/components/app/modules/reports/qra/InstructorCard';
 import QuestionDetailTable from '@/components/app/modules/reports/qra/QuestionDetailTable';
 import {
   StrandsTable,
   StandardsTable,
   SummaryByStandardsHeader,
 } from '@/components/app/modules/reports/qra/Strands_StandardsTables';
+import ActiveFilterBar from '@/components/app/modules/reports/shared/ActiveFilterBar';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
+import { useReportFilters } from '@/lib/reports/filters';
+import { deriveQra } from '@/lib/reports/filter-helpers';
 
 export default function QuestionResponseAnalysisPage() {
   const router = useRouter();
@@ -37,6 +39,14 @@ export default function QuestionResponseAnalysisPage() {
     enabled: !!itemId,
   });
 
+  const { filters, setStrand, setStandard, reset, hasActiveFilter } =
+    useReportFilters();
+
+  const filtered = useMemo(
+    () => (data ? deriveQra(data, filters) : null),
+    [data, filters],
+  );
+
   if (!itemId) return null;
   if (isLoading) return <LoadingState label="Loading assessment…" />;
   if (isError)
@@ -50,7 +60,7 @@ export default function QuestionResponseAnalysisPage() {
         onRetry={() => void refetch()}
       />
     );
-  if (!data) return null;
+  if (!data || !filtered) return null;
 
   return (
     <ReportCanvas>
@@ -70,46 +80,47 @@ export default function QuestionResponseAnalysisPage() {
         />
       </div>
 
-      <div
-        className="grid grid-cols-12 gap-2 mb-2"
-        style={{ minHeight: 100 }}
-      >
-        <div className="col-span-3">
-          <InstructorCard kpis={data.kpis} assessment={data.assessment} />
-        </div>
-        <div className="col-span-9">
-          <KpiStrip kpis={data.kpis} />
-        </div>
+      <div className="mb-2" style={{ minHeight: 100 }}>
+        <KpiStrip kpis={filtered.kpis} />
       </div>
 
-      {data.data_quality?.alignment_status === 'missing' ? (
+      {hasActiveFilter && (
+        <ActiveFilterBar filters={filters} onClear={reset} />
+      )}
+
+      {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
           quality={data.data_quality}
           reportLabel="Question Response Analysis"
+          displayMode="banner"
         />
-      ) : (
-        <>
-          <div className="mb-0">
-            <SummaryByStandardsHeader />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            <StrandsTable kpis={data.kpis} strands={data.strands_rollup} />
-            <StandardsTable
-              kpis={data.kpis}
-              standards={data.standards_rollup}
-            />
-          </div>
-
-          <div>
-            <QuestionDetailTable
-              questions={data.questions_overall}
-              incorrectChoices={data.incorrect_choices}
-              itemId={itemId}
-            />
-          </div>
-        </>
       )}
+
+      <div className="flex flex-col gap-2 mb-2">
+        <SummaryByStandardsHeader />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <StrandsTable
+            kpis={filtered.kpis}
+            strands={filtered.strands_rollup}
+            selectedStrand={filters.strand}
+            onSelectStrand={setStrand}
+          />
+          <StandardsTable
+            kpis={filtered.kpis}
+            standards={filtered.standards_rollup}
+            selectedStandard={filters.standard}
+            onSelectStandard={setStandard}
+          />
+        </div>
+      </div>
+
+      <div>
+        <QuestionDetailTable
+          questions={filtered.questions_overall}
+          incorrectChoices={filtered.incorrect_choices}
+          itemId={itemId}
+        />
+      </div>
     </ReportCanvas>
   );
 }
