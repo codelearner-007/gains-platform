@@ -1,205 +1,189 @@
 # CLAUDE.md
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Guidance for Claude Code (claude.ai/code) when working in this repository.
+
+This file has two halves:
+
+1. **Working agreement** — how Claude should plan, execute, verify, and communicate (applies to every task).
+2. **Gains Platform business rules** — architecture, RBAC, mistakes to avoid, project layout (applies to code in this repo).
+
+When the two ever appear to conflict, the project rules in half 2 win for *what* the code must look like; the working agreement in half 1 governs *how* Claude works.
 
 ---
 
-## 🚨 CRITICAL: Agent Usage Rules
+# Part 1 — Working Agreement
 
-### YOU Are the Orchestrator - NOT the Implementer
+## Core Principles
 
-**DO NOT implement features yourself.** Your role is to:
-1. Understand the user's request
-2. Decide which agent(s) to use
-3. Call the Task tool to delegate work
-4. Monitor progress and coordinate between agents
-
-**NEVER:**
-- ❌ Edit files directly (unless trivial single-line fixes)
-- ❌ Write implementation code yourself
-- ❌ Create new files yourself
-- ❌ Run tests yourself
-- ❌ Do work that belongs to a specialized agent
-
-**ALWAYS:**
-- ✅ Use the Task tool to delegate to agents
-- ✅ Provide full context in the task message
-- ✅ Let agents do their specialized work
-- ✅ Coordinate multi-agent workflows
-
-### Available Agents (.claude/agents/)
-
-| Agent | Purpose | When to Use | Model |
-|-------|---------|-------------|-------|
-| **researcher** | Deep codebase/web/docs research (read-only) | Before implementing unfamiliar features, architectural decisions | inherit |
-| **frontend-next-dev** | Next.js frontend (pages, components, styling) | Any frontend work (components, pages, styles, client logic) | inherit |
-| **backend-architect** | FastAPI backend (endpoints, services, repos) | Any backend work (API routes, services, repositories, business logic) | inherit |
-| **db-migration-manager** | Database schema changes (migrations, RLS) | Schema changes, new tables, RLS policies, database functions | inherit |
-| **e2e-tester** | Browser testing via agent-browser CLI (headed), Playwright MCP fallback | After implementing features, to verify functionality | inherit |
-
-### Decision Tree
-
-```
-User Request
-     |
-     v
-┌─────────────────────────────┐
-│ Is it a trivial fix?        │
-│ (typo, single line, obvious)│
-└──────────┬──────────────────┘
-           │
-    ┌──────┴──────┐
-    │             │
-   YES           NO
-    │             │
-    v             v
-Fix directly   Research needed?
-               (unfamiliar/complex)
-                    │
-              ┌─────┴─────┐
-              │           │
-             YES         NO
-              │           │
-              v           │
-    ┌─────────────────┐   │
-    │ Task: researcher│   │
-    └─────────────────┘   │
-              │           │
-              v           v
-         ┌────────────────────────┐
-         │ Which domain(s)?       │
-         └────┬───────────────────┘
-              │
-    ┌─────────┼─────────┬─────────┐
-    │         │         │         │
-Frontend  Backend  Database  Multiple
-    │         │         │         │
-    v         v         v         v
-Task:     Task:     Task:     Task: ALL
-frontend  backend   db-mgr    (parallel)
--next-dev -arch     THEN      │
-                    backend   └──> Then e2e-tester
-                              
-After ANY implementation:
-    Task: e2e-tester (verify)
-```
-
-### Execution Examples
-
-**❌ WRONG - You doing the work:**
-```typescript
-// User: "Add a new role creation form"
-// You: *edits frontend/src/components/admin/modules/rbac/CreateRoleDialog.tsx*
-// You: *edits backend/app/api/v1/roles.py*
-// You: *creates test file*
-```
-
-**✅ CORRECT - Delegating to agents:**
-```typescript
-// User: "Add a new role creation form"
-// You: Analyzing this request, I need to:
-// 1. Update the frontend form component
-// 2. Ensure backend endpoint exists
-// 3. Test the flow
-
-// Delegating to specialized agents:
-
-Task: frontend-next-dev
-Context: User wants a role creation form in the RBAC module.
-Requirements:
-- Add CreateRoleDialog component with name, description fields
-- Form validation with Zod
-- Call /api/v1/roles POST endpoint
-- Show success/error toast
-Files likely affected: frontend/src/components/admin/modules/rbac/
-
-Task: backend-architect
-Context: Ensure role creation endpoint exists and follows repository pattern.
-Requirements:
-- POST /api/v1/roles endpoint
-- Validate unique role name
-- Check permissions (roles:create)
-Files likely affected: backend/app/api/v1/roles.py, backend/app/services/role_service.py
-
-// After both complete:
-Task: e2e-tester
-Context: Verify role creation flow works end-to-end.
-Test: Login as admin, navigate to RBAC, create new role, verify it appears in list.
-```
-
-### Parallel vs Sequential
-
-**Parallel (default for independent work):**
-```typescript
-// User: "Add user profile page with API"
-// One message, multiple Task calls:
-
-Task: backend-architect
-Build GET /api/v1/users/me endpoint...
-
-Task: frontend-next-dev
-Create /profile page that calls /api/v1/users/me...
-
-// Then after both finish:
-Task: e2e-tester
-Verify profile page loads and displays user data...
-```
-
-**Sequential (for dependencies):**
-```typescript
-// User: "Add notifications system"
-
-// Step 1: Research
-Task: researcher
-Explore existing notification patterns, find affected files...
-
-// Step 2: Schema (wait for researcher)
-Task: db-migration-manager
-Create notifications table based on research findings...
-
-// Step 3: Implementation (wait for migration)
-Task: backend-architect
-Build notification API endpoints...
-
-Task: frontend-next-dev
-Build notification UI components...
-
-// Step 4: Verify (wait for implementation)
-Task: e2e-tester
-Test notification creation and display...
-```
-
-### Background Agents
-
-Use background execution for slow tasks when you have other work:
-
-```typescript
-// User: "Analyze the entire RBAC system and add user bulk import"
-
-Task: researcher (background)
-Deep dive into current RBAC implementation, find patterns...
-
-// While researcher runs, start implementation:
-Task: backend-architect
-Add bulk user import endpoint...
-
-// Check researcher results later, adjust if needed
-```
+1. **Think before code** — explore intent, write a plan, then implement.
+2. **Evidence before assertions** — never claim "done", "fixed", or "passing" without running the verification command and reading the output.
+3. **Do exactly what was asked** — no scope creep, no surprise refactors, no extra files.
+4. **Edit > create** — prefer modifying existing files. Don't create docs unless asked.
+5. **Root cause > shortcut** — fix the bug, don't bypass the check (`--no-verify`, `--force`, mocking around the failure).
+6. **Confirm before destructive ops** — anything irreversible or affecting shared state: ask first.
+7. **Delegate research** — for any exploration spanning more than 3 lookups, spawn a subagent (`Explore`, `general-purpose`, or `Plan`) instead of polluting main context.
 
 ---
 
-## 🚫 AI Assistant Rules
+## When to Run the Full Workflow vs. Skip Steps
 
-### Do NOT Create Summary Files
-- Never create `SUMMARY.md`, `CHANGES.md`, `README_*.md`, or similar files
-- Provide a short summary at the end of your message instead
-- Keep responses concise and actionable
+**Run the FULL workflow** for:
+- New features or user-facing capabilities
+- Bug fixes with non-trivial root cause
+- Refactors touching 3+ files
+- Anything touching auth, payments, DB schema, or security boundaries
+- Anything the user calls "important", "ship-ready", or "PR-ready"
 
-### Database Rules - UUID v7 Required
-- **Always use UUID v7** for primary keys: `DEFAULT uuid_generate_v7()`
-- Never use `uuid_generate_v4()` or `gen_random_uuid()`
-- UUID v7 provides 2-5x better insert performance and time-ordered IDs
+**SKIP to minimum (steps 4 + 9 + 12 only)** for:
+- Single-line typo / comment / rename
+- User follow-up that adjusts work already verified this session ("change the color", "rename that var", "also do X to the same file")
+- Pure formatting, log message, or copy tweaks
+- Reverting a change made minutes ago
+- Documentation edits the user explicitly asked for
+
+Don't run it after every cosmetic change.
 
 ---
+
+## Standard Workflow
+
+If a referenced skill is unavailable, execute the **Fallback** inline.
+
+### 1. Understand intent — brainstorming
+- **Skill**: `superpowers:brainstorming`
+- **Fallback**: 2–3 clarifying questions, restate goal, list constraints + success criteria.
+
+### 2. Locate code — delegated exploration
+- **Agents**: `Explore` for 1–3 targeted lookups; `Agent(general-purpose)` or `Agent(Explore)` "very thorough" for broad mapping.
+- **Rule**: Delegate when search spans 3+ queries or unfamiliar territory. Keep main context clean.
+- **Fallback**: `grep` / `rg` / `find` / `Read` with `file:line` notes.
+
+### 3. Plan the change — writing-plans
+- **Skill**: `superpowers:writing-plans` or `Agent(Plan)`.
+- **Fallback**: Numbered list of steps, critical files, risks, rollback path. Get user approval before writing code on anything non-trivial.
+
+### 4. Implement with discipline — test-driven-development
+- **Skill**: `superpowers:test-driven-development`
+- **Fallback**: Failing test → minimum code → refactor. No test framework? Write a tiny repro script.
+- **Rule**: Trust framework guarantees. No "just in case" handlers. No half-finished stubs.
+
+### 5. Debug when stuck — systematic-debugging
+- **Skill**: `superpowers:systematic-debugging`
+- **Fallback**: Reproduce → isolate → bisect. Form hypothesis, predict output, run, compare. Instrument, don't guess.
+
+### 6. Parallelize independent work — dispatching-parallel-agents
+- **Skill**: `superpowers:dispatching-parallel-agents`
+- **Fallback**: Multiple `Agent` calls in one message when tasks share no state.
+
+### 7. Isolate risky work — using-git-worktrees
+- **Skill**: `superpowers:using-git-worktrees`
+- **Fallback**: `git worktree add ../wt-feature feature-branch`.
+
+### 8. Simplify before commit
+- **Agent**: `code-simplifier:code-simplifier` or skill `simplify`.
+- **Fallback**: Re-read diff. Delete dead code, redundant comments, premature abstractions. Three similar lines beats a bad abstraction.
+
+### 9. Verify before claiming done — verification-before-completion
+- **Skill**: `superpowers:verification-before-completion`
+- **Fallback**: Run the actual commands. Paste real output. Required gates:
+  - Type check passes — `cd frontend && npx tsc --noEmit`
+  - Lint passes — `cd backend && python -m ruff check app/`
+  - Affected tests pass — `vitest`, `pytest`, etc.
+  - For UI: dev server started, feature exercised in browser, no console errors
+
+### 10. Self-review the diff
+- **Agent**: `coderabbit:code-reviewer` or skill `code-review:code-review`.
+- **Fallback**: `git diff` against base. Read every changed line. Check for: secrets, debug logs, TODOs, scope creep, untested branches.
+
+### 11. Security pass (conditional — see "When to Skip" above)
+- **Skill**: `security-review`
+- **Fallback**: Auth on every endpoint, tenant/user scoping enforced, no SQL via string concat, no secrets in code, no PII in logs, inputs validated at boundaries.
+
+### 12. Commit with conventional standards
+
+Standard Conventional Commits — no plugin required.
+
+```
+<type>(<scope>): <imperative summary, ≤72 chars>
+
+<body — optional, explains WHY>
+```
+
+Types:
+- `feat` — new user-facing capability
+- `fix` — bug fix
+- `refactor` — internal change, no behavior diff
+- `perf` — performance improvement
+- `test` — tests only
+- `docs` — docs only
+- `chore` — build, tooling, deps
+- `ci` — CI config
+- `style` — formatting only
+- `revert` — reverts prior commit
+
+Rules:
+- Imperative mood (`add`, not `added`/`adds`)
+- Lowercase summary
+- No trailing period
+- No `Co-Authored-By`, no robot emojis, no "Generated with Claude"
+- Breaking change: `feat(api)!: …` + `BREAKING CHANGE:` footer
+- Body explains WHY when summary alone leaves doubt
+
+Examples:
+- `feat(auth): add magic-link login`
+- `fix(cart): prevent negative-quantity submit`
+- `refactor(api): extract pricing into service module`
+- `perf(search): cache product index for 60s`
+- `chore(deps): bump zod to 3.23`
+
+### 13. Acting on review feedback
+- **Skill**: `superpowers:receiving-code-review` — verify each comment before applying.
+- **Fallback**: For every reviewer comment: confirm with test/grep that the claim holds; push back on incorrect ones; never blind-apply.
+
+---
+
+## Agent Quick-Reference
+
+| Need | Tool |
+|---|---|
+| Find symbol / file (1–3 queries) | `Explore` agent or `grep` |
+| Map large area of codebase | `Agent(Explore)` "very thorough" |
+| Open-ended multi-step research | `Agent(general-purpose)` |
+| Architect a plan | `Agent(Plan)` |
+| Clean up code before commit | `code-simplifier:code-simplifier` |
+| Review diff | `coderabbit:code-reviewer` |
+| Security audit | `security-review` skill |
+
+Delegate to subagents whenever research or exploration would consume more than a handful of main-context tool calls. Independent subagent work → run in parallel.
+
+---
+
+## What NOT to Do
+
+- ❌ Skip the plan on non-trivial work because "it's simple".
+- ❌ Add error handling for impossible states.
+- ❌ Write comments that restate code. Only document non-obvious WHY.
+- ❌ Leave half-finished implementations, dead branches, stub functions.
+- ❌ Use `--no-verify`, `--force`, or destructive git ops without explicit user request.
+- ❌ Commit `.env`, credentials, large binaries, anything in `.gitignore`.
+- ❌ Claim success without running the verification command.
+- ❌ Create `README.md` / `SUMMARY.md` / `CHANGES.md` or any other markdown files unless the user explicitly asked for them.
+- ❌ Run security review on cosmetic changes.
+
+---
+
+## Communication Style
+
+- Default short. Clear sentence beats clear paragraph.
+- State results, not internal deliberation.
+- Before each tool batch: one sentence on what you're doing.
+- End of turn: 1–2 sentences. What changed, what's next.
+- Reference code as `path/file.ext:line`.
+- Unsure → ask. Confident → act.
+
+---
+
+# Part 2 — Gains Platform Business Rules
 
 ## Project Overview
 
@@ -211,9 +195,8 @@ Add bulk user import endpoint...
 - Database: Supabase PostgreSQL with RLS, UUID v7
 - Ports: Next.js (3000), FastAPI (8000), Supabase (56321-56327)
 
-**Admin Modules:** Dashboard, Users, RBAC, Audit Logs  
+**Admin Modules:** Dashboard, Users, RBAC, Audit Logs
 **Permissions:** 13 total across 4 modules (users, roles, permissions, audit)
-**Migrations:** 4 files (uuid_v7_function, rbac_system, jwt_claims_hook, user_preferences)
 **Auth methods:** email/password, Google OAuth (PKCE), email magic link, MFA/TOTP step-up
 
 ---
@@ -236,7 +219,7 @@ source: "/api/v1/:path*" → destination: "http://127.0.0.1:8000/api/v1/:path*"
 
 ### What Goes Where
 
-**Next.js API Routes (`/api/**/route.ts`) - AUTH ONLY:**
+**Next.js API Routes (`/api/**/route.ts`) — AUTH ONLY:**
 - ✅ Auth operations (`/api/auth/**`)
 - ✅ MFA (`/api/auth/mfa/**`)
 - ✅ Supabase `auth.users` admin actions (`/api/users/[userId]/**`)
@@ -244,7 +227,7 @@ source: "/api/v1/:path*" → destination: "http://127.0.0.1:8000/api/v1/:path*"
 - ❌ NO business logic
 - ❌ NO application table queries
 
-**FastAPI Backend (`backend/app/api/v1/`) - ALL DATABASE:**
+**FastAPI Backend (`backend/app/api/v1/`) — ALL DATABASE:**
 - ✅ ALL database operations
 - ✅ ALL business logic
 - ✅ Repository pattern: Router → Service → Repository → Database
@@ -294,23 +277,30 @@ async def list_roles(db: AsyncSession = Depends()):
 
 ---
 
+## Database Rules — UUID v7 Required
+
+- **Always use UUID v7** for primary keys: `DEFAULT uuid_generate_v7()`
+- Never use `uuid_generate_v4()` or `gen_random_uuid()`
+- UUID v7 provides 2-5× better insert performance and time-ordered IDs
+
+---
+
 ## Common Mistakes
 
-1. **Doing work yourself instead of delegating** → Use Task tool for agents
-2. **Using backend URL directly** → Use `/api/v1/*` (rewrite)
-3. **Supabase client in components** → Use FastAPI service
-4. **Database logic in Next.js routes** → Move to FastAPI
-5. **Enabling CORS** → Not needed (rewrites)
-6. **Unnecessary hooks** → Call services directly
-7. **No superadmin protection** → Use `auth.admin.getUserById()` for LIVE check, never stale `app_metadata`
-8. **Missing CSRF on mutation routes** → All POST/PUT/DELETE API routes MUST call `enforceSameOrigin(request)` first
-9. **Leaking tokens in response** → Login/auth responses must NEVER include `access_token`/`refresh_token` (cookies handle it)
-10. **Leaking permissions in errors** → Never include user's permission list in error responses
-11. **`datetime.utcnow()`** → Use `datetime.now(timezone.utc)` (utcnow is deprecated)
-12. **MFA fail-open** → MFA checks MUST fail CLOSED (redirect to login on error, never let through)
-13. **Next.js 16 sync params** → `params` and `searchParams` are `Promise<>` types, must be `await`ed
-14. **Hardcoded Tailwind colors** → Use semantic tokens: `bg-primary`, `text-destructive`, `bg-muted`
-15. **`GRANT ALL` to anon/authenticated** → Use principle of least privilege; service_role for backend CRUD
+1. **Using backend URL directly** → Use `/api/v1/*` (rewrite handles it)
+2. **Supabase client in components** → Use FastAPI service
+3. **Database logic in Next.js routes** → Move to FastAPI
+4. **Enabling CORS** → Not needed (rewrites)
+5. **Unnecessary hooks** → Call services directly
+6. **No superadmin protection** → Use `auth.admin.getUserById()` for LIVE check, never stale `app_metadata`
+7. **Missing CSRF on mutation routes** → All POST/PUT/DELETE API routes MUST call `enforceSameOrigin(request)` first
+8. **Leaking tokens in response** → Login/auth responses must NEVER include `access_token`/`refresh_token` (cookies handle it)
+9. **Leaking permissions in errors** → Never include the user's permission list in error responses
+10. **`datetime.utcnow()`** → Use `datetime.now(timezone.utc)` (utcnow is deprecated)
+11. **MFA fail-open** → MFA checks MUST fail CLOSED (redirect to login on error, never let through)
+12. **Next.js 16 sync params** → `params` and `searchParams` are `Promise<>` types, must be `await`ed
+13. **Hardcoded Tailwind colors** → Use semantic tokens: `bg-primary`, `text-destructive`, `bg-muted`
+14. **`GRANT ALL` to anon/authenticated** → Use principle of least privilege; service_role for backend CRUD
 
 ---
 
@@ -319,12 +309,12 @@ async def list_roles(db: AsyncSession = Depends()):
 **Roles:** `super_admin` (hierarchy 10000), `user` (hierarchy 100)
 
 **Permissions (13):**
-- users (4): read_all, update_all, delete_all, assign_roles
-- roles (4): create, read, update, delete
-- permissions (4): create, read, update, delete
-- audit (1): read
+- users (4): `read_all`, `update_all`, `delete_all`, `assign_roles`
+- roles (4): `create`, `read`, `update`, `delete`
+- permissions (4): `create`, `read`, `update`, `delete`
+- audit (1): `read`
 
-**Permission Check (Client - Admin):**
+**Permission Check (Client — Admin):**
 ```typescript
 import { useAdminClaims } from '@/components/admin/AdminClaimsContext';
 import { hasPermission } from '@/lib/utils/rbac';
@@ -344,7 +334,7 @@ if (targetUser?.user?.app_metadata?.user_role === 'super_admin') {
 }
 ```
 
-**Admin Route Auth Helper (DRY pattern):**
+**Admin Route Auth Helper (DRY):**
 ```typescript
 // Use authorizeAdminAction() from lib/utils/admin-auth.ts for all admin mutation routes
 const auth = await authorizeAdminAction(request, userId, 'users:update_all');
@@ -359,29 +349,11 @@ psql "postgresql://postgres:postgres@127.0.0.1:56322/postgres"
 ```sql
 SELECT id, email FROM auth.users;
 
-UPDATE user_roles 
+UPDATE user_roles
 SET role_id = (SELECT id FROM roles WHERE name = 'super_admin')
 WHERE user_id = 'user-uuid-here';
 ```
 **Important:** User must refresh session after role change.
-
----
-
-## 🔧 Available Tools & MCPs
-
-### MCP Servers
-- **context7**: Latest documentation for Next.js, React, FastAPI, Supabase
-  - Use for up-to-date API references and best practices
-- **playwright**: Browser automation and testing
-  - Fallback only — e2e-tester uses agent-browser CLI (headed) as primary tool
-
-### Skills (invoke via `/skill-name`)
-- `architecture-rules`: Enforces project architecture rules
-- `next-best-practices`: Next.js best practices and conventions
-
-### Plugins (use via `subagent_type` in Task tool)
-- `code-simplifier:code-simplifier`: Simplifies and cleans up code after implementation
-- `coderabbit:code-reviewer`: Deep code review with security analysis
 
 ---
 
@@ -391,55 +363,54 @@ WHERE user_id = 'user-uuid-here';
 frontend/src/
 ├── app/
 │   ├── admin/          # Admin panel (dashboard, users, rbac, audit)
+│   ├── app/            # Authenticated app (reports, settings)
 │   ├── auth/           # Auth pages (login, register, 2fa)
 │   └── api/            # Next.js API routes (AUTH ONLY)
 │       ├── auth/       # Auth operations
 │       └── users/[userId]/  # User admin actions (auth.users table only)
 ├── components/
 │   ├── admin/modules/  # Admin module components
+│   ├── app/modules/    # App-side feature modules (reports, etc.)
 │   ├── auth/           # Auth components
 │   └── ui/             # shadcn/ui components
 └── lib/
     ├── services/       # API services (call /api/* routes)
+    ├── reports/        # Report-specific helpers, types, filters
     └── supabase/       # Supabase clients (API routes only)
 
 backend/app/
 ├── api/v1/             # FastAPI endpoints (all database ops)
-│   ├── dashboard.py
-│   ├── users.py
-│   ├── roles.py
-│   ├── permissions.py
-│   └── audit.py
 ├── services/           # Business logic layer
-├── repositories/       # Data access layer
+├── repositories/       # Data access layer (SQLAlchemy queries)
 ├── models/             # SQLAlchemy models
-└── schemas/            # Pydantic schemas
+├── schemas/            # Pydantic schemas
+├── jobs/               # Ingestion / pipeline jobs
+└── transformations/    # SQL transformations (staging → dims → facts → cubes)
 
 supabase/
-├── migrations/         # 4 migration files
-│   ├── 20260201000000_uuid_v7_function.sql
-│   ├── 20260201000001_rbac_system.sql
-│   ├── 20260201000002_jwt_claims_hook.sql
-│   └── 20260201000009_user_preferences.sql
-└── seeds/
-    └── rbac_seed.sql   # Default roles & permissions
+├── migrations/         # Migration files (applied in order)
+└── seeds/              # Seed data (roles, permissions, school config, standards)
+
+data/                   # Source CSV exports + decoded PBIX reference
+docs/                   # Internal documentation
 ```
 
 ---
 
 ## Theming & UI
 
-- **Semantic Tailwind tokens:** Check `globals.css` for available theme classes
+- **Semantic Tailwind tokens:** check `globals.css` for available theme classes
 - **Use tokens, not hardcoded colors:** `bg-primary`, `text-foreground`, `bg-muted`, `border-border`
-- **shadcn/ui for interactive elements:** Use `<Button>`, `<Input>`, `<Dialog>` (layout primitives like `<div>`, `<form>` are fine)
+- **Performance color tokens** (reports): `PERF_PINK` (<70%), `PERF_YELLOW` (70–80%), `PERF_GREEN` (≥80%), `INCORRECT_GREY`, `HEADER_BAR_BG`, `LAYOUT_BORDER` — all in `lib/reports/colors.ts`. Do not redefine.
+- **shadcn/ui for interactive elements:** use `<Button>`, `<Input>`, `<Dialog>` (layout primitives like `<div>`, `<form>` are fine)
 
 ---
 
 ## Form Architecture
 
-**Two patterns - choose based on requirements:**
+**Two patterns — choose based on requirements:**
 
-**1. Server Actions (Preferred):**
+**1. Server Actions (preferred):**
 ```typescript
 // app/actions/user.ts
 'use server';
@@ -455,7 +426,7 @@ export async function createUser(formData: FormData) {
 </form>
 ```
 
-**2. Client-Side (Complex UX):**
+**2. Client-Side (complex UX):**
 ```typescript
 // For conditional fields, instant feedback, multi-step
 const form = useForm({ resolver: zodResolver(schema) });
@@ -465,51 +436,52 @@ const form = useForm({ resolver: zodResolver(schema) });
 </Form>
 ```
 
-**Zod schemas** (`src/lib/schemas/`) for validation on BOTH client & server
+**Zod schemas** (`src/lib/schemas/`) for validation on BOTH client & server.
 
 ---
 
-## Development Workflow
+## Backend Verification Commands
 
-**1. You Are the Orchestrator (NOT the Implementer)**
-- Delegate ALL work to specialized agents via Task tool
-- Only fix trivial issues yourself (typos, single-line changes)
-- Research first for complex/unfamiliar tasks
-- Default to parallel for independent work, sequential for dependencies
-
-**2. Repository Pattern (Backend)**
-```
-Router (route) → Service (logic) → Repository (data) → Database
+After backend changes:
+```bash
+cd backend && ./venv/bin/python -m ruff check app/ --fix
+cd backend && ./venv/bin/python -c "from app.main import app; print('OK')"
 ```
 
-**3. Service Layer (Frontend)**
-```
-Component → Service → API Route (Next.js or FastAPI)
+After frontend changes:
+```bash
+cd frontend && npx tsc --noEmit
+cd frontend && npx vitest run             # affected unit tests
+cd frontend && npx next build              # only when shipping
 ```
 
-**4. After Implementation - Verify (REQUIRED)**
-- Run `code-simplifier:code-simplifier` to clean up changes
-- Frontend: `cd frontend && npx tsc --noEmit && npx next build`
-- Backend: `cd backend && python -m ruff check app/ --fix && python -c "from app.main import app; print('OK')"`
-- Use e2e-tester to verify features work
-- Check for superadmin protection and CSRF on mutation routes
+For UI changes: start `npm run dev`, exercise in browser, confirm zero console errors.
 
 ---
 
-## Remember
+## Repository / Service Pattern
 
-1. **YOU ARE THE ORCHESTRATOR, NOT THE IMPLEMENTER** - delegate to agents
-2. **Research first for complex tasks** - launch `researcher` before implementing
-3. **Parallel by default** - launch independent agents in one message
-4. **Next.js = Auth only, FastAPI = Database only**
-5. **No CORS (rewrites handle it)**
-6. **No Supabase client in components/hooks/services**
-7. **Repository pattern in backend**
-8. **Superadmin protection via LIVE `auth.admin.getUserById()`**
-9. **UUID v7 for all primary keys**
-10. **Semantic Tailwind tokens only**
-11. **CSRF (`enforceSameOrigin`) on ALL mutation routes**
-12. **Verify after implementation** - tsc, build, ruff, code-simplifier
-13. **13 permissions across 4 modules** (users, roles, permissions, audit)
-14. **Next.js 16: params/searchParams are Promise types**
-15. **Rate limiting via slowapi on sensitive endpoints**
+**Backend:**
+```
+Router (HTTP) → Service (logic) → Repository (data) → Database
+```
+
+**Frontend:**
+```
+Component → Service (lib/services) → API route (Next.js or FastAPI via /api/v1)
+```
+
+---
+
+## Quick Sanity Checklist
+
+1. Next.js = auth only. FastAPI = database only.
+2. No CORS (rewrites handle it).
+3. No Supabase client in components/hooks/services.
+4. Repository pattern in backend.
+5. Superadmin protection via LIVE `auth.admin.getUserById()`.
+6. UUID v7 for all primary keys.
+7. Semantic Tailwind tokens only.
+8. CSRF (`enforceSameOrigin`) on ALL mutation routes.
+9. `params` / `searchParams` are `Promise<>` in Next.js 16 — must be `await`ed.
+10. Rate limiting via slowapi on sensitive backend endpoints.
