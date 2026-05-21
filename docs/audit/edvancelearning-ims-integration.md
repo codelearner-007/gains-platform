@@ -139,14 +139,19 @@ uses the returned bearer token to GET the CASE resource. See Section 7.
 `services/lms/host/EdvanceLS.LMS.HttpApi.Host/appsettings.json:9-14`:
 ```json
 "ImsCaseNetwork": {
-  "clientId": "edvancelearning.us",
-  "clientSecret": "sPZYdURxeKrlyCn",
-  "apiEndpoint":"https://casenetwork.1edtech.org/ims/case/v1p1/",
-  "accessToken":"https://casenetwork.1edtech.org/case-oauth2/clienttoken"
+  "clientId":     "<REDACTED — see legacy appsettings.json>",
+  "clientSecret": "<REDACTED — see legacy appsettings.json>",
+  "apiEndpoint":  "https://casenetwork.1edtech.org/ims/case/v1p1/",
+  "accessToken":  "https://casenetwork.1edtech.org/case-oauth2/clienttoken"
 },
 ```
 
 `appsettings.Production.json:12` is identical (same host, same credentials).
+Credentials redacted from this doc on 2026-05-21 — empirically verified
+dead (HTTP 403 "Invalid credentials supplied") and should not be circulated
+either way. The live values remain at the cited path in the legacy repo if
+needed for reference. For our own pulls, request a fresh 1EdTech client
+or use the CPALMS anonymous path (see refresh_standards.py).
 
 > **Correction vs the prior audit assumption.** The brief said to look for
 > `opensalt.imsglobal.org` and `cpalms.org`. Neither appears in the
@@ -550,7 +555,8 @@ private async Task<string> ImsCaseNetworkApiCall(string caseNetworkApiEndpoint)
 **Token endpoint:** `https://casenetwork.1edtech.org/case-oauth2/clienttoken`
 **Resource endpoint:** `https://casenetwork.1edtech.org/ims/case/v1p1/...`
 **Grant:** `client_credentials` (form body `grant_type=client_credentials`,
-HTTP Basic auth header carrying `edvancelearning.us : sPZYdURxeKrlyCn`).
+HTTP Basic auth header carrying `<clientId>:<clientSecret>` — see the
+legacy appsettings.json for the literal values.
 **Bearer header:** `Authorization: bearer <token>` (lowercase scheme; some
 servers are picky and require `Bearer`, but 1EdTech accepts both).
 

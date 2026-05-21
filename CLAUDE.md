@@ -485,3 +485,27 @@ Component → Service (lib/services) → API route (Next.js or FastAPI via /api/
 8. CSRF (`enforceSameOrigin`) on ALL mutation routes.
 9. `params` / `searchParams` are `Promise<>` in Next.js 16 — must be `await`ed.
 10. Rate limiting via slowapi on sensitive backend endpoints.
+
+---
+
+## Documentation Index
+
+Permanent reference docs in `docs/`. Read the relevant file before guessing — these encode hard-won project knowledge. Read only what you need; each line is `path — when to read it`.
+
+**Standards & alignment**
+- `docs/standards-alignment.md` — where per-question standards come from, what happens when missing, how to fix gaps at source. Read before touching any standards-related code.
+- `docs/audit/legacy-standards-refresh.md` — how legacy refreshed `dim_standard` (Synapse → EdvanceLearning LMS → /local-standards → notebook). Read before designing any refresh workflow.
+- `docs/audit/edvancelearning-ims-integration.md` — full reverse-engineering of EdvanceLearning's K12StandardsImport: auth, endpoints, tree-walking, CFItem → dim_standard column mapping. Read before modifying `supabase/seeds/refresh_standards.py` or building anything that ingests CASE Network data.
+
+**Pipeline layer references** (read whichever layer you're about to touch)
+- `docs/audit/01_ingestion.md` — Schoology download → blob → file routing. Read before touching `backend/app/jobs/ingest_schoology.py` or related.
+- `docs/audit/02_parsing.md` — CSV/HTML → in-memory rows. Read before touching `backend/app/jobs/parsers/`.
+- `docs/audit/03_staging.md` — raw → typed staging tables. Read before touching `01_staging/*.sql`.
+- `docs/audit/04_dimensions.md` — dimension builds (`dim_student`, `dim_standard`, etc.). Read before touching `02_dimensions_a` … `06_dimensions_e/*.sql`.
+- `docs/audit/05_facts.md` — `fact_student_submission` grain + dedupe semantics. Read before touching `07_facts/*.sql`.
+- `docs/audit/06_cubes_and_reports.md` — cube → repo → frontend wiring; KPI formulas. Read before touching `09_cubes/*.sql` or `backend/app/repositories/cube_repository.py`.
+
+**Bug-fix writeups** (historical record of major numeric fixes — read to avoid undoing them)
+- `docs/audit/fixes/01_q12_multiselect_applied.md` — Q12 multi-select aggregation collapse at the cube `totals` CTE. Read before touching `cube_question_summary.sql` or `cube_question_summary_overall.sql`.
+
+**Don't read unless directly relevant** — these are deep technical references; the file headers tell you when they apply. Skip them by default.

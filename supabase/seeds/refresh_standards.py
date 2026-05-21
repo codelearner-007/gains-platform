@@ -101,7 +101,15 @@ CSV_COLUMNS = [
     "uniquesID",
 ]
 
-DEFAULT_BASE_URL = "https://casenetwork.1edtech.org/ims/case/v1p1/"
+# Default base: Florida CPALMS hub (anonymous, no auth required). This is
+# the upstream-of-upstream — 1EdTech's CASE Network republishes the same
+# documents from here. We use CPALMS directly to skip auth complexity and
+# because our seed actually came from FLDOE-published standards.
+DEFAULT_BASE_URL = "https://www.cpalms.org/Public/ims/case/v1p0/"
+# 1EdTech's CASE Network hub. Requires OAuth2 client_credentials.
+# Kept as opt-in via --base-url + --token-url / IMS_CASE_* env vars; used
+# by EdvanceLearning's legacy K12StandardsImport pipeline.
+ONEEDTECH_BASE_URL = "https://casenetwork.1edtech.org/ims/case/v1p1/"
 DEFAULT_TOKEN_URL = "https://casenetwork.1edtech.org/case-oauth2/clienttoken"
 
 SEEDS_DIR = Path(__file__).parent
@@ -203,19 +211,19 @@ def _get_token(
 
 def _fetch_json(
     url: str,
-    token: str,
+    token: str | None,
     label: str,
 ) -> Any:
-    """GET a resource with bearer token, retry/backoff. Returns parsed JSON.
+    """GET a resource (optionally with bearer token), retry/backoff. Returns parsed JSON.
 
     Mirrors `ImsCaseNetworkApiCall` second leg
     (`httpClient.GetAsync(caseNetworkApiEndpoint)`) but with retry that
-    legacy lacks.
+    legacy lacks. When `token` is None we send no Authorization header —
+    used for anonymous-access hubs like CPALMS.
     """
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
-    }
+    headers: dict[str, str] = {"Accept": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     last_err: Exception | None = None
     for attempt in range(MAX_RETRIES):
         try:
@@ -282,18 +290,31 @@ def fetch_documents(base_url: str, token: str) -> list[dict[str, Any]]:
 
 
 def fetch_package(
-    base_url: str, token: str, document_identifier: str
+    base_url: str,
+    token: str | None,
+    document: dict[str, Any],
 ) -> dict[str, Any]:
-    """GET {base}/CFPackages/{identifier} → full package bundle.
+    """Fetch the full CFPackage bundle for one CFDocument.
 
     Mirrors `RemoteCaseNetworkStandards.GetCFPackage` (line 599). The
     returned CFPackage inlines CFDocument, CFItems[], CFAssociations[],
-    CFRubrics[], and CFDefinitions (with CFConcepts/CFSubjects/
-    CFLicences/CFItemTypes/CFAssociationGroupings) — one call gives us
-    everything needed to reconstruct the standards tree.
+    CFRubrics[], and CFDefinitions — one call gives us everything needed
+    to reconstruct the standards tree.
+
+    Two URL conventions exist:
+      * 1EdTech: `{base}/CFPackages/{document.identifier}` (same id as
+        the CFDocument).
+      * CPALMS:  the CFPackage has its OWN identifier, exposed by the
+        CFDocument under `CFPackageURI.uri`. We prefer this URI when
+        present because it always works on both vendors.
     """
-    url = f"{base_url.rstrip('/')}/CFPackages/{document_identifier}"
-    return _fetch_json(url, token, f"CFPackage {document_identifier}")
+    pkg_uri = (document.get("CFPackageURI") or {}).get("uri")
+    doc_id = (document.get("identifier") or "").lower()
+    label = f"CFPackage for {doc_id}"
+    if pkg_uri:
+        return _fetch_json(pkg_uri, token, label)
+    url = f"{base_url.rstrip('/')}/CFPackages/{doc_id}"
+    return _fetch_json(url, token, label)
 
 
 # ─── Tree walking ──────────────────────────────────────────────────────────
@@ -558,12 +579,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--client-id",
         default=os.environ.get("IMS_CASE_CLIENT_ID"),
-        help="OAuth2 client id (env IMS_CASE_CLIENT_ID).",
+        help=(
+            "OAuth2 client id (env IMS_CASE_CLIENT_ID). Only required for "
+            "1EdTech's hub; CPALMS allows anonymous access."
+        ),
     )
     parser.add_argument(
         "--client-secret",
         default=os.environ.get("IMS_CASE_CLIENT_SECRET"),
-        help="OAuth2 client secret (env IMS_CASE_CLIENT_SECRET).",
+        help=(
+            "OAuth2 client secret (env IMS_CASE_CLIENT_SECRET). Only required "
+            "for 1EdTech's hub."
+        ),
     )
     parser.add_argument(
         "--documents",
@@ -596,23 +623,28 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    if not args.client_id or not args.client_secret:
-        logger.error(
-            "Missing credentials. Set IMS_CASE_CLIENT_ID and "
-            "IMS_CASE_CLIENT_SECRET (or pass --client-id / --client-secret)."
-        )
-        return 2
-
     rundate = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     logger.info("rundate = %s", rundate)
-    logger.info("Resolving OAuth2 token from %s ...", args.token_url)
-    token_cache = _get_token(args.token_url, args.client_id, args.client_secret, None)
-    logger.info(
-        "Got token. Expires in ~%ds.", int(token_cache.expires_at - time.time())
-    )
 
+    # Auth is optional — CPALMS and other public CASE hubs serve
+    # CFDocuments / CFPackages anonymously. 1EdTech requires OAuth2.
+    token_cache: _TokenCache | None = None
+    has_creds = bool(args.client_id and args.client_secret)
+    if has_creds:
+        logger.info("Resolving OAuth2 token from %s ...", args.token_url)
+        token_cache = _get_token(
+            args.token_url, args.client_id, args.client_secret, None
+        )
+        logger.info(
+            "Got token. Expires in ~%ds.",
+            int(token_cache.expires_at - time.time()),
+        )
+    else:
+        logger.info("No client credentials — using anonymous (CPALMS-style) access.")
+
+    bearer = token_cache.access_token if token_cache else None
     logger.info("Listing CFDocuments from %s ...", args.base_url)
-    docs = fetch_documents(args.base_url, token_cache.access_token)
+    docs = fetch_documents(args.base_url, bearer)
     logger.info("Discovered %d CFDocuments.", len(docs))
 
     if args.documents.lower().strip() == "all":
@@ -622,22 +654,36 @@ def main(argv: list[str] | None = None) -> int:
         wanted = [s.strip().lower() for s in args.documents.split(",") if s.strip()]
     logger.info("Will import %d CFDocument(s).", len(wanted))
 
+    # Index documents by identifier for fast lookup; we need the
+    # CFPackageURI from each document to fetch its bundle on CPALMS.
+    docs_by_id = {(d.get("identifier") or "").lower(): d for d in docs}
+
     all_rows: list[dict[str, str]] = []
     for i, doc_id in enumerate(wanted, start=1):
-        logger.info("[%d/%d] Fetching CFPackage %s ...", i, len(wanted), doc_id)
+        doc = docs_by_id.get(doc_id)
+        if not doc:
+            logger.warning("[%d/%d] CFDocument %s not in catalog — skipping.", i, len(wanted), doc_id)
+            continue
+        logger.info("[%d/%d] Fetching CFPackage for %s (%s)...", i, len(wanted), doc_id, doc.get("title", "")[:60])
+
         # Refresh token if needed (handles longer batches gracefully).
-        token_cache = _get_token(
-            args.token_url, args.client_id, args.client_secret, token_cache
-        )
+        if has_creds:
+            token_cache = _get_token(
+                args.token_url, args.client_id, args.client_secret, token_cache
+            )
+            bearer = token_cache.access_token
+
         try:
-            pkg = fetch_package(args.base_url, token_cache.access_token, doc_id)
+            pkg = fetch_package(args.base_url, bearer, doc)
         except PermissionError:
-            # Force token refresh and retry once.
+            if not has_creds:
+                raise
             logger.info("Refreshing token after 401 ...")
             token_cache = _get_token(
                 args.token_url, args.client_id, args.client_secret, None
             )
-            pkg = fetch_package(args.base_url, token_cache.access_token, doc_id)
+            bearer = token_cache.access_token
+            pkg = fetch_package(args.base_url, bearer, doc)
         rows = walk_package_to_rows(pkg, rundate)
         logger.info("    extracted %d standard rows.", len(rows))
         all_rows.extend(rows)
