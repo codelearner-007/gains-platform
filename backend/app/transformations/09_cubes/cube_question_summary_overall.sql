@@ -199,8 +199,16 @@ choices_per_grain AS (
            correct_answer, standard
 ),
 desc_per_standard AS (
-  -- dim_standard substring match for description (notebook line 2153).
-  -- Pick one (the lexically smallest schoology_standard) deterministically.
+  -- Exact-match join: dim_standard.schoology_standard = the cube's `standard`
+  -- text (which is itself Schoology's canonical code copied through the
+  -- fact table). Previous behavior used `ILIKE '%' || schoology_standard ||
+  -- '%'` which let a shorter alias match a longer code by accident — e.g.
+  -- the Civics standard whose `schoology_standard` is short would substring-
+  -- match an Algebra standard's long form, and the lex-min `ORDER BY`
+  -- pick let the Civics description win. Exact match removes that ambiguity.
+  -- If multiple dim_standard rows share the same `schoology_standard`
+  -- (alias-fanout), DISTINCT ON picks one deterministically; their
+  -- descriptions are expected to match anyway.
   SELECT DISTINCT ON (long_standard)
     long_standard,
     description,
@@ -214,8 +222,7 @@ desc_per_standard AS (
     SELECT t.long_standard, ds.schoology_standard, ds.description
     FROM (SELECT DISTINCT standard AS long_standard FROM latest_with_hash WHERE standard IS NOT NULL) t
     JOIN dim_standard ds
-      ON ds.schoology_standard IS NOT NULL
-     AND t.long_standard ILIKE '%' || ds.schoology_standard || '%'
+      ON ds.schoology_standard = t.long_standard
   ) sub
   ORDER BY long_standard, schoology_standard
 ),
