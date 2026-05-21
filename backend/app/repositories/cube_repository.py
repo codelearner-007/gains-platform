@@ -298,6 +298,42 @@ class CubeRepository:
                   AND standard IS NOT NULL AND standard <> ''
                 GROUP BY item_id, question_id
             ),
+            -- Mirrors legacy DAX `CombineDescriptionsColumn`
+            -- (04_dax_measures.dax:1200-1254). Legacy concatenates all
+            -- distinct standards, takes the alphabetical-first non-"Other"
+            -- one, and looks up that single standard's description. We
+            -- replicate that here in SQL because cube_question_summary
+            -- collapses to a single (lex-min identifier) standard per
+            -- question — losing the alphabetical-first standard's
+            -- description that legacy renders. Source the text from
+            -- dim_standard directly, keyed by the chosen Schoology code.
+            qd_first_standard AS (
+                SELECT
+                    item_id,
+                    question_id,
+                    MIN(standard) FILTER (
+                        WHERE standard IS NOT NULL
+                          AND standard <> ''
+                          AND LOWER(standard) <> 'other'
+                    ) AS first_standard
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                GROUP BY item_id, question_id
+            ),
+            qd_description AS (
+                SELECT
+                    qfs.item_id,
+                    qfs.question_id,
+                    -- MAX() guards against the rare case where the seed
+                    -- has two dim_standard rows for the same
+                    -- schoology_standard (duplicate alias on a single
+                    -- identifier); descriptions are expected identical.
+                    MAX(ds.description) AS description
+                FROM qd_first_standard qfs
+                LEFT JOIN dim_standard ds
+                  ON ds.schoology_standard = qfs.first_standard
+                GROUP BY qfs.item_id, qfs.question_id
+            ),
             qso_agg AS (
                 SELECT DISTINCT ON (school_id, ukey)
                     school_id, ukey, question_no, question, correct_answer,
@@ -330,12 +366,13 @@ class CubeRepository:
                 COALESCE(qso.incorrect_details_name, qsn.incorrect_details_name, '')     AS incorrect_details_name,
                 COALESCE(qdst.standards, '')                                    AS standards,
                 qs.standard                                                     AS strand_raw,
-                COALESCE(qso.description, '')                                   AS description
+                COALESCE(qdd.description, qso.description, '')                  AS description
             FROM qs_agg qs
-            LEFT JOIN qs_num      qsn  ON qsn.item_id    = qs.item_id  AND qsn.question_id = qs.question_id
-            LEFT JOIN qd_standards qdst ON qdst.item_id  = qs.item_id  AND qdst.question_id = qs.question_id
-            LEFT JOIN qso_agg     qso  ON qso.school_id  = qs.school_id AND qso.ukey       = qs.ukey
-            LEFT JOIN qso_num     qson ON qson.school_id = qs.school_id AND qson.ukey      = qs.ukey
+            LEFT JOIN qs_num         qsn  ON qsn.item_id    = qs.item_id  AND qsn.question_id = qs.question_id
+            LEFT JOIN qd_standards   qdst ON qdst.item_id   = qs.item_id  AND qdst.question_id = qs.question_id
+            LEFT JOIN qd_description qdd  ON qdd.item_id    = qs.item_id  AND qdd.question_id  = qs.question_id
+            LEFT JOIN qso_agg        qso  ON qso.school_id  = qs.school_id AND qso.ukey       = qs.ukey
+            LEFT JOIN qso_num        qson ON qson.school_id = qs.school_id AND qson.ukey      = qs.ukey
             ORDER BY NULLIF(regexp_replace(qs.question_no, '[^0-9]', '', 'g'), '')::int NULLS LAST,
                      qs.question_no
             """
