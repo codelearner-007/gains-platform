@@ -556,6 +556,141 @@ def write_csv(rows: Iterable[dict[str, str]], output_path: Path) -> int:
     return count
 
 
+# ─── Update mode (default) ─────────────────────────────────────────────────
+
+# Columns refreshed from CPALMS in --update mode. Everything else on the
+# existing row is preserved as-is — most importantly `Schoology_Standard`
+# (the AI.MA.* alias) and its derived columns (cPalms_Standard, Standard_New).
+UPDATABLE_COLUMNS = (
+    "description",
+    "Custom.CleanedDescription",
+    "cluster",
+    "Strand",
+    "Grader",
+    "Subject",
+    "Direct_Link",
+    "lastChangeDateTime",
+    "rundate",
+)
+
+
+def _read_existing_csv(path: Path) -> list[dict[str, str]]:
+    """Read the existing dim_standard.csv preserving every column verbatim."""
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Existing seed not found at {path}. Use --full-pull to bootstrap."
+        )
+    with path.open(newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    if not rows:
+        raise RuntimeError(f"Seed at {path} is empty.")
+    # Sanity-check the header matches what we expect.
+    first = rows[0]
+    missing = [c for c in CSV_COLUMNS if c not in first]
+    if missing:
+        raise RuntimeError(
+            f"Seed at {path} missing expected columns: {missing}"
+        )
+    return rows
+
+
+def _index_cpalms_by_identifier(
+    cpalms_rows: list[dict[str, str]],
+) -> dict[str, dict[str, str]]:
+    """Group rows by lowercased Identifier; pick the first if duplicates."""
+    index: dict[str, dict[str, str]] = {}
+    for r in cpalms_rows:
+        ident = (r.get("Identifier") or "").lower()
+        if not ident or ident in index:
+            continue
+        index[ident] = r
+    return index
+
+
+def update_existing_from_cpalms(
+    seed_path: Path,
+    cpalms_rows: list[dict[str, str]],
+    dry_run: bool = False,
+) -> tuple[int, int, list[str]]:
+    """Apply CPALMS text content onto the existing seed file in-place.
+
+    Returns (rows_updated, rows_unmapped, sample_unmapped_identifiers).
+
+    Behavior (matches the validated plan):
+      - For every row in the existing seed whose Identifier is also in CPALMS:
+        overwrite each column in `UPDATABLE_COLUMNS` with the CPALMS value.
+      - For seed rows with no CPALMS match: leave the row unchanged, count it,
+        log a warning.
+      - CPALMS rows with no seed match are silently skipped.
+
+    `Schoology_Standard`, `cPalms_Standard`, `Standard_New`, `Language`,
+    `uniquesID`, `Cognitive_Complexity_Rating`, and `Identifier` are
+    preserved untouched — they encode the Schoology alias and its
+    derivations and must not change here.
+    """
+    existing = _read_existing_csv(seed_path)
+    index = _index_cpalms_by_identifier(cpalms_rows)
+
+    logger.info("Existing seed: %d rows.", len(existing))
+    logger.info("CPALMS canonical rows indexed: %d identifiers.", len(index))
+
+    rows_updated = 0
+    rows_unmapped: list[str] = []
+    rows_unchanged_after_match = 0
+    fields_changed: dict[str, int] = {c: 0 for c in UPDATABLE_COLUMNS}
+
+    for row in existing:
+        ident = (row.get("Identifier") or "").lower()
+        cpalms = index.get(ident)
+        if not cpalms:
+            # Standard exists in our seed but not in CPALMS — leave alone.
+            rows_unmapped.append(
+                f"{ident}  schoology={row.get('Schoology_Standard','')}"
+            )
+            continue
+
+        changed_any = False
+        for col in UPDATABLE_COLUMNS:
+            new = cpalms.get(col, "")
+            old = row.get(col, "")
+            if new != old:
+                row[col] = new
+                fields_changed[col] += 1
+                changed_any = True
+        if changed_any:
+            rows_updated += 1
+        else:
+            rows_unchanged_after_match += 1
+
+    logger.info("")
+    logger.info("Update summary:")
+    logger.info("  rows matched + updated:       %d", rows_updated)
+    logger.info("  rows matched but already current: %d", rows_unchanged_after_match)
+    logger.info("  rows with no CPALMS match (left alone): %d", len(rows_unmapped))
+    logger.info("")
+    logger.info("Per-column change counts:")
+    for col, n in fields_changed.items():
+        logger.info("  %-30s  %5d rows touched", col, n)
+
+    if rows_unmapped:
+        logger.info("")
+        logger.info(
+            "Sample of unmapped identifiers (first 10 of %d):", len(rows_unmapped)
+        )
+        for line in rows_unmapped[:10]:
+            logger.info("  %s", line)
+
+    if dry_run:
+        logger.info("")
+        logger.info("--dry-run: not writing CSV.")
+        return rows_updated, len(rows_unmapped), rows_unmapped[:10]
+
+    write_csv(existing, seed_path)
+    logger.info("")
+    logger.info("Wrote %d rows + header to %s", len(existing), seed_path)
+    return rows_updated, len(rows_unmapped), rows_unmapped[:10]
+
+
 # ─── CLI ───────────────────────────────────────────────────────────────────
 
 
@@ -607,9 +742,19 @@ def main(argv: list[str] | None = None) -> int:
         help=f"Output CSV path (default {DEFAULT_OUTPUT}).",
     )
     parser.add_argument(
+        "--full-pull",
+        action="store_true",
+        help=(
+            "Generate a fresh CSV from scratch (one row per CPALMS identifier; "
+            "DROPS Schoology AI.MA.* alias rows). Only use this for an initial "
+            "bootstrap or when you have no existing seed. Default behavior is "
+            "the safer update-in-place mode."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Fetch and walk, but do not overwrite the CSV. Prints row count + sample.",
+        help="Fetch and compute, but do not overwrite the CSV. Prints summary.",
     )
     parser.add_argument(
         "--verbose",
@@ -688,19 +833,34 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("    extracted %d standard rows.", len(rows))
         all_rows.extend(rows)
 
-    logger.info("Total rows extracted: %d.", len(all_rows))
+    logger.info("Total CPALMS rows extracted: %d.", len(all_rows))
+
+    if args.full_pull:
+        # Bootstrap mode — discard existing seed structure, write a fresh
+        # CSV with one row per CPALMS identifier. This drops Schoology
+        # alias rows (AI.MA.*); only use for initial setup or when the
+        # existing seed is unrecoverable.
+        if args.dry_run:
+            logger.info("--dry-run --full-pull: not writing CSV.")
+            if all_rows:
+                sample = all_rows[0]
+                logger.info("Sample row:")
+                for k in CSV_COLUMNS:
+                    logger.info("  %-30s = %r", k, sample.get(k, ""))
+            return 0
+        n = write_csv(all_rows, args.output)
+        logger.info("Wrote %d rows + header to %s (full-pull mode).", n, args.output)
+    else:
+        # Default mode — update only the text content of existing seed rows
+        # whose Identifier matches a CPALMS canonical row. Preserves every
+        # Schoology AI.MA.* alias row by-the-by because Identifier is the
+        # join key and the rows are kept untouched on their Schoology_Standard.
+        logger.info("Updating existing seed in place from CPALMS …")
+        update_existing_from_cpalms(args.output, all_rows, dry_run=args.dry_run)
 
     if args.dry_run:
-        logger.info("--dry-run: not writing CSV.")
-        if all_rows:
-            sample = all_rows[0]
-            logger.info("Sample row:")
-            for k in CSV_COLUMNS:
-                logger.info("  %-30s = %r", k, sample.get(k, ""))
         return 0
 
-    n = write_csv(all_rows, args.output)
-    logger.info("Wrote %d rows + header to %s", n, args.output)
     logger.info("")
     logger.info("Next steps:")
     logger.info("  1. Inspect the diff:  git diff %s", args.output)
@@ -710,7 +870,11 @@ def main(argv: list[str] | None = None) -> int:
     logger.info(
         "       cd backend && ./venv/bin/python -m app.transformations.runner"
     )
-    logger.info("  4. If unhappy, restore the backup:")
+    logger.info("  4. Verify the KPI anchors didn't move:")
+    logger.info(
+        "       cd backend && ./venv/bin/python -m pytest tests/api/test_canonical_kpis.py"
+    )
+    logger.info("  5. If unhappy, restore the backup:")
     logger.info(
         "       mv %s %s", args.output.with_suffix(".csv.bak"), args.output
     )
