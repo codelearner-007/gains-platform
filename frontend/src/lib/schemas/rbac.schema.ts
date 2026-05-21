@@ -23,18 +23,6 @@ export const roleUpdateSchema = roleCreateSchema
   })
   .partial();
 
-export const userRoleAssignSchema = z.object({
-  role_id: z.string().uuid('Invalid role ID'),
-});
-
-export const rolePermissionsUpdateSchema = z.object({
-  permission_ids: z
-    .array(z.string().uuid('Invalid permission ID'))
-    .min(1, 'Must select at least one permission'),
-});
-
 // For forms/resolvers, use the INPUT type (defaults make the input optional).
 export type RoleCreateInput = z.input<typeof roleCreateSchema>;
 export type RoleUpdateInput = z.input<typeof roleUpdateSchema>;
-export type UserRoleAssignInput = z.infer<typeof userRoleAssignSchema>;
-export type RolePermissionsUpdateInput = z.infer<typeof rolePermissionsUpdateSchema>;

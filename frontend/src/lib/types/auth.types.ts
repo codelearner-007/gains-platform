@@ -55,16 +55,6 @@ export interface CurrentUserResponse {
   currentAAL?: 'aal1' | 'aal2';
 }
 
-export interface MFASetupData {
-  factor_id: string;
-  code: string;
-}
-
-export interface MFAVerifyData {
-  factor_id: string;
-  code: string;
-}
-
 export interface ForgotPasswordData {
   email: string;
 }
@@ -77,13 +67,6 @@ export interface ResetPasswordData {
 export interface MFAStatusResponse {
   currentLevel: 'aal1' | 'aal2';
   nextLevel: 'aal1' | 'aal2';
-}
-
-export interface MFAFactor {
-  id: string;
-  friendly_name: string;
-  factor_type: 'totp' | 'phone';
-  status: 'verified' | 'unverified';
 }
 
 export interface MFAFactorListItem {

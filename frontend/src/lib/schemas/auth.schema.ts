@@ -28,12 +28,5 @@ export const resetPasswordSchema = z.object({
   path: ['confirmPassword'],
 });
 
-export const mfaCodeSchema = z.object({
-  code: z.string().length(6, 'Code must be 6 digits'),
-});
-
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
-export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
-export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
-export type MFACodeInput = z.infer<typeof mfaCodeSchema>;

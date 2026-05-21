@@ -2,7 +2,7 @@ import type { ZodError } from 'zod';
 
 type JsonValue = null | string | number | boolean | JsonValue[] | { [k: string]: JsonValue };
 
-export type ApiErrorBody = {
+type ApiErrorBody = {
   error: string;
   code?: string;
   issues?: JsonValue;
