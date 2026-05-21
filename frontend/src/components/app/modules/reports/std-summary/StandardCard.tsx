@@ -116,7 +116,7 @@ export default function StandardCard({ std }: StandardCardProps) {
         }}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate">{std.cpalms_standard}</span>
+          <span className="truncate">{std.schoology_standard}</span>
           {std.subject && (
             <span className="text-[11px] font-medium opacity-90 truncate max-w-[130px]">
               {std.subject}

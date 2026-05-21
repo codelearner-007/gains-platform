@@ -24,7 +24,7 @@ interface BandPanelProps {
   correctColor: string;
   emptyMessage: string;
   selectedStandard?: string | null;
-  onSelectStandard?: (cpalms_standard: string) => void;
+  onSelectStandard?: (schoology_standard: string) => void;
 }
 
 /**
@@ -77,13 +77,13 @@ function BandPanel({
           <ul className="flex flex-col gap-1.5">
             {sorted.map((r, i) => (
               <BandRow
-                key={`${r.cpalms_standard}-${i}`}
+                key={`${r.schoology_standard}-${i}`}
                 row={r}
                 correctColor={correctColor}
-                selected={selectedStandard === r.cpalms_standard}
+                selected={selectedStandard === r.schoology_standard}
                 dim={
                   !!selectedStandard &&
-                  selectedStandard !== r.cpalms_standard
+                  selectedStandard !== r.schoology_standard
                 }
                 onSelect={onSelectStandard}
               />
@@ -106,7 +106,7 @@ function BandRow({
   correctColor: string;
   selected?: boolean;
   dim?: boolean;
-  onSelect?: (cpalms_standard: string) => void;
+  onSelect?: (schoology_standard: string) => void;
 }) {
   const pct = Math.max(0, Math.min(1, row.grade_average));
   const pctText = formatPercent(pct, 1);
@@ -114,27 +114,27 @@ function BandRow({
     <li
       className={`flex items-center gap-2 text-[11px] leading-tight rounded-sm px-1 -mx-1 transition-opacity ${onSelect ? 'cursor-pointer' : ''} ${selected ? 'ring-2 ring-neutral-800 ring-offset-1' : ''}`}
       style={{ opacity: dim ? 0.45 : 1 }}
-      onClick={() => onSelect?.(row.cpalms_standard)}
+      onClick={() => onSelect?.(row.schoology_standard)}
       role={onSelect ? 'button' : undefined}
       tabIndex={onSelect ? 0 : undefined}
       onKeyDown={(e) => {
         if (onSelect && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
-          onSelect(row.cpalms_standard);
+          onSelect(row.schoology_standard);
         }
       }}
     >
       <div
         className="shrink-0 truncate font-medium text-black"
         style={{ width: '46%' }}
-        title={`${row.cpalms_standard} · ${row.strand} · ${row.num_questions} question${row.num_questions === 1 ? '' : 's'}`}
+        title={`${row.schoology_standard} · ${row.strand} · ${row.num_questions} question${row.num_questions === 1 ? '' : 's'}`}
       >
-        {row.cpalms_standard}
+        {row.schoology_standard}
       </div>
       <div
         className="flex-1 relative h-4 rounded-sm overflow-hidden"
         style={{ backgroundColor: INCORRECT_GREY }}
-        aria-label={`${row.cpalms_standard} ${pctText} correct`}
+        aria-label={`${row.schoology_standard} ${pctText} correct`}
       >
         <div
           className="absolute inset-y-0 left-0"
@@ -156,7 +156,7 @@ interface PerformanceBandBarsProps {
   bandMid: SddBandStandardRow[];
   bandLow: SddBandStandardRow[];
   selectedStandard?: string | null;
-  onSelectStandard?: (cpalms_standard: string) => void;
+  onSelectStandard?: (schoology_standard: string) => void;
 }
 
 export default function PerformanceBandBars({

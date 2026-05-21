@@ -148,14 +148,14 @@ export function StandardsTable({
   kpis: KPIs;
   standards?: SddStandardRow[];
   selectedStandard?: string | null;
-  onSelectStandard?: (cpalms_standard: string) => void;
+  onSelectStandard?: (schoology_standard: string) => void;
 }) {
   const rows = useMemo(
     () =>
       (standards ?? []).slice().sort((a, b) => {
         const s = a.strand.localeCompare(b.strand);
         if (s !== 0) return s;
-        return a.cpalms_standard.localeCompare(b.cpalms_standard);
+        return a.schoology_standard.localeCompare(b.schoology_standard);
       }),
     [standards],
   );
@@ -206,12 +206,12 @@ export function StandardsTable({
             </tr>
           ) : (
             rows.map((row, i) => {
-              const isSelected = selectedStandard === row.cpalms_standard;
+              const isSelected = selectedStandard === row.schoology_standard;
               const dim = !!selectedStandard && !isSelected;
               return (
               <tr
-                key={`standard-${i}-${row.cpalms_standard}-${row.strand}`}
-                onClick={() => onSelectStandard?.(row.cpalms_standard)}
+                key={`standard-${i}-${row.schoology_standard}-${row.strand}`}
+                onClick={() => onSelectStandard?.(row.schoology_standard)}
                 role={onSelectStandard ? 'button' : undefined}
                 tabIndex={onSelectStandard ? 0 : undefined}
                 onKeyDown={(e) => {
@@ -220,7 +220,7 @@ export function StandardsTable({
                     (e.key === 'Enter' || e.key === ' ')
                   ) {
                     e.preventDefault();
-                    onSelectStandard(row.cpalms_standard);
+                    onSelectStandard(row.schoology_standard);
                   }
                 }}
                 className={
@@ -231,7 +231,7 @@ export function StandardsTable({
                   opacity: dim ? 0.45 : 1,
                 }}
               >
-                <td style={cellStyle}>{row.cpalms_standard}</td>
+                <td style={cellStyle}>{row.schoology_standard}</td>
                 <td style={{ ...cellStyle, textAlign: 'center' }}>
                   {row.num_questions}
                 </td>

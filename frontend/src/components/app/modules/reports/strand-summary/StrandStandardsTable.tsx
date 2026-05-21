@@ -16,7 +16,7 @@ import {
 
 type SortKey =
   | 'strand'
-  | 'cpalms_standard'
+  | 'schoology_standard'
   | 'num_questions'
   | 'num_assessments'
   | 'grade_average';
@@ -44,12 +44,12 @@ export default function StrandStandardsTable({
     const copy = [...filtered];
     copy.sort((a, b) => {
       let cmp = 0;
-      if (sortKey === 'strand' || sortKey === 'cpalms_standard') {
+      if (sortKey === 'strand' || sortKey === 'schoology_standard') {
         cmp = String(a[sortKey] ?? '').localeCompare(
           String(b[sortKey] ?? ''),
         );
         if (sortKey === 'strand' && cmp === 0) {
-          cmp = a.cpalms_standard.localeCompare(b.cpalms_standard);
+          cmp = a.schoology_standard.localeCompare(b.schoology_standard);
         }
       } else {
         cmp = (a[sortKey] as number) - (b[sortKey] as number);
@@ -116,7 +116,7 @@ export default function StrandStandardsTable({
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
-              {headerWith('Standard', 'cpalms_standard')}
+              {headerWith('Standard', 'schoology_standard')}
               {headerWith('Strand', 'strand')}
               <th style={tableHeaderStyle}>Cluster</th>
               {headerWith('# Questions', 'num_questions', 'center')}
@@ -144,10 +144,10 @@ export default function StrandStandardsTable({
             ) : (
               sorted.map((row, i) => (
                 <tr
-                  key={`std-${i}-${row.cpalms_standard}-${row.strand}`}
+                  key={`std-${i}-${row.schoology_standard}-${row.strand}`}
                 >
                   <td style={{ ...cellStyle, fontWeight: 600 }}>
-                    {row.cpalms_standard}
+                    {row.schoology_standard}
                   </td>
                   <td style={cellStyle}>{row.strand}</td>
                   <td style={cellStyle}>

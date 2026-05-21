@@ -91,7 +91,7 @@ export default function StandardSummaryPage() {
           ) : (
             data.standards.map((std, idx) => (
               <StandardCard
-                key={`${std.cpalms_standard}-${std.schoology_standard}-${std.strand}-${idx}`}
+                key={`${std.schoology_standard}-${std.schoology_standard}-${std.strand}-${idx}`}
                 std={std}
               />
             ))

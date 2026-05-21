@@ -15,7 +15,7 @@ import {
 } from '../shared/tableStyles';
 
 type SortKey =
-  | 'cpalms_standard'
+  | 'schoology_standard'
   | 'strand'
   | 'subject'
   | 'num_questions'
@@ -90,7 +90,7 @@ export default function StandardsTable({ standards }: Props) {
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
-              {headerWith('Standard', 'cpalms_standard')}
+              {headerWith('Standard', 'schoology_standard')}
               {headerWith('Strand', 'strand')}
               {headerWith('Subject', 'subject')}
               {headerWith('# of Questions', 'num_questions', 'center')}
@@ -115,10 +115,10 @@ export default function StandardsTable({ standards }: Props) {
             ) : (
               sorted.map((row, idx) => (
                 <tr
-                  key={`std-${row.cpalms_standard}-${row.schoology_standard}-${row.strand}-${idx}`}
+                  key={`std-${row.schoology_standard}-${row.schoology_standard}-${row.strand}-${idx}`}
                 >
                   <td style={{ ...cellStyle, fontWeight: 600 }}>
-                    {row.cpalms_standard}
+                    {row.schoology_standard}
                   </td>
                   <td style={cellStyle}>{row.strand}</td>
                   <td style={cellStyle}>{row.subject}</td>

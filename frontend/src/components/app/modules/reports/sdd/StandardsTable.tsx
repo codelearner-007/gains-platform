@@ -90,7 +90,7 @@ export function StandardsRollupTable({
       [...standards].sort((a, b) => {
         const s = a.strand.localeCompare(b.strand);
         if (s !== 0) return s;
-        return a.cpalms_standard.localeCompare(b.cpalms_standard);
+        return a.schoology_standard.localeCompare(b.schoology_standard);
       }),
     [standards],
   );
@@ -131,8 +131,8 @@ export function StandardsRollupTable({
               </tr>
             ) : (
               sorted.map((row, i) => (
-                <tr key={`standard-${i}-${row.cpalms_standard}-${row.strand}`}>
-                  <td style={cellStyle}>{row.cpalms_standard}</td>
+                <tr key={`standard-${i}-${row.schoology_standard}-${row.strand}`}>
+                  <td style={cellStyle}>{row.schoology_standard}</td>
                   <td style={cellStyle}>{row.strand}</td>
                   <td style={{ ...cellStyle, textAlign: 'center' }}>
                     {row.num_questions}

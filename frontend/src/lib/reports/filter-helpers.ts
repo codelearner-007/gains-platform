@@ -19,10 +19,10 @@ import { formatPercent } from './format';
 // dashboard recompute purely on the cached payload.
 
 function pickStrandFromStandard(
-  cpalms: string,
+  schoology: string,
   standards: readonly SddStandardRow[],
 ): string | undefined {
-  return standards.find((s) => s.cpalms_standard === cpalms)?.strand;
+  return standards.find((s) => s.schoology_standard === schoology)?.strand;
 }
 
 interface SddDerived {
@@ -55,9 +55,9 @@ export function deriveSdd(
       ? pickStrandFromStandard(filters.standard, payload.standards_rollup) ?? null
       : null);
 
-  const matches = (row: { strand: string; cpalms_standard?: string }) =>
+  const matches = (row: { strand: string; schoology_standard?: string }) =>
     (!effectiveStrand || row.strand === effectiveStrand) &&
-    (!filters.standard || row.cpalms_standard === filters.standard);
+    (!filters.standard || row.schoology_standard === filters.standard);
 
   const strandsRollup = payload.strands_rollup.filter(
     (r) => !effectiveStrand || r.strand === effectiveStrand,
@@ -147,21 +147,25 @@ export function deriveQra(
   const standardsRollup = payload.standards_rollup.filter(
     (r) =>
       (!effectiveStrand || r.strand === effectiveStrand) &&
-      (!filters.standard || r.cpalms_standard === filters.standard),
+      (!filters.standard || r.schoology_standard === filters.standard),
   );
 
-  // Question rows store the Schoology raw standard code (not the cpalms
-  // label) in their `standards` / `strand` fields, so we filter against
-  // the schoology_standard set derived from the (already filtered) rollup.
+  // Question rows store all aligned Schoology codes (one per line) in
+  // their `standards` field, so we split before matching against the
+  // allowed-codes set derived from the (already filtered) rollup.
   const allowedSchoologyCodes = new Set(
     standardsRollup.map((r) => r.schoology_standard).filter(Boolean),
   );
 
-  const questions = payload.questions_overall.filter(
-    (q) =>
-      allowedSchoologyCodes.has(q.standards) ||
-      allowedSchoologyCodes.has(q.strand),
-  );
+  const questions = payload.questions_overall.filter((q) => {
+    const codes = q.standards
+      ? q.standards.split('\n').map((s) => s.trim()).filter(Boolean)
+      : [];
+    return (
+      codes.some((c) => allowedSchoologyCodes.has(c)) ||
+      allowedSchoologyCodes.has(q.strand)
+    );
+  });
   const qidSet = new Set(questions.map((q) => q.question_id));
   const incorrectChoices = payload.incorrect_choices.filter((c) =>
     qidSet.has(c.question_id),

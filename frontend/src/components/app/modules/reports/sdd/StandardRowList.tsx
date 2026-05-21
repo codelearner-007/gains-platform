@@ -13,7 +13,7 @@ import { formatPercent } from '@/lib/reports/format';
 interface StandardRowListProps {
   standards: SddStandardRow[];
   selectedStandard?: string | null;
-  onSelectStandard?: (cpalms_standard: string) => void;
+  onSelectStandard?: (schoology_standard: string) => void;
 }
 
 // Sorted ascending by grade_avg so worst performers appear first
@@ -50,14 +50,14 @@ export default function StandardRowList({
             const pct = Math.max(0, Math.min(1, row.grade_average));
             const fill = performanceColor(pct);
             const subLine = `(${row.num_questions} Q${row.num_questions === 1 ? '' : 's'})`;
-            const isSelected = selectedStandard === row.cpalms_standard;
+            const isSelected = selectedStandard === row.schoology_standard;
             const dim = !!selectedStandard && !isSelected;
             return (
               <li
-                key={`${row.cpalms_standard}-${row.strand}-${i}`}
+                key={`${row.schoology_standard}-${row.strand}-${i}`}
                 className={`flex items-center gap-2 text-[11px] leading-tight rounded-sm px-1 -mx-1 transition-opacity ${onSelectStandard ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-neutral-800 ring-offset-1' : ''}`}
                 style={{ opacity: dim ? 0.45 : 1 }}
-                onClick={() => onSelectStandard?.(row.cpalms_standard)}
+                onClick={() => onSelectStandard?.(row.schoology_standard)}
                 role={onSelectStandard ? 'button' : undefined}
                 tabIndex={onSelectStandard ? 0 : undefined}
                 onKeyDown={(e) => {
@@ -66,22 +66,22 @@ export default function StandardRowList({
                     (e.key === 'Enter' || e.key === ' ')
                   ) {
                     e.preventDefault();
-                    onSelectStandard(row.cpalms_standard);
+                    onSelectStandard(row.schoology_standard);
                   }
                 }}
               >
                 <div
                   className="shrink-0 truncate font-medium text-black"
                   style={{ width: '46%' }}
-                  title={`${row.cpalms_standard} · ${row.strand}`}
+                  title={`${row.schoology_standard} · ${row.strand}`}
                 >
-                  <span>{row.cpalms_standard}</span>{' '}
+                  <span>{row.schoology_standard}</span>{' '}
                   <span className="text-neutral-600">{subLine}</span>
                 </div>
                 <div
                   className="flex-1 relative h-4 rounded-sm overflow-hidden"
                   style={{ backgroundColor: INCORRECT_GREY }}
-                  aria-label={`${row.cpalms_standard} ${formatPercent(pct, 1)} correct`}
+                  aria-label={`${row.schoology_standard} ${formatPercent(pct, 1)} correct`}
                 >
                   <div
                     className="absolute inset-y-0 left-0"

@@ -113,7 +113,6 @@ export interface SddStrandRow {
 }
 
 export interface SddStandardRow {
-  cpalms_standard: string;
   schoology_standard: string;
   strand: string;
   num_questions: number;
@@ -122,14 +121,14 @@ export interface SddStandardRow {
 }
 
 /**
- * One cpalms-standard bucket within a performance band (high/mid/low).
+ * One Schoology-standard bucket within a performance band (high/mid/low).
  *
- * Per PBIX spec the 3 × 100%-stacked bar charts on the SDD page are keyed
- * on `dim_standard.cPalms_Standard` (one bar per standard), not per strand.
+ * The 3 × 100%-stacked bar charts on the SDD page are keyed on the
+ * Schoology canonical standard code (one bar per standard), not per strand.
  * `strand` is carried alongside for tooltip context.
  */
 export interface SddBandStandardRow {
-  cpalms_standard: string;
+  schoology_standard: string;
   strand: string;
   num_questions: number;
   grade_average: number;
@@ -400,7 +399,6 @@ export interface StandardSummaryKpis {
 }
 
 export interface StandardSummaryRollupRow {
-  cpalms_standard: string;
   schoology_standard: string;
   strand: string;
   cluster: string;
@@ -467,7 +465,6 @@ export interface StrandSummaryRollupRow {
 
 export interface StrandSummaryStandardRow {
   strand: string;
-  cpalms_standard: string;
   schoology_standard: string;
   cluster: string;
   num_questions: number;
