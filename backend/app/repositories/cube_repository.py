@@ -1516,33 +1516,54 @@ class CubeRepository:
     async def get_per_student_attempts(
         self, item_id: str, question_id: str
     ) -> List[Dict[str, Any]]:
-        """Every student × this question row for the IAD per-student table."""
+        """Every student × this question row for the IAD per-student table.
+
+        `fact_student_submission` is keyed at `(user, question, standard)`
+        grain, so every question with N Schoology standards produces N rows
+        per (student, submission). All N rows in a cluster share identical
+        points_received / points_possible / answer_submission — only the
+        standard column differs. We collapse with DISTINCT ON to restore
+        one row per (user, submission) for display.
+        """
         sql = text(
             """
             SELECT
-                COALESCE(fss.user_uid, '')                       AS user_uid,
-                COALESCE(NULLIF(fss.user_name, ''), '—')         AS user_name,
-                COALESCE(fss.answer_submission, '')              AS answer_submission,
-                COALESCE(fss.correct_answer, '')                 AS correct_answer,
-                COALESCE(fss.points_received, 0)::numeric        AS points_received,
-                COALESCE(fss.points_possible, 0)::numeric        AS points_possible,
-                CASE
-                  WHEN COALESCE(fss.points_possible, 0) > 0
-                  THEN COALESCE(fss.points_received, 0)::numeric
-                       / COALESCE(fss.points_possible, 0)::numeric
-                  ELSE 0
-                END                                              AS score_pct,
-                CASE
-                  WHEN COALESCE(fss.points_possible, 0) > 0
-                       AND COALESCE(fss.points_received, 0) >= COALESCE(fss.points_possible, 0)
-                  THEN TRUE ELSE FALSE
-                END                                              AS is_correct,
-                fss.latest_attempt
-            FROM fact_student_submission fss
-            WHERE fss.item_id = :item_id
-              AND fss.question_id = :question_id
-              AND fss.user_uid IS NOT NULL
-            ORDER BY fss.user_name
+                user_uid,
+                user_name,
+                answer_submission,
+                correct_answer,
+                points_received,
+                points_possible,
+                score_pct,
+                is_correct,
+                latest_attempt
+            FROM (
+                SELECT DISTINCT ON (fss.user_uid, fss.submission)
+                    COALESCE(fss.user_uid, '')                       AS user_uid,
+                    COALESCE(NULLIF(fss.user_name, ''), '—')         AS user_name,
+                    COALESCE(fss.answer_submission, '')              AS answer_submission,
+                    COALESCE(fss.correct_answer, '')                 AS correct_answer,
+                    COALESCE(fss.points_received, 0)::numeric        AS points_received,
+                    COALESCE(fss.points_possible, 0)::numeric        AS points_possible,
+                    CASE
+                      WHEN COALESCE(fss.points_possible, 0) > 0
+                      THEN COALESCE(fss.points_received, 0)::numeric
+                           / COALESCE(fss.points_possible, 0)::numeric
+                      ELSE 0
+                    END                                              AS score_pct,
+                    CASE
+                      WHEN COALESCE(fss.points_possible, 0) > 0
+                           AND COALESCE(fss.points_received, 0) >= COALESCE(fss.points_possible, 0)
+                      THEN TRUE ELSE FALSE
+                    END                                              AS is_correct,
+                    fss.latest_attempt
+                FROM fact_student_submission fss
+                WHERE fss.item_id = :item_id
+                  AND fss.question_id = :question_id
+                  AND fss.user_uid IS NOT NULL
+                ORDER BY fss.user_uid, fss.submission
+            ) deduped
+            ORDER BY user_name
             """
         )
         result = await self.session.execute(
