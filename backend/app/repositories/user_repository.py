@@ -12,36 +12,6 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        query = text(
-            """
-            SELECT id, email
-            FROM auth.users
-            WHERE LOWER(email) = LOWER(:email)
-            LIMIT 1
-            """
-        )
-        result = await self.session.execute(query.bindparams(email=email))
-        row = result.first()
-        if not row:
-            return None
-        return {"id": str(row.id), "email": row.email}
-
-    async def get_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        query = text(
-            """
-            SELECT id, email
-            FROM auth.users
-            WHERE id = CAST(:user_id AS uuid)
-            LIMIT 1
-            """
-        )
-        result = await self.session.execute(query.bindparams(user_id=user_id))
-        row = result.first()
-        if not row:
-            return None
-        return {"id": str(row.id), "email": row.email}
-
     async def get_stats(self) -> Dict[str, int]:
         result = await self.session.execute(
             text("""

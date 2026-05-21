@@ -35,9 +35,3 @@ class PaginatedResponse(BaseModel, Generic[T]):
     total_pages: int
 
 
-class ErrorResponse(BaseModel):
-    """Standard error response returned by all error handlers."""
-
-    error: str
-    status_code: int
-    details: dict = {}

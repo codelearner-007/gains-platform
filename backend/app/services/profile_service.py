@@ -35,9 +35,6 @@ class ProfileService:
     def __init__(self, session: AsyncSession):
         self.repository = ProfileRepository(session)
 
-    async def get_profile(self, user_id: str) -> Optional[UserProfile]:
-        return await self.repository.get_by_user_id(user_id)
-
     async def get_or_create_profile(self, user_id: str) -> UserProfile:
         profile = await self.repository.get_by_user_id(user_id)
         if profile:

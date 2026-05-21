@@ -242,42 +242,6 @@ class CubeRepository:
     # Question-level summaries (cube_question_summary +
     # cube_question_summary_overall)
     # ────────────────────────────────────────────────────────────────────
-    async def get_questions_for_item(self, item_id: str) -> List[Dict[str, Any]]:
-        """Per-question summary for an assessment, joined with the overall
-        cube to pick up `description`/`standards`/`incorrect_*` columns.
-        """
-        sql = text(
-            """
-            SELECT
-                qs.question_id,
-                qs.question_no,
-                qs.position_number,
-                qs.question,
-                qs.question_type,
-                qs.correct_answer,
-                qs.total_possible_point,
-                qs.total_score,
-                qs.grade_average,
-                qs.percentage_incorrect_answers     AS percentage_incorrect,
-                COALESCE(qso.incorrect_choice_details, qs.incorrect_choice_details, '') AS incorrect_choice_details,
-                COALESCE(qso.incorrect_details_name, qs.incorrect_details_name, '')     AS incorrect_details_name,
-                COALESCE(qso.standards, qs.standards, '')                               AS standards,
-                COALESCE(qso.description, '')                                           AS description,
-                qs.standard,
-                qs.ukey,
-                qs.identifier
-            FROM cube_question_summary qs
-            LEFT JOIN cube_question_summary_overall qso
-              ON qso.school_id = qs.school_id
-             AND qso.ukey = qs.ukey
-            WHERE qs.item_id = :item_id
-            ORDER BY NULLIF(regexp_replace(qs.question_no, '[^0-9]', '', 'g'), '')::int NULLS LAST,
-                     qs.question_no
-            """
-        )
-        result = await self.session.execute(sql, {"item_id": item_id})
-        return [_row_to_dict(r) for r in result.all()]
-
     async def get_questions_overall_for_item(self, item_id: str) -> List[Dict[str, Any]]:
         """One row per (item_id, question_id) for an assessment.
 
@@ -441,34 +405,6 @@ class CubeRepository:
             """
         )
         result = await self.session.execute(sql, {"item_id": item_id})
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_strand_rollup(self) -> List[Dict[str, Any]]:
-        """Aggregate cube_standard_summary by strand for the school."""
-        sql = text(
-            """
-            SELECT
-                cs.strand_id,
-                ds_strand.strand,
-                COUNT(DISTINCT cs.item_id)             AS total_questions,
-                COUNT(DISTINCT cs.identifier)          AS total_standards,
-                SUM(cs.total_possible_point)           AS total_possible_point,
-                SUM(cs.total_score)                    AS total_score,
-                CASE WHEN SUM(cs.total_possible_point) > 0
-                     THEN SUM(cs.total_score)::numeric / SUM(cs.total_possible_point)::numeric
-                     ELSE 0 END                        AS grade_average,
-                CASE WHEN SUM(cs.total_possible_point) > 0
-                     THEN 1 - (SUM(cs.total_score)::numeric / SUM(cs.total_possible_point)::numeric)
-                     ELSE 0 END                        AS percentage_incorrect_answers
-            FROM cube_standard_summary cs
-            LEFT JOIN dim_strand ds_strand
-              ON ds_strand.strand_id = cs.strand_id
-             AND ds_strand.identifier = cs.identifier
-            GROUP BY cs.strand_id, ds_strand.strand
-            ORDER BY ds_strand.strand NULLS LAST, cs.strand_id
-            """
-        )
-        result = await self.session.execute(sql)
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
@@ -925,38 +861,6 @@ class CubeRepository:
                 "strand": strand,
             },
         )
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_all_standards_for_school(self) -> List[Dict[str, Any]]:
-        sql = text(
-            """
-            SELECT
-                cs.item_id,
-                cs.strand_id,
-                cs.identifier,
-                cs.total_questions,
-                cs.total_standards,
-                cs.total_possible_point,
-                cs.total_score,
-                cs.grade_average,
-                cs.percentage_incorrect_answers,
-                ds_strand.strand,
-                ds_std.schoology_standard,
-                ds_std.description
-            FROM cube_standard_summary cs
-            LEFT JOIN dim_strand ds_strand
-              ON ds_strand.strand_id = cs.strand_id
-             AND ds_strand.identifier = cs.identifier
-            LEFT JOIN LATERAL (
-                SELECT description, schoology_standard
-                FROM dim_standard
-                WHERE identifier = cs.identifier
-                LIMIT 1
-            ) ds_std ON TRUE
-            ORDER BY ds_strand.strand NULLS LAST, cs.identifier
-            """
-        )
-        result = await self.session.execute(sql)
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────

@@ -112,9 +112,3 @@ class ImmutableResourceError(AppException):
                 "reason": reason,
             },
         )
-
-class BadRequestError(AppException):
-    """Raised when request is invalid."""
-
-    def __init__(self, message: str, detail: dict | None = None) -> None:
-        super().__init__(message, status_code=400, details=detail)

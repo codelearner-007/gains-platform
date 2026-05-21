@@ -1,7 +1,6 @@
 """Async Redis client lifecycle and helpers."""
 
 import logging
-from typing import Optional
 from urllib.parse import urlsplit, urlunsplit
 
 import redis.asyncio as redis
@@ -26,10 +25,6 @@ def _redact_redis_url(raw_url: str) -> str:
             netloc = f"***@{netloc}"
         return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
     return raw_url
-
-
-def build_redis_key(*parts: str) -> str:
-    return ":".join([settings.REDIS_PREFIX, *parts])
 
 
 async def init_redis() -> None:
@@ -74,10 +69,6 @@ async def init_redis() -> None:
             _redis = None
 
 
-def get_redis() -> Optional[Redis]:
-    return _redis
-
-
 async def close_redis() -> None:
     global _redis
     if _redis is None:
@@ -91,11 +82,10 @@ async def close_redis() -> None:
 
 
 async def redis_ping() -> bool:
-    client = get_redis()
-    if client is None:
+    if _redis is None:
         return False
     try:
-        return bool(await client.ping())
+        return bool(await _redis.ping())
     except Exception as exc:
         logger.warning("Redis ping failed: %s", exc, exc_info=True)
         return False
