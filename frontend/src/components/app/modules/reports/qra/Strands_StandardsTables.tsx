@@ -64,6 +64,9 @@ export function StrandsTable({
               # of Standards
             </th>
             <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+              # of Questions
+            </th>
+            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
               % per Strand
             </th>
           </tr>
@@ -77,6 +80,9 @@ export function StrandsTable({
             <tr>
               <td style={cellStyle}>Other</td>
               <td style={{ ...cellStyle, textAlign: 'center' }}>1</td>
+              <td style={{ ...cellStyle, textAlign: 'center' }}>
+                {kpis.total_questions ?? 0}
+              </td>
               <td
                 style={{
                   ...cellStyle,
@@ -118,6 +124,9 @@ export function StrandsTable({
                   <td style={cellStyle}>{row.strand}</td>
                   <td style={{ ...cellStyle, textAlign: 'center' }}>
                     {row.num_standards}
+                  </td>
+                  <td style={{ ...cellStyle, textAlign: 'center' }}>
+                    {row.num_questions}
                   </td>
                   <td
                     style={{

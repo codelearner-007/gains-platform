@@ -63,13 +63,14 @@ export default function QuestionDetailTable({
           }}
         >
           <colgroup>
-            <col style={{ width: '5%' }} />
-            <col style={{ width: '32%' }} />
+            <col style={{ width: '4%' }} />
+            <col style={{ width: '27%' }} />
+            <col style={{ width: '9%' }} />
             <col style={{ width: '11%' }} />
             <col style={{ width: '12%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '18%' }} />
-            <col style={{ width: '8%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '11%' }} />
+            <col style={{ width: '11%' }} />
           </colgroup>
           <thead>
             <tr>
@@ -82,6 +83,7 @@ export default function QuestionDetailTable({
               <th style={headerStyle}>Incorrect Choice Details</th>
               <th style={headerStyle}>Incorrect Details Name</th>
               <th style={headerStyle}>Standards</th>
+              <th style={headerStyle}>Description</th>
             </tr>
           </thead>
           <tbody>
@@ -99,7 +101,11 @@ export default function QuestionDetailTable({
                 ga >= 1
                   ? ''
                   : formatAnswerHtml(q.incorrect_details_name, 'incorrect choice');
-              const standards = q.standards || q.strand || '—';
+              const standardsList = (q.standards || '')
+                .split('\n')
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const descriptionText = (q.description || '').trim();
 
               return (
                 <tr key={`${q.question_id}-${q.question_no}-${idx}`} className="hover:bg-neutral-50">
@@ -164,8 +170,29 @@ export default function QuestionDetailTable({
                       html={incorrectNamesHtml}
                     />
                   </td>
-                  <td style={{ ...cellBase, textAlign: 'center' }}>
-                    {standards}
+                  <td style={cellBase}>
+                    {standardsList.length > 0 ? (
+                      <div className="flex flex-col gap-0.5 text-[11px] font-mono leading-tight">
+                        {standardsList.map((s, i) => (
+                          <span key={`${q.question_id}-std-${i}`}>{s}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-neutral-400">—</span>
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      ...cellBase,
+                      fontSize: '11px',
+                      lineHeight: '1.35',
+                      color: 'rgb(82 82 82)',
+                      whiteSpace: 'pre-line',
+                    }}
+                  >
+                    {descriptionText || (
+                      <span className="text-neutral-400">—</span>
+                    )}
                   </td>
                 </tr>
               );
