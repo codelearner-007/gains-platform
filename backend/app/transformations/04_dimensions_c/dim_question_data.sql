@@ -22,7 +22,7 @@
 
 INSERT INTO dim_question_data (
   qkey, school_id, ukey, question, position_number, item_id, item_name,
-  school_id_csv, standards, question_id, question_no, least_points_earned,
+  standards, question_id, question_no, least_points_earned,
   correct_answer, question_type, average_points_earned, associated_question_id,
   total_points, most_points_earned, correctly_answered, sub_question, session,
   assessment_type, subject, grade, section, standard, identifier
@@ -156,7 +156,6 @@ deduped AS (
 )
 SELECT
   qkey, school_id, ukey, question, position_number, item_id, item_name,
-  NULL::TEXT                AS school_id_csv,
   standards_val             AS standards,
   question_id, question_no,
   least_points_earned::TEXT AS least_points_earned,
@@ -175,7 +174,6 @@ SET ukey                   = EXCLUDED.ukey,
     position_number        = EXCLUDED.position_number,
     item_id                = EXCLUDED.item_id,
     item_name              = EXCLUDED.item_name,
-    school_id_csv          = EXCLUDED.school_id_csv,
     standards              = EXCLUDED.standards,
     question_id            = EXCLUDED.question_id,
     question_no            = EXCLUDED.question_no,

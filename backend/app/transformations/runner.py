@@ -56,7 +56,6 @@ TRANSFORMATIONS_ORDER: list[tuple[str, str]] = [
     ("01_staging/stg_question_data.sql",       "staging"),
     ("01_staging/stg_student_submission.sql",  "staging"),
     ("01_staging/stg_submission_summary.sql",  "staging"),
-    ("01_staging/stg_standard.sql",            "staging"),
 
     # phase 2 — independent dims (ON CONFLICT ... DO UPDATE)
     ("02_dimensions_a/dim_school.sql",         "dimensions"),

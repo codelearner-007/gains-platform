@@ -20,7 +20,6 @@ def test_order_list_is_complete() -> None:
     assert "01_staging/stg_question_data.sql" in relpaths
     assert "01_staging/stg_student_submission.sql" in relpaths
     assert "01_staging/stg_submission_summary.sql" in relpaths
-    assert "01_staging/stg_standard.sql" in relpaths
 
     # Dim phase A
     assert "02_dimensions_a/dim_school.sql" in relpaths
@@ -171,15 +170,17 @@ def test_split_drops_empty_statements() -> None:
 
 
 @pytest.mark.parametrize(
-    # 5 staging files (stg_user, stg_question_data, stg_student_submission,
-    #                  stg_submission_summary, stg_standard).
+    # 4 staging files (stg_user, stg_question_data, stg_student_submission,
+    #                  stg_submission_summary). dim_standard is a static seed
+    #                  loaded by supabase/seeds/load_standards.py — no staging
+    #                  step in the runner.
     # 15 dimension files = 5 phase-A + 1 phase-B + 1 phase-C + 2 phase-D
     #                      (dim_standard placeholder + dim_strand) + 6 phase-E.
     # 1 fact (fact_student_submission).
     # 3 hash tables (dim_section_hash, dim_student_hash, fact_student_submissions_hash).
     # 8 cubes.
     "tag,expected",
-    [("staging", 5), ("dimensions", 15), ("facts", 1), ("hash", 3), ("cubes", 8)],
+    [("staging", 4), ("dimensions", 15), ("facts", 1), ("hash", 3), ("cubes", 8)],
 )
 def test_tag_distribution(tag: str, expected: int) -> None:
     n = sum(1 for _, t in TRANSFORMATIONS_ORDER if t == tag)

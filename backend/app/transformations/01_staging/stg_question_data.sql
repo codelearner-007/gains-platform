@@ -17,7 +17,6 @@ TRUNCATE TABLE stg_question_data;
 INSERT INTO stg_question_data (
   school_id, item_id, item_name, question_id, associated_question_id,
   total_points, question_type, question, position_number, sub_question,
-  answer_option, answer_breakdown_count, answer_breakdown_pct,
   correct_answer, correctly_answered, most_points_earned, least_points_earned,
   average_points_earned, standards_val, session, assessment_type, subject,
   grade, section, file_name, question_no
@@ -33,9 +32,6 @@ SELECT
   rqd.question,
   NULLIF(TRIM(rqd.position_number), ''),
   NULLIF(TRIM(rqd.sub_question), ''),
-  rqd.answer_option,
-  rqd.answer_breakdown_count,
-  rqd.answer_breakdown_pct,
   NULLIF(TRIM(rqd.correct_answer), ''),
   rqd.correctly_answered,
   rqd.most_points_earned,
