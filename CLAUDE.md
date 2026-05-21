@@ -496,6 +496,7 @@ Permanent reference docs in `docs/`. Read the relevant file before guessing — 
 - `docs/standards-alignment.md` — where per-question standards come from, what happens when missing, how to fix gaps at source. Read before touching any standards-related code.
 - `docs/audit/legacy-standards-refresh.md` — how legacy refreshed `dim_standard` (Synapse → EdvanceLearning LMS → /local-standards → notebook). Read before designing any refresh workflow.
 - `docs/audit/edvancelearning-ims-integration.md` — full reverse-engineering of EdvanceLearning's K12StandardsImport: auth, endpoints, tree-walking, CFItem → dim_standard column mapping. Read before modifying `supabase/seeds/refresh_standards.py` or building anything that ingests CASE Network data.
+- `docs/audit/legacy-schoology-cpalms-mapping.md` — why `dim_standard.csv` has both `MA.912.*` and `AI.MA.912.*` rows: Schoology embeds its course-prefix aliases in the Question-Data CSV exports, legacy synthesizes alias rows in the Spark notebook. Read before changing how aliases are produced or how the seed is refreshed.
 
 **Pipeline layer references** (read whichever layer you're about to touch)
 - `docs/audit/01_ingestion.md` — Schoology download → blob → file routing. Read before touching `backend/app/jobs/ingest_schoology.py` or related.
