@@ -93,10 +93,19 @@ export default function QuestionDetailTable({
               const correctHtml = formatCorrectAnswer(q.correct_answer)
                 .map((line) => formatAnswerHtml(line, 'correct answer'))
                 .join('<br />');
+              // Split entries onto their own line. The cube emits a
+              // single string like "3.7% chose [a. ...], 7.4% chose
+              // [b. ...]"; lookahead anchors on the next entry's
+              // percentage so the split is safe even when an answer's
+              // own text contains "], ".
+              const incorrectChoiceRaw = (q.incorrect_choice_details || '').replace(
+                /\], (?=\d+\.?\d*% chose \[)/g,
+                ']\n',
+              );
               const incorrectChoiceHtml =
                 ga >= 1
                   ? ''
-                  : formatAnswerHtml(q.incorrect_choice_details, 'incorrect choice');
+                  : formatAnswerHtml(incorrectChoiceRaw, 'incorrect choice');
               const incorrectNamesHtml =
                 ga >= 1
                   ? ''
@@ -152,19 +161,38 @@ export default function QuestionDetailTable({
                   >
                     {formatPercent(ga, 1)}
                   </td>
-                  <td style={{ ...cellBase, whiteSpace: 'pre-line' }}>
+                  <td
+                    style={{
+                      ...cellBase,
+                      whiteSpace: 'pre-line',
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
                     <RichReportHtml
                       className="pilot-answer-html"
                       html={correctHtml}
                     />
                   </td>
-                  <td style={cellBase}>
+                  <td
+                    style={{
+                      ...cellBase,
+                      overflowWrap: 'anywhere',
+                      lineHeight: '1.5',
+                    }}
+                  >
                     <RichReportHtml
                       className="pilot-answer-html"
                       html={incorrectChoiceHtml}
                     />
                   </td>
-                  <td style={{ ...cellBase, whiteSpace: 'pre-line' }}>
+                  <td
+                    style={{
+                      ...cellBase,
+                      whiteSpace: 'pre-line',
+                      overflowWrap: 'anywhere',
+                      lineHeight: '1.5',
+                    }}
+                  >
                     <RichReportHtml
                       className="pilot-answer-html"
                       html={incorrectNamesHtml}
@@ -172,7 +200,7 @@ export default function QuestionDetailTable({
                   </td>
                   <td style={cellBase}>
                     {standardsList.length > 0 ? (
-                      <div className="flex flex-col gap-0.5 text-[11px] font-mono leading-tight">
+                      <div className="flex flex-col gap-0.5 text-[11px] font-mono leading-tight break-all">
                         {standardsList.map((s, i) => (
                           <span key={`${q.question_id}-std-${i}`}>{s}</span>
                         ))}
@@ -185,9 +213,10 @@ export default function QuestionDetailTable({
                     style={{
                       ...cellBase,
                       fontSize: '11px',
-                      lineHeight: '1.35',
+                      lineHeight: '1.45',
                       color: 'rgb(82 82 82)',
                       whiteSpace: 'pre-line',
+                      overflowWrap: 'anywhere',
                     }}
                   >
                     {descriptionText || (

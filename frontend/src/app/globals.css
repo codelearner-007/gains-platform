@@ -253,10 +253,15 @@
   line-height: 1.2;
 }
 
+/* Question stems: let intrinsic aspect ratio drive height. Caps width so
+   cells don't blow up; height auto preserves ratio + avoids sub-pixel
+   resampling blur. LaTeX SVG fragments are tiny vector strips that get a
+   smaller cap so they sit inline with text. */
 .pilot-question-html img {
   width: auto;
+  height: auto;
   max-width: min(100%, 320px);
-  max-height: 120px;
+  image-rendering: auto;
 }
 
 .pilot-question-html img.report-latex-image {
@@ -266,14 +271,27 @@
 
 .pilot-answer-html img {
   width: auto;
-  max-width: min(100%, 128px);
-  max-height: 72px;
+  height: auto;
+  max-width: min(100%, 160px);
   margin: 2px 4px;
+  image-rendering: auto;
 }
 
 .pilot-answer-html img.report-latex-image {
   max-width: min(100%, 120px);
   max-height: 32px;
+}
+
+/* Click-to-zoom affordance on all report images (wired by RichReportHtml). */
+.report-rich-html img:not(.report-image-fallback) {
+  cursor: zoom-in;
+}
+@media (prefers-reduced-motion: reduce) {
+  .report-rich-html img,
+  .yarl__container * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 @keyframes report-image-shimmer {
