@@ -211,9 +211,9 @@ class SddStrandRow(BaseModel):
 
 
 class SddStandardRow(BaseModel):
-    """One row in the Standards rollup table."""
+    """One row in the Standards rollup table, keyed by the Schoology
+    canonical long-form code (e.g. ``MA.9-12.MAFS.912.N-Q.1.3``)."""
 
-    cpalms_standard: str
     schoology_standard: str
     strand: str
     num_questions: int
@@ -222,14 +222,13 @@ class SddStandardRow(BaseModel):
 
 
 class SddBandStandardRow(BaseModel):
-    """One cpalms-standard bucket within a performance band (high/mid/low).
-
-    Per PBIX spec (``50_sdd_spec.md`` §4.4) the 3 × 100%-stacked bar charts
-    are keyed on ``dim_standard.cPalms_Standard`` (one bar per standard),
-    not per strand. ``strand`` is carried alongside for tooltip context.
+    """One Schoology-standard bucket within a performance band
+    (high/mid/low). The 3 × 100%-stacked bar charts are keyed on the
+    Schoology canonical standard code. ``strand`` is carried alongside
+    for tooltip context.
     """
 
-    cpalms_standard: str
+    schoology_standard: str
     strand: str
     num_questions: int
     grade_average: float
@@ -435,9 +434,9 @@ class StandardSummaryKpis(BaseModel):
 
 
 class StandardSummaryRollupRow(BaseModel):
-    """One card per cPalms_Standard aggregated across the filter scope."""
+    """One card per Schoology canonical standard aggregated across the
+    filter scope."""
 
-    cpalms_standard: str
     schoology_standard: str
     strand: str
     cluster: str
@@ -514,10 +513,9 @@ class StrandSummaryRollupRow(BaseModel):
 
 
 class StrandSummaryStandardRow(BaseModel):
-    """One row per (strand, cPalms_Standard) for the drill table."""
+    """One row per (strand, Schoology standard) for the drill table."""
 
     strand: str
-    cpalms_standard: str
     schoology_standard: str
     cluster: str
     num_questions: int

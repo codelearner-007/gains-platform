@@ -358,7 +358,6 @@ class ReportService:
         ]
         standards_rollup = [
             SddStandardRow(
-                cpalms_standard=safe_str(r.get("cpalms_standard")),
                 schoology_standard=safe_str(r.get("schoology_standard")),
                 strand=_decode_html(safe_str(r.get("strand"))),
                 num_questions=to_int(r.get("num_questions")),
@@ -405,8 +404,7 @@ class ReportService:
             grade_average_pct=_format_pct(grade),
         )
         synthetic_standard = SddStandardRow(
-            cpalms_standard="Other",
-            schoology_standard="",
+            schoology_standard="Other",
             strand="Other",
             num_questions=total_q,
             grade_average=round(grade, 6),
@@ -658,12 +656,12 @@ class ReportService:
         band_mid: list[SddBandStandardRow] = []
         band_low: list[SddBandStandardRow] = []
         for r in band_rows:
-            cpalms = safe_str(r.get("cpalms_standard"))
-            if not cpalms:
+            schoology = safe_str(r.get("schoology_standard"))
+            if not schoology:
                 continue
             grade = to_float(r.get("grade_average"))
             row = SddBandStandardRow(
-                cpalms_standard=cpalms,
+                schoology_standard=schoology,
                 strand=_decode_html(safe_str(r.get("strand"))),
                 num_questions=to_int(r.get("num_questions")),
                 grade_average=round(grade, 6),
@@ -682,7 +680,7 @@ class ReportService:
         if synthesized_other:
             grade = to_float(canon.get("grade_average"))
             other_band_row = SddBandStandardRow(
-                cpalms_standard="Other",
+                schoology_standard="Other",
                 strand="Other",
                 num_questions=to_int(canon.get("total_questions")),
                 grade_average=round(grade, 6),
@@ -994,8 +992,8 @@ class ReportService:
         at_target = 0
         total_questions_acc = 0
         for row in rows:
-            cpalms = safe_str(row.get("cpalms_standard"))
-            if not cpalms:
+            schoology = safe_str(row.get("schoology_standard"))
+            if not schoology:
                 continue
             grade_avg = to_float(row.get("grade_average"))
             num_q = to_int(row.get("num_questions"))
@@ -1006,8 +1004,7 @@ class ReportService:
             last_change = row.get("last_change_date_time")
             standards.append(
                 StandardSummaryRollupRow(
-                    cpalms_standard=cpalms,
-                    schoology_standard=safe_str(row.get("schoology_standard")),
+                    schoology_standard=schoology,
                     strand=strand,
                     cluster=safe_str(row.get("cluster")),
                     cognitive_complexity=safe_str(row.get("cognitive_complexity")),
@@ -1184,7 +1181,6 @@ class ReportService:
         standards_rollup: list[StrandSummaryStandardRow] = [
             StrandSummaryStandardRow(
                 strand=_decode_html(safe_str(r.get("strand"))),
-                cpalms_standard=safe_str(r.get("cpalms_standard")),
                 schoology_standard=safe_str(r.get("schoology_standard")),
                 cluster=safe_str(r.get("cluster")),
                 num_questions=to_int(r.get("num_questions")),
@@ -1194,7 +1190,7 @@ class ReportService:
                 perf_color=_perf_color(to_float(r.get("grade_average"))),
             )
             for r in std_rows
-            if safe_str(r.get("cpalms_standard"))
+            if safe_str(r.get("schoology_standard"))
         ]
 
         total_strands = len(strands_rollup)

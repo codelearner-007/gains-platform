@@ -277,17 +277,32 @@ class CubeRepository:
                        SUM(total_possible_point)         AS total_possible_point,
                        SUM(total_score)                  AS total_score,
                        MAX(NULLIF(incorrect_choice_details, '')) AS incorrect_choice_details,
-                       MAX(NULLIF(incorrect_details_name, ''))   AS incorrect_details_name,
-                       MAX(NULLIF(standards, ''))                AS standards
+                       MAX(NULLIF(incorrect_details_name, ''))   AS incorrect_details_name
                 FROM cube_question_summary
                 WHERE item_id = :item_id
+                GROUP BY item_id, question_id
+            ),
+            -- Aggregate ALL Schoology standards per question. cube_question_summary
+            -- carries only one alias per question (collapsed via LATERAL LIMIT 1
+            -- against dim_question_data in 09_cubes/cube_question_summary.sql).
+            -- dim_question_data retains every alias the parser emitted, so we
+            -- read directly from it to recover the full list. Newline-joined so
+            -- the frontend can render one standard per line.
+            qd_standards AS (
+                SELECT
+                    item_id,
+                    question_id,
+                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND standard IS NOT NULL AND standard <> ''
                 GROUP BY item_id, question_id
             ),
             qso_agg AS (
                 SELECT DISTINCT ON (school_id, ukey)
                     school_id, ukey, question_no, question, correct_answer,
                     incorrect_choice_details, incorrect_details_name,
-                    standards, description
+                    description
                 FROM cube_question_summary_overall
                 ORDER BY school_id, ukey
             ),
@@ -313,13 +328,14 @@ class CubeRepository:
                 COALESCE(qsn.percentage_incorrect, qson.percentage_incorrect)   AS percentage_incorrect,
                 COALESCE(qso.incorrect_choice_details, qsn.incorrect_choice_details, '') AS incorrect_choice_details,
                 COALESCE(qso.incorrect_details_name, qsn.incorrect_details_name, '')     AS incorrect_details_name,
-                COALESCE(qso.standards, qsn.standards, '')                      AS standards,
+                COALESCE(qdst.standards, '')                                    AS standards,
                 qs.standard                                                     AS strand_raw,
                 COALESCE(qso.description, '')                                   AS description
             FROM qs_agg qs
-            LEFT JOIN qs_num  qsn  ON qsn.item_id   = qs.item_id   AND qsn.question_id = qs.question_id
-            LEFT JOIN qso_agg qso  ON qso.school_id = qs.school_id AND qso.ukey        = qs.ukey
-            LEFT JOIN qso_num qson ON qson.school_id = qs.school_id AND qson.ukey      = qs.ukey
+            LEFT JOIN qs_num      qsn  ON qsn.item_id    = qs.item_id  AND qsn.question_id = qs.question_id
+            LEFT JOIN qd_standards qdst ON qdst.item_id  = qs.item_id  AND qdst.question_id = qs.question_id
+            LEFT JOIN qso_agg     qso  ON qso.school_id  = qs.school_id AND qso.ukey       = qs.ukey
+            LEFT JOIN qso_num     qson ON qson.school_id = qs.school_id AND qson.ukey      = qs.ukey
             ORDER BY NULLIF(regexp_replace(qs.question_no, '[^0-9]', '', 'g'), '')::int NULLS LAST,
                      qs.question_no
             """
@@ -418,33 +434,17 @@ class CubeRepository:
 
         Per ``_pbix_extract/50_sdd_spec.md`` §4.5 the per-strand row strip
         reports ``COUNT(DISTINCT question_no)`` and the question-weighted
-        grade average. Sourced from ``cube_question_summary`` (post-pipeline
-        the grain is ``(school_id, item_id, question_id, position_number,
-        identifier)``) joined to ``dim_standard`` for the strand label.
+        grade average. Sourced from ``cube_question_summary`` joined to
+        ``dim_standard`` for the strand label.
 
-        Distinct-question count is the right grain because a single question
-        can be tagged to multiple identifiers within the same strand; a
-        plain SUM of per-identifier totals would double-count those
-        questions.
-
-        ``num_standards`` is counted at the **cpalms-label grain** — the
-        same visible-row grain rendered by ``get_standard_rollup_for_item``
-        — so the per-strand column sums to the school-level
-        ``DISTINCTCOUNT(cqso[Standards]) = 12`` legacy KPI and matches the
-        number of rows the standards rollup table renders for the strand.
-        Counting ``DISTINCT cqs.identifier`` instead would collapse
-        Florida CPALMS alias pairs (e.g. ``MA.912.AR.3.1`` and
-        ``AI.MA.912.AR.3.1`` share an identifier UUID) and understate the
-        per-strand count, contradicting the KPI tile and the standards
-        table.
+        ``num_standards`` is counted at the **schoology_standard grain** —
+        the Schoology canonical long form rendered by
+        ``get_standard_rollup_for_item``. Each unique Schoology code per
+        strand contributes one entry.
 
         Restricts identifiers via an exact-match join on the item's
-        ``dim_question_data.standard`` set (the raw ``standards_val``
-        codes) so unaligned assessments yield zero strand rows. We
-        deliberately do NOT walk the cpalms↔schoology chain — that walk
-        pulls in extra MAFS-prefixed aliases that legacy DAX excludes
-        (see ``FRESH-RCA-2026-05-18-stable-formulas.md`` §3 row 2 and
-        §4 ``standards_rollup row count``).
+        ``dim_question_data.standard`` set so unaligned assessments yield
+        zero strand rows.
         """
         sql = text(
             """
@@ -458,18 +458,18 @@ class CubeRepository:
             labeled AS (
                 SELECT DISTINCT
                     ds.identifier,
-                    ds.cpalms_standard,
+                    ds.schoology_standard,
                     ds.strand
                 FROM dim_standard ds
                 JOIN item_codes ic ON ds.schoology_standard = ic.code
                 WHERE ds.strand IS NOT NULL AND ds.strand <> ''
-                  AND ds.cpalms_standard IS NOT NULL
-                  AND ds.cpalms_standard <> ''
+                  AND ds.schoology_standard IS NOT NULL
+                  AND ds.schoology_standard <> ''
             ),
             strand_standards AS (
                 SELECT
                     strand,
-                    COUNT(DISTINCT cpalms_standard) AS num_standards
+                    COUNT(DISTINCT schoology_standard) AS num_standards
                 FROM labeled
                 GROUP BY strand
             ),
@@ -504,27 +504,22 @@ class CubeRepository:
     async def get_standard_rollup_for_item(
         self, item_id: str
     ) -> List[Dict[str, Any]]:
-        """One row per visible cPalms label for a given assessment.
+        """One row per Schoology canonical standard for a given assessment.
 
-        Mirrors the legacy PBIX display contract where each cPalms label
-        that the assessment's ``standards_val`` set resolves to renders
-        as its own row (e.g. ``AR.3.1`` and ``912.AR.3.1`` both render
-        because the item has both schoology aliases ``MA.912.AR.3.1``
-        and ``AI.MA.912.AR.3.1``).
+        Each ``schoology_standard`` code that the assessment's
+        ``standards_val`` set resolves to renders as its own row
+        (e.g. ``MA.912.AR.3.1`` and ``AI.MA.912.AR.3.1`` both render
+        because the item carries both aliases). This is the long
+        Schoology canonical form — the same string Schoology emits in
+        its raw Question-Data CSV.
 
         Restricts the output to exact-match dim_standard rows whose
-        ``schoology_standard`` appears in
-        ``dim_question_data.standard`` for this item. We deliberately do
-        NOT walk the recursive cpalms↔schoology chain — that walk pulled
-        in MAFS-prefixed aliases the legacy report excludes
-        (15 modern rows vs 12 legacy rows). The exact-match join
-        produces ``DISTINCTCOUNT(standards_val) = 12`` rows for the
-        audit assessment (``8359960427``), matching legacy precisely.
+        ``schoology_standard`` appears in ``dim_question_data.standard``
+        for this item.
 
         ``num_questions`` = ``COUNT(DISTINCT question_no)`` per matched
-        identifier (legacy ``Total Question Standard`` measure).
-        ``grade_average`` = AVG of per-question grade_average from
-        ``cube_question_summary`` for the identifier.
+        identifier. ``grade_average`` = AVG of per-question grade_average
+        from ``cube_question_summary`` for the identifier.
         """
         sql = text(
             """
@@ -538,14 +533,13 @@ class CubeRepository:
             labeled AS (
                 SELECT DISTINCT
                     ds.identifier,
-                    ds.cpalms_standard,
-                    COALESCE(ds.schoology_standard, '') AS schoology_standard,
+                    ds.schoology_standard,
                     ds.strand
                 FROM dim_standard ds
                 JOIN item_codes ic ON ds.schoology_standard = ic.code
                 WHERE ds.strand IS NOT NULL AND ds.strand <> ''
-                  AND ds.cpalms_standard IS NOT NULL
-                  AND ds.cpalms_standard <> ''
+                  AND ds.schoology_standard IS NOT NULL
+                  AND ds.schoology_standard <> ''
             ),
             per_identifier AS (
                 SELECT
@@ -557,15 +551,14 @@ class CubeRepository:
                 GROUP BY cqs.identifier
             )
             SELECT
-                l.cpalms_standard                                            AS cpalms_standard,
-                MAX(l.schoology_standard)                                    AS schoology_standard,
+                l.schoology_standard                                         AS schoology_standard,
                 l.strand                                                     AS strand,
                 MAX(COALESCE(p.num_questions, 0))                            AS num_questions,
                 MAX(COALESCE(p.grade_average, 0))                            AS grade_average
             FROM labeled l
             LEFT JOIN per_identifier p ON p.identifier = l.identifier
-            GROUP BY l.cpalms_standard, l.strand
-            ORDER BY l.strand, l.cpalms_standard
+            GROUP BY l.schoology_standard, l.strand
+            ORDER BY l.strand, l.schoology_standard
             """
         )
         result = await self.session.execute(sql, {"item_id": item_id})
@@ -574,18 +567,17 @@ class CubeRepository:
     async def get_standard_bands_for_item(
         self, item_id: str
     ) -> List[Dict[str, Any]]:
-        """One row per cpalms_standard for the SDD 100%-stacked band charts.
+        """One row per schoology_standard for the SDD 100%-stacked band charts.
 
         Per PBIX spec (``50_sdd_spec.md`` §4.4) the three band panels
         ("At Target", "Approaching", "Needs Attention") render bars keyed
-        on ``dim_standard.cPalms_Standard`` — NOT on Strand. Service layer
-        buckets the returned rows into high/mid/low based on the standard
-        70/80 thresholds.
+        on the Schoology canonical standard. Service layer buckets the
+        returned rows into high/mid/low based on the standard 70/80
+        thresholds.
 
         Uses the same exact-match restriction as
         ``get_standard_rollup_for_item`` so band bars and the per-standard
-        table render the same set of cpalms labels (12 for the audit
-        assessment vs the chain-walked 15 previously produced).
+        table render the same set of Schoology codes.
         """
         sql = text(
             """
@@ -599,13 +591,13 @@ class CubeRepository:
             labeled AS (
                 SELECT DISTINCT
                     ds.identifier,
-                    ds.cpalms_standard,
+                    ds.schoology_standard,
                     ds.strand
                 FROM dim_standard ds
                 JOIN item_codes ic ON ds.schoology_standard = ic.code
                 WHERE ds.strand IS NOT NULL AND ds.strand <> ''
-                  AND ds.cpalms_standard IS NOT NULL
-                  AND ds.cpalms_standard <> ''
+                  AND ds.schoology_standard IS NOT NULL
+                  AND ds.schoology_standard <> ''
             ),
             per_identifier AS (
                 SELECT
@@ -617,14 +609,14 @@ class CubeRepository:
                 GROUP BY cqs.identifier
             )
             SELECT
-                l.cpalms_standard                                            AS cpalms_standard,
+                l.schoology_standard                                         AS schoology_standard,
                 l.strand                                                     AS strand,
                 MAX(COALESCE(p.num_questions, 0))                            AS num_questions,
                 MAX(COALESCE(p.grade_average, 0))                            AS grade_average
             FROM labeled l
             LEFT JOIN per_identifier p ON p.identifier = l.identifier
-            GROUP BY l.cpalms_standard, l.strand
-            ORDER BY l.cpalms_standard
+            GROUP BY l.schoology_standard, l.strand
+            ORDER BY l.schoology_standard
             """
         )
         result = await self.session.execute(sql, {"item_id": item_id})
@@ -804,7 +796,6 @@ class CubeRepository:
                     iq.identifier,
                     iq.item_id,
                     ds.strand,
-                    dst.cpalms_standard,
                     dst.schoology_standard,
                     dst.cluster,
                     dst.cognitive_complexity_rating,
@@ -816,7 +807,7 @@ class CubeRepository:
                 LEFT JOIN dim_strand ds
                   ON ds.identifier = iq.identifier
                 LEFT JOIN LATERAL (
-                    SELECT cpalms_standard, schoology_standard, cluster,
+                    SELECT schoology_standard, cluster,
                            cognitive_complexity_rating, subject,
                            custom_cleaned_description, description,
                            last_change_date_time
@@ -824,8 +815,7 @@ class CubeRepository:
                     WHERE identifier = iq.identifier
                     LIMIT 1
                 ) dst ON TRUE
-                WHERE COALESCE(NULLIF(dst.cpalms_standard, ''),
-                               NULLIF(dst.schoology_standard, ''), '') <> ''
+                WHERE COALESCE(NULLIF(dst.schoology_standard, ''), '') <> ''
                   AND (CAST(:strand AS TEXT) IS NULL OR ds.strand = CAST(:strand AS TEXT))
             ),
             qso_avg AS (
@@ -834,7 +824,6 @@ class CubeRepository:
                 GROUP BY ukey
             )
             SELECT
-                COALESCE(NULLIF(sq.cpalms_standard, ''), sq.schoology_standard, '') AS cpalms_standard,
                 COALESCE(sq.schoology_standard, '')                AS schoology_standard,
                 COALESCE(sq.strand, '')                            AS strand,
                 COALESCE(sq.cluster, '')                           AS cluster,
@@ -848,8 +837,8 @@ class CubeRepository:
                 MAX(sq.last_change_date_time)                      AS last_change_date_time
             FROM std_q sq
             LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
-            GROUP BY 1, 2, 3, 4, 5, 6, 7
-            ORDER BY 3 NULLS LAST, 1
+            GROUP BY 1, 2, 3, 4, 5, 6
+            ORDER BY 2 NULLS LAST, 1
             """
         )
         result = await self.session.execute(
