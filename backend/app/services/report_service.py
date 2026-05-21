@@ -526,7 +526,13 @@ class ReportService:
                 incorrect_details_name=safe_str(q.get("incorrect_details_name")),
                 standards=safe_str(q.get("standards")),
                 strand=safe_str(q.get("strand_raw")),
-                description=safe_str(q.get("description")),
+                # Strip raw HTML tags from description — Schoology /standards
+                # API returns benchmark text with embedded markup
+                # (`<ol>`, `<b>`, `<sup>`, etc.). Legacy PBIX strips this at
+                # Power Query load (07_power_query.m:161-173); we mirror it
+                # at the serializer so the QRA Description cell renders as
+                # plain text.
+                description=_strip_html(safe_str(q.get("description"))),
             )
             for q in question_rows
         ]
