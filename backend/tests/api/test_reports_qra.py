@@ -138,7 +138,7 @@ async def test_qra_standards_rollup_has_multiple_strands_and_standards_for_chapt
 ) -> None:
     """Strands/standards rollups must source from cube_standard_summary (RCA Layer A1).
 
-    The Chapter-9 fixture has 6 real strands and 12 distinct cpalms
+    The Chapter-9 fixture has 6 real strands and 12 distinct Schoology
     standard rows. The pre-fix substring chain collapsed both down to 4.
     """
     response = await admin_client.get(
@@ -157,7 +157,7 @@ async def test_qra_standards_rollup_has_multiple_strands_and_standards_for_chapt
         f"{[s.strand for s in payload.strands_rollup]}"
     )
     assert len(payload.standards_rollup) >= 10, (
-        f"expected ≥10 cpalms standard rows for {_CHAPTER9_ITEM_ID}, got "
+        f"expected ≥10 Schoology standard rows for {_CHAPTER9_ITEM_ID}, got "
         f"{len(payload.standards_rollup)}"
     )
 

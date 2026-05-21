@@ -162,40 +162,39 @@ async def test_canonical_kpis_qra_sdd_parity_chapter9(
 async def test_canonical_standards_rollup_chapter9_exact_12_rows(
     admin_client: AsyncClient,
 ) -> None:
-    """Standards rollup table must render the legacy 12 cpalms rows.
+    """Standards rollup table must render 12 Schoology canonical standards.
 
-    Previously the recursive chain CTE walked past the assessment's
-    ``standards_val`` set and produced 15 rows (the extra 3 were
-    MAFS-prefixed aliases pulled in by the schoology↔cpalms chain).
-    The restricted exact-match join now produces 12, matching legacy.
+    Schoology emits 12 distinct standards (its raw long form) across
+    Chapter 9 Test. The exact-match join in get_standard_rollup_for_item
+    surfaces each of them as its own row; row count = 12.
     """
     sdd = await _get_sdd(admin_client, _CHAPTER9_ITEM_ID)
 
     assert len(sdd.standards_rollup) == 12, (
-        f"Standards rollup must have exactly 12 rows (legacy parity), "
+        f"Standards rollup must have exactly 12 rows (Schoology parity), "
         f"got {len(sdd.standards_rollup)}: "
-        f"{[r.cpalms_standard for r in sdd.standards_rollup]}"
+        f"{[r.schoology_standard for r in sdd.standards_rollup]}"
     )
 
-    cpalms = {r.cpalms_standard for r in sdd.standards_rollup}
-    # Legacy 12 labels (from the embedded Schoology PowerBI dashboard).
-    expected_cpalms = {
-        "NSO.1.4",
-        "912.NSO.1.4",
-        "MAFS.912.N-RN.1.2",
-        "MAFS.912.N-Q.1.3",
-        "MAFS.912.A-CED.1.1",
-        "MAFS.912.A-REI.2.4.a",
-        "MAFS.912.A-REI.2.4.b",
-        "AR.1.2",
-        "AR.1.7",
-        "912.AR.1.7",
-        "AR.3.1",
-        "912.AR.3.1",
+    schoology = {r.schoology_standard for r in sdd.standards_rollup}
+    # The 12 Schoology canonical codes Schoology emits for Chapter 9.
+    expected_schoology = {
+        "MA.9-12.MAFS.912.A-CED.1.1",
+        "AI.MA.912.AR.1.7",
+        "AI.MA.912.AR.3.1",
+        "MA.912.AR.1.2",
+        "MA.912.AR.1.7",
+        "MA.912.AR.3.1",
+        "MA.9-12.MAFS.912.A-REI.2.4.a",
+        "MA.9-12.MAFS.912.A-REI.2.4.b",
+        "MA.9-12.MAFS.912.N-Q.1.3",
+        "MA.9-12.MAFS.912.N-RN.1.2",
+        "AI.MA.912.NSO.1.4",
+        "MA.912.NSO.1.4",
     }
-    assert cpalms == expected_cpalms, (
-        f"Standards rollup cpalms set drifted from legacy 12. "
-        f"Missing: {expected_cpalms - cpalms}. Extra: {cpalms - expected_cpalms}."
+    assert schoology == expected_schoology, (
+        f"Standards rollup Schoology set drifted from expected 12. "
+        f"Missing: {expected_schoology - schoology}. Extra: {schoology - expected_schoology}."
     )
 
 
@@ -233,10 +232,10 @@ async def test_canonical_strand_num_standards_matches_table_grain(
     ``kpis.total_standards = 12`` and the standards rollup table
     rendered 12 rows — an internal contradiction.
 
-    The fix counts ``DISTINCT cpalms_standard`` per strand from the same
-    ``labeled`` CTE that drives the standards rollup, guaranteeing the
-    strand column always sums to the standards-table row count and the
-    school-level KPI.
+    The fix counts ``DISTINCT schoology_standard`` per strand from the
+    same ``labeled`` CTE that drives the standards rollup, guaranteeing
+    the strand column always sums to the standards-table row count and
+    the school-level KPI.
     """
     sdd = await _get_sdd(admin_client, _CHAPTER9_ITEM_ID)
 
@@ -245,7 +244,7 @@ async def test_canonical_strand_num_standards_matches_table_grain(
     assert sum_per_strand == len(sdd.standards_rollup), (
         f"sum(strand.num_standards) = {sum_per_strand} must equal "
         f"len(standards_rollup) = {len(sdd.standards_rollup)} — strand "
-        f"column and standards table disagree on visible cpalms count."
+        f"column and standards table disagree on visible standard count."
     )
     assert sum_per_strand == sdd.kpis.total_standards, (
         f"sum(strand.num_standards) = {sum_per_strand} must equal "
@@ -253,22 +252,22 @@ async def test_canonical_strand_num_standards_matches_table_grain(
         f"column and KPI tile disagree."
     )
     assert sum_per_strand == 12, (
-        f"Legacy parity: total_standards should be 12, "
+        f"Schoology parity: total_standards should be 12, "
         f"got {sum_per_strand}."
     )
 
-    # Per-strand pin (cpalms-grain count drawn from the labeled CTE).
+    # Per-strand pin (Schoology-standard grain from the labeled CTE).
     expected_per_strand = {
-        "Algebra: Creating Equations": 1,                     # MAFS.912.A-CED.1.1
-        "Algebra: Reasoning with Equations & Inequalities": 2,  # MAFS.912.A-REI.2.4.{a,b}
-        "Algebraic Reasoning": 5,                             # 912.AR.{1.7,3.1} + AR.{1.2,1.7,3.1}
-        "Number & Quantity: Quantities": 1,                   # MAFS.912.N-Q.1.3
-        "Number & Quantity: The Real Number System": 1,       # MAFS.912.N-RN.1.2
-        "Number Sense and Operations": 2,                     # 912.NSO.1.4 + NSO.1.4
+        "Algebra: Creating Equations": 1,                      # MA.9-12.MAFS.912.A-CED.1.1
+        "Algebra: Reasoning with Equations & Inequalities": 2, # MA.9-12.MAFS.912.A-REI.2.4.{a,b}
+        "Algebraic Reasoning": 5,                              # AI.MA.912.AR.{1.7,3.1} + MA.912.AR.{1.2,1.7,3.1}
+        "Number & Quantity: Quantities": 1,                    # MA.9-12.MAFS.912.N-Q.1.3
+        "Number & Quantity: The Real Number System": 1,        # MA.9-12.MAFS.912.N-RN.1.2
+        "Number Sense and Operations": 2,                      # AI.MA.912.NSO.1.4 + MA.912.NSO.1.4
     }
     actual_per_strand = {s.strand: s.num_standards for s in sdd.strands_rollup}
     assert actual_per_strand == expected_per_strand, (
-        f"Per-strand num_standards drifted from legacy/cpalms-grain.\n"
+        f"Per-strand num_standards drifted from Schoology grain.\n"
         f"Expected: {expected_per_strand}\nActual: {actual_per_strand}"
     )
 

@@ -144,9 +144,8 @@ async def test_sdd_standards_rollup_uses_cube_standard_summary(
 ) -> None:
     """Rollups must source from cube_standard_summary (RCA Layer A1).
 
-    The Chapter-9 fixture has 6 distinct strands and 12 distinct cpalms
-    rows in cube_standard_summary; the broken substring chain previously
-    produced 4 strands and 4 standard rows. We assert the looser bound
+    The Chapter-9 fixture has 6 distinct strands and 12 distinct
+    Schoology canonical standards. We assert the looser bound
     (≥5 strands, ≥10 standards) to remain robust to minor data shifts.
     """
     response = await admin_client.get(
@@ -162,7 +161,7 @@ async def test_sdd_standards_rollup_uses_cube_standard_summary(
         f"{[s.strand for s in payload.strands_rollup]}"
     )
     assert len(payload.standards_rollup) >= 10, (
-        f"expected ≥10 cpalms standard rows, got "
+        f"expected ≥10 Schoology standard rows, got "
         f"{len(payload.standards_rollup)}"
     )
     # Defense: ensure no empty-strand sentinel rows leak through
@@ -171,14 +170,13 @@ async def test_sdd_standards_rollup_uses_cube_standard_summary(
 
 
 @pytest.mark.anyio
-async def test_sdd_band_bars_at_cpalms_standard_grain(
+async def test_sdd_band_bars_at_schoology_standard_grain(
     admin_client: AsyncClient,
 ) -> None:
-    """Performance bands must render one row per cpalms_standard (RCA Layer A4).
+    """Performance bands must render one row per Schoology standard.
 
-    Per spec §4.4 (50_sdd_spec.md:143-184) the 3 × 100%-stacked bar
-    panels have ``dim_standard.cPalms_Standard`` on the Y-axis. The old
-    schema (``SddBandStrandRow``) flattened to per-strand.
+    The 3 × 100%-stacked bar panels have the Schoology canonical
+    standard on the Y-axis.
     """
     response = await admin_client.get(
         f"/api/v1/reports/standards-deep-dive/{ALIGNED_ITEM_ID}"
@@ -194,7 +192,7 @@ async def test_sdd_band_bars_at_cpalms_standard_grain(
         # Pydantic validation already ensures the field is present; we
         # assert non-empty to guard against an upstream regression where
         # the field is wired but blank.
-        assert row.cpalms_standard, (
-            "band row missing cpalms_standard — schema regressed to "
+        assert row.schoology_standard, (
+            "band row missing schoology_standard — schema regressed to "
             "strand grain?"
         )
