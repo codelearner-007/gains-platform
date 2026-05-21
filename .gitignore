@@ -79,3 +79,6 @@ docs/_research/
 
 # Raw PowerBI binary stays local; extracted breakdown under data/_pbix_extract is tracked.
 data/Assessment Analysis Dashboard.pbix
+
+# Seed-loader backups (left by supabase/seeds/refresh_standards.py)
+supabase/seeds/*.csv.bak
