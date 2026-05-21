@@ -79,14 +79,6 @@ export const authService = {
     await apiClient.post('/auth/callback', { code });
   },
 
-  async setupMFA(): Promise<unknown> {
-    return apiClient.post<unknown>('/auth/mfa/setup');
-  },
-
-  async verifyMFA(code: string): Promise<unknown> {
-    return apiClient.post<unknown>('/auth/mfa/verify', { code });
-  },
-
   // MFA Management
   async listMFAFactors(): Promise<MFAFactorsResponse> {
     return apiClient.get<MFAFactorsResponse>('/auth/mfa/factors');

@@ -32,22 +32,11 @@ export interface PermissionsGroupedByModule {
   permissions: PermissionResponse[];
 }
 
-export interface RoleWithPermissions extends RoleResponse {
-  permissions: PermissionResponse[];
-}
-
 /**
  * List all roles
  */
 export async function listRoles(): Promise<RoleResponse[]> {
   return apiClient.get<RoleResponse[]>('/v1/roles');
-}
-
-/**
- * Get role with permissions
- */
-export async function getRoleWithPermissions(roleId: string): Promise<RoleWithPermissions> {
-  return apiClient.get<RoleWithPermissions>(`/v1/roles/${roleId}`);
 }
 
 /**
@@ -177,13 +166,6 @@ export async function listUsersWithRoles(
   ).toString();
 
   return apiClient.get<PaginatedUsersResponse>(`/v1/users/with-roles?${queryString}`);
-}
-
-/**
- * Get user's assigned roles
- */
-export async function getUserRoles(userId: string): Promise<UserRoleResponse[]> {
-  return apiClient.get<UserRoleResponse[]>(`/v1/users/${userId}/roles`);
 }
 
 /**
