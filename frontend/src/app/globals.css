@@ -286,9 +286,77 @@
 .report-rich-html img:not(.report-image-fallback) {
   cursor: zoom-in;
 }
+
+/* ─── Lightbox (yet-another-react-lightbox-lite) ──────────────────────────
+   Overrides the library's default fullscreen + black layout so we get a
+   centered modal with breathing room and a light "plate" behind the image.
+   The plate handles three image-background cases (transparent / white /
+   black/dark) by giving every image a light gray padding ring so its edges
+   are always delineated against the dark backdrop. */
+
+.yarll__portal {
+  /* Backdrop: dark, semi-transparent so the underlying page peeks through
+     and the modal feels overlaid rather than full-screen. */
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(2px);
+}
+
+.yarll__carousel {
+  /* Frame the slide so the image is centered with margin instead of
+     edge-to-edge. clamp keeps it responsive (32px min, ~6vw, 64px max). */
+  margin: clamp(2rem, 6vw, 4rem);
+}
+
+.yarll__slide_image {
+  /* Bound the image so it never feels overwhelming. min() caps in both
+     viewport-relative and absolute terms so very large monitors don't get
+     an oversized preview. */
+  max-width: min(80vw, 1100px);
+  max-height: min(80vh, 800px);
+
+  /* Light "plate" behind the image. Padding becomes a visible inner
+     border-ring; background-color shows through transparent PNGs and
+     provides contrast against dark image content. */
+  background-color: #f8fafc;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+
+  /* Cursor: zoom-out hint when hovering the plate inside the modal. */
+  cursor: zoom-out;
+}
+
+/* Toolbar (close button + zoom). Lift it slightly above the image plate
+   and give it a subtle backdrop so it stays visible over any image. */
+.yarll__toolbar {
+  top: clamp(1rem, 3vw, 1.5rem);
+  right: clamp(1rem, 3vw, 1.5rem);
+}
+.yarll__button {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease;
+}
+@media (hover: hover) {
+  .yarll__button:hover {
+    background-color: rgba(255, 255, 255, 0.22);
+  }
+}
+.yarll__button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .report-rich-html img,
-  .yarl__container * {
+  .yarll__portal,
+  .yarll__portal * {
     transition: none !important;
     animation: none !important;
   }
