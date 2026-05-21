@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
+import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import KpiStrip from '@/components/app/modules/reports/qra/KpiStrip';
 import AssessmentReportHeader from '@/components/app/modules/reports/shared/AssessmentReportHeader';
 import ReportBreadcrumb, {

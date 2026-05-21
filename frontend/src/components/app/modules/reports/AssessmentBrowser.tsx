@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { FileBarChart, Layers, type LucideIcon } from 'lucide-react';
-import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
+import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { Button } from '@/components/ui/button';
 import ReportFilters from './shared/ReportFilters';

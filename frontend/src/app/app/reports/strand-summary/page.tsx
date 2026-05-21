@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
+import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { StrandSummaryFilters } from '@/lib/reports/types';
 import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';

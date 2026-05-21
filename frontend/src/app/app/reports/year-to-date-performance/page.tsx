@@ -1,8 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
-import PageHeader from '@/components/app/modules/reports/ytd/PageHeader';
+import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
+import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import KpiStrip from '@/components/app/modules/reports/ytd/KpiStrip';
 import OverallTrendChart from '@/components/app/modules/reports/ytd/OverallTrendChart';
 import GradeDistributionChart from '@/components/app/modules/reports/ytd/GradeDistributionChart';
@@ -37,6 +37,22 @@ export default function YearToDatePerformancePage() {
     );
   if (!data) return null;
 
+  const subtitleParts = [
+    data.school.current_session
+      ? `Academic year ${data.school.current_session}`
+      : null,
+    data.period.date_from && data.period.date_to
+      ? `${data.period.date_from} – ${data.period.date_to}`
+      : null,
+    data.kpis.total_assessments
+      ? `${data.kpis.total_assessments} assessment${data.kpis.total_assessments === 1 ? '' : 's'}`
+      : null,
+  ].filter(Boolean) as string[];
+  const subtitle =
+    subtitleParts.length > 0
+      ? subtitleParts.join(' • ')
+      : 'Cross-assessment performance dashboard';
+
   return (
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2">
@@ -45,10 +61,11 @@ export default function YearToDatePerformancePage() {
       </div>
 
       <div className="mb-2">
-        <PageHeader
-          school={data.school}
-          period={data.period}
-          totalAssessments={data.kpis.total_assessments}
+        <ReportPageHeader
+          logoUrl={data.school.logo_url}
+          title="Year-To-Date Performance"
+          subtitle={subtitle}
+          meta={data.school.name || undefined}
         />
       </div>
 

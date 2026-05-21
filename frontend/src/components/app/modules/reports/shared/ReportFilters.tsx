@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { reportsApi, reportsKeys } from '@/lib/services/reports-service';
+import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { AssessmentFilters } from '@/lib/reports/types';
 
 const ANY = '__any__';
