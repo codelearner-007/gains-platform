@@ -186,7 +186,7 @@ class StandardSummaryRow(BaseModel):
     percentage_incorrect_answers: float
 
 
-# ─── Standards Deep Dive (per-assessment) ──────────────────────────────────
+# ─── Standards Deep Dive interactive (per-assessment) ─────────────────────
 
 
 class SddKpis(BaseModel):
@@ -235,7 +235,7 @@ class SddBandStandardRow(BaseModel):
 
 
 class StandardsDeepDivePayload(BaseModel):
-    """Standards Deep Dive endpoint — per-assessment rollup."""
+    """Standards Deep Dive interactive endpoint — per-assessment rollup."""
 
     assessment: AssessmentMeta
     kpis: SddKpis
@@ -251,7 +251,7 @@ class QuestionResponseAnalysisPayload(BaseModel):
     """Composed payload for the QRA report.
 
     The ``strands_rollup`` and ``standards_rollup`` arrays use the same
-    shape as Standards Deep Dive so a single helper computes both.
+    shape as Standards Deep Dive interactive so a single helper computes both.
 
     ``data_quality`` is the standards-alignment block; the QRA page gates
     on ``alignment_status === "missing"`` to render the explanatory
@@ -269,7 +269,7 @@ class QuestionResponseAnalysisPayload(BaseModel):
     data_quality: Optional[AlignmentDataQuality] = None
 
 
-# ─── Year-To-Date Performance ──────────────────────────────────────────────
+# ─── Year To Date - Longitudinal Report ────────────────────────────────────
 
 
 class YTDSchoolInfo(BaseModel):

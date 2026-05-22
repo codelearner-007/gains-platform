@@ -20,13 +20,13 @@ const ROW_ACTIONS: Array<{
   {
     pathname: '/app/reports/question-response-analysis',
     label: 'QRA',
-    ariaPrefix: 'Open Question Response Analysis for',
+    ariaPrefix: 'Open Question Response Analysis Interactive for',
     icon: FileBarChart,
   },
   {
     pathname: '/app/reports/standards-deep-dive',
     label: 'SDD',
-    ariaPrefix: 'Open Standards Deep Dive for',
+    ariaPrefix: 'Open Standards Deep Dive interactive for',
     icon: Layers,
   },
 ];
@@ -135,8 +135,8 @@ export default function AssessmentBrowser() {
 
       <p className="text-[11px] text-muted-foreground px-1">
         Need to drill into a specific incorrect answer? Open the assessment&apos;s
-        Question Response Analysis, then click a question number in the Question
-        Summary table.
+        Question Response Analysis Interactive, then click a question number in
+        the Question Summary table.
       </p>
     </div>
   );

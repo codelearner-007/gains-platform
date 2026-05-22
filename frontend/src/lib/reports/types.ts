@@ -93,7 +93,7 @@ export interface KPIs {
   total_score: number;
 }
 
-// ─── Standards Deep Dive (per-assessment) ────────────────────────────────
+// ─── Standards Deep Dive interactive (per-assessment) ────────────────────
 
 export interface SddKpis {
   instructors: string[];
@@ -251,7 +251,7 @@ export interface SessionRow {
   session: string | null;
 }
 
-// ─── Year-To-Date Performance ───────────────────────────────────────────
+// ─── Year To Date - Longitudinal Report ─────────────────────────────────
 
 export interface YTDSchoolInfo {
   name: string;

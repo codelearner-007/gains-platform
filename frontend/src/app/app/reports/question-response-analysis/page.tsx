@@ -76,7 +76,7 @@ export default function QuestionResponseAnalysisPage() {
       <div className="mb-2">
         <AssessmentReportHeader
           assessment={data.assessment}
-          title="Question Response Analysis"
+          title="Question Response Analysis Interactive"
         />
       </div>
 
@@ -91,7 +91,7 @@ export default function QuestionResponseAnalysisPage() {
       {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
           quality={data.data_quality}
-          reportLabel="Question Response Analysis"
+          reportLabel="Question Response Analysis Interactive"
           displayMode="banner"
         />
       )}

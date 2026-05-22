@@ -494,7 +494,7 @@ class CubeRepository:
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
-    # Per-assessment strand / standard rollups (Standards Deep Dive page
+    # Per-assessment strand / standard rollups (Standards Deep Dive interactive page
     # AND the QRA Strands/Standards summary tables).
     # ────────────────────────────────────────────────────────────────────
     async def get_strand_rollup_for_item(
@@ -1368,7 +1368,7 @@ class CubeRepository:
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
-    # Year-To-Date Performance (cross-assessment, school-wide)
+    # Year To Date - Longitudinal Report (cross-assessment, school-wide)
     # ────────────────────────────────────────────────────────────────────
     async def get_ytd_school_meta(
         self,

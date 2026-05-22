@@ -601,7 +601,7 @@ class ReportService:
         )
 
     # ────────────────────────────────────────────────────────────────────
-    # Standards Deep Dive (per-assessment, mirrors PBIX page #16)
+    # Standards Deep Dive interactive (per-assessment, mirrors PBIX page #16)
     # ────────────────────────────────────────────────────────────────────
     async def build_standards_deep_dive(
         self, item_id: str
@@ -830,7 +830,7 @@ class ReportService:
         )
 
     # ────────────────────────────────────────────────────────────────────
-    # Year-To-Date Performance (cross-assessment, school-wide)
+    # Year To Date - Longitudinal Report (cross-assessment, school-wide)
     # ────────────────────────────────────────────────────────────────────
     async def build_year_to_date_performance(
         self,

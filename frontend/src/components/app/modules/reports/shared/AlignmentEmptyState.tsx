@@ -9,7 +9,7 @@ import type {
 interface AlignmentEmptyStateProps {
   /** The data_quality block from the report payload. */
   quality: AlignmentDataQuality;
-  /** Label of the report we're rendering inside ("Standards Deep Dive" etc.) — used in the headline. */
+  /** Label of the report we're rendering inside ("Standards Deep Dive interactive" etc.) — used in the headline. */
   reportLabel: string;
   /**
    * Layout mode. ``"block"`` (default) renders a large card that replaces

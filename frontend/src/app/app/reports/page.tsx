@@ -14,7 +14,7 @@ export const metadata = {
 const PROGRAM_REPORTS = [
   {
     href: '/app/reports/year-to-date-performance',
-    title: 'Year-To-Date Performance',
+    title: 'Year To Date - Longitudinal Report',
     description:
       'Trend, grade distribution, strand heat-map, and most-improved/dropped students for the current session.',
     icon: LineChart,

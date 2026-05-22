@@ -24,7 +24,7 @@ import { useReportFilters } from '@/lib/reports/filters';
 import { deriveSdd } from '@/lib/reports/filter-helpers';
 
 /**
- * Standards Deep Dive — layout mirrors the legacy PBIX page #16
+ * Standards Deep Dive interactive — layout mirrors the legacy PBIX page #16
  * (``data/_pbix_extract/50_sdd_spec.md``). Adds PowerBI-style click
  * cross-filtering: clicking a strand tile / standard row / band-chart
  * row filters every other panel on the page (except the Total Students
@@ -80,7 +80,7 @@ export default function StandardsDeepDivePage() {
       <div className="mb-2">
         <AssessmentReportHeader
           assessment={data.assessment}
-          title="Standards Deep Dive"
+          title="Standards Deep Dive interactive"
         />
       </div>
 
@@ -95,7 +95,7 @@ export default function StandardsDeepDivePage() {
       {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
           quality={data.data_quality}
-          reportLabel="Standards Deep Dive"
+          reportLabel="Standards Deep Dive interactive"
           displayMode="banner"
         />
       )}

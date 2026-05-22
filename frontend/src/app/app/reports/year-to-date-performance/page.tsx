@@ -52,14 +52,14 @@ export default function YearToDatePerformancePage() {
   return (
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2">
-        <ReportBreadcrumb crumbs={programCrumbs('Year-To-Date Performance')} />
+        <ReportBreadcrumb crumbs={programCrumbs('Year To Date - Longitudinal Report')} />
         <ReportTypeSwitcher group="program" />
       </div>
 
       <div className="mb-2">
         <ReportPageHeader
           logoUrl={data.school.logo_url}
-          title="Year-To-Date Performance"
+          title="Year To Date - Longitudinal Report"
           subtitle={
             data.school.current_session
               ? `Academic year ${data.school.current_session}`

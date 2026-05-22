@@ -32,13 +32,13 @@ interface TabDef<S extends string> {
 const ASSESSMENT_TABS: TabDef<AssessmentReportSlug>[] = [
   {
     slug: 'question-response-analysis',
-    label: 'Question Response Analysis',
+    label: 'Question Response Analysis Interactive',
     shortLabel: 'QRA',
     icon: FileBarChart,
   },
   {
     slug: 'standards-deep-dive',
-    label: 'Standards Deep Dive',
+    label: 'Standards Deep Dive interactive',
     shortLabel: 'SDD',
     icon: Layers,
   },
@@ -54,7 +54,7 @@ const IAD_TAB: TabDef<AssessmentReportSlug> = {
 const PROGRAM_TABS: TabDef<ProgramReportSlug>[] = [
   {
     slug: 'year-to-date-performance',
-    label: 'Year-To-Date Performance',
+    label: 'Year To Date - Longitudinal Report',
     shortLabel: 'YTD',
     icon: LineChart,
   },
