@@ -13,6 +13,9 @@ venv/
 dist/
 build/
 
+# Deploy CLI local link state — per-developer, contains project + org IDs
+.vercel/
+
 # Environment files — ignore actual secrets, never ignore example templates
 .env
 .env.local
