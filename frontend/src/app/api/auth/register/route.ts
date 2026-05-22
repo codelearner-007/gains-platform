@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       email: validated.email,
       password: validated.password,
       options: {
-        emailRedirectTo: `${origin}/app`,
+        emailRedirectTo: `${origin}/auth/callback?next=/app`,
         data: {
           full_name: validated.full_name || '',
         },

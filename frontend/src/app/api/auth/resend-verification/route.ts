@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${origin}/app`,
+        emailRedirectTo: `${origin}/auth/callback?next=/app`,
       },
     });
 
