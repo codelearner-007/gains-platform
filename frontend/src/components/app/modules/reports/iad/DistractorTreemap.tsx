@@ -26,13 +26,24 @@ interface TreemapContentProps {
   y?: number;
   width?: number;
   height?: number;
-  payload?: TreeRow;
+  name?: string;
+  size?: number;
+  share?: number;
+  fill?: string;
 }
 
 function TreeCell(props: TreemapContentProps) {
-  const { x = 0, y = 0, width = 0, height = 0, payload } = props;
-  if (!payload || width <= 0 || height <= 0) return null;
-  const label = payload.name;
+  const {
+    x = 0,
+    y = 0,
+    width = 0,
+    height = 0,
+    name = '',
+    size = 0,
+    share = 0,
+    fill,
+  } = props;
+  if (width <= 0 || height <= 0) return null;
   const canFit = width > 60 && height > 30;
   return (
     <g>
@@ -41,22 +52,16 @@ function TreeCell(props: TreemapContentProps) {
         y={y}
         width={width}
         height={height}
-        style={{ fill: payload.fill, stroke: '#fff', strokeWidth: 2 }}
+        style={{ fill: fill ?? '#ccc', stroke: '#fff', strokeWidth: 2 }}
       />
       {canFit && (
-        <text
-          x={x + 6}
-          y={y + 16}
-          fill="#000"
-          fontSize={11}
-          fontWeight={600}
-        >
-          {label.length > 24 ? `${label.slice(0, 23)}…` : label}
+        <text x={x + 6} y={y + 16} fill="#000" fontSize={11} fontWeight={600}>
+          {name.length > 24 ? `${name.slice(0, 23)}…` : name}
         </text>
       )}
       {canFit && height > 36 && (
         <text x={x + 6} y={y + 30} fill="#000" fontSize={10}>
-          {payload.size} ({(payload.share * 100).toFixed(0)}%)
+          {size} ({(share * 100).toFixed(0)}%)
         </text>
       )}
     </g>
