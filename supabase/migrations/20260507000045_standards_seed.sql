@@ -63,6 +63,14 @@ CREATE INDEX dim_strand_strand_id_idx  ON dim_strand (strand_id);
 GRANT SELECT ON dim_standard TO anon, authenticated;
 GRANT SELECT ON dim_strand   TO anon, authenticated;
 
+-- Supabase Cloud auto-enables RLS on every public table. These two are
+-- global lookups (see header) with no per-tenant column, so we explicitly
+-- disable RLS to defeat that default; otherwise every authenticated/anon
+-- read returns zero rows and downstream report endpoints (Standard
+-- Summary, Strand Summary) silently render empty.
+ALTER TABLE dim_standard DISABLE ROW LEVEL SECURITY;
+ALTER TABLE dim_strand   DISABLE ROW LEVEL SECURITY;
+
 DO $$ BEGIN
   RAISE NOTICE 'dim_standard/dim_strand created. Run `python supabase/seeds/load_standards.py` to load 7958 + 7071 rows.';
 END $$;
