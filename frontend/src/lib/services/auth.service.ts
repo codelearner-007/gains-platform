@@ -60,7 +60,7 @@ export const authService = {
   },
 
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
-    return apiClient.post('/auth/register', { email, resend: true });
+    return apiClient.post('/auth/resend-verification', { email });
   },
 
   async logout(): Promise<{ message: string }> {
