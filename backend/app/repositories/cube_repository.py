@@ -1757,9 +1757,18 @@ class CubeRepository:
         """Per-answer-choice rollup for one question (cube_questionincorrectchoice_summary).
 
         Empty/null answer_submission rows are dropped (matches PBIX M filter).
+
+        ``answer_submission`` arrives prefixed with a randomised option
+        letter ("a. ", "b. ", …) — Schoology shuffles option positions per
+        student, so the same logical answer can appear under 4 different
+        letters. The cube preserves the raw string for legacy parity (per
+        notebook lines 1772-1798), so we strip the prefix and re-aggregate
+        here at the read layer — same precedent as
+        ``get_canonical_kpis_for_item`` which collapses the
+        (user, question, position_number) alias fan-out before averaging.
         """
         sql = text(
-            """
+            r"""
             WITH item_qids AS (
                 SELECT DISTINCT question_id
                 FROM cube_question_summary
@@ -1768,15 +1777,16 @@ class CubeRepository:
             ),
             choices AS (
                 SELECT
-                    qic.answer_submission,
-                    SUM(qic.total_student)        AS students_count,
-                    SUM(qic.total_score)          AS total_score,
-                    SUM(qic.total_possible_point) AS total_possible_point
+                    regexp_replace(qic.answer_submission, '^\s*[a-zA-Z]\.\s+', '')
+                                                          AS answer_submission,
+                    SUM(qic.total_student)                AS students_count,
+                    SUM(qic.total_score)                  AS total_score,
+                    SUM(qic.total_possible_point)         AS total_possible_point
                 FROM cube_questionincorrectchoice_summary qic
                 JOIN item_qids iq ON iq.question_id = qic.question_id
                 WHERE qic.answer_submission IS NOT NULL
                   AND qic.answer_submission <> ''
-                GROUP BY qic.answer_submission
+                GROUP BY regexp_replace(qic.answer_submission, '^\s*[a-zA-Z]\.\s+', '')
             ),
             totals AS (
                 SELECT SUM(students_count) AS total_students FROM choices
@@ -1815,9 +1825,15 @@ class CubeRepository:
         points_received / points_possible / answer_submission — only the
         standard column differs. We collapse with DISTINCT ON to restore
         one row per (user, submission) for display.
+
+        ``answer_submission`` / ``correct_answer`` arrive prefixed with the
+        random option-letter ("b. …") that Schoology shuffled for this
+        student. The letter is per-submission metadata, not part of the
+        answer's identity, so we strip it for display — same handling as
+        :meth:`get_distractor_breakdown`.
         """
         sql = text(
-            """
+            r"""
             SELECT
                 user_uid,
                 user_name,
@@ -1832,8 +1848,14 @@ class CubeRepository:
                 SELECT DISTINCT ON (fss.user_uid, fss.submission)
                     COALESCE(fss.user_uid, '')                       AS user_uid,
                     COALESCE(NULLIF(fss.user_name, ''), '—')         AS user_name,
-                    COALESCE(fss.answer_submission, '')              AS answer_submission,
-                    COALESCE(fss.correct_answer, '')                 AS correct_answer,
+                    regexp_replace(
+                        COALESCE(fss.answer_submission, ''),
+                        '^\s*[a-zA-Z]\.\s+', ''
+                    )                                                AS answer_submission,
+                    regexp_replace(
+                        COALESCE(fss.correct_answer, ''),
+                        '^\s*[a-zA-Z]\.\s+', ''
+                    )                                                AS correct_answer,
                     COALESCE(fss.points_received, 0)::numeric        AS points_received,
                     COALESCE(fss.points_possible, 0)::numeric        AS points_possible,
                     CASE
