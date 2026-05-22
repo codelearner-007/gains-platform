@@ -15,7 +15,9 @@ import ReportBreadcrumb, {
   programCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
 import KpiStrip from '@/components/app/modules/reports/strand-summary/KpiStrip';
+import StrandCard from '@/components/app/modules/reports/strand-summary/StrandCard';
 import StrandTreemap from '@/components/app/modules/reports/strand-summary/StrandTreemap';
 import StrandRollupTable from '@/components/app/modules/reports/strand-summary/StrandRollupTable';
 import StrandStandardsTable from '@/components/app/modules/reports/strand-summary/StrandStandardsTable';
@@ -30,8 +32,6 @@ export default function StrandSummaryPage() {
   const searchParams = useSearchParams();
   const selectedStrand = searchParams.get(SELECTED_PARAM) || null;
 
-  // Preserve the strand selection across filter changes via the
-  // useSummaryFilters preserveParams hook contract.
   const preserveParams = useMemo(
     () => ({ [SELECTED_PARAM]: selectedStrand }),
     [selectedStrand],
@@ -51,9 +51,14 @@ export default function StrandSummaryPage() {
     [router, searchParams],
   );
 
+  const queryFilters: StrandSummaryFilters = useMemo(
+    () => ({ ...filters, strand: selectedStrand ?? undefined }),
+    [filters, selectedStrand],
+  );
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.strandSummary(filters),
-    queryFn: () => reportsApi.strandSummary(filters),
+    queryKey: reportsKeys.strandSummary(queryFilters),
+    queryFn: () => reportsApi.strandSummary(queryFilters),
   });
 
   if (isLoading) return <LoadingState label="Loading strand summary…" />;
@@ -72,6 +77,10 @@ export default function StrandSummaryPage() {
   const subtitle = data.school.current_session
     ? `Academic year ${data.school.current_session} • ${data.kpis.total_strands} strands • ${data.kpis.total_standards} standards`
     : `${data.kpis.total_strands} strands • ${data.kpis.total_standards} standards`;
+
+  const strandsToRender = selectedStrand
+    ? data.strands_rollup.filter((s) => s.strand === selectedStrand)
+    : data.strands_rollup;
 
   return (
     <ReportCanvas>
@@ -105,36 +114,66 @@ export default function StrandSummaryPage() {
         />
       )}
 
-      <div className="mb-2">
+      {selectedStrand && (
+        <div className="mb-2 flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-xs">
+          <span>
+            Filtered to strand:{' '}
+            <span className="font-semibold">{selectedStrand}</span>
+          </span>
+          <button
+            type="button"
+            className="text-primary underline-offset-2 hover:underline"
+            onClick={() => setSelectedStrand(null)}
+          >
+            Clear strand filter
+          </button>
+        </div>
+      )}
+
+      {/* Legacy zone — per-strand chart pair repeater (PBIX page-ord-15) */}
+      <div className="flex flex-col gap-3">
+        {strandsToRender.length === 0 ? (
+          <div className="bg-white border border-border rounded p-6 text-center text-sm text-muted-foreground">
+            No strands match the current filters.
+          </div>
+        ) : (
+          strandsToRender.map((strand) => (
+            <StrandCard
+              key={strand.strand}
+              strand={strand}
+              standards={data.standards_rollup}
+            />
+          ))
+        )}
+      </div>
+
+      {data.data_refreshed_at && (
+        <div className="mt-3 text-right text-[11px] text-muted-foreground">
+          Standard Info. Adopted/Revised Date: {data.data_refreshed_at}
+        </div>
+      )}
+
+      <ReportAdditionalInsights>
         <StrandTreemap
           rows={data.strands_rollup}
           selectedStrand={selectedStrand}
           onSelectStrand={setSelectedStrand}
         />
-      </div>
-
-      <div className="mb-2">
         <StrandRollupTable
           strands={data.strands_rollup}
           selectedStrand={selectedStrand}
           onSelectStrand={setSelectedStrand}
         />
-      </div>
-
-      <div className="mb-2">
         <BandBars
           bandHigh={data.band_high}
           bandMid={data.band_mid}
           bandLow={data.band_low}
         />
-      </div>
-
-      <div>
         <StrandStandardsTable
           standards={data.standards_rollup}
           selectedStrand={selectedStrand}
         />
-      </div>
+      </ReportAdditionalInsights>
     </ReportCanvas>
   );
 }

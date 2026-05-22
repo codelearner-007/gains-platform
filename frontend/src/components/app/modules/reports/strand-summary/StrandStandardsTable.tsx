@@ -177,10 +177,7 @@ export default function StrandStandardsTable({
                   <td style={{ ...cellStyle, textAlign: 'center' }}>
                     <PerfPill
                       pct={row.grade_average_pct}
-                      color={
-                        row.perf_color ||
-                        performanceColor(row.grade_average)
-                      }
+                      color={performanceColor(row.grade_average)}
                     />
                   </td>
                 </tr>

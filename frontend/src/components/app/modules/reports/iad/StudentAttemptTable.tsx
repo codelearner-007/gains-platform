@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Check, X } from 'lucide-react';
 import type { IadStudentAttempt } from '@/lib/reports/types';
 import {
@@ -23,8 +23,6 @@ interface Props {
   attempts: IadStudentAttempt[];
 }
 
-type FilterMode = 'all' | 'correct' | 'incorrect';
-
 const dateFmt = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
@@ -39,31 +37,12 @@ function formatDate(iso: string): string {
   return dateFmt.format(d);
 }
 
-/**
- * Per-student attempt table — replicates the tableEx (visual #10) on
- * the PBIX IAD page. Adds a small filter pill row so a teacher can
- * toggle between "All / Correct / Incorrect" views.
- */
 export default function StudentAttemptTable({ attempts }: Props) {
-  const [filter, setFilter] = useState<FilterMode>('all');
-
-  const filtered = useMemo(() => {
-    const sorted = [...attempts].sort((a, b) =>
-      a.user_name.localeCompare(b.user_name),
-    );
-    if (filter === 'correct') return sorted.filter((a) => a.is_correct);
-    if (filter === 'incorrect') return sorted.filter((a) => !a.is_correct);
-    return sorted;
-  }, [attempts, filter]);
-
-  const correctCount = attempts.filter((a) => a.is_correct).length;
-  const incorrectCount = attempts.length - correctCount;
-
-  const pillBase =
-    'px-2.5 py-0.5 text-[11px] rounded-md transition-colors border';
-  const pillActive = 'bg-foreground text-background border-transparent';
-  const pillIdle =
-    'bg-white text-neutral-700 hover:bg-neutral-100 border-neutral-300';
+  const filtered = useMemo(
+    () =>
+      [...attempts].sort((a, b) => a.user_name.localeCompare(b.user_name)),
+    [attempts],
+  );
 
   return (
     <div
@@ -71,33 +50,10 @@ export default function StudentAttemptTable({ attempts }: Props) {
       style={{ borderColor: LAYOUT_BORDER }}
     >
       <div
-        className="px-3 py-1.5 text-[14px] font-bold text-black flex items-center justify-between gap-3"
+        className="px-3 py-1.5 text-[14px] font-bold text-black"
         style={{ backgroundColor: HEADER_BAR_BG }}
       >
-        <div>Per-Student Attempts</div>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className={`${pillBase} ${filter === 'all' ? pillActive : pillIdle}`}
-          >
-            All ({attempts.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('correct')}
-            className={`${pillBase} ${filter === 'correct' ? pillActive : pillIdle}`}
-          >
-            Correct ({correctCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('incorrect')}
-            className={`${pillBase} ${filter === 'incorrect' ? pillActive : pillIdle}`}
-          >
-            Incorrect ({incorrectCount})
-          </button>
-        </div>
+        Per-Student Attempts
       </div>
       <div className="w-full overflow-auto">
         <table

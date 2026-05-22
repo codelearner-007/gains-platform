@@ -15,8 +15,10 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import QuestionContextCard from '@/components/app/modules/reports/iad/QuestionContextCard';
 import KpiStrip from '@/components/app/modules/reports/iad/KpiStrip';
 import DistractorTable from '@/components/app/modules/reports/iad/DistractorTable';
+import DistractorTreemap from '@/components/app/modules/reports/iad/DistractorTreemap';
 import DistractorChart from '@/components/app/modules/reports/iad/DistractorChart';
 import StudentAttemptTable from '@/components/app/modules/reports/iad/StudentAttemptTable';
+import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
 
 export default function IncorrectAnswerDetailsPage() {
   const router = useRouter();
@@ -85,12 +87,16 @@ export default function IncorrectAnswerDetailsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
         <DistractorTable rows={data.distractors} />
-        <DistractorChart rows={data.distractors} />
+        <DistractorTreemap rows={data.distractors} />
       </div>
 
       <div>
         <StudentAttemptTable attempts={data.student_attempts} />
       </div>
+
+      <ReportAdditionalInsights>
+        <DistractorChart rows={data.distractors} />
+      </ReportAdditionalInsights>
     </ReportCanvas>
   );
 }

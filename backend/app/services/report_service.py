@@ -61,6 +61,7 @@ from app.schemas.reports import (
     StrandSummaryStandardRow,
     Student,
     YearToDatePerformancePayload,
+    YTDFilters,
     YTDGradeDistribution,
     YTDHeatmapCell,
     YTDKpis,
@@ -156,28 +157,11 @@ def _format_pct(v: float) -> str:
     return f"{v * 100:.1f}%"
 
 
-# PBIX 70/80 traffic-light hexes. Kept in sync with frontend
-# ``lib/reports/colors.ts`` so the server can stamp the perf-color directly
-# into the payload — saves the client from recomputing for every row.
-_PERF_PINK = "#FFB3D9"
-_PERF_YELLOW = "#FFF066"
-_PERF_GREEN = "#7BE38C"
-
 # PBIX-mandated band thresholds (Performance Color* DAX measures): a strand
 # or standard is "at target" at >=80%, "approaching" at 70–80%, and "needs
 # attention" below 70%.
 _BAND_HIGH_THRESHOLD = 0.8
 _BAND_MID_THRESHOLD = 0.7
-
-
-def _perf_color(grade: float) -> str:
-    if grade is None or grade <= 0:
-        return ""
-    if grade < _BAND_MID_THRESHOLD:
-        return _PERF_PINK
-    if grade < _BAND_HIGH_THRESHOLD:
-        return _PERF_YELLOW
-    return _PERF_GREEN
 
 
 def _decode_html(s: str) -> str:
@@ -191,6 +175,20 @@ def _decode_html(s: str) -> str:
     if not s:
         return ""
     return _html.unescape(s)
+
+
+def _coerce_str_list(value: Any) -> list[str]:
+    """Normalise a SQL string_agg / array_agg result into a clean str list.
+
+    Postgres ``array_agg`` lands as a Python ``list``; legacy ``string_agg``
+    lands as a comma-joined str. Both shapes appear across the codebase; this
+    helper accepts either, drops empties, and preserves order.
+    """
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if v]
+    return [s.strip() for s in str(value).split(",") if s.strip()]
 
 
 class ReportService:
@@ -836,13 +834,51 @@ class ReportService:
     # ────────────────────────────────────────────────────────────────────
     async def build_year_to_date_performance(
         self,
+        filters: Optional["YTDFilters"] = None,
     ) -> YearToDatePerformancePayload:
-        meta = await self.cube.get_ytd_school_meta() or {}
-        kpi_row = await self.cube.get_ytd_overall_kpis() or {}
-        timeline_rows = await self.cube.get_ytd_timeline()
-        grade_dist_rows = await self.cube.get_ytd_grade_distribution()
-        prog_rows = await self.cube.get_ytd_student_progression()
-        heatmap_rows = await self.cube.get_ytd_strand_heatmap()
+        f = filters or YTDFilters()
+        meta = await self.cube.get_ytd_school_meta(
+            session_filter=f.session,
+            subject=f.subject,
+            grade=f.grade,
+            category=f.category,
+            section=f.section,
+        ) or {}
+        kpi_row = await self.cube.get_ytd_overall_kpis(
+            session_filter=f.session,
+            subject=f.subject,
+            grade=f.grade,
+            category=f.category,
+            section=f.section,
+        ) or {}
+        timeline_rows = await self.cube.get_ytd_timeline(
+            session_filter=f.session,
+            subject=f.subject,
+            grade=f.grade,
+            category=f.category,
+            section=f.section,
+        )
+        grade_dist_rows = await self.cube.get_ytd_grade_distribution(
+            session_filter=f.session,
+            subject=f.subject,
+            grade=f.grade,
+            category=f.category,
+            section=f.section,
+        )
+        prog_rows = await self.cube.get_ytd_student_progression(
+            session_filter=f.session,
+            subject=f.subject,
+            grade=f.grade,
+            category=f.category,
+            section=f.section,
+        )
+        heatmap_rows = await self.cube.get_ytd_strand_heatmap(
+            session_filter=f.session,
+            subject=f.subject,
+            grade=f.grade,
+            category=f.category,
+            section=f.section,
+        )
 
         date_from = meta.get("date_from")
         date_to = meta.get("date_to")
@@ -850,6 +886,8 @@ class ReportService:
             name=safe_str(meta.get("name")),
             logo_url=meta.get("logo_url") or None,
             current_session=safe_str(meta.get("current_session")),
+            course_unit=safe_str(meta.get("course_unit")),
+            assessment_types=_coerce_str_list(meta.get("assessment_types")),
         )
         period = YTDPeriodInfo(
             date_from=date_from.isoformat() if date_from else "",
@@ -939,12 +977,16 @@ class ReportService:
 
         overall_avg = to_float(kpi_row.get("overall_avg"))
         kpis = YTDKpis(
+            total_questions=to_int(kpi_row.get("total_questions")),
             total_students=to_int(kpi_row.get("total_students")),
-            total_assessments=to_int(kpi_row.get("total_assessments")),
-            total_questions_answered=to_int(
-                kpi_row.get("total_questions_answered")
+            total_points_earned=round(
+                to_float(kpi_row.get("total_points_earned")), 2
+            ),
+            total_points_possible=round(
+                to_float(kpi_row.get("total_points_possible")), 2
             ),
             overall_avg_pct=_format_pct(overall_avg),
+            total_assessments=to_int(kpi_row.get("total_assessments")),
             students_improving=improving,
             students_declining=declining,
             most_improved=most_improved,
@@ -994,9 +1036,7 @@ class ReportService:
 
         standards: list[StandardSummaryRollupRow] = []
         strand_counts_acc: dict[str, dict[str, Any]] = {}
-        grade_sum = 0.0
         at_target = 0
-        total_questions_acc = 0
         for row in rows:
             schoology = safe_str(row.get("schoology_standard"))
             if not schoology:
@@ -1005,9 +1045,9 @@ class ReportService:
             num_q = to_int(row.get("num_questions"))
             num_a = to_int(row.get("num_assessments"))
             strand = _decode_html(safe_str(row.get("strand")))
-            description_raw = safe_str(row.get("description"))
-            description = _strip_html(description_raw)
+            description = _strip_html(safe_str(row.get("description")))
             last_change = row.get("last_change_date_time")
+            grades_list = _coerce_str_list(row.get("grades"))
             standards.append(
                 StandardSummaryRollupRow(
                     schoology_standard=schoology,
@@ -1016,18 +1056,16 @@ class ReportService:
                     cognitive_complexity=safe_str(row.get("cognitive_complexity")),
                     description=description,
                     subject=safe_str(row.get("subject")),
+                    grades=grades_list,
                     num_questions=num_q,
                     num_assessments=num_a,
                     grade_average=round(grade_avg, 6),
                     grade_average_pct=_format_pct(grade_avg),
-                    perf_color=_perf_color(grade_avg),
                     last_change_date_time=(
                         last_change.isoformat() if last_change else None
                     ),
                 )
             )
-            grade_sum += grade_avg
-            total_questions_acc += num_q
             if grade_avg >= _BAND_HIGH_THRESHOLD:
                 at_target += 1
             bucket = strand_counts_acc.setdefault(
@@ -1046,7 +1084,6 @@ class ReportService:
             bucket["rows"] += 1
 
         total_standards = len(standards)
-        grade_average = grade_sum / total_standards if total_standards else 0.0
         at_target_pct = at_target / total_standards if total_standards else 0.0
 
         strand_counts = sorted(
@@ -1066,9 +1103,26 @@ class ReportService:
             reverse=True,
         )
 
+        # Sequential — AsyncSession is not safe for concurrent statements
+        # on the same connection.
+        total_questions_cqso = await self.cube.get_school_total_questions(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+        grade_average = await self.cube.get_school_overall_grade_average(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+
         kpis = StandardSummaryKpis(
             total_standards=total_standards,
-            total_questions=total_questions_acc,
+            total_questions=total_questions_cqso,
             total_students=total_students,
             at_target_pct=round(at_target_pct, 6),
             at_target_pct_str=_format_pct(at_target_pct),
@@ -1129,6 +1183,7 @@ class ReportService:
             grade=filters.grade,
             category=filters.category,
             section=filters.section,
+            strand=filters.strand,
         )
         total_students = await self.cube.get_school_total_students(
             session_filter=filters.session,
@@ -1164,7 +1219,6 @@ class ReportService:
                     grade_average=round(grade_avg, 6),
                     grade_average_pct=_format_pct(grade_avg),
                     incorrect_pct=round(max(0.0, 1.0 - grade_avg), 6),
-                    perf_color=_perf_color(grade_avg),
                     subjects=subjects,
                 )
             )
@@ -1193,7 +1247,6 @@ class ReportService:
                 num_assessments=to_int(r.get("num_assessments")),
                 grade_average=round(to_float(r.get("grade_average")), 6),
                 grade_average_pct=_format_pct(to_float(r.get("grade_average"))),
-                perf_color=_perf_color(to_float(r.get("grade_average"))),
             )
             for r in std_rows
             if safe_str(r.get("schoology_standard"))
@@ -1201,29 +1254,31 @@ class ReportService:
 
         total_strands = len(strands_rollup)
         total_standards = sum(s.num_standards for s in strands_rollup)
-        total_questions = sum(s.num_questions for s in strands_rollup)
-        total_assessments_set: set[int] = set()
-        # Count distinct assessment ids across the union of strands; the
-        # strand-rollup itself counts per-strand-distinct only.
-        for r in strand_rows:
-            num_a = to_int(r.get("num_assessments"))
-            if num_a:
-                total_assessments_set.add(num_a)
-        # Since we don't carry item_ids back, fall back to using max of the
-        # per-strand counts as a lower bound. For an exact value we'd need a
-        # second query — pragmatic compromise: take the max.
-        total_assessments = max(
-            (to_int(r.get("num_assessments")) for r in strand_rows), default=0
+        # Mirrors PBIX `Total Question = DISTINCTCOUNT(cqso[Question_No])` so
+        # the KPI agrees across YTD / Standard / Strand Summary.
+        total_questions = await self.cube.get_school_total_questions(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
         )
-
-        if strands_rollup:
-            grade_average = sum(s.grade_average for s in strands_rollup) / len(
-                strands_rollup
-            )
-        else:
-            grade_average = 0.0
-            worst_strand = ""
-            worst_grade = 0.0
+        total_assessments = await self.cube.get_school_total_assessments(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+        # Mirrors PBIX `Grade_Average_Standard_Measure = AVERAGE(cqso[Grade_Average])`
+        # rather than mean-of-per-strand-means (which would weight strands equally).
+        grade_average = await self.cube.get_school_overall_grade_average(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
 
         kpis = StrandSummaryKpis(
             total_strands=total_strands,
@@ -1236,6 +1291,10 @@ class ReportService:
             worst_strand=worst_strand,
             worst_strand_pct=_format_pct(worst_grade) if worst_strand else "—",
         )
+
+        data_refreshed_at = (
+            await self.cube.get_school_data_refreshed_at()
+        ) or ""
 
         school = YTDSchoolInfo(
             name=safe_str(meta.get("name")),
@@ -1271,6 +1330,7 @@ class ReportService:
             band_mid=band_mid,
             band_low=band_low,
             data_quality=data_quality,
+            data_refreshed_at=data_refreshed_at,
         )
 
     # ────────────────────────────────────────────────────────────────────

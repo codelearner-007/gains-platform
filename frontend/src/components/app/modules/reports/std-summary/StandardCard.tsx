@@ -117,11 +117,14 @@ export default function StandardCard({ std }: StandardCardProps) {
       >
         <div className="flex items-center justify-between gap-2">
           <span className="truncate">{std.schoology_standard}</span>
-          {std.subject && (
-            <span className="text-[11px] font-medium opacity-90 truncate max-w-[130px]">
-              {std.subject}
-            </span>
-          )}
+          <span className="flex items-center gap-1.5 text-[11px] font-medium opacity-90 truncate max-w-[180px]">
+            {std.subject && <span className="truncate">{std.subject}</span>}
+            {std.grades && std.grades.length > 0 && (
+              <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px]">
+                {std.grades.join(', ')}
+              </span>
+            )}
+          </span>
         </div>
       </div>
 

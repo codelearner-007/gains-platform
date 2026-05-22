@@ -62,6 +62,39 @@ def _school_filter_params(
     }
 
 
+# YTD filter clauses — cube_user_summary has session/grade/subject/assessment_type
+# directly; section dereferences via dim_section.
+_CUS_YTD_FILTER_SQL = """\
+(CAST(:session_filter AS TEXT) IS NULL OR cus.session = CAST(:session_filter AS TEXT))
+              AND (CAST(:subject AS TEXT) IS NULL OR cus.subject = CAST(:subject AS TEXT))
+              AND (CAST(:grade AS TEXT) IS NULL OR cus.grade = CAST(:grade AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR cus.assessment_type = CAST(:category AS TEXT))
+              AND (
+                    CAST(:section AS TEXT) IS NULL
+                 OR cus.section_nid = CAST(:section AS TEXT)
+                 OR EXISTS (
+                      SELECT 1 FROM dim_section dsec
+                      WHERE dsec.school_id = cus.school_id
+                        AND dsec.item_id = cus.item_id
+                        AND (
+                          dsec.section_name = CAST(:section AS TEXT)
+                       OR dsec.section_code = CAST(:section AS TEXT)
+                       OR dsec.section_nid  = CAST(:section AS TEXT)
+                        )
+                    )
+                  )"""
+
+# YTD filter clause for cube_question_summary_overall — joins dim_subject for
+# session/grade/subject/category since cqso only carries subject_id. Section
+# filter is not meaningful at the per-question grain (section is a
+# class-roster construct), so it is intentionally ignored here.
+_CQSO_YTD_FILTER_SQL = """\
+(CAST(:session_filter AS TEXT) IS NULL OR dsubj.session = CAST(:session_filter AS TEXT))
+              AND (CAST(:subject AS TEXT) IS NULL OR dsubj.subject = CAST(:subject AS TEXT))
+              AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))"""
+
+
 class CubeRepository:
     """Reads from the cube_* and supporting fact tables."""
 
@@ -690,6 +723,108 @@ class CubeRepository:
         row = result.first()
         return _row_to_dict(row) if row else None
 
+    async def get_school_total_assessments(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> int:
+        """Distinct assessments (item_ids) within the chosen filter scope."""
+        sql = text(
+            f"""
+            SELECT COUNT(DISTINCT cus.item_id) AS total_assessments
+            FROM cube_user_summary cus
+            WHERE {_CUS_YTD_FILTER_SQL}
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(session_filter, subject, grade, category, section),
+        )
+        row = result.first()
+        return int(row._mapping["total_assessments"]) if row else 0
+
+    async def get_school_overall_grade_average(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> float:
+        """Re-aggregated AVG(cqso.grade_average) over filter scope.
+
+        Mirrors DAX ``Grade_Average_Standard_Measure``. Section filter
+        ignored at this grain (section is a class-roster construct,
+        questions are below it).
+        """
+        sql = text(
+            f"""
+            SELECT COALESCE(AVG(cqso.grade_average), 0)::float AS overall_avg
+            FROM cube_question_summary_overall cqso
+            LEFT JOIN dim_subject dsubj
+              ON dsubj.school_id = cqso.school_id
+             AND dsubj.subject_id = cqso.subject_id
+            WHERE {_CQSO_YTD_FILTER_SQL}
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(session_filter, subject, grade, category, section),
+        )
+        row = result.first()
+        return float(row._mapping["overall_avg"]) if row else 0.0
+
+    async def get_school_total_questions(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> int:
+        """DISTINCTCOUNT(ukey) over cube_question_summary_overall.
+
+        Matches PBIX DAX ``Total Question = DISTINCTCOUNT(cqso[Question_No])``.
+        Section filter ignored at this grain (questions are below section).
+        """
+        sql = text(
+            f"""
+            SELECT COUNT(DISTINCT cqso.ukey) AS total_questions
+            FROM cube_question_summary_overall cqso
+            LEFT JOIN dim_subject dsubj
+              ON dsubj.school_id = cqso.school_id
+             AND dsubj.subject_id = cqso.subject_id
+            WHERE {_CQSO_YTD_FILTER_SQL}
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(session_filter, subject, grade, category, section),
+        )
+        row = result.first()
+        return int(row._mapping["total_questions"]) if row else 0
+
+    async def get_school_data_refreshed_at(self) -> Optional[str]:
+        """Most-recent dim_standard.last_change_date_time, ISO formatted.
+
+        Surfaced as the "Data refreshed" footer line on report pages.
+        """
+        sql = text(
+            """
+            SELECT MAX(last_change_date_time) AS d
+            FROM dim_standard
+            """
+        )
+        result = await self.session.execute(sql)
+        row = result.first()
+        if row is None:
+            return None
+        d = row._mapping["d"]
+        return d.isoformat() if d else None
+
     async def get_school_total_students(
         self,
         session_filter: Optional[str] = None,
@@ -823,7 +958,8 @@ class CubeRepository:
                     qs.school_id,
                     qs.ukey,
                     qs.identifier,
-                    qs.item_id
+                    qs.item_id,
+                    qs.grade
                 FROM cube_question_summary qs
                 WHERE {_QS_SCHOOL_FILTER_SQL}
             ),
@@ -832,6 +968,7 @@ class CubeRepository:
                     iq.ukey,
                     iq.identifier,
                     iq.item_id,
+                    iq.grade,
                     ds.strand,
                     dst.schoology_standard,
                     dst.cluster,
@@ -868,6 +1005,11 @@ class CubeRepository:
                 COALESCE(NULLIF(sq.custom_cleaned_description, ''),
                          sq.description, '')                       AS description,
                 COALESCE(sq.std_subject, '')                       AS subject,
+                COALESCE(
+                    array_agg(DISTINCT NULLIF(sq.grade, ''))
+                      FILTER (WHERE NULLIF(sq.grade, '') IS NOT NULL),
+                    ARRAY[]::text[]
+                )                                                  AS grades,
                 COUNT(DISTINCT sq.ukey)                            AS num_questions,
                 COUNT(DISTINCT sq.item_id)                         AS num_assessments,
                 AVG(COALESCE(qa.grade_average, 0))                 AS grade_average,
@@ -1228,53 +1370,143 @@ class CubeRepository:
     # ────────────────────────────────────────────────────────────────────
     # Year-To-Date Performance (cross-assessment, school-wide)
     # ────────────────────────────────────────────────────────────────────
-    async def get_ytd_school_meta(self) -> Optional[Dict[str, Any]]:
+    async def get_ytd_school_meta(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        # School meta + course/unit + assessment-type list for legacy PBIX
+        # multiRowCard chrome (H2 Course+Unit, H2 Assessment Type).
         sql = text(
-            """
+            f"""
+            WITH scoped AS (
+                SELECT DISTINCT cus.school_id, cus.item_id, cus.subject,
+                                cus.grade, cus.session, cus.assessment_type,
+                                cus.item_name
+                FROM cube_user_summary cus
+                WHERE {_CUS_YTD_FILTER_SQL}
+            )
             SELECT
                 COALESCE(s.name, '')                          AS name,
                 COALESCE(s.logo_url, '')                      AS logo_url,
-                COALESCE(MAX(dsubj.session), '')              AS current_session,
-                MIN(di.assessment_date)                       AS date_from,
-                MAX(di.assessment_date)                       AS date_to,
-                COUNT(DISTINCT di.item_id)                    AS total_assessments
-            FROM dim_item di
-            LEFT JOIN dim_subject dsubj
-              ON dsubj.school_id = di.school_id
-             AND dsubj.subject_id = di.subject_id
-            LEFT JOIN public.schools s
-              ON s.school_id = di.school_id
-            GROUP BY s.name, s.logo_url
+                COALESCE(
+                    (SELECT MAX(session) FROM scoped),
+                    ''
+                )                                              AS current_session,
+                COALESCE(
+                    (SELECT string_agg(label, ' | ' ORDER BY label)
+                     FROM (
+                       SELECT DISTINCT NULLIF(
+                           trim(both ' / ' from
+                             concat_ws(' / ',
+                               NULLIF(subject, ''),
+                               NULLIF(grade, '')
+                             )
+                           ),
+                           ''
+                       ) AS label
+                       FROM scoped
+                     ) cu
+                     WHERE cu.label IS NOT NULL
+                    ),
+                    ''
+                )                                              AS course_unit,
+                COALESCE(
+                    (SELECT array_agg(at.assessment_type ORDER BY at.assessment_type)
+                     FROM (
+                       SELECT DISTINCT assessment_type
+                       FROM scoped
+                       WHERE assessment_type IS NOT NULL
+                         AND assessment_type <> ''
+                     ) at
+                    ),
+                    ARRAY[]::text[]
+                )                                              AS assessment_types,
+                (SELECT MIN(di.assessment_date)
+                   FROM dim_item di
+                   JOIN scoped sc ON sc.school_id = di.school_id AND sc.item_id = di.item_id
+                )                                              AS date_from,
+                (SELECT MAX(di.assessment_date)
+                   FROM dim_item di
+                   JOIN scoped sc ON sc.school_id = di.school_id AND sc.item_id = di.item_id
+                )                                              AS date_to,
+                (SELECT COUNT(DISTINCT item_id) FROM scoped)    AS total_assessments
+            FROM public.schools s
             LIMIT 1
             """
         )
-        result = await self.session.execute(sql)
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
+        )
         row = result.first()
         return _row_to_dict(row) if row else None
 
-    async def get_ytd_overall_kpis(self) -> Optional[Dict[str, Any]]:
+    async def get_ytd_overall_kpis(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        # Legacy "Key Measures" card (PBIX multiRowCard, _layout.full.json ord 8):
+        #   Total Questions  = DISTINCTCOUNT(question)        — over cqso
+        #   Total Students   = DISTINCTCOUNT(user_uid)        — over cube_user_summary
+        #   Score            = SUM(total_score)                — over cube_user_summary
+        #   Points Possible  = SUM(total_possible_point)       — over cube_user_summary
+        #   % Correct        = AVG(grade_average)              — over cqso
+        #                      (DAX: AVERAGE('cqso'[Grade_Average]))
         sql = text(
-            """
+            f"""
+            WITH cus_scoped AS (
+                SELECT cus.user_uid, cus.item_id,
+                       cus.total_score, cus.total_possible_point
+                FROM cube_user_summary cus
+                WHERE {_CUS_YTD_FILTER_SQL}
+            ),
+            cqso_scoped AS (
+                SELECT cqso.ukey, cqso.grade_average
+                FROM cube_question_summary_overall cqso
+                LEFT JOIN dim_subject dsubj
+                  ON dsubj.school_id = cqso.school_id
+                 AND dsubj.subject_id = cqso.subject_id
+                WHERE {_CQSO_YTD_FILTER_SQL}
+            )
             SELECT
-                COUNT(DISTINCT cus.user_uid)                  AS total_students,
-                COUNT(DISTINCT cus.item_id)                   AS total_assessments,
-                COUNT(*)                                      AS total_questions_answered,
-                CASE
-                  WHEN SUM(cus.total_possible_point) > 0
-                  THEN SUM(cus.total_score)::numeric
-                       / SUM(cus.total_possible_point)::numeric
-                  ELSE 0
-                END                                           AS overall_avg
-            FROM cube_user_summary cus
+                (SELECT COUNT(DISTINCT ukey) FROM cqso_scoped)              AS total_questions,
+                (SELECT COUNT(DISTINCT user_uid) FROM cus_scoped)            AS total_students,
+                (SELECT COALESCE(SUM(total_score), 0) FROM cus_scoped)       AS total_points_earned,
+                (SELECT COALESCE(SUM(total_possible_point), 0) FROM cus_scoped)
+                                                                              AS total_points_possible,
+                (SELECT COALESCE(AVG(grade_average), 0) FROM cqso_scoped)   AS overall_avg,
+                (SELECT COUNT(DISTINCT item_id) FROM cus_scoped)             AS total_assessments
             """
         )
-        result = await self.session.execute(sql)
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
+        )
         row = result.first()
         return _row_to_dict(row) if row else None
 
-    async def get_ytd_timeline(self) -> List[Dict[str, Any]]:
+    async def get_ytd_timeline(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         sql = text(
-            """
+            f"""
             WITH per_date_subject AS (
                 SELECT
                     di.assessment_date              AS d,
@@ -1288,6 +1520,7 @@ class CubeRepository:
                   ON dsubj.school_id = di.school_id
                  AND dsubj.subject_id = di.subject_id
                 WHERE di.assessment_date IS NOT NULL
+                  AND {_CUS_YTD_FILTER_SQL}
                 GROUP BY di.assessment_date, COALESCE(dsubj.subject, 'Other')
             ),
             per_date AS (
@@ -1300,6 +1533,7 @@ class CubeRepository:
                 JOIN dim_item di
                   ON di.item_id = cus.item_id
                 WHERE di.assessment_date IS NOT NULL
+                  AND {_CUS_YTD_FILTER_SQL}
                 GROUP BY di.assessment_date
             )
             SELECT
@@ -1314,12 +1548,24 @@ class CubeRepository:
             ORDER BY pd.d, pds.subject
             """
         )
-        result = await self.session.execute(sql)
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
+        )
         return [_row_to_dict(r) for r in result.all()]
 
-    async def get_ytd_grade_distribution(self) -> List[Dict[str, Any]]:
+    async def get_ytd_grade_distribution(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         sql = text(
-            """
+            f"""
             WITH user_item AS (
                 SELECT
                     cus.user_uid,
@@ -1327,6 +1573,7 @@ class CubeRepository:
                     SUM(cus.total_score)            AS s,
                     SUM(cus.total_possible_point)   AS p
                 FROM cube_user_summary cus
+                WHERE {_CUS_YTD_FILTER_SQL}
                 GROUP BY cus.user_uid, cus.item_id
             ),
             user_item_pct AS (
@@ -1347,12 +1594,24 @@ class CubeRepository:
             ORDER BY di.assessment_date
             """
         )
-        result = await self.session.execute(sql)
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
+        )
         return [_row_to_dict(r) for r in result.all()]
 
-    async def get_ytd_student_progression(self) -> List[Dict[str, Any]]:
+    async def get_ytd_student_progression(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
         sql = text(
-            """
+            f"""
             WITH user_item AS (
                 SELECT
                     cus.user_uid,
@@ -1365,6 +1624,7 @@ class CubeRepository:
                 JOIN dim_item di
                   ON di.item_id = cus.item_id
                 WHERE di.assessment_date IS NOT NULL
+                  AND {_CUS_YTD_FILTER_SQL}
                 GROUP BY cus.user_uid, cus.user_name, di.assessment_date, cus.item_id
             ),
             user_item_pct AS (
@@ -1403,7 +1663,12 @@ class CubeRepository:
             ORDER BY user_name
             """
         )
-        result = await self.session.execute(sql)
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
+        )
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
@@ -1597,7 +1862,17 @@ class CubeRepository:
         )
         return [_row_to_dict(r) for r in result.all()]
 
-    async def get_ytd_strand_heatmap(self) -> List[Dict[str, Any]]:
+    async def get_ytd_strand_heatmap(
+        self,
+        session_filter: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        # cube_standard_summary is at (school_id, item_id, strand_id, …) grain;
+        # we scope through dim_item → dim_subject for the 4 dim-subject filters
+        # and dim_section for section.
         sql = text(
             """
             SELECT
@@ -1611,14 +1886,39 @@ class CubeRepository:
             FROM cube_standard_summary cs
             JOIN dim_item di
               ON di.item_id = cs.item_id
+            LEFT JOIN dim_subject dsubj
+              ON dsubj.school_id = di.school_id
+             AND dsubj.subject_id = di.subject_id
             JOIN dim_strand ds
               ON ds.strand_id = cs.strand_id
              AND ds.identifier = cs.identifier
             WHERE ds.strand IS NOT NULL
               AND di.assessment_date IS NOT NULL
+              AND (CAST(:session_filter AS TEXT) IS NULL OR dsubj.session = CAST(:session_filter AS TEXT))
+              AND (CAST(:subject AS TEXT) IS NULL OR dsubj.subject = CAST(:subject AS TEXT))
+              AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))
+              AND (
+                    CAST(:section AS TEXT) IS NULL
+                 OR EXISTS (
+                      SELECT 1 FROM dim_section dsec
+                      WHERE dsec.school_id = di.school_id
+                        AND dsec.item_id = di.item_id
+                        AND (
+                          dsec.section_name = CAST(:section AS TEXT)
+                       OR dsec.section_code = CAST(:section AS TEXT)
+                       OR dsec.section_nid  = CAST(:section AS TEXT)
+                        )
+                    )
+                  )
             GROUP BY ds.strand, di.assessment_date
             ORDER BY ds.strand, di.assessment_date
             """
         )
-        result = await self.session.execute(sql)
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
+        )
         return [_row_to_dict(r) for r in result.all()]

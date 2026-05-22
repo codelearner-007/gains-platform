@@ -276,6 +276,8 @@ class YTDSchoolInfo(BaseModel):
     name: str
     logo_url: Optional[str] = None
     current_session: str
+    course_unit: str = ""
+    assessment_types: List[str] = []
 
 
 class YTDPeriodInfo(BaseModel):
@@ -289,11 +291,24 @@ class YTDStudentSummary(BaseModel):
     delta: float
 
 
+class YTDFilters(BaseModel):
+    session: Optional[str] = None
+    category: Optional[str] = None
+    subject: Optional[str] = None
+    grade: Optional[str] = None
+    section: Optional[str] = None
+
+
 class YTDKpis(BaseModel):
+    """PBIX "Key Measures" card plus derived counters used by the
+    Additional Insights zone."""
+
+    total_questions: int
     total_students: int
-    total_assessments: int
-    total_questions_answered: int
+    total_points_earned: float
+    total_points_possible: float
     overall_avg_pct: str
+    total_assessments: int
     students_improving: int
     students_declining: int
     most_improved: List[YTDStudentSummary]
@@ -443,11 +458,11 @@ class StandardSummaryRollupRow(BaseModel):
     cognitive_complexity: str
     description: str
     subject: str
+    grades: List[str] = []
     num_questions: int
     num_assessments: int
     grade_average: float
     grade_average_pct: str
-    perf_color: str
     last_change_date_time: Optional[str] = None
 
 
@@ -482,6 +497,7 @@ class StrandSummaryFilters(BaseModel):
     grade: Optional[str] = None
     category: Optional[str] = None
     section: Optional[str] = None
+    strand: Optional[str] = None
 
 
 class StrandSummaryKpis(BaseModel):
@@ -508,7 +524,6 @@ class StrandSummaryRollupRow(BaseModel):
     grade_average: float
     grade_average_pct: str
     incorrect_pct: float
-    perf_color: str
     subjects: List[str]
 
 
@@ -522,7 +537,6 @@ class StrandSummaryStandardRow(BaseModel):
     num_assessments: int
     grade_average: float
     grade_average_pct: str
-    perf_color: str
 
 
 class StrandSummaryBandRow(BaseModel):
@@ -546,6 +560,7 @@ class StrandSummaryPayload(BaseModel):
     band_mid: List[StrandSummaryBandRow]
     band_low: List[StrandSummaryBandRow]
     data_quality: Optional[AlignmentDataQuality] = None
+    data_refreshed_at: str = ""
 
 
 # ─── Standards-alignment Data Quality (admin) ──────────────────────────────

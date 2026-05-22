@@ -57,10 +57,11 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<StandardsDeepDivePayload>),
 
-  ytd: () =>
-    fetch('/api/v1/reports/year-to-date-performance', {
-      credentials: 'include',
-    }).then(handleResponse<YearToDatePerformancePayload>),
+  ytd: (filters?: AssessmentFilters) =>
+    fetch(
+      `/api/v1/reports/year-to-date-performance${buildQuery(filters)}`,
+      { credentials: 'include' },
+    ).then(handleResponse<YearToDatePerformancePayload>),
 
   standardSummary: (filters?: StandardSummaryFilters) =>
     fetch(`/api/v1/reports/standard-summary${buildQuery(filters)}`, {
@@ -113,7 +114,8 @@ export const reportsKeys = {
   all: ['reports'] as const,
   qra: (itemId: string) => [...reportsKeys.all, 'qra', itemId] as const,
   sdd: (itemId: string) => [...reportsKeys.all, 'sdd', itemId] as const,
-  ytd: () => [...reportsKeys.all, 'ytd'] as const,
+  ytd: (filters?: AssessmentFilters) =>
+    [...reportsKeys.all, 'ytd', filters ?? {}] as const,
   iad: (itemId: string, questionId: string) =>
     [...reportsKeys.all, 'iad', itemId, questionId] as const,
   standardSummary: (filters?: StandardSummaryFilters) =>

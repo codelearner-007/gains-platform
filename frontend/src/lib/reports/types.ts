@@ -257,6 +257,8 @@ export interface YTDSchoolInfo {
   name: string;
   logo_url: string | null;
   current_session: string;
+  course_unit: string;
+  assessment_types: string[];
 }
 
 export interface YTDPeriodInfo {
@@ -271,10 +273,12 @@ export interface YTDStudentSummary {
 }
 
 export interface YTDKpis {
+  total_questions: number;
   total_students: number;
-  total_assessments: number;
-  total_questions_answered: number;
+  total_points_earned: number;
+  total_points_possible: number;
   overall_avg_pct: string;
+  total_assessments: number;
   students_improving: number;
   students_declining: number;
   most_improved: YTDStudentSummary[];
@@ -405,11 +409,11 @@ export interface StandardSummaryRollupRow {
   cognitive_complexity: string;
   description: string;
   subject: string;
+  grades: string[];
   num_questions: number;
   num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
-  perf_color: string;
   last_change_date_time: string | null;
 }
 
@@ -437,6 +441,7 @@ export interface StrandSummaryFilters {
   grade?: string;
   category?: string;
   section?: string;
+  strand?: string;
 }
 
 export interface StrandSummaryKpis {
@@ -459,7 +464,6 @@ export interface StrandSummaryRollupRow {
   grade_average: number;
   grade_average_pct: string;
   incorrect_pct: number;
-  perf_color: string;
   subjects: string[];
 }
 
@@ -471,7 +475,6 @@ export interface StrandSummaryStandardRow {
   num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
-  perf_color: string;
 }
 
 export interface StrandSummaryBandRow {
@@ -491,6 +494,7 @@ export interface StrandSummaryPayload {
   band_mid: StrandSummaryBandRow[];
   band_low: StrandSummaryBandRow[];
   data_quality?: AlignmentDataQuality | null;
+  data_refreshed_at?: string;
 }
 
 // ─── Data Quality — Standards alignment (admin) ──────────────────────────

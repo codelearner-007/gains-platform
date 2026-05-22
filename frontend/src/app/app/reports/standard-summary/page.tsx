@@ -16,8 +16,10 @@ import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTy
 import KpiStrip from '@/components/app/modules/reports/std-summary/KpiStrip';
 import StandardCard from '@/components/app/modules/reports/std-summary/StandardCard';
 import StandardsTable from '@/components/app/modules/reports/std-summary/StandardsTable';
+import StandardsBarChart from '@/components/app/modules/reports/std-summary/StandardsBarChart';
 import StandardsByStrandChart from '@/components/app/modules/reports/std-summary/StandardsByStrandChart';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
+import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
 
 export default function StandardSummaryPage() {
   const { filters, setFilters } = useSummaryFilters<StandardSummaryFilters>({
@@ -79,7 +81,7 @@ export default function StandardSummaryPage() {
       )}
 
       <div className="mb-2">
-        <StandardsByStrandChart rows={data.strand_counts} />
+        <StandardsBarChart rows={data.standards} />
       </div>
 
       <div className="mb-2">
@@ -102,6 +104,10 @@ export default function StandardSummaryPage() {
       <div>
         <StandardsTable standards={data.standards} />
       </div>
+
+      <ReportAdditionalInsights>
+        <StandardsByStrandChart rows={data.strand_counts} />
+      </ReportAdditionalInsights>
     </ReportCanvas>
   );
 }

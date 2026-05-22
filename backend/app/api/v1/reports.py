@@ -25,6 +25,7 @@ from app.schemas.reports import (
     StrandSummaryFilters,
     StrandSummaryPayload,
     YearToDatePerformancePayload,
+    YTDFilters,
 )
 from app.services.report_service import ReportService
 
@@ -85,16 +86,30 @@ async def incorrect_answer_details(
     dependencies=[Depends(require_permission("reports:read"))],
 )
 async def year_to_date_performance(
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> YearToDatePerformancePayload:
     """Cross-assessment, school-wide YTD performance dashboard.
 
-    Composes timeline, grade distribution, student progression and a
-    strand heatmap from cube_user_summary / cube_standard_summary.
-    Requires: reports:read.
+    Composes the legacy PBIX "Key Measures" KPI card plus our extended
+    Additional Insights (timeline, grade distribution, student
+    progression, strand heatmap). All filter params optional; default =
+    whole-school rollup. Requires: reports:read.
     """
     service = ReportService(db)
-    return await service.build_year_to_date_performance()
+    return await service.build_year_to_date_performance(
+        YTDFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+        )
+    )
 
 
 @router.get(
@@ -159,13 +174,16 @@ async def strand_summary(
     subject: Optional[str] = None,
     grade: Optional[str] = None,
     section: Optional[str] = None,
+    strand: Optional[str] = None,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StrandSummaryPayload:
     """School-wide strand rollup (mirrors PBIX page #15).
 
     Aggregates cube_question_summary by strand across all assessments in
     the selected scope. All filter params optional; default = whole-school
-    rollup. Requires: reports:read.
+    rollup. The ``strand`` filter narrows the per-standard drill list
+    when the client cross-filters on a strand selection. Requires:
+    reports:read.
     """
     service = ReportService(db)
     return await service.build_strand_summary(
@@ -175,5 +193,6 @@ async def strand_summary(
             subject=subject,
             grade=grade,
             section=section,
+            strand=strand,
         )
     )
