@@ -4,8 +4,21 @@ import { useMemo } from 'react';
 import { ResponsiveContainer, Tooltip, Treemap } from 'recharts';
 import type { IadDistractorRow } from '@/lib/reports/types';
 import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
-import { sanitizeShortAnswer } from '@/lib/reports/format';
+import {
+  normalizeSchoologyAssetUrl,
+  sanitizeShortAnswer,
+} from '@/lib/reports/format';
 import { distractorFill, maxIncorrectShareOf } from './distractorFill';
+
+// Pulls the first <https://…> URL token out of a Schoology answer string,
+// matching the same `URL_IN_BRACKETS` regex format.ts uses to render
+// image answers in HTML tables. Returns null for plain-text answers.
+const URL_TOKEN = /<(https?:\/\/[^>\s]+)>/;
+function extractAnswerImageUrl(raw: string): string | null {
+  if (!raw) return null;
+  const m = raw.match(URL_TOKEN);
+  return m ? normalizeSchoologyAssetUrl(m[1]) : null;
+}
 
 interface Props {
   rows: IadDistractorRow[];
@@ -14,6 +27,7 @@ interface Props {
 interface TreeRow {
   name: string;
   fullAnswer: string;
+  imageUrl: string | null;
   size: number;
   share: number;
   isCorrect: boolean;
@@ -30,6 +44,7 @@ interface TreemapContentProps {
   size?: number;
   share?: number;
   fill?: string;
+  imageUrl?: string | null;
 }
 
 function TreeCell(props: TreemapContentProps) {
@@ -42,9 +57,23 @@ function TreeCell(props: TreemapContentProps) {
     size = 0,
     share = 0,
     fill,
+    imageUrl,
   } = props;
   if (width <= 0 || height <= 0) return null;
-  const canFit = width > 60 && height > 30;
+  const canFitLabel = width > 40 && height > 26;
+  const canFitImage = !!imageUrl && width > 50 && height > 50;
+  const countLine = `${size} (${(share * 100).toFixed(0)}%)`;
+
+  // Image answers (Schoology screenshots of math): render the picture
+  // inside the cell so teachers can see the math, not the URL fragment.
+  // Reserve the bottom strip of the cell for the count label.
+  const padding = 6;
+  const labelStripHeight = 18;
+  const imgX = x + padding;
+  const imgY = y + padding;
+  const imgWidth = Math.max(0, width - padding * 2);
+  const imgHeight = Math.max(0, height - padding * 2 - labelStripHeight);
+
   return (
     <g>
       <rect
@@ -54,14 +83,30 @@ function TreeCell(props: TreemapContentProps) {
         height={height}
         style={{ fill: fill ?? '#ccc', stroke: '#fff', strokeWidth: 2 }}
       />
-      {canFit && (
-        <text x={x + 6} y={y + 16} fill="#000" fontSize={11} fontWeight={600}>
+      {canFitImage && (
+        <image
+          href={imageUrl!}
+          x={imgX}
+          y={imgY}
+          width={imgWidth}
+          height={imgHeight}
+          preserveAspectRatio="xMidYMid meet"
+        />
+      )}
+      {canFitLabel && !canFitImage && (
+        <text x={x + padding} y={y + 16} fill="#000" fontSize={11} fontWeight={600}>
           {name.length > 24 ? `${name.slice(0, 23)}…` : name}
         </text>
       )}
-      {canFit && height > 36 && (
-        <text x={x + 6} y={y + 30} fill="#000" fontSize={10}>
-          {size} ({(share * 100).toFixed(0)}%)
+      {canFitLabel && (
+        <text
+          x={x + padding}
+          y={y + height - padding}
+          fill="#000"
+          fontSize={11}
+          fontWeight={600}
+        >
+          {countLine}
         </text>
       )}
     </g>
@@ -100,6 +145,7 @@ export default function DistractorTreemap({ rows }: Props) {
       return {
         name: clean,
         fullAnswer: clean,
+        imageUrl: extractAnswerImageUrl(r.answer_submission),
         size: r.students_count,
         share: r.share_of_attempts,
         isCorrect: r.is_correct,
