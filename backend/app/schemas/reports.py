@@ -107,16 +107,6 @@ class KPIs(BaseModel):
     total_score: float
 
 
-class Student(BaseModel):
-    user_uid: str
-    username: str
-    first_name: str
-    last_name: str
-    user_role_id: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class QuestionOverall(BaseModel):
     question_id: str
     question_no: str
@@ -147,26 +137,6 @@ class IncorrectChoice(BaseModel):
     total_possible_point: float
     grade_average: float
     students: List[str]
-
-
-class RawQuestionOption(BaseModel):
-    item_id: str
-    item_name: str
-    question_id: str
-    associated_question_id: str
-    total_points: float
-    question_type: str
-    question: str
-    position_number: str
-    sub_question: str
-    answer_option: str
-    answer_breakdown_count: float
-    answer_breakdown_pct: float
-    correct_answer: str
-    correctly_answered: float
-    most_points_earned: float
-    least_points_earned: float
-    average_points_earned: float
 
 
 class StandardSummaryRow(BaseModel):
@@ -260,10 +230,7 @@ class QuestionResponseAnalysisPayload(BaseModel):
 
     assessment: AssessmentMeta
     kpis: KPIs
-    students: List[Student]
     questions_overall: List[QuestionOverall]
-    incorrect_choices: List[IncorrectChoice]
-    raw_question_options: List[RawQuestionOption]
     strands_rollup: List[SddStrandRow] = []
     standards_rollup: List[SddStandardRow] = []
     data_quality: Optional[AlignmentDataQuality] = None
@@ -384,6 +351,8 @@ class IadKpis(BaseModel):
     correct_pct: str
     incorrect_pct: str
     distinct_answers: int
+    # Legacy PBIX's `Total Incorrect Choices` (DISTINCTCOUNT of wrong answers).
+    total_incorrect_choices: int
     top_wrong_answer: str
     top_wrong_count: int
     top_wrong_pct: str

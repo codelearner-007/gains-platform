@@ -10,11 +10,6 @@ interface Props {
   kpis: IadKpis;
 }
 
-/**
- * Per-question KPI strip — replicates the pivotTable + multiRowCard
- * cluster (visuals #3, #5, #11, #12) from the PBIX IAD page but
- * presented as five compact KPI cards.
- */
 function TopWrongValue({
   answer,
   count,
@@ -30,22 +25,23 @@ function TopWrongValue({
     );
   }
   return (
-    <div className="flex flex-col items-center justify-center gap-0.5 leading-tight">
-      <div className="text-[20px] font-bold text-black">{count}</div>
-      <div className="text-[10px] text-neutral-700 text-center px-1 leading-tight line-clamp-2">
+    <div className="flex flex-col items-center justify-center gap-0.5 leading-tight px-1">
+      <div className="text-[16px] font-bold text-black text-center max-w-full overflow-hidden">
         <RichReportHtml
           className="pilot-answer-html"
           html={formatAnswerHtml(answer, 'most common wrong answer')}
         />
       </div>
-      <div className="text-[11px] font-semibold text-black mt-0.5">{pct}</div>
+      <div className="text-[11px] text-neutral-700 font-medium">
+        {count} {count === 1 ? 'student' : 'students'} · {pct}
+      </div>
     </div>
   );
 }
 
 export default function KpiStrip({ kpis }: Props) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 w-full h-full">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 w-full h-full">
       <KpiCard
         className={IAD_CARD_CLASSNAME}
         valueClassName={IAD_VALUE_CLASSNAME}
@@ -87,6 +83,12 @@ export default function KpiStrip({ kpis }: Props) {
         valueClassName={IAD_VALUE_CLASSNAME}
         label="Distinct Answers"
         value={String(kpis.distinct_answers)}
+      />
+      <KpiCard
+        className={IAD_CARD_CLASSNAME}
+        valueClassName={IAD_VALUE_CLASSNAME}
+        label="Total Incorrect Choices"
+        value={String(kpis.total_incorrect_choices)}
       />
       <KpiCard
         className={IAD_CARD_CLASSNAME}

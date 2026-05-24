@@ -17,10 +17,35 @@ import {
 } from '../shared/tableStyles';
 import { formatAnswerHtml } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
+import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
 interface Props {
   rows: IadDistractorRow[];
 }
+
+type DistractorSortKey =
+  | 'is_correct'
+  | 'answer_submission'
+  | 'students_count'
+  | 'share_of_attempts';
+
+const DISTRACTOR_SORT_ACCESSORS: Record<
+  DistractorSortKey,
+  (r: IadDistractorRow) => string | number
+> = {
+  is_correct: (r) => (r.is_correct ? 1 : 0),
+  answer_submission: (r) => (r.answer_submission || '').toLowerCase(),
+  students_count: (r) => r.students_count,
+  share_of_attempts: (r) => r.share_of_attempts,
+};
+
+const DISTRACTOR_INITIAL_DIRECTIONS: Partial<
+  Record<DistractorSortKey, 'asc' | 'desc'>
+> = {
+  students_count: 'desc',
+  share_of_attempts: 'desc',
+  is_correct: 'desc',
+};
 
 /**
  * Distractor frequency table — replicates the pivotTable (visual #3)
@@ -29,10 +54,14 @@ interface Props {
  * and an inline % bar (PERF colour-graded for wrong choices).
  */
 export default function DistractorTable({ rows }: Props) {
-  const sorted = useMemo(
-    () => [...rows].sort((a, b) => b.students_count - a.students_count),
-    [rows],
-  );
+  const { sortedRows: sorted, sortColumn, sortDirection, onHeaderClick } =
+    useTableSort<IadDistractorRow, DistractorSortKey>({
+      rows,
+      accessors: DISTRACTOR_SORT_ACCESSORS,
+      defaultColumn: 'students_count',
+      defaultDirection: 'desc',
+      initialDirections: DISTRACTOR_INITIAL_DIRECTIONS,
+    });
   const maxIncorrectShare = useMemo(
     () => maxIncorrectShareOf(sorted),
     [sorted],
@@ -70,12 +99,45 @@ export default function DistractorTable({ rows }: Props) {
           </colgroup>
           <thead>
             <tr>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>Status</th>
-              <th style={headerStyle}>Answer</th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>
-                # Students
+              <th style={{ ...headerStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="is_correct"
+                  label="Status"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
               </th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>%</th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="answer_submission"
+                  label="Answer"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
+              <th style={{ ...headerStyle, textAlign: 'right' }}>
+                <SortableHeader
+                  column="students_count"
+                  label="# Students"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="right"
+                />
+              </th>
+              <th style={{ ...headerStyle, textAlign: 'right' }}>
+                <SortableHeader
+                  column="share_of_attempts"
+                  label="%"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="right"
+                />
+              </th>
               <th style={headerStyle}>Distribution</th>
             </tr>
           </thead>

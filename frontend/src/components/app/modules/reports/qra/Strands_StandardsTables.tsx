@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import type {
   KPIs,
   SddStandardRow,
@@ -12,6 +11,23 @@ import {
   tableCellStyle as cellStyle,
   tableHeaderStyle,
 } from '../shared/tableStyles';
+import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
+
+type StrandSortKey = 'strand' | 'num_standards' | 'num_questions' | 'grade_average';
+type StandardSortKey = 'schoology_standard' | 'num_questions' | 'grade_average';
+
+const STRAND_SORT_ACCESSORS: Record<StrandSortKey, (r: SddStrandRow) => string | number> = {
+  strand: (r) => r.strand.toLowerCase(),
+  num_standards: (r) => r.num_standards,
+  num_questions: (r) => r.num_questions,
+  grade_average: (r) => r.grade_average,
+};
+
+const STANDARD_SORT_ACCESSORS: Record<StandardSortKey, (r: SddStandardRow) => string | number> = {
+  schoology_standard: (r) => r.schoology_standard.toLowerCase(),
+  num_questions: (r) => r.num_questions,
+  grade_average: (r) => r.grade_average,
+};
 
 export function SummaryByStandardsHeader() {
   return (
@@ -35,13 +51,13 @@ export function StrandsTable({
   selectedStrand?: string | null;
   onSelectStrand?: (strand: string) => void;
 }) {
-  const rows = useMemo(
-    () =>
-      (strands ?? []).slice().sort((a, b) =>
-        a.strand.localeCompare(b.strand),
-      ),
-    [strands],
-  );
+  const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
+    useTableSort<SddStrandRow, StrandSortKey>({
+      rows: strands ?? [],
+      accessors: STRAND_SORT_ACCESSORS,
+      defaultColumn: 'strand',
+      defaultDirection: 'asc',
+    });
   const fallback = rows.length === 0;
   const value = kpis.grade_average;
 
@@ -59,15 +75,44 @@ export function StrandsTable({
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th style={tableHeaderStyle}>Strand</th>
-            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-              # of Standards
+            <th style={tableHeaderStyle}>
+              <SortableHeader
+                column="strand"
+                label="Strand"
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onClick={onHeaderClick}
+              />
             </th>
             <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-              # of Questions
+              <SortableHeader
+                column="num_standards"
+                label="# of Standards"
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onClick={onHeaderClick}
+                align="center"
+              />
             </th>
             <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-              % per Strand
+              <SortableHeader
+                column="num_questions"
+                label="# of Questions"
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onClick={onHeaderClick}
+                align="center"
+              />
+            </th>
+            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+              <SortableHeader
+                column="grade_average"
+                label="% per Strand"
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onClick={onHeaderClick}
+                align="center"
+              />
             </th>
           </tr>
         </thead>
@@ -159,15 +204,13 @@ export function StandardsTable({
   selectedStandard?: string | null;
   onSelectStandard?: (schoology_standard: string) => void;
 }) {
-  const rows = useMemo(
-    () =>
-      (standards ?? []).slice().sort((a, b) => {
-        const s = a.strand.localeCompare(b.strand);
-        if (s !== 0) return s;
-        return a.schoology_standard.localeCompare(b.schoology_standard);
-      }),
-    [standards],
-  );
+  const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
+    useTableSort<SddStandardRow, StandardSortKey>({
+      rows: standards ?? [],
+      accessors: STANDARD_SORT_ACCESSORS,
+      defaultColumn: 'schoology_standard',
+      defaultDirection: 'asc',
+    });
   const fallback = rows.length === 0;
   const value = kpis.grade_average;
 
@@ -185,12 +228,34 @@ export function StandardsTable({
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th style={tableHeaderStyle}>Standards</th>
-            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-              # of Questions
+            <th style={tableHeaderStyle}>
+              <SortableHeader
+                column="schoology_standard"
+                label="Standards"
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onClick={onHeaderClick}
+              />
             </th>
             <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-              % per Standard
+              <SortableHeader
+                column="num_questions"
+                label="# of Questions"
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onClick={onHeaderClick}
+                align="center"
+              />
+            </th>
+            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+              <SortableHeader
+                column="grade_average"
+                label="% per Standard"
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onClick={onHeaderClick}
+                align="center"
+              />
             </th>
           </tr>
         </thead>

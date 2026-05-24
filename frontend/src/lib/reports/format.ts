@@ -245,3 +245,8 @@ export function sanitizeShortAnswer(raw: string | null | undefined): string {
   if (SHORT_ANSWER_BARE_URL.test(trimmed)) return '[image]';
   return trimmed.replace(SHORT_ANSWER_URL_IN_BRACKETS, '[image]');
 }
+
+export function splitStandards(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  return raw.split('\n').map((s) => s.trim()).filter(Boolean);
+}

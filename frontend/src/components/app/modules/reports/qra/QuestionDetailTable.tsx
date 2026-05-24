@@ -1,42 +1,69 @@
 'use client';
 
-import { useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import type { IncorrectChoice, QuestionOverall } from '@/lib/reports/types';
+import type { QuestionOverall } from '@/lib/reports/types';
 import { cellColor, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import {
   formatAnswerHtml,
   formatCorrectAnswer,
   formatPercent,
   formatQuestionHtml,
+  splitStandards,
 } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
 import {
   tableCellStyleLarge as cellBase,
   tableHeaderStyleLarge as headerStyle,
 } from '../shared/tableStyles';
+import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
 interface QuestionDetailTableProps {
   questions: QuestionOverall[];
-  // incorrectChoices reserved for future per-question expansion; kept for API parity
-  incorrectChoices?: IncorrectChoice[];
   /** Item id for drill-through to Incorrect Answer Details. When omitted,
    *  the per-row "deep dive" link is hidden. */
   itemId?: string;
 }
 
+type QraSortKey =
+  | 'question_no'
+  | 'grade_average'
+  | 'correct_answer'
+  | 'standards'
+  | 'description';
+
+const QRA_SORT_ACCESSORS: Record<
+  QraSortKey,
+  (q: QuestionOverall) => string | number | null
+> = {
+  question_no: (q) => {
+    const n = Number(q.question_no);
+    return Number.isFinite(n) ? n : q.question_no ?? '';
+  },
+  grade_average: (q) => q.grade_average ?? null,
+  correct_answer: (q) => (q.correct_answer || '').toLowerCase(),
+  standards: (q) => (q.standards || '').toLowerCase(),
+  description: (q) => (q.description || '').toLowerCase(),
+};
+
+const QRA_INITIAL_DIRECTIONS: Partial<Record<QraSortKey, 'asc' | 'desc'>> = {
+  grade_average: 'asc',
+  question_no: 'asc',
+};
+
 export default function QuestionDetailTable({
   questions,
   itemId,
 }: QuestionDetailTableProps) {
-  const rows = useMemo(
-    () =>
-      [...questions].sort(
-        (a, b) => Number(a.question_no) - Number(b.question_no),
-      ),
-    [questions],
-  );
+  // Legacy paginated PDF default: ascending by % Correct (worst first).
+  const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
+    useTableSort<QuestionOverall, QraSortKey>({
+      rows: questions,
+      accessors: QRA_SORT_ACCESSORS,
+      defaultColumn: 'grade_average',
+      defaultDirection: 'asc',
+      initialDirections: QRA_INITIAL_DIRECTIONS,
+    });
 
   return (
     <div
@@ -74,16 +101,56 @@ export default function QuestionDetailTable({
           </colgroup>
           <thead>
             <tr>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>No</th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="question_no"
+                  label="No"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
               <th style={headerStyle}>Question</th>
               <th style={{ ...headerStyle, textAlign: 'center' }}>
-                % of Correct Answers
+                <SortableHeader
+                  column="grade_average"
+                  label="% of Correct Answers"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
               </th>
-              <th style={headerStyle}>Correct Answer</th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="correct_answer"
+                  label="Correct Answer"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
               <th style={headerStyle}>Incorrect Choice Details</th>
               <th style={headerStyle}>Incorrect Details Name</th>
-              <th style={headerStyle}>Standards</th>
-              <th style={headerStyle}>Description</th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="standards"
+                  label="Standards"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="description"
+                  label="Description"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -110,10 +177,7 @@ export default function QuestionDetailTable({
                 ga >= 1
                   ? ''
                   : formatAnswerHtml(q.incorrect_details_name, 'incorrect choice');
-              const standardsList = (q.standards || '')
-                .split('\n')
-                .map((s) => s.trim())
-                .filter(Boolean);
+              const standardsList = splitStandards(q.standards);
               const descriptionText = (q.description || '').trim();
 
               return (

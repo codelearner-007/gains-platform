@@ -33,12 +33,6 @@ async def test_qra_returns_full_payload(
     assert payload.kpis.total_possible_point >= 0
     assert payload.kpis.total_score >= 0
 
-    # Students
-    assert isinstance(payload.students, list)
-    assert len(payload.students) > 0
-    for s in payload.students:
-        assert s.user_uid
-
     # Questions
     assert isinstance(payload.questions_overall, list)
     assert len(payload.questions_overall) > 0
@@ -46,13 +40,6 @@ async def test_qra_returns_full_payload(
         assert q.question_id
         assert 0.0 <= q.grade_average <= 1.0001  # tolerate rounding
         assert q.position_number  # never empty (defaults to "n/a")
-
-    # Incorrect choices
-    assert isinstance(payload.incorrect_choices, list)
-    if payload.incorrect_choices:
-        ic = payload.incorrect_choices[0]
-        assert ic.question_id
-        assert ic.share_of_attempts >= 0
 
 
 @pytest.mark.anyio

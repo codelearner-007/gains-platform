@@ -1,14 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import type { IadStudentAttempt } from '@/lib/reports/types';
 import {
   EMPTY_TABLE_FG,
   HEADER_BAR_BG,
   LAYOUT_BORDER,
-  PERF_GREEN,
-  PERF_PINK,
+  IAD_GREEN,
+  IAD_RED,
   STATUS_CORRECT_FG,
   STATUS_INCORRECT_FG,
 } from '@/lib/reports/colors';
@@ -18,10 +18,41 @@ import {
 } from '../shared/tableStyles';
 import { formatAnswerHtml } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
+import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
 interface Props {
   attempts: IadStudentAttempt[];
 }
+
+type StudentSortKey =
+  | 'user_name'
+  | 'answer_submission'
+  | 'is_correct'
+  | 'points_received'
+  | 'score_pct'
+  | 'latest_attempt';
+
+type AttemptScope = 'wrong' | 'all';
+
+const STUDENT_SORT_ACCESSORS: Record<
+  StudentSortKey,
+  (a: IadStudentAttempt) => string | number | null
+> = {
+  user_name: (a) => (a.user_name || '').toLowerCase(),
+  answer_submission: (a) => (a.answer_submission || '').toLowerCase(),
+  is_correct: (a) => (a.is_correct ? 1 : 0),
+  points_received: (a) => a.points_received,
+  score_pct: (a) => a.score_pct,
+  latest_attempt: (a) => a.latest_attempt || null,
+};
+
+const STUDENT_INITIAL_DIRECTIONS: Partial<
+  Record<StudentSortKey, 'asc' | 'desc'>
+> = {
+  points_received: 'desc',
+  score_pct: 'desc',
+  latest_attempt: 'desc',
+};
 
 const dateFmt = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -38,11 +69,22 @@ function formatDate(iso: string): string {
 }
 
 export default function StudentAttemptTable({ attempts }: Props) {
-  const filtered = useMemo(
-    () =>
-      [...attempts].sort((a, b) => a.user_name.localeCompare(b.user_name)),
+  // Legacy PBIX default: wrong-only (Points_Received = '0').
+  const [scope, setScope] = useState<AttemptScope>('wrong');
+  const wrong = useMemo(
+    () => attempts.filter((a) => !a.is_correct),
     [attempts],
   );
+  const scoped = scope === 'wrong' ? wrong : attempts;
+
+  const { sortedRows: filtered, sortColumn, sortDirection, onHeaderClick } =
+    useTableSort<IadStudentAttempt, StudentSortKey>({
+      rows: scoped,
+      accessors: STUDENT_SORT_ACCESSORS,
+      defaultColumn: 'user_name',
+      defaultDirection: 'asc',
+      initialDirections: STUDENT_INITIAL_DIRECTIONS,
+    });
 
   return (
     <div
@@ -50,10 +92,45 @@ export default function StudentAttemptTable({ attempts }: Props) {
       style={{ borderColor: LAYOUT_BORDER }}
     >
       <div
-        className="px-3 py-1.5 text-[14px] font-bold text-black"
+        className="px-3 py-1.5 flex items-center justify-between gap-2"
         style={{ backgroundColor: HEADER_BAR_BG }}
       >
-        Per-Student Attempts
+        <span className="text-[14px] font-bold text-black">
+          Per-Student Attempts
+        </span>
+        <div
+          className="flex rounded-sm overflow-hidden border text-[11px] font-semibold"
+          style={{ borderColor: LAYOUT_BORDER }}
+          role="tablist"
+          aria-label="Filter student attempts"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scope === 'wrong'}
+            onClick={() => setScope('wrong')}
+            className={`px-2 py-0.5 transition-colors ${
+              scope === 'wrong'
+                ? 'bg-black text-white'
+                : 'bg-white text-black hover:bg-neutral-100'
+            }`}
+          >
+            Wrong only ({wrong.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scope === 'all'}
+            onClick={() => setScope('all')}
+            className={`px-2 py-0.5 transition-colors ${
+              scope === 'all'
+                ? 'bg-black text-white'
+                : 'bg-white text-black hover:bg-neutral-100'
+            }`}
+          >
+            All ({attempts.length})
+          </button>
+        </div>
       </div>
       <div className="w-full overflow-auto">
         <table
@@ -73,12 +150,63 @@ export default function StudentAttemptTable({ attempts }: Props) {
           </colgroup>
           <thead>
             <tr>
-              <th style={headerStyle}>Student</th>
-              <th style={headerStyle}>Their Answer</th>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>Correct?</th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>Points</th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>Score %</th>
-              <th style={headerStyle}>Submitted</th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="user_name"
+                  label="Student"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="answer_submission"
+                  label="Their Answer"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="is_correct"
+                  label="Correct?"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
+              <th style={{ ...headerStyle, textAlign: 'right' }}>
+                <SortableHeader
+                  column="points_received"
+                  label="Points"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="right"
+                />
+              </th>
+              <th style={{ ...headerStyle, textAlign: 'right' }}>
+                <SortableHeader
+                  column="score_pct"
+                  label="Score %"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="right"
+                />
+              </th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="latest_attempt"
+                  label="Submitted"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -107,7 +235,7 @@ export default function StudentAttemptTable({ attempts }: Props) {
                   style={{
                     ...cellBase,
                     textAlign: 'center',
-                    backgroundColor: a.is_correct ? PERF_GREEN : PERF_PINK,
+                    backgroundColor: a.is_correct ? IAD_GREEN : IAD_RED,
                   }}
                 >
                   {a.is_correct ? (

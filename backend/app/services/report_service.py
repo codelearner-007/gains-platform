@@ -38,11 +38,9 @@ from app.schemas.reports import (
     IadQuestionContext,
     IadStudentAttempt,
     IncorrectAnswerDetailsPayload,
-    IncorrectChoice,
     KPIs,
     QuestionOverall,
     QuestionResponseAnalysisPayload,
-    RawQuestionOption,
     SddBandStandardRow,
     SddKpis,
     SddStandardRow,
@@ -59,7 +57,6 @@ from app.schemas.reports import (
     StrandSummaryPayload,
     StrandSummaryRollupRow,
     StrandSummaryStandardRow,
-    Student,
     YearToDatePerformancePayload,
     YTDFilters,
     YTDGradeDistribution,
@@ -421,9 +418,6 @@ class ReportService:
             raise ResourceNotFoundError("Assessment", item_id)
 
         question_rows = await self.cube.get_questions_overall_for_item(item_id)
-        incorrect_rows = await self.cube.get_incorrect_choices_for_item(item_id)
-        student_rows = await self.cube.get_students_for_item(item_id)
-        raw_options = await self.cube.get_raw_question_options_for_item(item_id)
 
         # ─── AssessmentMeta ────────────────────────────────────────────────
         first_access = meta_row.get("first_access")
@@ -495,18 +489,6 @@ class ReportService:
             total_score=round(canon["total_score"], 4),
         )
 
-        # ─── Students ──────────────────────────────────────────────────────
-        students = [
-            Student(
-                user_uid=safe_str(s.get("user_uid")),
-                username=safe_str(s.get("username")),
-                first_name=safe_str(s.get("first_name")),
-                last_name=safe_str(s.get("last_name")),
-                user_role_id=safe_str(s.get("user_role_id")),
-            )
-            for s in student_rows
-        ]
-
         # ─── Questions ─────────────────────────────────────────────────────
         questions_overall = [
             QuestionOverall(
@@ -535,53 +517,6 @@ class ReportService:
             for q in question_rows
         ]
 
-        # ─── Incorrect choices ────────────────────────────────────────────
-        # Build student-name lookup keyed by user_uid for the "students" array.
-        # cube_questionincorrectchoice_summary doesn't store names so we
-        # leave the array empty (frontend will display from students_count).
-        incorrect_choices = [
-            IncorrectChoice(
-                question_id=safe_str(c.get("question_id")),
-                answer_submission=safe_str(c.get("answer_submission")),
-                is_correct=bool(c.get("is_correct")),
-                students_count=to_int(c.get("students_count")),
-                attempt_count_for_choice=to_int(c.get("attempt_count_for_choice")),
-                total_attempts_for_question=to_int(
-                    c.get("total_attempts_for_question")
-                ),
-                share_of_attempts=round(to_float(c.get("share_of_attempts")), 4),
-                total_score=round(to_float(c.get("total_score")), 4),
-                total_possible_point=round(to_float(c.get("total_possible_point")), 4),
-                grade_average=round(to_float(c.get("grade_average")), 4),
-                students=[],
-            )
-            for c in incorrect_rows
-        ]
-
-        # ─── Raw question options ─────────────────────────────────────────
-        raw_question_options = [
-            RawQuestionOption(
-                item_id=safe_str(r.get("item_id")),
-                item_name=safe_str(r.get("item_name")),
-                question_id=safe_str(r.get("question_id")),
-                associated_question_id=safe_str(r.get("associated_question_id")),
-                total_points=to_float(r.get("total_points")),
-                question_type=safe_str(r.get("question_type")),
-                question=_strip_html(safe_str(r.get("question"))),
-                position_number=safe_str(r.get("position_number")),
-                sub_question=safe_str(r.get("sub_question")),
-                answer_option=safe_str(r.get("answer_option")),
-                answer_breakdown_count=to_float(r.get("answer_breakdown_count")),
-                answer_breakdown_pct=to_float(r.get("answer_breakdown_pct")),
-                correct_answer=safe_str(r.get("correct_answer")),
-                correctly_answered=to_float(r.get("correctly_answered")),
-                most_points_earned=to_float(r.get("most_points_earned")),
-                least_points_earned=to_float(r.get("least_points_earned")),
-                average_points_earned=to_float(r.get("average_points_earned")),
-            )
-            for r in raw_options
-        ]
-
         # Surface the standards-alignment block so the QRA page can render
         # the AlignmentEmptyState card when the assessment has no aligned
         # questions (mirrors SDD behaviour). Rollups already computed above
@@ -591,10 +526,7 @@ class ReportService:
         return QuestionResponseAnalysisPayload(
             assessment=assessment,
             kpis=kpis,
-            students=students,
             questions_overall=questions_overall,
-            incorrect_choices=incorrect_choices,
-            raw_question_options=raw_question_options,
             strands_rollup=strands_rollup,
             standards_rollup=standards_rollup,
             data_quality=data_quality,
@@ -809,6 +741,10 @@ class ReportService:
             top_wrong_count = 0
             top_wrong_pct = _format_pct(0.0)
 
+        # `Total Incorrect Choices` = DISTINCTCOUNT(wrong submissions) —
+        # legacy DAX at 04_dax_measures.dax:598.
+        total_incorrect_choices = len(wrong_choices_sorted)
+
         kpis = IadKpis(
             total_attempts=total_attempts,
             correct_count=correct_count,
@@ -816,6 +752,7 @@ class ReportService:
             correct_pct=_format_pct(correct_pct),
             incorrect_pct=_format_pct(incorrect_pct),
             distinct_answers=len(distractors),
+            total_incorrect_choices=total_incorrect_choices,
             top_wrong_answer=top_wrong_answer,
             top_wrong_count=top_wrong_count,
             top_wrong_pct=top_wrong_pct,

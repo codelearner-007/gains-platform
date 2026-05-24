@@ -1,5 +1,4 @@
 import type {
-  IncorrectChoice,
   KPIs,
   QuestionOverall,
   QuestionResponseAnalysisPayload,
@@ -10,7 +9,7 @@ import type {
   StandardsDeepDivePayload,
 } from './types';
 import type { ReportFilters } from './filters';
-import { formatPercent } from './format';
+import { formatPercent, splitStandards } from './format';
 
 // Why client-side: `total_students` reads from `cube_school_summary` which
 // has no relationship to `dim_strand` (08_relationships.csv:14, IsActive=0),
@@ -116,7 +115,6 @@ export function deriveSdd(
 interface QraDerived {
   kpis: KPIs;
   questions_overall: QuestionOverall[];
-  incorrect_choices: IncorrectChoice[];
   strands_rollup: SddStrandRow[];
   standards_rollup: SddStandardRow[];
 }
@@ -129,7 +127,6 @@ export function deriveQra(
     return {
       kpis: payload.kpis,
       questions_overall: payload.questions_overall,
-      incorrect_choices: payload.incorrect_choices,
       strands_rollup: payload.strands_rollup,
       standards_rollup: payload.standards_rollup,
     };
@@ -158,18 +155,12 @@ export function deriveQra(
   );
 
   const questions = payload.questions_overall.filter((q) => {
-    const codes = q.standards
-      ? q.standards.split('\n').map((s) => s.trim()).filter(Boolean)
-      : [];
+    const codes = splitStandards(q.standards);
     return (
       codes.some((c) => allowedSchoologyCodes.has(c)) ||
       allowedSchoologyCodes.has(q.strand)
     );
   });
-  const qidSet = new Set(questions.map((q) => q.question_id));
-  const incorrectChoices = payload.incorrect_choices.filter((c) =>
-    qidSet.has(c.question_id),
-  );
 
   let totalPossible = 0;
   let totalScore = 0;
@@ -210,7 +201,6 @@ export function deriveQra(
   return {
     kpis,
     questions_overall: questions,
-    incorrect_choices: incorrectChoices,
     strands_rollup: strandsRollup,
     standards_rollup: standardsRollup,
   };

@@ -13,6 +13,15 @@ export const PERF_PINK = '#FFB3D9'; // legible on white, still reads as pink
 export const PERF_YELLOW = '#FFF066'; // less harsh than pure yellow at large sizes
 export const PERF_GREEN = '#7BE38C'; // softer green for chart fills + chips
 
+// ── IAD per-student saturated palette ───────────────────────────────────────
+// PBIX page #19 (IAD) explicitly uses brighter saturated colors on the
+// Per-Student Attempts table cell fills — distinct from the QRA / SDD pastel
+// palette so the per-student grid reads clearly at small sizes. Hexes are
+// verbatim from `_layout.full.json` IAD visual #10 `objects.values[0]
+// .properties.backColor.Conditional.Cases`.
+export const IAD_RED = '#ff2800'; // wrong cell fill (Points_Received = '0')
+export const IAD_GREEN = '#00ff44'; // correct cell fill
+
 // ── Layout / chrome colors (PBIX-mandated, shared across reports) ───────────
 // Centralized here so all report views (QRA, SDD, YTD, IAD, Standard
 // Summary, Strand Summary) stay visually consistent and we never

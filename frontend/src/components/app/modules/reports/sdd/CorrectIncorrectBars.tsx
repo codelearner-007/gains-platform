@@ -169,24 +169,22 @@ export default function PerformanceBandBars({
   const shared = { selectedStandard, onSelectStandard };
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-      {/* All three panels share the legacy PBIX title; band membership is
-          implicit via the correctColor (per data/_pbix_extract/50_sdd_spec.md:165-177). */}
       <BandPanel
-        title="Correct and Incorrect % by Standards"
+        title="At Target (≥80%)"
         rows={bandHigh}
         correctColor={BAND_COLORS.high}
         emptyMessage="No standards at target (≥80%)"
         {...shared}
       />
       <BandPanel
-        title="Correct and Incorrect % by Standards"
+        title="Approaching (70%–80%)"
         rows={bandMid}
         correctColor={BAND_COLORS.mid}
         emptyMessage="No standards approaching (70%–80%)"
         {...shared}
       />
       <BandPanel
-        title="Correct and Incorrect % by Standards"
+        title="Needs Attention (<70%)"
         rows={bandLow}
         correctColor={BAND_COLORS.low}
         emptyMessage="No standards need attention (<70%)"

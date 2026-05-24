@@ -117,7 +117,6 @@ export default function QuestionResponseAnalysisPage() {
       <div>
         <QuestionDetailTable
           questions={filtered.questions_overall}
-          incorrectChoices={filtered.incorrect_choices}
           itemId={itemId}
         />
       </div>

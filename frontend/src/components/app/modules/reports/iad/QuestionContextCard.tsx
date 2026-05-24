@@ -4,6 +4,7 @@ import {
   formatAnswerHtml,
   formatCorrectAnswer,
   formatQuestionHtml,
+  splitStandards,
 } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
 
@@ -21,7 +22,7 @@ export default function QuestionContextCard({ question }: Props) {
   const correctHtml = formatCorrectAnswer(question.correct_answer)
     .map((line) => formatAnswerHtml(line, 'correct answer'))
     .join('<br />');
-  const standards = question.standards || question.strand || '—';
+  const standardsList = splitStandards(question.standards || question.strand);
   const pctBg = cellColor(question.grade_average);
 
   return (
@@ -81,9 +82,20 @@ export default function QuestionContextCard({ question }: Props) {
           <div className="text-[11px] uppercase tracking-wide text-neutral-600">
             Standards
           </div>
-          <div className="text-[13px] text-black mt-1 leading-snug break-all">
-            {standards}
-          </div>
+          {standardsList.length === 0 ? (
+            <div className="text-[13px] text-black mt-1 leading-snug">—</div>
+          ) : (
+            <div className="flex flex-col gap-0.5 mt-1">
+              {standardsList.map((code) => (
+                <span
+                  key={code}
+                  className="text-[12px] font-mono text-black leading-snug break-all"
+                >
+                  {code}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

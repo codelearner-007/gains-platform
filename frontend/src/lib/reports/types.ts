@@ -18,14 +18,6 @@ export interface AssessmentMeta {
   latest_attempt: string;
 }
 
-export interface Student {
-  user_uid: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-  user_role_id: string;
-}
-
 export interface QuestionOverall {
   question_id: string;
   question_no: string;
@@ -42,40 +34,6 @@ export interface QuestionOverall {
   standards: string;
   strand: string;
   description: string;
-}
-
-export interface IncorrectChoice {
-  question_id: string;
-  answer_submission: string;
-  is_correct: boolean;
-  students_count: number;
-  attempt_count_for_choice: number;
-  total_attempts_for_question: number;
-  share_of_attempts: number;
-  total_score: number;
-  total_possible_point: number;
-  grade_average: number;
-  students: string[];
-}
-
-export interface RawQuestionOption {
-  item_id: string;
-  item_name: string;
-  question_id: string;
-  associated_question_id: string;
-  total_points: number;
-  question_type: string;
-  question: string;
-  position_number: string;
-  sub_question: string;
-  answer_option: string;
-  answer_breakdown_count: number;
-  answer_breakdown_pct: number;
-  correct_answer: string;
-  correctly_answered: number;
-  most_points_earned: number;
-  least_points_earned: number;
-  average_points_earned: number;
 }
 
 export interface KPIs {
@@ -195,10 +153,7 @@ export interface StandardsDeepDivePayload {
 export interface QuestionResponseAnalysisPayload {
   assessment: AssessmentMeta;
   kpis: KPIs;
-  students: Student[];
   questions_overall: QuestionOverall[];
-  incorrect_choices: IncorrectChoice[];
-  raw_question_options: RawQuestionOption[];
   strands_rollup: SddStrandRow[];
   standards_rollup: SddStandardRow[];
   data_quality?: AlignmentDataQuality | null;
@@ -349,6 +304,8 @@ export interface IadKpis {
   correct_pct: string;
   incorrect_pct: string;
   distinct_answers: number;
+  /** Legacy PBIX's `Total Incorrect Choices` — DISTINCTCOUNT of wrong answers. */
+  total_incorrect_choices: number;
   top_wrong_answer: string;
   top_wrong_count: number;
   top_wrong_pct: string;

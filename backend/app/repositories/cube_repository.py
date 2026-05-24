@@ -1302,71 +1302,6 @@ class CubeRepository:
             meta["latest_attempt"] = None
         return meta
 
-    async def get_students_for_item(self, item_id: str) -> List[Dict[str, Any]]:
-        """Distinct students who submitted for an item, joined to dim_student.
-
-        Falls back to fact_student_submission.user_name if the dim row is
-        missing.
-        """
-        sql = text(
-            """
-            WITH item_users AS (
-                SELECT DISTINCT user_uid, user_role_id, user_name
-                FROM fact_student_submission
-                WHERE item_id = :item_id
-                  AND user_uid IS NOT NULL
-            )
-            SELECT
-                iu.user_uid                                                  AS user_uid,
-                COALESCE(NULLIF(ds.username, ''), '')                        AS username,
-                COALESCE(NULLIF(ds.name_first, ''), split_part(iu.user_name, ' ', 1)) AS first_name,
-                COALESCE(NULLIF(ds.name_last,  ''),
-                         CASE WHEN position(' ' in COALESCE(iu.user_name,'')) > 0
-                              THEN substring(iu.user_name from position(' ' in iu.user_name) + 1)
-                              ELSE '' END)                                   AS last_name,
-                COALESCE(iu.user_role_id, ds.role_id, '')                    AS user_role_id
-            FROM item_users iu
-            LEFT JOIN dim_student ds
-              ON ds.uid = iu.user_uid
-            ORDER BY last_name, first_name
-            """
-        )
-        result = await self.session.execute(sql, {"item_id": item_id})
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_raw_question_options_for_item(
-        self, item_id: str
-    ) -> List[Dict[str, Any]]:
-        """Distractor-level rows from dim_question_data for this item."""
-        sql = text(
-            """
-            SELECT
-                COALESCE(item_id, '')              AS item_id,
-                COALESCE(item_name, '')            AS item_name,
-                COALESCE(question_id, '')          AS question_id,
-                COALESCE(associated_question_id, '') AS associated_question_id,
-                COALESCE(NULLIF(total_points, ''), '0')::numeric AS total_points,
-                COALESCE(question_type, '')        AS question_type,
-                COALESCE(question, '')             AS question,
-                COALESCE(position_number, '')      AS position_number,
-                COALESCE(sub_question, '')         AS sub_question,
-                ''                                 AS answer_option,
-                0::numeric                         AS answer_breakdown_count,
-                0::numeric                         AS answer_breakdown_pct,
-                COALESCE(correct_answer, '')       AS correct_answer,
-                COALESCE(NULLIF(correctly_answered, ''), '0')::numeric    AS correctly_answered,
-                COALESCE(NULLIF(most_points_earned,  ''), '0')::numeric   AS most_points_earned,
-                COALESCE(NULLIF(least_points_earned, ''), '0')::numeric   AS least_points_earned,
-                COALESCE(NULLIF(average_points_earned, ''), '0')::numeric AS average_points_earned
-            FROM dim_question_data
-            WHERE item_id = :item_id
-            ORDER BY NULLIF(regexp_replace(COALESCE(question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
-                     question_no
-            """
-        )
-        result = await self.session.execute(sql, {"item_id": item_id})
-        return [_row_to_dict(r) for r in result.all()]
-
     # ────────────────────────────────────────────────────────────────────
     # Year To Date - Longitudinal Report (cross-assessment, school-wide)
     # ────────────────────────────────────────────────────────────────────
@@ -1682,6 +1617,11 @@ class CubeRepository:
         Same dedup pattern as :meth:`get_questions_overall_for_item` to avoid
         the qs × qso cartesian product when a question has multiple
         sub-question rows or qso has multiple per-section rows.
+
+        Standards: ``STRING_AGG`` over ``dim_question_data`` so every alias
+        the parser emitted reaches the frontend. Description follows the
+        legacy ``CombineDescriptionsColumn`` DAX: alphabetical-first non-
+        "Other" standard, then look up its row in ``dim_standard``.
         """
         sql = text(
             """
@@ -1698,7 +1638,6 @@ class CubeRepository:
                 SELECT item_id, question_id,
                        MAX(question)                                  AS question,
                        MAX(correct_answer)                            AS correct_answer,
-                       MAX(NULLIF(standards, ''))                     AS standards,
                        AVG(grade_average)                             AS grade_average,
                        SUM(total_possible_point)                      AS total_possible_point,
                        SUM(total_score)                               AS total_score,
@@ -1707,10 +1646,44 @@ class CubeRepository:
                 WHERE item_id = :item_id AND question_id = :question_id
                 GROUP BY item_id, question_id
             ),
+            qd_standards AS (
+                SELECT
+                    item_id,
+                    question_id,
+                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND question_id = :question_id
+                  AND standard IS NOT NULL AND standard <> ''
+                GROUP BY item_id, question_id
+            ),
+            qd_first_standard AS (
+                SELECT
+                    item_id,
+                    question_id,
+                    MIN(standard) FILTER (
+                        WHERE standard IS NOT NULL
+                          AND standard <> ''
+                          AND LOWER(standard) <> 'other'
+                    ) AS first_standard
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND question_id = :question_id
+                GROUP BY item_id, question_id
+            ),
+            qd_description AS (
+                SELECT
+                    qfs.item_id,
+                    qfs.question_id,
+                    MAX(ds.description) AS description
+                FROM qd_first_standard qfs
+                LEFT JOIN dim_standard ds
+                  ON ds.schoology_standard = qfs.first_standard
+                GROUP BY qfs.item_id, qfs.question_id
+            ),
             qso_pick AS (
                 SELECT DISTINCT ON (school_id, ukey)
-                       school_id, ukey, question_no, question, correct_answer,
-                       standards, description
+                       school_id, ukey, question_no, question, correct_answer
                 FROM cube_question_summary_overall
                 ORDER BY school_id, ukey
             ),
@@ -1732,12 +1705,16 @@ class CubeRepository:
                 COALESCE(qsa.total_possible_point, qson.total_possible_point) AS total_possible_point,
                 COALESCE(qsa.total_score, qson.total_score)                 AS total_score,
                 COALESCE(qsa.grade_average, qson.grade_average)             AS grade_average,
-                COALESCE(qso.standards, qsa.standards, '')                  AS standards,
+                COALESCE(qdst.standards, '')                                AS standards,
                 COALESCE(qsp.standard, '')                                  AS strand_raw,
-                COALESCE(qso.description, '')                               AS description
+                COALESCE(qdd.description, '')                               AS description
             FROM qs_pick qsp
             JOIN qs_agg qsa
               ON qsa.item_id = qsp.item_id AND qsa.question_id = qsp.question_id
+            LEFT JOIN qd_standards qdst
+              ON qdst.item_id = qsp.item_id AND qdst.question_id = qsp.question_id
+            LEFT JOIN qd_description qdd
+              ON qdd.item_id  = qsp.item_id AND qdd.question_id  = qsp.question_id
             LEFT JOIN qso_pick qso
               ON qso.school_id = qsp.school_id AND qso.ukey = qsp.ukey
             LEFT JOIN qso_num qson

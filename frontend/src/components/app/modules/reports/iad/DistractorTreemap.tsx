@@ -44,7 +44,12 @@ function TreeCell(props: TreemapContentProps) {
     fill,
   } = props;
   if (width <= 0 || height <= 0) return null;
-  const canFit = width > 60 && height > 30;
+  const showLabel = width > 28 && height > 18;
+  const showStats = width > 44 && height > 32;
+  // 6.2 px/glyph at fontSize 11 is a safe upper bound for variable-width fonts.
+  const maxChars = Math.max(2, Math.floor((width - 8) / 6.2));
+  const label =
+    name.length > maxChars ? `${name.slice(0, Math.max(1, maxChars - 1))}…` : name;
   return (
     <g>
       <rect
@@ -54,13 +59,33 @@ function TreeCell(props: TreemapContentProps) {
         height={height}
         style={{ fill: fill ?? '#ccc', stroke: '#fff', strokeWidth: 2 }}
       />
-      {canFit && (
-        <text x={x + 6} y={y + 16} fill="#000" fontSize={11} fontWeight={600}>
-          {name.length > 24 ? `${name.slice(0, 23)}…` : name}
+      {showLabel && (
+        <text
+          x={x + 4}
+          y={y + 14}
+          fill="#0a0a0a"
+          stroke="none"
+          fontSize={11}
+          fontWeight={600}
+          fontFamily="system-ui, -apple-system, Segoe UI, sans-serif"
+          paintOrder="fill"
+          // pointerEvents disabled so text doesn't intercept tooltip hover.
+          style={{ pointerEvents: 'none' }}
+        >
+          {label}
         </text>
       )}
-      {canFit && height > 36 && (
-        <text x={x + 6} y={y + 30} fill="#000" fontSize={10}>
+      {showStats && (
+        <text
+          x={x + 4}
+          y={y + 28}
+          fill="#0a0a0a"
+          stroke="none"
+          fontSize={10}
+          fontFamily="system-ui, -apple-system, Segoe UI, sans-serif"
+          paintOrder="fill"
+          style={{ pointerEvents: 'none' }}
+        >
           {size} ({(share * 100).toFixed(0)}%)
         </text>
       )}
