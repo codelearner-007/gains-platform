@@ -565,3 +565,138 @@ class AlignmentDataQualityReport(BaseModel):
     items_missing_alignment: int
     items_partial_alignment: int
     items: List[AlignmentItemRow]
+
+
+# ─── Paginated reports (ord 6/7/16, 11, 12, 13) ───────────────────────────
+
+
+class PaginatedKpis(BaseModel):
+    """5-cell KPI strip shared by every paginated report."""
+
+    total_questions: int
+    total_students: int
+    score: float
+    total_possible_point: float
+    grade_average: float
+    grade_average_pct: str
+
+
+class QsmQuestionColumn(BaseModel):
+    """One leaf column header in the QSR matrix."""
+
+    question_id: str
+    question_no: str
+    sorting_question_no: int
+    standard: str
+    cpalms_standard: str
+    position_number: str
+    correct_answer: str
+
+
+class QsmStudentRow(BaseModel):
+    """One per-student row inside a teacher group."""
+
+    user_uid: str
+    user_name: str
+    score_pct: float
+    possible_points: float
+    correct_count: float
+    cells: dict[str, int | None]
+
+
+class QsmTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_score_pct: float
+    students: List[QsmStudentRow]
+
+
+class QsmGrandTotal(BaseModel):
+    possible_points: float
+    correct_count: float
+    score_pct: float
+    per_question_possible: dict[str, float]
+    per_question_correct: dict[str, float]
+    per_question_pct: dict[str, float]
+
+
+class QuestionSummaryMatrixPayload(BaseModel):
+    """Per-(student × question) matrix for the QSR paginated family
+    (PBIX ord 6 / 7 / 16). The three rendering variants — base, teacher
+    subtotal, header highlights — all consume this same payload; the
+    differences are purely client-side.
+    """
+
+    assessment: AssessmentMeta
+    kpis: PaginatedKpis
+    questions: List[QsmQuestionColumn]
+    teacher_groups: List[QsmTeacherGroup]
+    grand_total: QsmGrandTotal
+
+
+class PaginatedQuestionRow(BaseModel):
+    """One detail-table row in the QRA paginated reports.
+
+    ``question`` carries unsanitised HTML — the frontend runs it through
+    ``formatQuestionHtml`` + ``RichReportHtml`` exactly like the interactive
+    QRA, so embedded images and inline markup render identically across
+    interactive and paginated views.
+    """
+
+    question_id: str
+    question_no: str
+    sorting_question_no: int
+    position_number: str
+    question: str
+    correct_answer: str
+    grade_average: float
+    grade_average_pct: str
+    incorrect_choice_details: str
+    incorrect_details_name: str
+    standards: str
+    cpalms_standard: str
+
+
+class QraPaginatedPayload(BaseModel):
+    """PBIX ord 11 — Question Response Analysis paginated."""
+
+    assessment: AssessmentMeta
+    kpis: PaginatedKpis
+    questions: List[PaginatedQuestionRow]
+
+
+class QraTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_grade_average: float
+    teacher_grade_average_pct: str
+    questions: List[PaginatedQuestionRow]
+
+
+class QraByTeacherPayload(BaseModel):
+    """PBIX ord 12 — Question Response Analysis by Teacher."""
+
+    assessment: AssessmentMeta
+    kpis: PaginatedKpis
+    teacher_groups: List[QraTeacherGroup]
+
+
+class QraStandardTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_standard_average: float
+    teacher_standard_average_pct: str
+    questions: List[PaginatedQuestionRow]
+
+
+class QraStandardGroup(BaseModel):
+    cpalms_standard: str
+    standard_description: str
+    standard_average: float
+    standard_average_pct: str
+    teacher_groups: List[QraStandardTeacherGroup]
+
+
+class QraByStandardTeacherPayload(BaseModel):
+    """PBIX ord 13 — Question Response Analysis by Standard and Teacher."""
+
+    assessment: AssessmentMeta
+    kpis: PaginatedKpis
+    standard_groups: List[QraStandardGroup]

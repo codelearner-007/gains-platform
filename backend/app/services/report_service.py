@@ -39,8 +39,21 @@ from app.schemas.reports import (
     IadStudentAttempt,
     IncorrectAnswerDetailsPayload,
     KPIs,
+    PaginatedKpis,
+    PaginatedQuestionRow,
+    QraByStandardTeacherPayload,
+    QraByTeacherPayload,
+    QraPaginatedPayload,
+    QraStandardGroup,
+    QraStandardTeacherGroup,
+    QraTeacherGroup,
+    QsmGrandTotal,
+    QsmQuestionColumn,
+    QsmStudentRow,
+    QsmTeacherGroup,
     QuestionOverall,
     QuestionResponseAnalysisPayload,
+    QuestionSummaryMatrixPayload,
     SddBandStandardRow,
     SddKpis,
     SddStandardRow,
@@ -1317,4 +1330,308 @@ class ReportService:
             items_missing_alignment=items_missing,
             items_partial_alignment=items_partial,
             items=items,
+        )
+
+    # ────────────────────────────────────────────────────────────────────
+    # Paginated reports (PBIX ord 6/7/16, 11, 12, 13)
+    # ────────────────────────────────────────────────────────────────────
+    async def _build_paginated_kpis(self, item_id: str) -> PaginatedKpis:
+        canon = await self._compute_canonical_kpis_for_item(item_id)
+        return PaginatedKpis(
+            total_questions=canon["total_questions"],
+            total_students=canon["total_students"],
+            score=round(canon["total_score"], 4),
+            total_possible_point=round(canon["total_possible_point"], 4),
+            grade_average=round(canon["grade_average"], 6),
+            grade_average_pct=_format_pct(canon["grade_average"]),
+        )
+
+    async def build_question_summary_matrix(
+        self, item_id: str
+    ) -> QuestionSummaryMatrixPayload:
+        meta_row = await self.cube.get_assessment_meta(item_id)
+        if not meta_row:
+            raise ResourceNotFoundError("Assessment", item_id)
+
+        assessment = self._build_assessment_meta(
+            meta_row, meta_row.get("first_access"), meta_row.get("latest_attempt")
+        )
+        kpis = await self._build_paginated_kpis(item_id)
+
+        rows = await self.cube.get_question_summary_matrix_rows(item_id)
+
+        # ── Question columns (deduplicated, sorted by cpalms then question_no)
+        questions_by_id: dict[str, QsmQuestionColumn] = {}
+        for r in rows:
+            qid = safe_str(r.get("question_id"))
+            if qid and qid not in questions_by_id:
+                questions_by_id[qid] = QsmQuestionColumn(
+                    question_id=qid,
+                    question_no=safe_str(r.get("question_no")),
+                    sorting_question_no=to_int(r.get("sorting_question_no")),
+                    standard=safe_str(r.get("schoology_standard")),
+                    cpalms_standard=safe_str(r.get("cpalms_standard"))
+                    or safe_str(r.get("schoology_standard")),
+                    position_number=safe_str(r.get("position_number")),
+                    correct_answer=safe_str(r.get("correct_answer")),
+                )
+        questions = sorted(
+            questions_by_id.values(),
+            key=lambda q: (q.cpalms_standard or "~", q.sorting_question_no or 0),
+        )
+
+        # ── Per-(teacher, student) accumulation ────────────────────────────
+        teacher_students: dict[str, dict[str, dict[str, Any]]] = {}
+        per_q_possible: dict[str, float] = {}
+        per_q_correct: dict[str, float] = {}
+
+        for r in rows:
+            teacher = safe_str(r.get("section_instructors")) or "Unassigned"
+            user_uid = safe_str(r.get("user_uid"))
+            user_name = safe_str(r.get("user_name"))
+            qid = safe_str(r.get("question_id"))
+            pr = to_float(r.get("points_received"))
+            pp = to_float(r.get("points_possible"))
+            cell: int | None = None
+            if pp > 0:
+                cell = 1 if pr >= pp else 0
+            student = teacher_students.setdefault(teacher, {}).setdefault(
+                user_uid,
+                {
+                    "user_uid": user_uid,
+                    "user_name": user_name,
+                    "possible": 0.0,
+                    "correct": 0.0,
+                    "cells": {},
+                },
+            )
+            student["possible"] += pp
+            student["correct"] += pr
+            student["cells"][qid] = cell
+            per_q_possible[qid] = per_q_possible.get(qid, 0.0) + pp
+            per_q_correct[qid] = per_q_correct.get(qid, 0.0) + pr
+
+        teacher_groups: list[QsmTeacherGroup] = []
+        total_possible = 0.0
+        total_correct = 0.0
+        for teacher in sorted(teacher_students):
+            students_list: list[QsmStudentRow] = []
+            teach_poss = 0.0
+            teach_corr = 0.0
+            for s in teacher_students[teacher].values():
+                poss = s["possible"]
+                corr = s["correct"]
+                pct = (corr / poss) if poss > 0 else 0.0
+                students_list.append(
+                    QsmStudentRow(
+                        user_uid=s["user_uid"],
+                        user_name=s["user_name"],
+                        score_pct=round(pct, 6),
+                        possible_points=round(poss, 4),
+                        correct_count=round(corr, 4),
+                        cells={k: v for k, v in s["cells"].items()},
+                    )
+                )
+                teach_poss += poss
+                teach_corr += corr
+            # Sort students asc by score_pct (PBIX ord 6/7 default)
+            students_list.sort(key=lambda x: x.score_pct)
+            teacher_pct = (teach_corr / teach_poss) if teach_poss > 0 else 0.0
+            teacher_groups.append(
+                QsmTeacherGroup(
+                    section_instructor=teacher,
+                    teacher_score_pct=round(teacher_pct, 6),
+                    students=students_list,
+                )
+            )
+            total_possible += teach_poss
+            total_correct += teach_corr
+
+        grand_pct = (total_correct / total_possible) if total_possible > 0 else 0.0
+        grand_total = QsmGrandTotal(
+            possible_points=round(total_possible, 4),
+            correct_count=round(total_correct, 4),
+            score_pct=round(grand_pct, 6),
+            per_question_possible={
+                k: round(v, 4) for k, v in per_q_possible.items()
+            },
+            per_question_correct={
+                k: round(v, 4) for k, v in per_q_correct.items()
+            },
+            per_question_pct={
+                k: round(
+                    (per_q_correct.get(k, 0.0) / v) if v > 0 else 0.0, 6
+                )
+                for k, v in per_q_possible.items()
+            },
+        )
+
+        return QuestionSummaryMatrixPayload(
+            assessment=assessment,
+            kpis=kpis,
+            questions=questions,
+            teacher_groups=teacher_groups,
+            grand_total=grand_total,
+        )
+
+    @staticmethod
+    @staticmethod
+    def _sorting_question_no(qno: str) -> int:
+        """Match the SQL ``regexp_replace`` int cast — returns 0 for non-numeric
+        labels like ``"Q1"``. ``to_int("Q1")`` returns 0 from a different code
+        path so we keep this helper explicit."""
+        return int("".join(c for c in qno if c.isdigit()) or 0)
+
+    def _to_paginated_question_row(self, r: dict[str, Any]) -> PaginatedQuestionRow:
+        ga = to_float(r.get("grade_average"))
+        qno = safe_str(r.get("question_no"))
+        # NOTE: keep `question` raw — the client renders it via
+        # formatQuestionHtml + RichReportHtml (same as interactive QRA), and
+        # server-side _strip_html would discard <img> tags the renderer needs.
+        return PaginatedQuestionRow(
+            question_id=safe_str(r.get("question_id")),
+            question_no=qno,
+            sorting_question_no=to_int(r.get("sorting_question_no"))
+            or self._sorting_question_no(qno),
+            position_number=safe_str(r.get("position_number")) or "n/a",
+            question=safe_str(r.get("question")),
+            correct_answer=safe_str(r.get("correct_answer")),
+            grade_average=round(ga, 6),
+            grade_average_pct=_format_pct(ga),
+            incorrect_choice_details=safe_str(r.get("incorrect_choice_details")),
+            incorrect_details_name=safe_str(r.get("incorrect_details_name")),
+            standards=safe_str(r.get("standards")),
+            cpalms_standard=safe_str(r.get("cpalms_standard"))
+            or safe_str(r.get("standard")),
+        )
+
+    async def build_qra_paginated(self, item_id: str) -> QraPaginatedPayload:
+        meta_row = await self.cube.get_assessment_meta(item_id)
+        if not meta_row:
+            raise ResourceNotFoundError("Assessment", item_id)
+        assessment = self._build_assessment_meta(
+            meta_row, meta_row.get("first_access"), meta_row.get("latest_attempt")
+        )
+        kpis = await self._build_paginated_kpis(item_id)
+
+        # Reuse the questions_overall reader so paginated base shares
+        # exactly the same row math as the interactive QRA (including the
+        # canonical per-question grade override and the cube's pre-built
+        # ``incorrect_details_name`` named-students string).
+        question_rows = await self.cube.get_questions_overall_for_item(item_id)
+        canon_per_q = await self.cube.get_canonical_per_question_grades(item_id)
+        canon_q_by_id = {
+            safe_str(r.get("question_id")): to_float(r.get("grade_average"))
+            for r in canon_per_q
+        }
+        for q in question_rows:
+            qid = safe_str(q.get("question_id"))
+            if qid in canon_q_by_id:
+                q["grade_average"] = canon_q_by_id[qid]
+
+        # Sort ASC by grade_average (PBIX ord 11 default — surfaces problems
+        # first). Tiebreak on numeric portion of question_no.
+        question_rows.sort(
+            key=lambda r: (
+                to_float(r.get("grade_average")),
+                self._sorting_question_no(safe_str(r.get("question_no"))),
+            )
+        )
+
+        questions = [self._to_paginated_question_row(r) for r in question_rows]
+
+        return QraPaginatedPayload(
+            assessment=assessment, kpis=kpis, questions=questions
+        )
+
+    async def build_qra_by_teacher(self, item_id: str) -> QraByTeacherPayload:
+        meta_row = await self.cube.get_assessment_meta(item_id)
+        if not meta_row:
+            raise ResourceNotFoundError("Assessment", item_id)
+        assessment = self._build_assessment_meta(
+            meta_row, meta_row.get("first_access"), meta_row.get("latest_attempt")
+        )
+        kpis = await self._build_paginated_kpis(item_id)
+
+        rows = await self.cube.get_qra_by_teacher_rows(item_id)
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for r in rows:
+            t = safe_str(r.get("section_instructors")) or "Unassigned"
+            groups.setdefault(t, []).append(r)
+
+        teacher_groups: list[QraTeacherGroup] = []
+        for teacher in sorted(groups):
+            qs = groups[teacher]
+            # Average grade across this teacher's questions.
+            grades = [to_float(q.get("grade_average")) for q in qs]
+            avg = (sum(grades) / len(grades)) if grades else 0.0
+            teacher_groups.append(
+                QraTeacherGroup(
+                    section_instructor=teacher,
+                    teacher_grade_average=round(avg, 6),
+                    teacher_grade_average_pct=_format_pct(avg),
+                    questions=[self._to_paginated_question_row(q) for q in qs],
+                )
+            )
+
+        return QraByTeacherPayload(
+            assessment=assessment, kpis=kpis, teacher_groups=teacher_groups
+        )
+
+    async def build_qra_by_standard_teacher(
+        self, item_id: str
+    ) -> QraByStandardTeacherPayload:
+        meta_row = await self.cube.get_assessment_meta(item_id)
+        if not meta_row:
+            raise ResourceNotFoundError("Assessment", item_id)
+        assessment = self._build_assessment_meta(
+            meta_row, meta_row.get("first_access"), meta_row.get("latest_attempt")
+        )
+        kpis = await self._build_paginated_kpis(item_id)
+
+        rows = await self.cube.get_qra_by_standard_teacher_rows(item_id)
+        # Group rows into (standard, teacher) nests preserving SQL order.
+        nested: dict[str, dict[str, list[dict[str, Any]]]] = {}
+        std_meta: dict[str, dict[str, Any]] = {}
+        for r in rows:
+            std = safe_str(r.get("cpalms_standard")) or "Unaligned"
+            teacher = safe_str(r.get("section_instructors")) or "Unassigned"
+            nested.setdefault(std, {}).setdefault(teacher, []).append(r)
+            if std not in std_meta:
+                std_meta[std] = {
+                    "description": _strip_html(
+                        safe_str(r.get("standard_description"))
+                    ),
+                    "standard_avg": to_float(r.get("standard_avg")),
+                }
+
+        standard_groups: list[QraStandardGroup] = []
+        for std in sorted(nested):
+            t_groups: list[QraStandardTeacherGroup] = []
+            for teacher in sorted(nested[std]):
+                qs = nested[std][teacher]
+                t_avg = to_float(qs[0].get("teacher_standard_avg")) if qs else 0.0
+                t_groups.append(
+                    QraStandardTeacherGroup(
+                        section_instructor=teacher,
+                        teacher_standard_average=round(t_avg, 6),
+                        teacher_standard_average_pct=_format_pct(t_avg),
+                        questions=[
+                            self._to_paginated_question_row(q) for q in qs
+                        ],
+                    )
+                )
+            s_avg = std_meta[std]["standard_avg"]
+            standard_groups.append(
+                QraStandardGroup(
+                    cpalms_standard=std,
+                    standard_description=std_meta[std]["description"],
+                    standard_average=round(s_avg, 6),
+                    standard_average_pct=_format_pct(s_avg),
+                    teacher_groups=t_groups,
+                )
+            )
+
+        return QraByStandardTeacherPayload(
+            assessment=assessment, kpis=kpis, standard_groups=standard_groups
         )

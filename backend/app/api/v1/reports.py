@@ -18,7 +18,11 @@ from app.middleware.rls import get_db_with_rls
 from app.schemas.reports import (
     AlignmentDataQualityReport,
     IncorrectAnswerDetailsPayload,
+    QraByStandardTeacherPayload,
+    QraByTeacherPayload,
+    QraPaginatedPayload,
     QuestionResponseAnalysisPayload,
+    QuestionSummaryMatrixPayload,
     StandardSummaryFilters,
     StandardSummaryPayload,
     StandardsDeepDivePayload,
@@ -196,3 +200,73 @@ async def strand_summary(
             strand=strand,
         )
     )
+
+
+# ─── Paginated reports (PBIX ord 6/7/16, 11, 12, 13) ──────────────────────
+
+
+@router.get(
+    "/question-summary-paginated/{item_id}",
+    response_model=QuestionSummaryMatrixPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_summary_paginated(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QuestionSummaryMatrixPayload:
+    """Per-(student × question) matrix for the QSR paginated family
+    (PBIX ord 6, 7, 16). Variants (base / teacher subtotal / header
+    highlights) are rendered from the same payload via query-string flags
+    on the frontend. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_question_summary_matrix(item_id)
+
+
+@router.get(
+    "/question-response-analysis-paginated/{item_id}",
+    response_model=QraPaginatedPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_response_analysis_paginated(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QraPaginatedPayload:
+    """PBIX ord 11. Flat list of questions with per-question student-name
+    list for every incorrect answer. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_qra_paginated(item_id)
+
+
+@router.get(
+    "/question-response-analysis-by-teacher/{item_id}",
+    response_model=QraByTeacherPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_response_analysis_by_teacher(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QraByTeacherPayload:
+    """PBIX ord 12. Questions grouped by classroom instructor with per-teacher
+    average shown in the group header. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_qra_by_teacher(item_id)
+
+
+@router.get(
+    "/question-response-analysis-by-standard-and-teacher/{item_id}",
+    response_model=QraByStandardTeacherPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_response_analysis_by_standard_and_teacher(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QraByStandardTeacherPayload:
+    """PBIX ord 13. Questions grouped by CPALMS standard then by classroom
+    instructor, with both standard-wide and teacher-within-standard averages.
+    Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_qra_by_standard_teacher(item_id)

@@ -477,3 +477,111 @@ export interface AlignmentDataQualityReport {
   items_partial_alignment: number;
   items: AlignmentItemRow[];
 }
+
+// ─── Paginated reports (PBIX ord 6/7/16, 11, 12, 13) ────────────────────
+
+export interface PaginatedKpis {
+  total_questions: number;
+  total_students: number;
+  score: number;
+  total_possible_point: number;
+  grade_average: number;
+  grade_average_pct: string;
+}
+
+export interface QsmQuestionColumn {
+  question_id: string;
+  question_no: string;
+  sorting_question_no: number;
+  standard: string;
+  cpalms_standard: string;
+  position_number: string;
+  correct_answer: string;
+}
+
+export interface QsmStudentRow {
+  user_uid: string;
+  user_name: string;
+  score_pct: number;
+  possible_points: number;
+  correct_count: number;
+  cells: Record<string, 0 | 1 | null>;
+}
+
+export interface QsmTeacherGroup {
+  section_instructor: string;
+  teacher_score_pct: number;
+  students: QsmStudentRow[];
+}
+
+export interface QsmGrandTotal {
+  possible_points: number;
+  correct_count: number;
+  score_pct: number;
+  per_question_possible: Record<string, number>;
+  per_question_correct: Record<string, number>;
+  per_question_pct: Record<string, number>;
+}
+
+export interface QuestionSummaryMatrixPayload {
+  assessment: AssessmentMeta;
+  kpis: PaginatedKpis;
+  questions: QsmQuestionColumn[];
+  teacher_groups: QsmTeacherGroup[];
+  grand_total: QsmGrandTotal;
+}
+
+export interface PaginatedQuestionRow {
+  question_id: string;
+  question_no: string;
+  sorting_question_no: number;
+  position_number: string;
+  question: string;
+  correct_answer: string;
+  grade_average: number;
+  grade_average_pct: string;
+  incorrect_choice_details: string;
+  incorrect_details_name: string;
+  standards: string;
+  cpalms_standard: string;
+}
+
+export interface QraPaginatedPayload {
+  assessment: AssessmentMeta;
+  kpis: PaginatedKpis;
+  questions: PaginatedQuestionRow[];
+}
+
+export interface QraTeacherGroup {
+  section_instructor: string;
+  teacher_grade_average: number;
+  teacher_grade_average_pct: string;
+  questions: PaginatedQuestionRow[];
+}
+
+export interface QraByTeacherPayload {
+  assessment: AssessmentMeta;
+  kpis: PaginatedKpis;
+  teacher_groups: QraTeacherGroup[];
+}
+
+export interface QraStandardTeacherGroup {
+  section_instructor: string;
+  teacher_standard_average: number;
+  teacher_standard_average_pct: string;
+  questions: PaginatedQuestionRow[];
+}
+
+export interface QraStandardGroup {
+  cpalms_standard: string;
+  standard_description: string;
+  standard_average: number;
+  standard_average_pct: string;
+  teacher_groups: QraStandardTeacherGroup[];
+}
+
+export interface QraByStandardTeacherPayload {
+  assessment: AssessmentMeta;
+  kpis: PaginatedKpis;
+  standard_groups: QraStandardGroup[];
+}

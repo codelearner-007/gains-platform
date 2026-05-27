@@ -3,7 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { FileBarChart, Layers, type LucideIcon } from 'lucide-react';
+import {
+  FileBarChart,
+  FileText,
+  Grid3x3,
+  Layers,
+  Users,
+  UsersRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { Button } from '@/components/ui/button';
@@ -28,6 +36,30 @@ const ROW_ACTIONS: Array<{
     label: 'SDD',
     ariaPrefix: 'Open Standards Deep Dive interactive for',
     icon: Layers,
+  },
+  {
+    pathname: '/app/reports/question-summary-paginated',
+    label: 'QSR',
+    ariaPrefix: 'Open Question Summary Report for',
+    icon: Grid3x3,
+  },
+  {
+    pathname: '/app/reports/question-response-analysis-paginated',
+    label: 'QRA·P',
+    ariaPrefix: 'Open Question Response Analysis paginated for',
+    icon: FileText,
+  },
+  {
+    pathname: '/app/reports/question-response-analysis-by-teacher',
+    label: 'QRA·T',
+    ariaPrefix: 'Open Question Response Analysis by Teacher for',
+    icon: Users,
+  },
+  {
+    pathname: '/app/reports/question-response-analysis-by-standard-and-teacher',
+    label: 'QRA·S·T',
+    ariaPrefix: 'Open Question Response Analysis by Standard and Teacher for',
+    icon: UsersRound,
   },
 ];
 

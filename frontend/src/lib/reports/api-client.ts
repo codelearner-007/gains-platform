@@ -4,7 +4,11 @@ import type {
   AssessmentListRow,
   GradeRow,
   IncorrectAnswerDetailsPayload,
+  QraByStandardTeacherPayload,
+  QraByTeacherPayload,
+  QraPaginatedPayload,
   QuestionResponseAnalysisPayload,
+  QuestionSummaryMatrixPayload,
   SectionRow,
   SessionRow,
   StandardSummaryFilters,
@@ -84,6 +88,30 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<IncorrectAnswerDetailsPayload>),
 
+  questionSummaryPaginated: (itemId: string) =>
+    fetch(
+      `/api/v1/reports/question-summary-paginated/${encodeURIComponent(itemId)}`,
+      { credentials: 'include' },
+    ).then(handleResponse<QuestionSummaryMatrixPayload>),
+
+  qraPaginated: (itemId: string) =>
+    fetch(
+      `/api/v1/reports/question-response-analysis-paginated/${encodeURIComponent(itemId)}`,
+      { credentials: 'include' },
+    ).then(handleResponse<QraPaginatedPayload>),
+
+  qraByTeacher: (itemId: string) =>
+    fetch(
+      `/api/v1/reports/question-response-analysis-by-teacher/${encodeURIComponent(itemId)}`,
+      { credentials: 'include' },
+    ).then(handleResponse<QraByTeacherPayload>),
+
+  qraByStandardTeacher: (itemId: string) =>
+    fetch(
+      `/api/v1/reports/question-response-analysis-by-standard-and-teacher/${encodeURIComponent(itemId)}`,
+      { credentials: 'include' },
+    ).then(handleResponse<QraByStandardTeacherPayload>),
+
   assessments: (filters?: AssessmentFilters) =>
     fetch(`/api/v1/assessments${buildQuery(filters)}`, {
       credentials: 'include',
@@ -118,6 +146,14 @@ export const reportsKeys = {
     [...reportsKeys.all, 'ytd', filters ?? {}] as const,
   iad: (itemId: string, questionId: string) =>
     [...reportsKeys.all, 'iad', itemId, questionId] as const,
+  questionSummaryPaginated: (itemId: string) =>
+    [...reportsKeys.all, 'qsr-paginated', itemId] as const,
+  qraPaginated: (itemId: string) =>
+    [...reportsKeys.all, 'qra-paginated', itemId] as const,
+  qraByTeacher: (itemId: string) =>
+    [...reportsKeys.all, 'qra-by-teacher', itemId] as const,
+  qraByStandardTeacher: (itemId: string) =>
+    [...reportsKeys.all, 'qra-by-std-teacher', itemId] as const,
   standardSummary: (filters?: StandardSummaryFilters) =>
     [...reportsKeys.all, 'standardSummary', filters ?? {}] as const,
   strandSummary: (filters?: StrandSummaryFilters) =>

@@ -32,6 +32,14 @@ export const LAYOUT_BORDER = '#B3B3B3'; // standard report border
 export const INCORRECT_GREY = '#CCCCCC'; // grey fill used in incorrect-bar series
 export const GRID_LINE = '#E5E5E5'; // table grid lines / cell borders
 
+// ── Paginated reports (PBIX ord 6/7/16, 11, 12, 13) ─────────────────────────
+// Tokens used by the column-group headers, secondary header rows, and group
+// header bands in the new paginated table family. Match the Office accent
+// palette as rendered in the legacy SSRS PDFs.
+export const PBIX_ACCENT_NAVY = '#4472C4'; // Standard / outer column-group header
+export const PBIX_ACCENT_LIGHT_BLUE = '#8FAADC'; // Question-No / inner header row
+export const GROUP_HEADER_CYAN = '#D6F1EF'; // Teacher / Standard group band
+
 // ── Status icon hexes (used inside cells for the Check / X marks) ───────────
 // Tailwind `green-700` and `red-700` from the project palette, hard-coded so
 // the icons stay legible on the green/pink traffic-light cell backgrounds.

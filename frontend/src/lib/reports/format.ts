@@ -204,6 +204,14 @@ export function formatPercent(value: number, digits = 1): string {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
+export function formatNumber(value: number): string {
+  if (!Number.isFinite(value)) return '';
+  // Drop trailing .0 when integer-valued; otherwise keep 1-2 decimals.
+  return Number.isInteger(value)
+    ? value.toLocaleString('en-US')
+    : value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
 // ── Shared report constants / string helpers ───────────────────────────────
 
 /** Local fallback logo used when an assessment / school has no `logo_url`. */

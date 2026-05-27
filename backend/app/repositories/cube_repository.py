@@ -1921,3 +1921,227 @@ class CubeRepository:
             ),
         )
         return [_row_to_dict(r) for r in result.all()]
+
+    # ────────────────────────────────────────────────────────────────────
+    # Paginated reports (PBIX ord 6/7/16, 11, 12, 13)
+    # ────────────────────────────────────────────────────────────────────
+    async def get_question_summary_matrix_rows(
+        self, item_id: str
+    ) -> List[Dict[str, Any]]:
+        """One row per (student, question) for the QSR matrix.
+
+        Joins ``fact_student_submission`` to ``cube_question_summary`` for
+        canonical question metadata and to ``dim_standard`` for the CPALMS
+        long-form alias used as the column-group header. All dim joins
+        include the ``school_id`` predicate as defense-in-depth even though
+        RLS is enabled on every tenant-scoped table.
+        """
+        sql = text(
+            """
+            WITH per_question AS (
+                SELECT DISTINCT ON (qs.question_id)
+                    qs.school_id,
+                    qs.question_id,
+                    qs.question_no,
+                    qs.position_number,
+                    qs.correct_answer,
+                    qs.standards,
+                    qs.standard
+                FROM cube_question_summary qs
+                WHERE qs.item_id = :item_id
+                ORDER BY qs.question_id,
+                         NULLIF(regexp_replace(COALESCE(qs.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST
+            ),
+            -- Per-(user, question) latest attempt, so re-takes don't double-count.
+            -- fss.submission is UUID v7 (time-ordered) per CLAUDE.md.
+            per_attempt AS (
+                SELECT DISTINCT ON (fss.user_uid, fss.question_id)
+                    fss.school_id,
+                    fss.user_uid,
+                    fss.user_name,
+                    fss.section_nid,
+                    fss.question_id,
+                    fss.points_received,
+                    fss.points_possible
+                FROM fact_student_submission fss
+                WHERE fss.item_id = :item_id
+                ORDER BY fss.user_uid, fss.question_id,
+                         fss.submission DESC NULLS LAST,
+                         fss.latest_attempt DESC NULLS LAST
+            )
+            SELECT
+                pa.user_uid,
+                pa.user_name,
+                COALESCE(NULLIF(dsec.section_instructors, ''), 'Unassigned')
+                                                            AS section_instructors,
+                pa.question_id,
+                pa.points_received,
+                pa.points_possible,
+                pq.question_no,
+                NULLIF(regexp_replace(COALESCE(pq.question_no, ''), '[^0-9]', '', 'g'), '')::int
+                                                            AS sorting_question_no,
+                pq.position_number,
+                pq.correct_answer,
+                pq.standards,
+                pq.standard                                  AS schoology_standard,
+                ds.cpalms_standard
+            FROM per_attempt pa
+            JOIN per_question pq ON pq.question_id = pa.question_id
+            LEFT JOIN dim_section dsec
+              ON dsec.section_nid = pa.section_nid
+             AND dsec.school_id = pa.school_id
+            -- dim_standard is global (no school_id) — RLS not applicable.
+            LEFT JOIN dim_standard ds
+              ON ds.schoology_standard = pq.standard
+            ORDER BY section_instructors, pa.user_name,
+                     NULLIF(regexp_replace(COALESCE(pq.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                     pq.question_no
+            """
+        )
+        result = await self.session.execute(sql, {"item_id": item_id})
+        return [_row_to_dict(r) for r in result.all()]
+
+    async def get_qra_by_teacher_rows(
+        self, item_id: str
+    ) -> List[Dict[str, Any]]:
+        """Per-(section_instructor × question) grain for ord 12.
+
+        Collapses ``cube_question_summary``'s standards-alias fan-out with
+        ``DISTINCT ON`` so ``grade_average`` is the cube row's value, not an
+        AVG across alias copies. Standards list (multiple Schoology codes
+        per question) is aggregated from ``dim_question_data`` — mirrors the
+        canonical ``get_questions_overall_for_item`` semantics.
+        """
+        sql = text(
+            """
+            WITH qs AS (
+                SELECT DISTINCT ON (item_id, section_instructors, question_id)
+                    item_id, school_id, section_instructors, question_id,
+                    question_no,
+                    NULLIF(regexp_replace(COALESCE(question_no, ''), '[^0-9]', '', 'g'), '')::int
+                                                              AS sorting_question_no,
+                    position_number, question, correct_answer, standard,
+                    grade_average,
+                    NULLIF(incorrect_choice_details, '') AS incorrect_choice_details,
+                    NULLIF(incorrect_details_name, '')   AS incorrect_details_name
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                ORDER BY item_id, section_instructors, question_id,
+                         NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                         position_number
+            ),
+            qd_standards AS (
+                SELECT
+                    school_id,
+                    item_id,
+                    question_id,
+                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND standard IS NOT NULL AND standard <> ''
+                GROUP BY school_id, item_id, question_id
+            )
+            SELECT
+                qs.section_instructors,
+                qs.question_id,
+                qs.question_no,
+                qs.sorting_question_no,
+                qs.position_number,
+                qs.question,
+                qs.correct_answer,
+                qs.standard,
+                COALESCE(qds.standards, qs.standard) AS standards,
+                qs.grade_average,
+                qs.incorrect_choice_details,
+                qs.incorrect_details_name
+            FROM qs
+            LEFT JOIN qd_standards qds
+              ON qds.item_id = qs.item_id
+             AND qds.question_id = qs.question_id
+             AND qds.school_id = qs.school_id
+            ORDER BY qs.section_instructors,
+                     qs.grade_average ASC NULLS LAST,
+                     qs.sorting_question_no NULLS LAST, qs.question_no
+            """
+        )
+        result = await self.session.execute(sql, {"item_id": item_id})
+        return [_row_to_dict(r) for r in result.all()]
+
+    async def get_qra_by_standard_teacher_rows(
+        self, item_id: str
+    ) -> List[Dict[str, Any]]:
+        """Per-(cpalms_standard × section_instructor × question) grain for ord 13.
+
+        Adds two window-aggregates: ``standard_avg`` across teachers within a
+        standard, and ``teacher_standard_avg`` for one teacher within a
+        standard. Standards labels come from ``dim_standard.cpalms_standard``;
+        per-question ``grade_average`` collapses standards-alias fan-out via
+        ``DISTINCT ON``.
+        """
+        sql = text(
+            """
+            WITH base AS (
+                SELECT DISTINCT ON (item_id, section_instructors, question_id)
+                    item_id, school_id, section_instructors, question_id,
+                    question_no,
+                    NULLIF(regexp_replace(COALESCE(question_no, ''), '[^0-9]', '', 'g'), '')::int
+                                                              AS sorting_question_no,
+                    position_number, question, correct_answer,
+                    standard,
+                    grade_average,
+                    NULLIF(incorrect_choice_details, '') AS incorrect_choice_details,
+                    NULLIF(incorrect_details_name, '')   AS incorrect_details_name
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                ORDER BY item_id, section_instructors, question_id,
+                         NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                         position_number
+            ),
+            qd_standards AS (
+                SELECT
+                    school_id,
+                    item_id,
+                    question_id,
+                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND standard IS NOT NULL AND standard <> ''
+                GROUP BY school_id, item_id, question_id
+            )
+            SELECT
+                COALESCE(NULLIF(ds.cpalms_standard, ''), b.standard) AS cpalms_standard,
+                ds.description                                       AS standard_description,
+                b.section_instructors,
+                b.question_id,
+                b.question_no,
+                b.sorting_question_no,
+                b.position_number,
+                b.question,
+                b.correct_answer,
+                b.standard,
+                COALESCE(qds.standards, b.standard)                  AS standards,
+                b.grade_average,
+                b.incorrect_choice_details,
+                b.incorrect_details_name,
+                AVG(b.grade_average) OVER (
+                    PARTITION BY COALESCE(NULLIF(ds.cpalms_standard, ''), b.standard),
+                                 b.section_instructors
+                )                                                     AS teacher_standard_avg,
+                AVG(b.grade_average) OVER (
+                    PARTITION BY COALESCE(NULLIF(ds.cpalms_standard, ''), b.standard)
+                )                                                     AS standard_avg
+            FROM base b
+            -- dim_standard is global (no school_id) — RLS not applicable.
+            LEFT JOIN dim_standard ds
+              ON ds.schoology_standard = b.standard
+            LEFT JOIN qd_standards qds
+              ON qds.item_id = b.item_id
+             AND qds.question_id = b.question_id
+             AND qds.school_id = b.school_id
+            ORDER BY cpalms_standard, b.section_instructors,
+                     b.grade_average ASC NULLS LAST,
+                     b.sorting_question_no NULLS LAST, b.question_no
+            """
+        )
+        result = await self.session.execute(sql, {"item_id": item_id})
+        return [_row_to_dict(r) for r in result.all()]
