@@ -88,16 +88,26 @@ def make_user_override(
     permissions: Optional[List[str]] = None,
     role: str = "super_admin",
     hierarchy: int = 10000,
+    school_ids: Optional[List[str]] = None,
+    primary_school_id: Optional[str] = None,
+    user_id: str = "00000000-0000-0000-0000-000000000001",
+    email: str = "phase5-tester@example.com",
 ):
-    """Build an async dependency that returns a mock CurrentUser."""
+    """Build an async dependency that returns a mock CurrentUser.
+
+    ``is_super_admin`` is derived from ``role`` to mirror the JWT claims hook.
+    """
 
     async def _override() -> CurrentUser:
         return CurrentUser(
-            user_id="00000000-0000-0000-0000-000000000001",
-            email="phase5-tester@example.com",
+            user_id=user_id,
+            email=email,
             user_role=role,
             hierarchy_level=hierarchy,
             permissions=permissions or [],
+            school_ids=school_ids or [],
+            primary_school_id=primary_school_id,
+            is_super_admin=(role == "super_admin"),
         )
 
     return _override

@@ -132,4 +132,7 @@ def extract_user_claims(payload: Dict[str, Any]) -> Dict[str, Any]:
         "user_role": payload.get("user_role", "user"),
         "hierarchy_level": payload.get("hierarchy_level", 100),
         "permissions": payload.get("permissions", []),
+        "school_ids": payload.get("school_ids", []),
+        "primary_school_id": payload.get("primary_school_id"),
+        "is_super_admin": payload.get("is_super_admin", False),
     }
