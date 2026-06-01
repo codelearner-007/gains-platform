@@ -44,7 +44,7 @@ We reproduce 1–3 on **Supabase RLS + FastAPI + Next.js**, rendering reports na
 
 ## Phases
 
-### Phase 1 — Multi-tenant control plane ⬜
+### Phase 1 — Multi-tenant control plane ✅
 The load-bearing gap. Make tenant isolation *real per authenticated user*.
 - `user_schools` membership table (`user_id`, `school_id`, `school_role`, `is_primary`).
 - JWT claims hook injects `school_ids[]` + `is_super_admin`.
@@ -54,7 +54,7 @@ The load-bearing gap. Make tenant isolation *real per authenticated user*.
 - Membership management endpoints + RBAC.
 - Tests: per-user RLS isolation (member sees only theirs; admin can scope to any).
 
-### Phase 2 — Seed 20–30 tenant schools with data ⬜
+### Phase 2 — Seed 20–30 tenant schools with data ✅
 - Cube fan-out seeder: read backup parquet, synthesize 20–30 schools with varied
   subject/grade **profiles** (elementary / middle / high), sample assessments per school,
   re-key `school_id` + re-hash `id` PKs (collision-free).
