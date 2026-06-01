@@ -8,6 +8,7 @@ import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { canSeeAdminEntry } from '@/lib/rbac/access';
 import { Button } from '@/components/ui/button';
+import SchoolSwitcher from '@/components/app/SchoolSwitcher';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,6 +96,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          <div className="px-1 pb-3">
+            <SchoolSwitcher />
+          </div>
           {navigation.map((item) => {
             const isActive =
               item.href === '/app'

@@ -15,6 +15,7 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/PaginatedKpiStrip';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QuestionSummaryMatrix from '@/components/app/modules/reports/paginated/QuestionSummaryMatrix';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 type Variant = 'base' | 'teacher_subtotal' | 'header_highlights';
 
@@ -45,9 +46,12 @@ export default function QuestionSummaryPaginatedPage() {
     if (!itemId) router.replace('/app/reports');
   }, [itemId, router]);
 
+  const { schoolId } = useSelectedSchool();
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.questionSummaryPaginated(itemId ?? ''),
-    queryFn: () => reportsApi.questionSummaryPaginated(itemId as string),
+    queryKey: reportsKeys.questionSummaryPaginated(itemId ?? '', schoolId ?? undefined),
+    queryFn: () =>
+      reportsApi.questionSummaryPaginated(itemId as string, schoolId ?? undefined),
     enabled: !!itemId,
   });
 

@@ -1,10 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
@@ -31,10 +33,16 @@ export default function YearToDatePerformancePage() {
   const { filters, setFilters } = useSummaryFilters<AssessmentFilters>({
     basePath: BASE_PATH,
   });
+  const { schoolId } = useSelectedSchool();
+
+  const queryFilters = useMemo<AssessmentFilters>(
+    () => ({ ...filters, school_id: schoolId ?? undefined }),
+    [filters, schoolId],
+  );
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.ytd(filters),
-    queryFn: () => reportsApi.ytd(filters),
+    queryKey: reportsKeys.ytd(queryFilters),
+    queryFn: () => reportsApi.ytd(queryFilters),
   });
 
   if (isLoading) return <LoadingState label="Loading year-to-date performance…" />;

@@ -14,6 +14,7 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/PaginatedKpiStrip';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraByTeacherTable from '@/components/app/modules/reports/paginated/QraByTeacherTable';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function QraByTeacherPage() {
   const router = useRouter();
@@ -24,9 +25,11 @@ export default function QraByTeacherPage() {
     if (!itemId) router.replace('/app/reports');
   }, [itemId, router]);
 
+  const { schoolId } = useSelectedSchool();
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.qraByTeacher(itemId ?? ''),
-    queryFn: () => reportsApi.qraByTeacher(itemId as string),
+    queryKey: reportsKeys.qraByTeacher(itemId ?? '', schoolId ?? undefined),
+    queryFn: () => reportsApi.qraByTeacher(itemId as string, schoolId ?? undefined),
     enabled: !!itemId,
   });
 

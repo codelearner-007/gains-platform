@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { StrandSummaryFilters } from '@/lib/reports/types';
 import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
@@ -40,6 +41,7 @@ export default function StrandSummaryPage() {
     basePath: BASE_PATH,
     preserveParams,
   });
+  const { schoolId } = useSelectedSchool();
 
   const setSelectedStrand = useCallback(
     (strand: string | null) => {
@@ -52,8 +54,12 @@ export default function StrandSummaryPage() {
   );
 
   const queryFilters: StrandSummaryFilters = useMemo(
-    () => ({ ...filters, strand: selectedStrand ?? undefined }),
-    [filters, selectedStrand],
+    () => ({
+      ...filters,
+      strand: selectedStrand ?? undefined,
+      school_id: schoolId ?? undefined,
+    }),
+    [filters, selectedStrand, schoolId],
   );
 
   const { data, isLoading, isError, error, refetch } = useQuery({

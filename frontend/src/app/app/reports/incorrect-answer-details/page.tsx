@@ -19,6 +19,7 @@ import DistractorTreemap from '@/components/app/modules/reports/iad/DistractorTr
 import DistractorChart from '@/components/app/modules/reports/iad/DistractorChart';
 import StudentAttemptTable from '@/components/app/modules/reports/iad/StudentAttemptTable';
 import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function IncorrectAnswerDetailsPage() {
   const router = useRouter();
@@ -30,9 +31,12 @@ export default function IncorrectAnswerDetailsPage() {
     if (!itemId || !questionId) router.replace('/app/reports');
   }, [itemId, questionId, router]);
 
+  const { schoolId } = useSelectedSchool();
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.iad(itemId ?? '', questionId ?? ''),
-    queryFn: () => reportsApi.iad(itemId as string, questionId as string),
+    queryKey: reportsKeys.iad(itemId ?? '', questionId ?? '', schoolId ?? undefined),
+    queryFn: () =>
+      reportsApi.iad(itemId as string, questionId as string, schoolId ?? undefined),
     enabled: !!itemId && !!questionId,
   });
 

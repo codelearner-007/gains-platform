@@ -62,7 +62,7 @@ The load-bearing gap. Make tenant isolation *real per authenticated user*.
 - Create one teacher + one student demo user per school (membership-scoped).
 - Verify reports render per school and isolation holds.
 
-### Phase 3 — Admin school management + switcher UI ⬜
+### Phase 3 — Admin school management + switcher UI ✅
 - Admin `schools` module: list / create / edit / activate.
 - Admin school-switcher that threads `school_id` into report requests.
 - Member users: no switcher; locked to their school.

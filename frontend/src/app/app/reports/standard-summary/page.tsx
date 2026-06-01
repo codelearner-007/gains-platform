@@ -1,9 +1,11 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { StandardSummaryFilters } from '@/lib/reports/types';
 import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
@@ -25,10 +27,16 @@ export default function StandardSummaryPage() {
   const { filters, setFilters } = useSummaryFilters<StandardSummaryFilters>({
     basePath: '/app/reports/standard-summary',
   });
+  const { schoolId } = useSelectedSchool();
+
+  const queryFilters = useMemo<StandardSummaryFilters>(
+    () => ({ ...filters, school_id: schoolId ?? undefined }),
+    [filters, schoolId],
+  );
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.standardSummary(filters),
-    queryFn: () => reportsApi.standardSummary(filters),
+    queryKey: reportsKeys.standardSummary(queryFilters),
+    queryFn: () => reportsApi.standardSummary(queryFilters),
   });
 
   if (isLoading) return <LoadingState label="Loading standard summary…" />;

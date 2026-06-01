@@ -22,6 +22,7 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 import { useReportFilters } from '@/lib/reports/filters';
 import { deriveSdd } from '@/lib/reports/filter-helpers';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 /**
  * Standards Deep Dive interactive — layout mirrors the legacy PBIX page #16
@@ -39,9 +40,11 @@ export default function StandardsDeepDivePage() {
     if (!itemId) router.replace('/app/reports');
   }, [itemId, router]);
 
+  const { schoolId } = useSelectedSchool();
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.sdd(itemId ?? ''),
-    queryFn: () => reportsApi.sdd(itemId as string),
+    queryKey: reportsKeys.sdd(itemId ?? '', schoolId ?? undefined),
+    queryFn: () => reportsApi.sdd(itemId as string, schoolId ?? undefined),
     enabled: !!itemId,
   });
 

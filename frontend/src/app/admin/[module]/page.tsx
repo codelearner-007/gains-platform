@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import AdminRBACPage from '@/components/admin/modules/rbac/AdminRBACPage';
 import AdminUsersPage from '@/components/admin/modules/users/AdminUsersPage';
 import AdminAuditPage from '@/components/admin/modules/audit/AdminAuditPage';
+import AdminSchoolsPage from '@/components/admin/modules/schools/AdminSchoolsPage';
 import { canAccessAdminModule } from '@/lib/rbac/access';
 import { getMe, getUserClaims } from '@/lib/server/me';
 import AccessDenied from '@/components/common/AccessDenied';
@@ -13,6 +14,7 @@ const MODULE_COMPONENTS: Record<string, React.ComponentType> = {
   rbac: AdminRBACPage,
   users: AdminUsersPage,
   audit: AdminAuditPage,
+  schools: AdminSchoolsPage,
 };
 
 export default async function AdminModulePage({

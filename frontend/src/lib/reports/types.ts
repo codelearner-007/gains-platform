@@ -179,6 +179,16 @@ export interface AssessmentFilters {
   subject?: string;
   grade?: string;
   section?: string;
+  school_id?: string;
+}
+
+// ─── Multi-tenant — accessible schools (school switcher) ─────────────────
+
+export interface AccessibleSchool {
+  school_id: string;
+  name: string;
+  short_name: string;
+  is_active: boolean;
 }
 
 export interface SubjectRow {
@@ -347,6 +357,7 @@ export interface StandardSummaryFilters {
   grade?: string;
   category?: string;
   section?: string;
+  school_id?: string;
 }
 
 export interface StandardSummaryKpis {
@@ -399,6 +410,7 @@ export interface StrandSummaryFilters {
   category?: string;
   section?: string;
   strand?: string;
+  school_id?: string;
 }
 
 export interface StrandSummaryKpis {

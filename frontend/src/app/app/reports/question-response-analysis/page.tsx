@@ -23,6 +23,7 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 import { useReportFilters } from '@/lib/reports/filters';
 import { deriveQra } from '@/lib/reports/filter-helpers';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function QuestionResponseAnalysisPage() {
   const router = useRouter();
@@ -33,9 +34,11 @@ export default function QuestionResponseAnalysisPage() {
     if (!itemId) router.replace('/app/reports');
   }, [itemId, router]);
 
+  const { schoolId } = useSelectedSchool();
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.qra(itemId ?? ''),
-    queryFn: () => reportsApi.qra(itemId as string),
+    queryKey: reportsKeys.qra(itemId ?? '', schoolId ?? undefined),
+    queryFn: () => reportsApi.qra(itemId as string, schoolId ?? undefined),
     enabled: !!itemId,
   });
 

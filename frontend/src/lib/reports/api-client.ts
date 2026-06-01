@@ -1,4 +1,5 @@
 import type {
+  AccessibleSchool,
   AlignmentDataQualityReport,
   AssessmentFilters,
   AssessmentListRow,
@@ -49,15 +50,20 @@ function buildQuery(params?: Record<string, string | undefined> | object): strin
 }
 
 export const reportsApi = {
-  qra: (itemId: string) =>
+  accessibleSchools: () =>
+    fetch('/api/v1/schools/accessible', { credentials: 'include' }).then(
+      handleResponse<AccessibleSchool[]>,
+    ),
+
+  qra: (itemId: string, schoolId?: string) =>
     fetch(
-      `/api/v1/reports/question-response-analysis/${encodeURIComponent(itemId)}`,
+      `/api/v1/reports/question-response-analysis/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
       { credentials: 'include' },
     ).then(handleResponse<QuestionResponseAnalysisPayload>),
 
-  sdd: (itemId: string) =>
+  sdd: (itemId: string, schoolId?: string) =>
     fetch(
-      `/api/v1/reports/standards-deep-dive/${encodeURIComponent(itemId)}`,
+      `/api/v1/reports/standards-deep-dive/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
       { credentials: 'include' },
     ).then(handleResponse<StandardsDeepDivePayload>),
 
@@ -82,33 +88,33 @@ export const reportsApi = {
       credentials: 'include',
     }).then(handleResponse<AlignmentDataQualityReport>),
 
-  iad: (itemId: string, questionId: string) =>
+  iad: (itemId: string, questionId: string, schoolId?: string) =>
     fetch(
-      `/api/v1/reports/incorrect-answer-details/${encodeURIComponent(itemId)}/${encodeURIComponent(questionId)}`,
+      `/api/v1/reports/incorrect-answer-details/${encodeURIComponent(itemId)}/${encodeURIComponent(questionId)}${buildQuery({ school_id: schoolId })}`,
       { credentials: 'include' },
     ).then(handleResponse<IncorrectAnswerDetailsPayload>),
 
-  questionSummaryPaginated: (itemId: string) =>
+  questionSummaryPaginated: (itemId: string, schoolId?: string) =>
     fetch(
-      `/api/v1/reports/question-summary-paginated/${encodeURIComponent(itemId)}`,
+      `/api/v1/reports/question-summary-paginated/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
       { credentials: 'include' },
     ).then(handleResponse<QuestionSummaryMatrixPayload>),
 
-  qraPaginated: (itemId: string) =>
+  qraPaginated: (itemId: string, schoolId?: string) =>
     fetch(
-      `/api/v1/reports/question-response-analysis-paginated/${encodeURIComponent(itemId)}`,
+      `/api/v1/reports/question-response-analysis-paginated/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
       { credentials: 'include' },
     ).then(handleResponse<QraPaginatedPayload>),
 
-  qraByTeacher: (itemId: string) =>
+  qraByTeacher: (itemId: string, schoolId?: string) =>
     fetch(
-      `/api/v1/reports/question-response-analysis-by-teacher/${encodeURIComponent(itemId)}`,
+      `/api/v1/reports/question-response-analysis-by-teacher/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
       { credentials: 'include' },
     ).then(handleResponse<QraByTeacherPayload>),
 
-  qraByStandardTeacher: (itemId: string) =>
+  qraByStandardTeacher: (itemId: string, schoolId?: string) =>
     fetch(
-      `/api/v1/reports/question-response-analysis-by-standard-and-teacher/${encodeURIComponent(itemId)}`,
+      `/api/v1/reports/question-response-analysis-by-standard-and-teacher/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
       { credentials: 'include' },
     ).then(handleResponse<QraByStandardTeacherPayload>),
 
@@ -140,20 +146,23 @@ export const reportsApi = {
 
 export const reportsKeys = {
   all: ['reports'] as const,
-  qra: (itemId: string) => [...reportsKeys.all, 'qra', itemId] as const,
-  sdd: (itemId: string) => [...reportsKeys.all, 'sdd', itemId] as const,
+  schools: () => [...reportsKeys.all, 'schools', 'accessible'] as const,
+  qra: (itemId: string, schoolId?: string) =>
+    [...reportsKeys.all, 'qra', itemId, schoolId ?? null] as const,
+  sdd: (itemId: string, schoolId?: string) =>
+    [...reportsKeys.all, 'sdd', itemId, schoolId ?? null] as const,
   ytd: (filters?: AssessmentFilters) =>
     [...reportsKeys.all, 'ytd', filters ?? {}] as const,
-  iad: (itemId: string, questionId: string) =>
-    [...reportsKeys.all, 'iad', itemId, questionId] as const,
-  questionSummaryPaginated: (itemId: string) =>
-    [...reportsKeys.all, 'qsr-paginated', itemId] as const,
-  qraPaginated: (itemId: string) =>
-    [...reportsKeys.all, 'qra-paginated', itemId] as const,
-  qraByTeacher: (itemId: string) =>
-    [...reportsKeys.all, 'qra-by-teacher', itemId] as const,
-  qraByStandardTeacher: (itemId: string) =>
-    [...reportsKeys.all, 'qra-by-std-teacher', itemId] as const,
+  iad: (itemId: string, questionId: string, schoolId?: string) =>
+    [...reportsKeys.all, 'iad', itemId, questionId, schoolId ?? null] as const,
+  questionSummaryPaginated: (itemId: string, schoolId?: string) =>
+    [...reportsKeys.all, 'qsr-paginated', itemId, schoolId ?? null] as const,
+  qraPaginated: (itemId: string, schoolId?: string) =>
+    [...reportsKeys.all, 'qra-paginated', itemId, schoolId ?? null] as const,
+  qraByTeacher: (itemId: string, schoolId?: string) =>
+    [...reportsKeys.all, 'qra-by-teacher', itemId, schoolId ?? null] as const,
+  qraByStandardTeacher: (itemId: string, schoolId?: string) =>
+    [...reportsKeys.all, 'qra-by-std-teacher', itemId, schoolId ?? null] as const,
   standardSummary: (filters?: StandardSummaryFilters) =>
     [...reportsKeys.all, 'standardSummary', filters ?? {}] as const,
   strandSummary: (filters?: StrandSummaryFilters) =>

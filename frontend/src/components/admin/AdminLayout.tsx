@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, Shield, Users, FileText, LogOut, Key, ArrowLeft, Settings, LayoutGrid } from 'lucide-react';
+import { Menu, X, Shield, Users, FileText, LogOut, Key, ArrowLeft, Settings, LayoutGrid, School } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -24,6 +24,7 @@ const moduleIcons = {
   rbac: Shield,
   users: Users,
   audit: FileText,
+  schools: School,
 } as const;
 
 type NavItem = {
