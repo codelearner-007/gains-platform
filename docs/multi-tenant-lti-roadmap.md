@@ -67,7 +67,7 @@ The load-bearing gap. Make tenant isolation *real per authenticated user*.
 - Admin school-switcher that threads `school_id` into report requests.
 - Member users: no switcher; locked to their school.
 
-### Phase 4 — LTI 1.3 tool provider ⬜
+### Phase 4 — LTI 1.3 tool provider ✅
 - Tables: `lti_registration`, `lti_deployment`, `lti_launch_session` (state/nonce).
 - Tool RSA keypair + `/.well-known/jwks.json`.
 - `/lti/login` (OIDC init) and `/lti/launch` (validate id_token, map roles, resolve

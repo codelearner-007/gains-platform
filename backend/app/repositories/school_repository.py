@@ -36,6 +36,39 @@ class SchoolRepository:
         result = await self.session.execute(sql)
         return [dict(r._mapping) for r in result.all()]
 
+    async def list_accessible(
+        self, *, all_active: bool, school_ids: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Lightweight list for the school switcher.
+
+        ``all_active=True`` (super-admin) returns every active school; otherwise
+        only the schools in ``school_ids`` (the member's memberships).
+        """
+        if all_active:
+            sql = text(
+                """
+                SELECT school_id::text AS school_id, name, short_name, is_active
+                FROM public.schools
+                WHERE is_active = TRUE
+                ORDER BY name
+                """
+            )
+            result = await self.session.execute(sql)
+            return [dict(r._mapping) for r in result.all()]
+
+        if not school_ids:
+            return []
+        sql = text(
+            """
+            SELECT school_id::text AS school_id, name, short_name, is_active
+            FROM public.schools
+            WHERE school_id = ANY(CAST(:ids AS uuid[]))
+            ORDER BY name
+            """
+        )
+        result = await self.session.execute(sql, {"ids": school_ids})
+        return [dict(r._mapping) for r in result.all()]
+
     async def get(self, school_id: str) -> Optional[Dict[str, Any]]:
         sql = text(
             """

@@ -27,6 +27,17 @@ class SchoolService:
         rows = await self.repo.list_all()
         return [SchoolResponse.model_validate(r) for r in rows]
 
+    async def list_accessible(
+        self, *, is_super_admin: bool, school_ids: List[str]
+    ) -> List[dict]:
+        """Schools the caller may scope to (drives the switcher).
+
+        Super-admins get every active school; members get only their own.
+        """
+        return await self.repo.list_accessible(
+            all_active=is_super_admin, school_ids=school_ids
+        )
+
     async def get_school(self, school_id: str) -> SchoolResponse:
         row = await self.repo.get(school_id)
         if not row:

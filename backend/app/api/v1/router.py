@@ -8,10 +8,12 @@ from app.api.v1 import (
     auth,
     dashboard,
     dim,
+    lti,
     permissions,
     profile,
     reports,
     roles,
+    schools,
     sessions,
     user_roles,
     users,
@@ -36,4 +38,6 @@ api_router.include_router(sessions.router)
 api_router.include_router(assessments.router)
 api_router.include_router(reports.router)
 api_router.include_router(dim.router)
+api_router.include_router(schools.router)
+api_router.include_router(lti.router)
 api_router.include_router(admin_router)
