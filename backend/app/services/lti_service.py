@@ -312,12 +312,18 @@ class LtiService:
                 """
                 INSERT INTO auth.users (
                     id, instance_id, aud, role, email, email_confirmed_at,
-                    raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+                    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+                    -- GoTrue scans these as NOT NULL strings; '' avoids the
+                    -- "Database error querying schema" 500 on later auth queries.
+                    confirmation_token, recovery_token, email_change,
+                    email_change_token_new, email_change_token_current,
+                    phone_change, phone_change_token, reauthentication_token)
                 VALUES (
                     uuid_generate_v7(), '00000000-0000-0000-0000-000000000000',
                     'authenticated', 'authenticated', CAST(:email AS text), now(),
                     '{"provider":"lti","providers":["lti"]}'::jsonb,
-                    jsonb_build_object('full_name', CAST(:name AS text)), now(), now())
+                    jsonb_build_object('full_name', CAST(:name AS text)), now(), now(),
+                    '', '', '', '', '', '', '', '')
                 RETURNING id::text
                 """
             ),

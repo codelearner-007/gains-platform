@@ -10,7 +10,7 @@ import { apiClient } from './api-client';
 
 // Response type matching FastAPI backend
 export interface School {
-  id: string;
+  school_id: string;
   schoology_building_id: string;
   schoology_school_id: string | null;
   name: string;

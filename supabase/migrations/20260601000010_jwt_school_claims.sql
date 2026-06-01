@@ -81,7 +81,11 @@ BEGIN
     event := jsonb_set(event, '{claims,permissions}', to_jsonb(COALESCE(user_permissions, ARRAY[]::TEXT[])));
     event := jsonb_set(event, '{claims,hierarchy_level}', to_jsonb(hierarchy_level));
     event := jsonb_set(event, '{claims,school_ids}', to_jsonb(COALESCE(school_ids, ARRAY[]::TEXT[])));
-    event := jsonb_set(event, '{claims,primary_school_id}', to_jsonb(primary_school_id));
+    -- to_jsonb(NULL) is SQL NULL, and jsonb_set(_, _, NULL) returns NULL — which
+    -- would null out the entire token. Coalesce to a JSON null instead so a
+    -- super-admin with no membership still gets a valid claims object.
+    event := jsonb_set(event, '{claims,primary_school_id}',
+                       COALESCE(to_jsonb(primary_school_id), 'null'::jsonb));
     event := jsonb_set(event, '{claims,is_super_admin}', to_jsonb(is_super_admin));
 
     RETURN event;

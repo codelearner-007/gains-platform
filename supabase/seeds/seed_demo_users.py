@@ -60,14 +60,21 @@ def main() -> int:
                 INSERT INTO auth.users (
                     id, instance_id, aud, role, email, encrypted_password,
                     email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
-                    created_at, updated_at)
+                    created_at, updated_at,
+                    -- GoTrue scans these token columns as NOT NULL strings;
+                    -- manually-inserted rows must set them to '' or login 500s
+                    -- with "Database error querying schema".
+                    confirmation_token, recovery_token, email_change,
+                    email_change_token_new, email_change_token_current,
+                    phone_change, phone_change_token, reauthentication_token)
                 VALUES (
                     uuid_generate_v7(), '00000000-0000-0000-0000-000000000000',
                     'authenticated', 'authenticated', %s,
                     crypt(%s, gen_salt('bf')), now(),
                     '{"provider":"email","providers":["email"]}'::jsonb,
                     jsonb_build_object('full_name', %s),
-                    now(), now())
+                    now(), now(),
+                    '', '', '', '', '', '', '', '')
                 RETURNING id
                 """,
                 (email, DEMO_PASSWORD, email.split("@")[0].replace(".", " ").title()),

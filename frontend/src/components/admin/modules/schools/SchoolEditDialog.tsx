@@ -66,7 +66,7 @@ export function SchoolEditDialog({
     if (!school) return;
     try {
       setSubmitting(true);
-      await updateSchool(school.id, data);
+      await updateSchool(school.school_id, data);
       toast('School updated', {
         description: `"${data.name || school.name}" has been updated successfully.`,
       });

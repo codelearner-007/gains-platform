@@ -106,7 +106,7 @@ export function SchoolsTable({
           </TableHeader>
           <TableBody>
             {schools.map((school) => (
-              <TableRow key={school.id} className="hover:bg-muted/30">
+              <TableRow key={school.school_id} className="hover:bg-muted/30">
                 <TableCell>
                   <p className="font-medium text-sm">{school.name}</p>
                 </TableCell>

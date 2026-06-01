@@ -75,7 +75,7 @@ The load-bearing gap. Make tenant isolation *real per authenticated user*.
 - Mock platform harness for local end-to-end (real Schoology org deferred).
 - Tests: launch validation, replay rejection, role/tenant mapping.
 
-### Phase 5 — Browser verification (Playwright MCP) ⬜
+### Phase 5 — Browser verification (Playwright MCP) ✅
 - Multi-tenant isolation: member A cannot see school B's data; admin can switch.
 - Schools admin CRUD.
 - Reports per school render.
