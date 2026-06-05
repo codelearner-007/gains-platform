@@ -90,7 +90,7 @@ class AssessmentService:
                 incorrect_choice_details=safe_str(q.get("incorrect_choice_details")),
                 incorrect_details_name=safe_str(q.get("incorrect_details_name")),
                 standards=safe_str(q.get("standards")),
-                strand=safe_str(q.get("strand_raw")),
+                standard_raw=safe_str(q.get("strand_raw")),
                 description=safe_str(q.get("description")),
             )
             for q in rows

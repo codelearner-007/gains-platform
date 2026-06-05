@@ -39,8 +39,8 @@ export default function StrandTreemap({
         .map((s) => ({
           name: s.strand,
           size: s.num_questions,
-          color: performanceColor(s.grade_average),
-          percentage: s.grade_average,
+          color: performanceColor(s.grade_average ?? 0),
+          percentage: s.grade_average ?? 0,
           numStandards: s.num_standards,
         })),
     [strands],

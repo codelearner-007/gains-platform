@@ -16,17 +16,19 @@ import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 type StrandSortKey = 'strand' | 'num_standards' | 'num_questions' | 'grade_average';
 type StandardSortKey = 'schoology_standard' | 'num_questions' | 'grade_average';
 
+// Unassessed rows (grade_average === null) sort as -1 so they sink to the
+// bottom on ascending order, matching the "blank cell last" reading order.
 const STRAND_SORT_ACCESSORS: Record<StrandSortKey, (r: SddStrandRow) => string | number> = {
   strand: (r) => r.strand.toLowerCase(),
   num_standards: (r) => r.num_standards,
   num_questions: (r) => r.num_questions,
-  grade_average: (r) => r.grade_average,
+  grade_average: (r) => r.grade_average ?? -1,
 };
 
 const STANDARD_SORT_ACCESSORS: Record<StandardSortKey, (r: SddStandardRow) => string | number> = {
   schoology_standard: (r) => r.schoology_standard.toLowerCase(),
   num_questions: (r) => r.num_questions,
-  grade_average: (r) => r.grade_average,
+  grade_average: (r) => r.grade_average ?? -1,
 };
 
 export function SummaryByStandardsHeader() {
@@ -178,7 +180,11 @@ export function StrandsTable({
                       ...cellStyle,
                       textAlign: 'center',
                       fontWeight: 600,
-                      backgroundColor: cellColor(row.grade_average),
+                      // Unassessed strand → blank cell, no traffic-light fill.
+                      backgroundColor:
+                        row.grade_average == null
+                          ? undefined
+                          : cellColor(row.grade_average),
                     }}
                   >
                     {row.grade_average_pct}
@@ -314,7 +320,11 @@ export function StandardsTable({
                     ...cellStyle,
                     textAlign: 'center',
                     fontWeight: 600,
-                    backgroundColor: cellColor(row.grade_average),
+                    // Unassessed alias standard → blank cell, no fill.
+                    backgroundColor:
+                      row.grade_average == null
+                        ? undefined
+                        : cellColor(row.grade_average),
                   }}
                 >
                   {row.grade_average_pct}

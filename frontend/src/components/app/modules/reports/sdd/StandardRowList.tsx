@@ -25,7 +25,12 @@ export default function StandardRowList({
   onSelectStandard,
 }: StandardRowListProps) {
   const rows = useMemo(
-    () => [...standards].sort((a, b) => a.grade_average - b.grade_average),
+    // Unassessed standards (grade_average === null) sort to the top of the
+    // worst-first list; their bar is empty and the % label is blank.
+    () =>
+      [...standards].sort(
+        (a, b) => (a.grade_average ?? -1) - (b.grade_average ?? -1),
+      ),
     [standards],
   );
 
@@ -47,8 +52,11 @@ export default function StandardRowList({
       ) : (
         <ul className="flex-1 overflow-y-auto max-h-[360px] px-2 py-2 flex flex-col gap-1">
           {rows.map((row, i) => {
-            const pct = Math.max(0, Math.min(1, row.grade_average));
+            // Unassessed alias standard: blank %, empty bar (legacy BLANK).
+            const unassessed = row.grade_average == null;
+            const pct = Math.max(0, Math.min(1, row.grade_average ?? 0));
             const fill = performanceColor(pct);
+            const pctLabel = unassessed ? '' : formatPercent(pct, 1);
             const subLine = `(${row.num_questions} Q${row.num_questions === 1 ? '' : 's'})`;
             const isSelected = selectedStandard === row.schoology_standard;
             const dim = !!selectedStandard && !isSelected;
@@ -81,21 +89,27 @@ export default function StandardRowList({
                 <div
                   className="flex-1 relative h-4 rounded-sm overflow-hidden"
                   style={{ backgroundColor: INCORRECT_GREY }}
-                  aria-label={`${row.schoology_standard} ${formatPercent(pct, 1)} correct`}
+                  aria-label={
+                    unassessed
+                      ? `${row.schoology_standard} not assessed`
+                      : `${row.schoology_standard} ${pctLabel} correct`
+                  }
                 >
-                  <div
-                    className="absolute inset-y-0 left-0"
-                    style={{
-                      width: `${pct * 100}%`,
-                      backgroundColor: fill,
-                    }}
-                  />
+                  {!unassessed && (
+                    <div
+                      className="absolute inset-y-0 left-0"
+                      style={{
+                        width: `${pct * 100}%`,
+                        backgroundColor: fill,
+                      }}
+                    />
+                  )}
                 </div>
                 <div
                   className="shrink-0 text-right font-semibold text-black tabular-nums"
                   style={{ width: 44 }}
                 >
-                  {formatPercent(pct, 1)}
+                  {pctLabel}
                 </div>
               </li>
             );

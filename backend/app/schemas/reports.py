@@ -121,7 +121,10 @@ class QuestionOverall(BaseModel):
     incorrect_choice_details: str
     incorrect_details_name: str
     standards: str
-    strand: str
+    # The first/primary raw standard code for the question (e.g.
+    # "MA.912.AR.3.1"). Carries a standard code, NOT a strand — renamed
+    # from the misleading ``strand`` (MASTER_PLAN §6, QRA-RENAME-1).
+    standard_raw: str
     description: str
 
 
@@ -171,23 +174,33 @@ class SddKpis(BaseModel):
 
 
 class SddStrandRow(BaseModel):
-    """One row in the Strands rollup table / treemap."""
+    """One row in the Strands rollup table / treemap.
+
+    ``grade_average`` is ``None`` (and ``grade_average_pct`` an empty
+    string) for an unassessed strand — legacy renders BLANK, not 0.0%
+    (MASTER_PLAN §6, Decision 3).
+    """
 
     strand: str
     num_standards: int
     num_questions: int
-    grade_average: float
+    grade_average: Optional[float] = None
     grade_average_pct: str
 
 
 class SddStandardRow(BaseModel):
     """One row in the Standards rollup table, keyed by the Schoology
-    canonical long-form code (e.g. ``MA.9-12.MAFS.912.N-Q.1.3``)."""
+    canonical long-form code (e.g. ``MA.9-12.MAFS.912.N-Q.1.3``).
+
+    ``grade_average`` is ``None`` (and ``grade_average_pct`` an empty
+    string) for an unassessed Schoology alias standard — legacy renders
+    BLANK, not 0.0% (MASTER_PLAN §6, Decision 3).
+    """
 
     schoology_standard: str
     strand: str
     num_questions: int
-    grade_average: float
+    grade_average: Optional[float] = None
     grade_average_pct: str
 
 

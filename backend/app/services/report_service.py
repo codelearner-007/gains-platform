@@ -166,6 +166,24 @@ def _format_pct(v: float) -> str:
     return f"{v * 100:.1f}%"
 
 
+def _round_opt(v: Any) -> Optional[float]:
+    """Round to 6 dp, preserving ``None`` (an unassessed/BLANK grade).
+
+    Unlike ``to_float`` this does NOT coerce ``None`` → 0.0, so a missing
+    grade stays blank end-to-end (MASTER_PLAN §6, Decision 3).
+    """
+    if v is None:
+        return None
+    return round(to_float(v), 6)
+
+
+def _format_pct_opt(v: Any) -> str:
+    """Percent string for an optional grade; empty string when ``None``."""
+    if v is None:
+        return ""
+    return _format_pct(to_float(v))
+
+
 # PBIX-mandated band thresholds (Performance Color* DAX measures): a strand
 # or standard is "at target" at >=80%, "approaching" at 70–80%, and "needs
 # attention" below 70%.
@@ -358,8 +376,8 @@ class ReportService:
                 strand=_decode_html(safe_str(r.get("strand"))),
                 num_standards=to_int(r.get("num_standards")),
                 num_questions=to_int(r.get("num_questions")),
-                grade_average=round(to_float(r.get("grade_average")), 6),
-                grade_average_pct=_format_pct(to_float(r.get("grade_average"))),
+                grade_average=_round_opt(r.get("grade_average")),
+                grade_average_pct=_format_pct_opt(r.get("grade_average")),
             )
             for r in strand_rows
         ]
@@ -368,8 +386,8 @@ class ReportService:
                 schoology_standard=safe_str(r.get("schoology_standard")),
                 strand=_decode_html(safe_str(r.get("strand"))),
                 num_questions=to_int(r.get("num_questions")),
-                grade_average=round(to_float(r.get("grade_average")), 6),
-                grade_average_pct=_format_pct(to_float(r.get("grade_average"))),
+                grade_average=_round_opt(r.get("grade_average")),
+                grade_average_pct=_format_pct_opt(r.get("grade_average")),
             )
             for r in standard_rows
         ]
@@ -517,7 +535,7 @@ class ReportService:
                 incorrect_choice_details=safe_str(q.get("incorrect_choice_details")),
                 incorrect_details_name=safe_str(q.get("incorrect_details_name")),
                 standards=safe_str(q.get("standards")),
-                strand=safe_str(q.get("strand_raw")),
+                standard_raw=safe_str(q.get("strand_raw")),
                 # Strip raw HTML tags from description — Schoology /standards
                 # API returns benchmark text with embedded markup
                 # (`<ol>`, `<b>`, `<sup>`, etc.). Legacy PBIX strips this at

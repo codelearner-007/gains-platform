@@ -80,14 +80,16 @@ export function deriveSdd(
     if (single) {
       totalQuestions = single.num_questions;
       totalStandards = 1;
-      gradeAverage = single.grade_average;
+      // null (unassessed alias) → 0 for the KPI tile; the rollup cell
+      // itself still renders blank.
+      gradeAverage = single.grade_average ?? 0;
     }
   } else if (filters.strand) {
     const single = strandsRollup[0];
     if (single) {
       totalQuestions = single.num_questions;
       totalStandards = single.num_standards;
-      gradeAverage = single.grade_average;
+      gradeAverage = single.grade_average ?? 0;
     }
   }
 
@@ -158,7 +160,7 @@ export function deriveQra(
     const codes = splitStandards(q.standards);
     return (
       codes.some((c) => allowedSchoologyCodes.has(c)) ||
-      allowedSchoologyCodes.has(q.strand)
+      allowedSchoologyCodes.has(q.standard_raw)
     );
   });
 

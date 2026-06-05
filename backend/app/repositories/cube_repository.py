@@ -519,8 +519,8 @@ class CubeRepository:
         ``06_cubes_and_reports.md`` §D4). The cqso bridge maps
         ``cqso.standards`` (the Schoology canonical code) to the strand via
         ``dim_standard.schoology_standard``. Alias strands carrying no cqso
-        rows resolve to BLANK (0) — matching legacy where the DAX measure
-        returns BLANK for an unassessed standard.
+        rows resolve to NULL (rendered BLANK) — matching legacy where the
+        DAX measure returns BLANK for an unassessed standard.
 
         Restricts identifiers via an exact-match join on the item's
         ``dim_question_data.standard`` set so unaligned assessments yield
@@ -591,7 +591,10 @@ class CubeRepository:
                 sq.strand                       AS strand,
                 ss.num_standards                AS num_standards,
                 sq.num_questions                AS num_questions,
-                COALESCE(sg.grade_average, 0)   AS grade_average
+                -- NULL (not 0) when the strand's standards carry no cqso
+                -- rows: legacy renders an unassessed strand BLANK, not
+                -- 0.0% (MASTER_PLAN §6, Decision 3).
+                sg.grade_average                AS grade_average
             FROM strand_questions sq
             JOIN strand_standards ss ON ss.strand = sq.strand
             LEFT JOIN strand_grade sg ON sg.strand = sq.strand
@@ -639,8 +642,9 @@ class CubeRepository:
              so a Schoology **alias** code (e.g. ``MA.912.AR.3.1``, which
              never appears literally in cqso but shares an identifier with
              ``AI.MA.912.AR.3.1``) still inherits its canonical target.
-        Alias codes whose identifier carries no cqso rows resolve to 0
-        (legacy BLANK).
+        Alias codes whose identifier carries no cqso rows resolve to
+        NULL — legacy renders these unassessed Schoology aliases as a
+        BLANK cell (not 0.0%); see MASTER_PLAN §6 Decision 3.
         """
         sql = text(
             """
@@ -698,7 +702,11 @@ class CubeRepository:
                 l.schoology_standard                                         AS schoology_standard,
                 l.strand                                                     AS strand,
                 MAX(COALESCE(p.num_questions, 0))                            AS num_questions,
-                MAX(COALESCE(bc.grade_average, bi.grade_average, 0))         AS grade_average
+                -- NULL (not 0) when no cqso rows match this code/identifier:
+                -- legacy DAX returns BLANK for an unassessed Schoology alias
+                -- standard, which renders as an empty cell (MASTER_PLAN §6,
+                -- Decision 3). The serializer preserves None → blank pct.
+                MAX(COALESCE(bc.grade_average, bi.grade_average))            AS grade_average
             FROM labeled l
             LEFT JOIN per_identifier p ON p.identifier = l.identifier
             LEFT JOIN cqso_by_code bc ON bc.schoology_standard = l.schoology_standard

@@ -21,7 +21,11 @@ export default function StrandRowList({
   onSelectStrand,
 }: StrandRowListProps) {
   const rows = useMemo(
-    () => [...strands].sort((a, b) => a.grade_average - b.grade_average),
+    // Unassessed strands (grade_average === null) sort first; blank label.
+    () =>
+      [...strands].sort(
+        (a, b) => (a.grade_average ?? -1) - (b.grade_average ?? -1),
+      ),
     [strands],
   );
 
@@ -37,8 +41,9 @@ export default function StrandRowList({
       ) : (
         <ul className="flex-1 overflow-y-auto max-h-[260px] p-2 flex flex-col gap-1.5">
           {rows.map((row, i) => {
-            const pct = Math.max(0, Math.min(1, row.grade_average));
+            const pct = Math.max(0, Math.min(1, row.grade_average ?? 0));
             const fill = performanceColor(pct);
+            const pctLabel = row.grade_average == null ? '' : formatPercent(pct, 1);
             const isSelected = selectedStrand === row.strand;
             const dim = !!selectedStrand && !isSelected;
             return (
@@ -72,7 +77,7 @@ export default function StrandRowList({
                       }}
                     >
                       <span className="font-semibold text-black text-[11px] tabular-nums">
-                        {formatPercent(pct, 1)}
+                        {pctLabel}
                       </span>
                     </div>
                     <span

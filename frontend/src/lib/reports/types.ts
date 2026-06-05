@@ -32,7 +32,8 @@ export interface QuestionOverall {
   incorrect_choice_details: string;
   incorrect_details_name: string;
   standards: string;
-  strand: string;
+  // First/primary raw standard code (e.g. "MA.912.AR.3.1") — NOT a strand.
+  standard_raw: string;
   description: string;
 }
 
@@ -66,7 +67,8 @@ export interface SddStrandRow {
   strand: string;
   num_standards: number;
   num_questions: number;
-  grade_average: number;
+  // null + empty pct for an unassessed strand — rendered BLANK, not 0.0%.
+  grade_average: number | null;
   grade_average_pct: string;
 }
 
@@ -74,7 +76,8 @@ export interface SddStandardRow {
   schoology_standard: string;
   strand: string;
   num_questions: number;
-  grade_average: number;
+  // null + empty pct for an unassessed Schoology alias — rendered BLANK.
+  grade_average: number | null;
   grade_average_pct: string;
 }
 
