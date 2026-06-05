@@ -20,7 +20,7 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
     <div className="space-y-3">
       {standardGroups.map((sg, idx) => (
         <div
-          key={sg.cpalms_standard}
+          key={`${sg.cpalms_standard}-${idx}`}
           className={`bg-white border ${idx > 0 ? 'print:break-before-page' : ''}`}
           style={{ borderColor: LAYOUT_BORDER }}
         >
@@ -56,8 +56,8 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
               </tr>
             </thead>
             <tbody>
-              {sg.teacher_groups.map((tg) => (
-                <Fragment key={tg.section_instructor}>
+              {sg.teacher_groups.map((tg, ti) => (
+                <Fragment key={`${tg.section_instructor}-${ti}`}>
                   <tr
                     className="font-semibold border-b border-t"
                     style={{
@@ -83,9 +83,9 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
                       {tg.questions.length} questions
                     </td>
                   </tr>
-                  {tg.questions.map((q) => (
+                  {tg.questions.map((q, qi) => (
                     <tr
-                      key={`${tg.section_instructor}-${q.question_id}`}
+                      key={`${tg.section_instructor}-${q.question_id}-${qi}`}
                       className="border-b align-top"
                       style={{ borderColor: LAYOUT_BORDER }}
                     >
