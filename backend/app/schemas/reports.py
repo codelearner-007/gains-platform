@@ -602,8 +602,10 @@ class QsmStudentRow(BaseModel):
     user_uid: str
     user_name: str
     score_pct: float
-    possible_points: float
-    correct_count: float
+    # Count-based (PAG-6): possible_points = attempted-cell count,
+    # correct_count = count of fully-correct (green) cells.
+    possible_points: int
+    correct_count: int
     cells: dict[str, int | None]
 
 
@@ -614,11 +616,13 @@ class QsmTeacherGroup(BaseModel):
 
 
 class QsmGrandTotal(BaseModel):
-    possible_points: float
-    correct_count: float
+    # Count-based (PAG-6): possible_points / correct_count are cell counts,
+    # not summed points; per_question_* mirror the legacy footer rows.
+    possible_points: int
+    correct_count: int
     score_pct: float
-    per_question_possible: dict[str, float]
-    per_question_correct: dict[str, float]
+    per_question_possible: dict[str, int]
+    per_question_correct: dict[str, int]
     per_question_pct: dict[str, float]
 
 

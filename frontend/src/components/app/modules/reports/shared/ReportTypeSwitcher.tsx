@@ -9,12 +9,15 @@ import {
   LineChart,
   GraduationCap,
   Network,
+  Table2,
   type LucideIcon,
 } from 'lucide-react';
 
 type AssessmentReportSlug =
   | 'question-response-analysis'
   | 'standards-deep-dive'
+  | 'question-summary-paginated'
+  | 'question-response-analysis-paginated'
   | 'incorrect-answer-details';
 
 type ProgramReportSlug =
@@ -41,6 +44,18 @@ const ASSESSMENT_TABS: TabDef<AssessmentReportSlug>[] = [
     label: 'Standards Deep Dive interactive',
     shortLabel: 'SDD',
     icon: Layers,
+  },
+  {
+    slug: 'question-summary-paginated',
+    label: 'Question Summary Report',
+    shortLabel: 'QSR',
+    icon: Table2,
+  },
+  {
+    slug: 'question-response-analysis-paginated',
+    label: 'Question Response Analysis Report',
+    shortLabel: 'QRA (paginated)',
+    icon: FileBarChart,
   },
 ];
 

@@ -2015,6 +2015,12 @@ class CubeRepository:
         sql = text(
             """
             WITH per_question AS (
+                -- Exactly one row per question. The dim_standard alias table
+                -- can map a single schoology_standard to many rows (Schoology
+                -- course-prefix aliases — see
+                -- docs/audit/legacy-schoology-cpalms-mapping.md); collapse to
+                -- one cpalms_standard here so the (user, question) attempt rows
+                -- below do NOT fan out and inflate the cell counts (PAG-6).
                 SELECT DISTINCT ON (qs.question_id)
                     qs.school_id,
                     qs.question_id,
@@ -2022,11 +2028,16 @@ class CubeRepository:
                     qs.position_number,
                     qs.correct_answer,
                     qs.standards,
-                    qs.standard
+                    qs.standard,
+                    ds.cpalms_standard
                 FROM cube_question_summary qs
+                -- dim_standard is global (no school_id) — RLS not applicable.
+                LEFT JOIN dim_standard ds
+                  ON ds.schoology_standard = qs.standard
                 WHERE qs.item_id = :item_id
                 ORDER BY qs.question_id,
-                         NULLIF(regexp_replace(COALESCE(qs.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST
+                         NULLIF(regexp_replace(COALESCE(qs.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                         ds.cpalms_standard NULLS LAST
             ),
             -- Per-(user, question) latest attempt, so re-takes don't double-count.
             -- fss.submission is UUID v7 (time-ordered) per CLAUDE.md.
@@ -2060,15 +2071,12 @@ class CubeRepository:
                 pq.correct_answer,
                 pq.standards,
                 pq.standard                                  AS schoology_standard,
-                ds.cpalms_standard
+                pq.cpalms_standard
             FROM per_attempt pa
             JOIN per_question pq ON pq.question_id = pa.question_id
             LEFT JOIN dim_section dsec
               ON dsec.section_nid = pa.section_nid
              AND dsec.school_id = pa.school_id
-            -- dim_standard is global (no school_id) — RLS not applicable.
-            LEFT JOIN dim_standard ds
-              ON ds.schoology_standard = pq.standard
             ORDER BY section_instructors, pa.user_name,
                      NULLIF(regexp_replace(COALESCE(pq.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
                      pq.question_no

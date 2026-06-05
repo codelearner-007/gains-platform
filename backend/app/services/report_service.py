@@ -1385,9 +1385,16 @@ class ReportService:
         )
 
         # ── Per-(teacher, student) accumulation ────────────────────────────
+        # Legacy QSR semantics (PAG-6): "# Correct Answers" is the COUNT of
+        # fully-correct cells (the green 1-cells), NOT a sum of points_received.
+        # A partial-credit / multi-select answer (0 < received < possible) is
+        # rendered as a 0-cell and therefore is NOT counted as correct.
+        # "Possible Points" is the count of attempted cells, and Score% is
+        # correct-cells / attempted-cells at every grain — this reproduces the
+        # legacy SSRS PDFs exactly (e.g. grand total 953 correct / 1166 = 82%).
         teacher_students: dict[str, dict[str, dict[str, Any]]] = {}
-        per_q_possible: dict[str, float] = {}
-        per_q_correct: dict[str, float] = {}
+        per_q_possible: dict[str, int] = {}
+        per_q_correct: dict[str, int] = {}
 
         for r in rows:
             teacher = safe_str(r.get("section_instructors")) or "Unassigned"
@@ -1404,24 +1411,25 @@ class ReportService:
                 {
                     "user_uid": user_uid,
                     "user_name": user_name,
-                    "possible": 0.0,
-                    "correct": 0.0,
+                    "possible": 0,
+                    "correct": 0,
                     "cells": {},
                 },
             )
-            student["possible"] += pp
-            student["correct"] += pr
+            if cell is not None:
+                student["possible"] += 1
+                student["correct"] += cell
+                per_q_possible[qid] = per_q_possible.get(qid, 0) + 1
+                per_q_correct[qid] = per_q_correct.get(qid, 0) + cell
             student["cells"][qid] = cell
-            per_q_possible[qid] = per_q_possible.get(qid, 0.0) + pp
-            per_q_correct[qid] = per_q_correct.get(qid, 0.0) + pr
 
         teacher_groups: list[QsmTeacherGroup] = []
-        total_possible = 0.0
-        total_correct = 0.0
+        total_possible = 0
+        total_correct = 0
         for teacher in sorted(teacher_students):
             students_list: list[QsmStudentRow] = []
-            teach_poss = 0.0
-            teach_corr = 0.0
+            teach_poss = 0
+            teach_corr = 0
             for s in teacher_students[teacher].values():
                 poss = s["possible"]
                 corr = s["correct"]
@@ -1431,8 +1439,8 @@ class ReportService:
                         user_uid=s["user_uid"],
                         user_name=s["user_name"],
                         score_pct=round(pct, 6),
-                        possible_points=round(poss, 4),
-                        correct_count=round(corr, 4),
+                        possible_points=poss,
+                        correct_count=corr,
                         cells={k: v for k, v in s["cells"].items()},
                     )
                 )
@@ -1453,18 +1461,14 @@ class ReportService:
 
         grand_pct = (total_correct / total_possible) if total_possible > 0 else 0.0
         grand_total = QsmGrandTotal(
-            possible_points=round(total_possible, 4),
-            correct_count=round(total_correct, 4),
+            possible_points=total_possible,
+            correct_count=total_correct,
             score_pct=round(grand_pct, 6),
-            per_question_possible={
-                k: round(v, 4) for k, v in per_q_possible.items()
-            },
-            per_question_correct={
-                k: round(v, 4) for k, v in per_q_correct.items()
-            },
+            per_question_possible=dict(per_q_possible),
+            per_question_correct=dict(per_q_correct),
             per_question_pct={
                 k: round(
-                    (per_q_correct.get(k, 0.0) / v) if v > 0 else 0.0, 6
+                    (per_q_correct.get(k, 0) / v) if v > 0 else 0.0, 6
                 )
                 for k, v in per_q_possible.items()
             },

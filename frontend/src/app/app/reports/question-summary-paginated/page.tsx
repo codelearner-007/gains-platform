@@ -12,27 +12,27 @@ import ReportBreadcrumb, {
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import PaginatedReportHeader from '@/components/app/modules/reports/paginated/PaginatedReportHeader';
-import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/PaginatedKpiStrip';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QuestionSummaryMatrix from '@/components/app/modules/reports/paginated/QuestionSummaryMatrix';
+import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
-type Variant = 'base' | 'teacher_subtotal' | 'header_highlights';
+// Legacy QSR paginated variants (PAG-4 / PAG-5, Decision 5):
+//   • base     — PBIX ord 6 "Question Summary Report"
+//   • teacher  — PBIX ord 7 "- Teacher" two-row per-instructor subtotal block
+//   • redacted — PBIX ord 17, anonymized names (client-side; see matrix note)
+// The invented "Header Highlights" variant is dropped, and the broken-in-legacy
+// "Teacher Subtotal" report (ord 16) is intentionally NOT mirrored.
+type Variant = 'base' | 'teacher' | 'redacted';
 
 const VARIANT_LABEL: Record<Variant, string> = {
   base: 'Question Summary Report',
-  teacher_subtotal: 'Question Summary Report — Teacher Subtotal',
-  header_highlights: 'Question Summary Report — Header Highlights',
-};
-
-const VARIANT_SUBTITLE: Record<Variant, string | undefined> = {
-  base: undefined,
-  teacher_subtotal: 'With per-teacher subtotal rows',
-  header_highlights: 'Per-standard headers colored by performance band',
+  teacher: 'Question Summary Report',
+  redacted: 'Question Summary Report',
 };
 
 function parseVariant(raw: string | null): Variant {
-  if (raw === 'teacher_subtotal' || raw === 'header_highlights') return raw;
+  if (raw === 'teacher' || raw === 'redacted') return raw;
   return 'base';
 }
 
@@ -77,6 +77,7 @@ export default function QuestionSummaryPaginatedPage() {
             label: data.assessment.item_name || data.assessment.item_id,
           })}
         />
+        <ReportTypeSwitcher group="assessment" itemId={itemId} />
         <VariantTabs itemId={itemId} active={variant} />
       </div>
 
@@ -84,18 +85,15 @@ export default function QuestionSummaryPaginatedPage() {
         <PaginatedReportHeader
           assessment={data.assessment}
           title={VARIANT_LABEL[variant]}
-          subtitle={VARIANT_SUBTITLE[variant]}
         />
       </div>
 
-      <div className="mb-2">
-        <PaginatedKpiStrip kpis={data.kpis} />
-      </div>
+      {/* PAG-3: legacy QSR has no KPI strip — intentionally omitted. */}
 
       <QuestionSummaryMatrix
         payload={data}
-        showTeacherSubtotal={variant === 'teacher_subtotal'}
-        highlightStandardHeader={variant === 'header_highlights'}
+        showTeacherSubtotal={variant === 'teacher'}
+        redacted={variant === 'redacted'}
       />
 
       <PaginatedFooter />
@@ -112,8 +110,8 @@ function VariantTabs({
 }) {
   const variants: { slug: Variant; label: string }[] = [
     { slug: 'base', label: 'Base' },
-    { slug: 'teacher_subtotal', label: 'Teacher Subtotal' },
-    { slug: 'header_highlights', label: 'Header Highlights' },
+    { slug: 'teacher', label: 'Teacher' },
+    { slug: 'redacted', label: 'Redacted' },
   ];
   return (
     <div role="tablist" className="flex gap-1 rounded-md bg-muted/50 p-1 w-fit">

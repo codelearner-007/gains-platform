@@ -40,6 +40,26 @@ export const PBIX_ACCENT_NAVY = '#4472C4'; // Standard / outer column-group head
 export const PBIX_ACCENT_LIGHT_BLUE = '#8FAADC'; // Question-No / inner header row
 export const GROUP_HEADER_CYAN = '#D6F1EF'; // Teacher / Standard group band
 
+// ── Question Summary Report (QSR) exact legacy fills ────────────────────────
+// Verbatim from the rendered legacy SSRS PDFs (e.g. "Unit 6 Test- Heat Sources
+// …-Question Summary Report - color.pdf"). The QSR uses BRIGHTER fills than the
+// softened PERF_* report tokens above — keep both: PERF_* drives the
+// interactive QRA/SDD/summary surfaces, QSR_* drives this paginated family so
+// it is pixel-faithful to the legacy print output. Do NOT collapse the two.
+//   correct cell / Score% ≥80%   → #99FF99 (green)
+//   incorrect cell / Score% <70% → #FFCCFF (pink)
+//   Score% 70–80%                → #FFF591 (yellow)
+export const QSR_GREEN = '#99FF99';
+export const QSR_PINK = '#FFCCFF';
+export const QSR_YELLOW = '#FFF591';
+
+/** Three-band Score% fill for the QSR family (exact legacy hexes). */
+export function qsrPerformanceColor(grade: number): string {
+  if (grade < 0.7) return QSR_PINK;
+  if (grade < 0.8) return QSR_YELLOW;
+  return QSR_GREEN;
+}
+
 // ── Status icon hexes (used inside cells for the Check / X marks) ───────────
 // Tailwind `green-700` and `red-700` from the project palette, hard-coded so
 // the icons stay legible on the green/pink traffic-light cell backgrounds.

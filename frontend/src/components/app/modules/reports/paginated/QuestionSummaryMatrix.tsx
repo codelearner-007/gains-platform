@@ -8,25 +8,46 @@ import type {
 } from '@/lib/reports/types';
 import {
   HEADER_BAR_BG,
-  IAD_GREEN,
-  IAD_RED,
   LAYOUT_BORDER,
   PBIX_ACCENT_LIGHT_BLUE,
   PBIX_ACCENT_NAVY,
-  performanceColor,
+  QSR_GREEN,
+  QSR_PINK,
+  qsrPerformanceColor,
 } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
 
 interface Props {
   payload: QuestionSummaryMatrixPayload;
-  /** Add a per-teacher subtotal row at the foot of each teacher group. */
+  /**
+   * Render the legacy "- Teacher" two-row subtotal block (# Correct Answers
+   * + Score %) at the foot of each teacher group (PBIX ord 7 / PAG-4).
+   */
   showTeacherSubtotal?: boolean;
-  /** Color the per-standard column-group header by performance band. */
-  highlightStandardHeader?: boolean;
+  /**
+   * PAG-5 (redacted, PBIX ord 17): anonymize student / teacher names so the
+   * matrix can be shared without PII. This is a client-side deterministic
+   * redaction; the cube's canonical `*_name_hash` columns (cube_user_summary)
+   * are not yet joined into the QSR matrix query — exact legacy-hash parity is
+   * a documented follow-up (there is no sample redacted PDF to diff against).
+   */
+  redacted?: boolean;
 }
 
 function pct(v: number): string {
   return `${(v * 100).toFixed(0)}%`;
+}
+
+/**
+ * Deterministic, stable anonymization for the redacted QSR variant. Same input
+ * always yields the same label so a reader can still track a row across pages.
+ */
+function redactName(seed: string, prefix: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return `${prefix} ${h.toString(36).toUpperCase().slice(0, 6)}`;
 }
 
 interface StandardSpan {
@@ -59,29 +80,12 @@ function buildStandardSpans(questions: QsmQuestionColumn[]): StandardSpan[] {
 export default function QuestionSummaryMatrix({
   payload,
   showTeacherSubtotal = false,
-  highlightStandardHeader = false,
+  redacted = false,
 }: Props) {
   const { questions, teacher_groups: teacherGroups, grand_total: grandTotal } =
     payload;
 
   const spans = useMemo(() => buildStandardSpans(questions), [questions]);
-  const stdPctByCpalms = useMemo(() => {
-    const map = new Map<string, { possible: number; correct: number }>();
-    for (const q of questions) {
-      const code = q.cpalms_standard || q.standard || 'Other';
-      const possible = grandTotal.per_question_possible[q.question_id] ?? 0;
-      const correct = grandTotal.per_question_correct[q.question_id] ?? 0;
-      const acc = map.get(code) ?? { possible: 0, correct: 0 };
-      acc.possible += possible;
-      acc.correct += correct;
-      map.set(code, acc);
-    }
-    const out = new Map<string, number>();
-    for (const [code, { possible, correct }] of map) {
-      out.set(code, possible > 0 ? correct / possible : 0);
-    }
-    return out;
-  }, [questions, grandTotal]);
 
   return (
     <div
@@ -99,28 +103,21 @@ export default function QuestionSummaryMatrix({
             >
               Standards
             </th>
-            {spans.map((s, i) => {
-              const stdPct = stdPctByCpalms.get(s.cpalms) ?? 0;
-              const bg = highlightStandardHeader
-                ? performanceColor(stdPct)
-                : PBIX_ACCENT_NAVY;
-              const fg = highlightStandardHeader ? '#000' : '#fff';
-              return (
-                <th
-                  key={`${s.cpalms}-${i}`}
-                  colSpan={s.span}
-                  className="border-r border-b text-center font-semibold px-2 py-1"
-                  style={{ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER }}
-                  title={
-                    highlightStandardHeader
-                      ? `${s.cpalms} · ${pct(stdPct)}`
-                      : s.cpalms
-                  }
-                >
-                  {s.cpalms}
-                </th>
-              );
-            })}
+            {spans.map((s, i) => (
+              <th
+                key={`${s.cpalms}-${i}`}
+                colSpan={s.span}
+                className="border-r border-b text-center font-semibold px-2 py-1"
+                style={{
+                  backgroundColor: PBIX_ACCENT_NAVY,
+                  color: '#fff',
+                  borderColor: LAYOUT_BORDER,
+                }}
+                title={s.cpalms}
+              >
+                {s.cpalms}
+              </th>
+            ))}
             <th
               colSpan={2}
               className="border-l border-b text-white px-2 py-1 text-center"
@@ -191,7 +188,7 @@ export default function QuestionSummaryMatrix({
                   {idx === 0 ? (
                     <td
                       rowSpan={
-                        group.students.length + (showTeacherSubtotal ? 1 : 0)
+                        group.students.length + (showTeacherSubtotal ? 2 : 0)
                       }
                       className="border-r px-2 py-1 align-top font-semibold"
                       style={{
@@ -199,7 +196,11 @@ export default function QuestionSummaryMatrix({
                         backgroundColor: HEADER_BAR_BG,
                       }}
                     >
-                      <div>{group.section_instructor}</div>
+                      <div>
+                        {redacted
+                          ? redactName(group.section_instructor, 'Instructor')
+                          : group.section_instructor}
+                      </div>
                       <div className="text-[10px] text-neutral-700">
                         {pct(group.teacher_score_pct)}
                       </div>
@@ -210,13 +211,15 @@ export default function QuestionSummaryMatrix({
                     className="border-r px-2 py-1 truncate max-w-[180px] text-left font-normal"
                     style={{ borderColor: LAYOUT_BORDER }}
                   >
-                    {student.user_name}
+                    {redacted
+                      ? redactName(student.user_uid, 'Student')
+                      : student.user_name}
                   </th>
                   <td
                     className="border-r px-2 py-1 text-right tabular-nums font-semibold"
                     style={{
                       borderColor: LAYOUT_BORDER,
-                      backgroundColor: performanceColor(student.score_pct),
+                      backgroundColor: qsrPerformanceColor(student.score_pct),
                     }}
                   >
                     {pct(student.score_pct)}
@@ -227,11 +230,11 @@ export default function QuestionSummaryMatrix({
                     let label = '';
                     let aria = 'not attempted';
                     if (cell === 1) {
-                      bg = IAD_GREEN;
+                      bg = QSR_GREEN;
                       label = '1';
                       aria = 'correct';
                     } else if (cell === 0) {
-                      bg = IAD_RED;
+                      bg = QSR_PINK;
                       label = '0';
                       aria = 'incorrect';
                     }
@@ -264,63 +267,116 @@ export default function QuestionSummaryMatrix({
                   </td>
                 </tr>
               ))}
-              {showTeacherSubtotal && (
-                <tr
-                  className="border-b font-semibold"
-                  style={{
-                    borderColor: LAYOUT_BORDER,
-                    backgroundColor: HEADER_BAR_BG,
-                  }}
-                >
-                  <td
-                    className="border-r px-2 py-1 italic"
-                    style={{ borderColor: LAYOUT_BORDER }}
-                  >
-                    Teacher Subtotal
-                  </td>
-                  <td
-                    className="border-r px-2 py-1 text-right tabular-nums"
-                    style={{
-                      borderColor: LAYOUT_BORDER,
-                      backgroundColor: performanceColor(group.teacher_score_pct),
-                    }}
-                  >
-                    {pct(group.teacher_score_pct)}
-                  </td>
-                  {questions.map((q) => {
-                    const pos = group.students.reduce(
-                      (acc, s) => acc + (s.cells[q.question_id] === 1 ? 1 : 0),
-                      0,
-                    );
-                    const att = group.students.reduce(
-                      (acc, s) =>
-                        acc + (s.cells[q.question_id] === null ? 0 : 1),
-                      0,
-                    );
-                    return (
-                      <td
-                        key={`sub-${q.question_id}`}
-                        className="border-r px-1 py-0.5 text-center tabular-nums"
-                        style={{ borderColor: LAYOUT_BORDER }}
+              {showTeacherSubtotal &&
+                (() => {
+                  // Legacy "- Teacher" two-row subtotal block (PBIX ord 7):
+                  // a "# Correct Answers" row (per-question correct counts) and
+                  // a "Score %" row (per-question pct, 3-band colored), both
+                  // nested inside the teacher group before the next teacher.
+                  const teacherCorrect = group.students.reduce(
+                    (acc, s) => acc + s.correct_count,
+                    0,
+                  );
+                  const perQ = questions.map((q) => {
+                    let correct = 0;
+                    let attempted = 0;
+                    for (const s of group.students) {
+                      const c = s.cells[q.question_id];
+                      if (c === null || c === undefined) continue;
+                      attempted += 1;
+                      correct += c;
+                    }
+                    return {
+                      qid: q.question_id,
+                      correct,
+                      attempted,
+                      pct: attempted > 0 ? correct / attempted : 0,
+                    };
+                  });
+                  return (
+                    <Fragment key={`${group.section_instructor}-subtotal`}>
+                      <tr
+                        className="border-b font-semibold"
+                        style={{
+                          borderColor: LAYOUT_BORDER,
+                          backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
+                        }}
                       >
-                        {att > 0 ? `${pos}/${att}` : '—'}
-                      </td>
-                    );
-                  })}
-                  <td
-                    className="border-r px-2 py-1 text-right tabular-nums"
-                    style={{ borderColor: LAYOUT_BORDER }}
-                  >
-                    {group.students.reduce((acc, s) => acc + s.possible_points, 0)}
-                  </td>
-                  <td
-                    className="px-2 py-1 text-right tabular-nums"
-                    style={{ borderColor: LAYOUT_BORDER }}
-                  >
-                    {group.students.reduce((acc, s) => acc + s.correct_count, 0)}
-                  </td>
-                </tr>
-              )}
+                        <td
+                          className="border-r px-2 py-1"
+                          style={{ borderColor: LAYOUT_BORDER }}
+                        >
+                          # Correct Answers
+                        </td>
+                        <td
+                          className="border-r px-2 py-1 text-right tabular-nums"
+                          style={{ borderColor: LAYOUT_BORDER }}
+                        >
+                          {teacherCorrect}
+                        </td>
+                        {perQ.map((p) => (
+                          <td
+                            key={`sub-cc-${p.qid}`}
+                            className="border-r px-1 py-0.5 text-center tabular-nums"
+                            style={{ borderColor: LAYOUT_BORDER }}
+                          >
+                            {p.attempted > 0 ? p.correct : '—'}
+                          </td>
+                        ))}
+                        <td
+                          className="border-r"
+                          style={{ borderColor: LAYOUT_BORDER }}
+                        />
+                        <td style={{ borderColor: LAYOUT_BORDER }} />
+                      </tr>
+                      <tr
+                        className="border-b font-semibold"
+                        style={{
+                          borderColor: LAYOUT_BORDER,
+                          backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
+                        }}
+                      >
+                        <td
+                          className="border-r px-2 py-1"
+                          style={{ borderColor: LAYOUT_BORDER }}
+                        >
+                          Score %
+                        </td>
+                        <td
+                          className="border-r px-2 py-1 text-right tabular-nums"
+                          style={{
+                            borderColor: LAYOUT_BORDER,
+                            backgroundColor: qsrPerformanceColor(
+                              group.teacher_score_pct,
+                            ),
+                          }}
+                        >
+                          {pct(group.teacher_score_pct)}
+                        </td>
+                        {perQ.map((p) => (
+                          <td
+                            key={`sub-pct-${p.qid}`}
+                            className="border-r px-1 py-0.5 text-center tabular-nums"
+                            style={{
+                              borderColor: LAYOUT_BORDER,
+                              backgroundColor:
+                                p.attempted > 0
+                                  ? qsrPerformanceColor(p.pct)
+                                  : undefined,
+                            }}
+                          >
+                            {p.attempted > 0 ? pct(p.pct) : '—'}
+                          </td>
+                        ))}
+                        <td
+                          className="border-r"
+                          style={{ borderColor: LAYOUT_BORDER }}
+                        />
+                        <td style={{ borderColor: LAYOUT_BORDER }} />
+                      </tr>
+                    </Fragment>
+                  );
+                })()}
             </Fragment>
           ))}
 
@@ -414,7 +470,7 @@ export default function QuestionSummaryMatrix({
               className="border-r px-2 py-1 text-right tabular-nums"
               style={{
                 borderColor: LAYOUT_BORDER,
-                backgroundColor: performanceColor(grandTotal.score_pct),
+                backgroundColor: qsrPerformanceColor(grandTotal.score_pct),
               }}
             >
               {pct(grandTotal.score_pct)}
@@ -427,7 +483,7 @@ export default function QuestionSummaryMatrix({
                   className="border-r px-1 py-1 text-center tabular-nums"
                   style={{
                     borderColor: LAYOUT_BORDER,
-                    backgroundColor: performanceColor(p),
+                    backgroundColor: qsrPerformanceColor(p),
                   }}
                 >
                   {pct(p)}
