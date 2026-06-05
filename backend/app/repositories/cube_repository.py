@@ -1458,543 +1458,205 @@ class CubeRepository:
         row = result.first()
         return _row_to_dict(row) if row else None
 
-    async def get_ytd_overall_kpis(
-        self,
-        session_filter: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        category: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> Optional[Dict[str, Any]]:
-        # Legacy "Key Measures" card (PBIX multiRowCard, _layout.full.json ord 8):
-        #   Total Questions  = DISTINCTCOUNT(question)        — over cqso
-        #   Total Students   = DISTINCTCOUNT(user_uid)        — over cube_user_summary
-        #   Score            = SUM(total_score)                — over cube_user_summary
-        #   Points Possible  = SUM(total_possible_point)       — over cube_user_summary
-        #   % Correct        = AVG(grade_average)              — over cqso
-        #                      (DAX: AVERAGE('cqso'[Grade_Average]))
-        sql = text(
-            f"""
-            WITH cus_scoped AS (
-                SELECT cus.user_uid, cus.item_id,
-                       cus.total_score, cus.total_possible_point
-                FROM cube_user_summary cus
-                WHERE {_CUS_YTD_FILTER_SQL}
-            ),
-            cqso_scoped AS (
-                SELECT cqso.ukey, cqso.grade_average
-                FROM cube_question_summary_overall cqso
-                LEFT JOIN dim_subject dsubj
-                  ON dsubj.school_id = cqso.school_id
-                 AND dsubj.subject_id = cqso.subject_id
-                WHERE {_CQSO_YTD_FILTER_SQL}
-            )
-            SELECT
-                (SELECT COUNT(DISTINCT ukey) FROM cqso_scoped)              AS total_questions,
-                (SELECT COUNT(DISTINCT user_uid) FROM cus_scoped)            AS total_students,
-                (SELECT COALESCE(SUM(total_score), 0) FROM cus_scoped)       AS total_points_earned,
-                (SELECT COALESCE(SUM(total_possible_point), 0) FROM cus_scoped)
-                                                                              AS total_points_possible,
-                (SELECT COALESCE(AVG(grade_average), 0) FROM cqso_scoped)   AS overall_avg,
-                (SELECT COUNT(DISTINCT item_id) FROM cus_scoped)             AS total_assessments
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            _school_filter_params(
-                session_filter, subject, grade, category, section
-            ),
-        )
-        row = result.first()
-        return _row_to_dict(row) if row else None
-
-    async def get_ytd_timeline(
-        self,
-        session_filter: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        category: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        sql = text(
-            f"""
-            WITH per_date_subject AS (
-                SELECT
-                    di.assessment_date              AS d,
-                    COALESCE(dsubj.subject, 'Other') AS subject,
-                    SUM(cus.total_score)            AS s,
-                    SUM(cus.total_possible_point)   AS p
-                FROM cube_user_summary cus
-                JOIN dim_item di
-                  ON di.item_id = cus.item_id
-                LEFT JOIN dim_subject dsubj
-                  ON dsubj.school_id = di.school_id
-                 AND dsubj.subject_id = di.subject_id
-                WHERE di.assessment_date IS NOT NULL
-                  AND {_CUS_YTD_FILTER_SQL}
-                GROUP BY di.assessment_date, COALESCE(dsubj.subject, 'Other')
-            ),
-            per_date AS (
-                SELECT
-                    di.assessment_date                       AS d,
-                    SUM(cus.total_score)                     AS s,
-                    SUM(cus.total_possible_point)            AS p,
-                    COUNT(DISTINCT cus.item_id)              AS items
-                FROM cube_user_summary cus
-                JOIN dim_item di
-                  ON di.item_id = cus.item_id
-                WHERE di.assessment_date IS NOT NULL
-                  AND {_CUS_YTD_FILTER_SQL}
-                GROUP BY di.assessment_date
-            )
-            SELECT
-                pd.d                                          AS date,
-                CASE WHEN pd.p > 0 THEN pd.s::numeric / pd.p::numeric ELSE 0 END AS overall_avg,
-                pd.items                                      AS assessments_count,
-                pds.subject                                   AS subject,
-                CASE WHEN pds.p > 0 THEN pds.s::numeric / pds.p::numeric ELSE 0 END AS subject_avg
-            FROM per_date pd
-            LEFT JOIN per_date_subject pds
-              ON pds.d = pd.d
-            ORDER BY pd.d, pds.subject
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            _school_filter_params(
-                session_filter, subject, grade, category, section
-            ),
-        )
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_ytd_grade_distribution(
-        self,
-        session_filter: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        category: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        sql = text(
-            f"""
-            WITH user_item AS (
-                SELECT
-                    cus.user_uid,
-                    cus.item_id,
-                    SUM(cus.total_score)            AS s,
-                    SUM(cus.total_possible_point)   AS p
-                FROM cube_user_summary cus
-                WHERE {_CUS_YTD_FILTER_SQL}
-                GROUP BY cus.user_uid, cus.item_id
-            ),
-            user_item_pct AS (
-                SELECT user_uid, item_id,
-                       CASE WHEN p > 0 THEN s::numeric / p ELSE 0 END AS pct
-                FROM user_item
-            )
-            SELECT
-                di.assessment_date                                     AS date,
-                COUNT(*) FILTER (WHERE ui.pct >= 0.8)                  AS band_high,
-                COUNT(*) FILTER (WHERE ui.pct >= 0.7 AND ui.pct < 0.8) AS band_mid,
-                COUNT(*) FILTER (WHERE ui.pct < 0.7)                   AS band_low
-            FROM user_item_pct ui
-            JOIN dim_item di
-              ON di.item_id = ui.item_id
-            WHERE di.assessment_date IS NOT NULL
-            GROUP BY di.assessment_date
-            ORDER BY di.assessment_date
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            _school_filter_params(
-                session_filter, subject, grade, category, section
-            ),
-        )
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_ytd_student_progression(
-        self,
-        session_filter: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        category: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        sql = text(
-            f"""
-            WITH user_item AS (
-                SELECT
-                    cus.user_uid,
-                    COALESCE(NULLIF(cus.user_name, ''), cus.user_uid) AS user_name,
-                    di.assessment_date                                AS d,
-                    cus.item_id,
-                    SUM(cus.total_score)                              AS s,
-                    SUM(cus.total_possible_point)                     AS p
-                FROM cube_user_summary cus
-                JOIN dim_item di
-                  ON di.item_id = cus.item_id
-                WHERE di.assessment_date IS NOT NULL
-                  AND {_CUS_YTD_FILTER_SQL}
-                GROUP BY cus.user_uid, cus.user_name, di.assessment_date, cus.item_id
-            ),
-            user_item_pct AS (
-                SELECT
-                    user_uid,
-                    user_name,
-                    d,
-                    item_id,
-                    CASE WHEN p > 0 THEN s::numeric / p ELSE 0 END AS pct
-                FROM user_item
-            ),
-            ranked AS (
-                SELECT
-                    user_uid,
-                    user_name,
-                    item_id,
-                    d,
-                    pct,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY user_uid ORDER BY d ASC, item_id ASC
-                    ) AS rn_first,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY user_uid ORDER BY d DESC, item_id DESC
-                    ) AS rn_last,
-                    COUNT(*) OVER (PARTITION BY user_uid) AS n
-                FROM user_item_pct
-            )
-            SELECT
-                user_uid,
-                MAX(user_name)                                AS user_name,
-                MAX(CASE WHEN rn_first = 1 THEN pct END)::numeric AS first_avg,
-                MAX(CASE WHEN rn_last  = 1 THEN pct END)::numeric AS latest_avg,
-                MAX(n)                                        AS assessments_taken
-            FROM ranked
-            GROUP BY user_uid
-            ORDER BY user_name
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            _school_filter_params(
-                session_filter, subject, grade, category, section
-            ),
-        )
-        return [_row_to_dict(r) for r in result.all()]
-
     # ────────────────────────────────────────────────────────────────────
-    # Incorrect Answer Details (drill-through from QRA, single question)
+    # YTD Longitudinal paginated matrix (PBIX ord 8 / 9 / 10 rdlVisual).
+    #
+    # The three legacy "Longitudinal Report - Year To Date" paginated reports
+    # (1/2/3) are the SAME matrix parameterised by (Session, Grade, Subject,
+    # Assessment_type, School_ID) — one row per (Classroom Instructor →
+    # Student) and one column-pair per STANDARD assessed YTD, where the cell is
+    # the POINTS earned over points possible (e.g. ``4/7``) summed across every
+    # assessment of that scope, and ``%`` = SUM(received)/SUM(possible).
+    #
+    # Grain note (alias fan-out): ``fact_student_submission``'s 9-part PK fans
+    # a single (user, question, position) attempt into one row per Schoology
+    # standard alias (e.g. ``AI.MA.912.AR.1.7`` + ``MA.912.AR.1.7``). Summing
+    # the fact directly would double-count those points. We therefore:
+    #   1. resolve ONE canonical Schoology standard per (item, question) via
+    #      the alphabetical-first non-"Other" label in ``dim_question_data``
+    #      (mirrors the committed ``qd_first_standard`` rollup pattern), then
+    #   2. dedupe the fact to one row per (user, item, question, position)
+    #      before summing, so each attempt contributes its points exactly once
+    #      to exactly one standard column.
+    # The column label is ``dim_standard.cpalms_standard`` (falling back to the
+    # canonical Schoology code), matching the bare-code headers in the legacy
+    # PDFs (e.g. ``MA.1.NSO.2.3``). No school_id predicate is needed — RLS
+    # scopes every tenant table via ``app.current_school_id``.
     # ────────────────────────────────────────────────────────────────────
-    async def get_question_overall(
-        self, item_id: str, question_id: str
-    ) -> Optional[Dict[str, Any]]:
-        """One question's overall metadata (joined to qso for description).
-
-        Same dedup pattern as :meth:`get_questions_overall_for_item` to avoid
-        the qs × qso cartesian product when a question has multiple
-        sub-question rows or qso has multiple per-section rows.
-
-        Standards: ``STRING_AGG`` over ``dim_question_data`` so every alias
-        the parser emitted reaches the frontend. Description follows the
-        legacy ``CombineDescriptionsColumn`` DAX: alphabetical-first non-
-        "Other" standard, then look up its row in ``dim_standard``.
-        """
+    async def get_ytd_longitudinal_cells(
+        self,
+        session_filter: Optional[str],
+        subject: Optional[str],
+        grade: Optional[str],
+        category: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        """Long-format (teacher, student, standard) points for the YTD matrix."""
         sql = text(
             """
-            WITH qs_pick AS (
-                SELECT school_id, item_id, question_id, ukey, position_number,
-                       question_type, standard
-                FROM cube_question_summary
-                WHERE item_id = :item_id AND question_id = :question_id
-                ORDER BY NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
-                         position_number
-                LIMIT 1
+            WITH qd_first AS (
+                -- One canonical Schoology standard per (item, question):
+                -- alphabetical-first non-"Other" label (collapses aliases).
+                SELECT qd.item_id, qd.question_id,
+                       MIN(qd.standard) FILTER (
+                           WHERE qd.standard IS NOT NULL
+                             AND qd.standard <> ''
+                             AND LOWER(qd.standard) <> 'other'
+                       ) AS canon_std
+                FROM dim_question_data qd
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qd.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR qd.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR qd.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR qd.assessment_type = CAST(:category AS TEXT))
+                GROUP BY qd.item_id, qd.question_id
             ),
-            qs_agg AS (
-                SELECT item_id, question_id,
-                       MAX(question)                                  AS question,
-                       MAX(correct_answer)                            AS correct_answer,
-                       AVG(grade_average)                             AS grade_average,
-                       SUM(total_possible_point)                      AS total_possible_point,
-                       SUM(total_score)                               AS total_score,
-                       MIN(NULLIF(question_no, ''))                   AS question_no
-                FROM cube_question_summary
-                WHERE item_id = :item_id AND question_id = :question_id
-                GROUP BY item_id, question_id
+            fact_dedup AS (
+                -- Undo the standard-alias fan-out: one attempt row per
+                -- (user, item, question, position).
+                SELECT DISTINCT ON (
+                           fss.user_uid, fss.item_id, fss.question_id, fss.position_number
+                       )
+                       fss.user_uid, fss.user_name, fss.section_nid, fss.school_id,
+                       fss.item_id, fss.item_name, fss.question_id,
+                       fss.points_received, fss.points_possible
+                FROM fact_student_submission fss
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR fss.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR fss.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR fss.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR fss.assessment_type = CAST(:category AS TEXT))
+                  AND fss.points_possible IS NOT NULL
+                  AND fss.points_possible > 0
+                ORDER BY fss.user_uid, fss.item_id, fss.question_id,
+                         fss.position_number, fss.standard NULLS LAST
             ),
-            qd_standards AS (
+            joined AS (
                 SELECT
-                    item_id,
-                    question_id,
-                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
-                FROM dim_question_data
-                WHERE item_id = :item_id
-                  AND question_id = :question_id
-                  AND standard IS NOT NULL AND standard <> ''
-                GROUP BY item_id, question_id
-            ),
-            qd_first_standard AS (
-                SELECT
-                    item_id,
-                    question_id,
-                    MIN(standard) FILTER (
-                        WHERE standard IS NOT NULL
-                          AND standard <> ''
-                          AND LOWER(standard) <> 'other'
-                    ) AS first_standard
-                FROM dim_question_data
-                WHERE item_id = :item_id
-                  AND question_id = :question_id
-                GROUP BY item_id, question_id
-            ),
-            qd_description AS (
-                SELECT
-                    qfs.item_id,
-                    qfs.question_id,
-                    MAX(ds.description) AS description
-                FROM qd_first_standard qfs
+                    fd.user_uid,
+                    fd.user_name,
+                    COALESCE(NULLIF(dsec.section_instructors, ''), 'Unassigned')
+                                                            AS section_instructors,
+                    fd.item_id,
+                    fd.item_name,
+                    qf.canon_std                            AS schoology_standard,
+                    COALESCE(ds.cpalms_standard, qf.canon_std, 'Other')
+                                                            AS standard_label,
+                    fd.points_received,
+                    fd.points_possible
+                FROM fact_dedup fd
+                LEFT JOIN qd_first qf
+                  ON qf.item_id = fd.item_id AND qf.question_id = fd.question_id
                 LEFT JOIN dim_standard ds
-                  ON ds.schoology_standard = qfs.first_standard
-                GROUP BY qfs.item_id, qfs.question_id
-            ),
-            qso_pick AS (
-                SELECT DISTINCT ON (school_id, ukey)
-                       school_id, ukey, question_no, question, correct_answer
-                FROM cube_question_summary_overall
-                ORDER BY school_id, ukey
-            ),
-            qso_num AS (
-                SELECT school_id, ukey,
-                       AVG(grade_average)        AS grade_average,
-                       SUM(total_possible_point) AS total_possible_point,
-                       SUM(total_score)          AS total_score
-                FROM cube_question_summary_overall
-                GROUP BY school_id, ukey
+                  ON ds.schoology_standard = qf.canon_std
+                LEFT JOIN dim_section dsec
+                  ON dsec.section_nid = fd.section_nid
+                 AND dsec.school_id   = fd.school_id
             )
             SELECT
-                qsp.question_id,
-                COALESCE(qso.question_no, qsa.question_no)                  AS question_no,
-                COALESCE(qsp.position_number, '')                           AS position_number,
-                COALESCE(qso.question, qsa.question)                        AS question,
-                COALESCE(qsp.question_type, '')                             AS question_type,
-                COALESCE(qso.correct_answer, qsa.correct_answer)            AS correct_answer,
-                COALESCE(qsa.total_possible_point, qson.total_possible_point) AS total_possible_point,
-                COALESCE(qsa.total_score, qson.total_score)                 AS total_score,
-                COALESCE(qsa.grade_average, qson.grade_average)             AS grade_average,
-                COALESCE(qdst.standards, '')                                AS standards,
-                COALESCE(qsp.standard, '')                                  AS strand_raw,
-                COALESCE(qdd.description, '')                               AS description
-            FROM qs_pick qsp
-            JOIN qs_agg qsa
-              ON qsa.item_id = qsp.item_id AND qsa.question_id = qsp.question_id
-            LEFT JOIN qd_standards qdst
-              ON qdst.item_id = qsp.item_id AND qdst.question_id = qsp.question_id
-            LEFT JOIN qd_description qdd
-              ON qdd.item_id  = qsp.item_id AND qdd.question_id  = qsp.question_id
-            LEFT JOIN qso_pick qso
-              ON qso.school_id = qsp.school_id AND qso.ukey = qsp.ukey
-            LEFT JOIN qso_num qson
-              ON qson.school_id = qsp.school_id AND qson.ukey = qsp.ukey
-            LIMIT 1
-            """
-        )
-        result = await self.session.execute(
-            sql, {"item_id": item_id, "question_id": question_id}
-        )
-        row = result.first()
-        return _row_to_dict(row) if row else None
-
-    async def get_distractor_breakdown(
-        self, item_id: str, question_id: str
-    ) -> List[Dict[str, Any]]:
-        """Per-answer-choice rollup for one question (cube_questionincorrectchoice_summary).
-
-        Empty/null answer_submission rows are dropped (matches PBIX M filter).
-
-        ``answer_submission`` arrives prefixed with a randomised option
-        letter ("a. ", "b. ", …) — Schoology shuffles option positions per
-        student, so the same logical answer can appear under 4 different
-        letters. The cube preserves the raw string for legacy parity (per
-        notebook lines 1772-1798), so we strip the prefix and re-aggregate
-        here at the read layer — same precedent as
-        ``get_canonical_kpis_for_item`` which collapses the
-        (user, question, position_number) alias fan-out before averaging.
-        """
-        sql = text(
-            r"""
-            WITH item_qids AS (
-                SELECT DISTINCT question_id
-                FROM cube_question_summary
-                WHERE item_id = :item_id
-                  AND question_id = :question_id
-            ),
-            choices AS (
-                SELECT
-                    regexp_replace(qic.answer_submission, '^\s*[a-zA-Z]\.\s+', '')
-                                                          AS answer_submission,
-                    SUM(qic.total_student)                AS students_count,
-                    SUM(qic.total_score)                  AS total_score,
-                    SUM(qic.total_possible_point)         AS total_possible_point
-                FROM cube_questionincorrectchoice_summary qic
-                JOIN item_qids iq ON iq.question_id = qic.question_id
-                WHERE qic.answer_submission IS NOT NULL
-                  AND qic.answer_submission <> ''
-                GROUP BY regexp_replace(qic.answer_submission, '^\s*[a-zA-Z]\.\s+', '')
-            ),
-            totals AS (
-                SELECT SUM(students_count) AS total_students FROM choices
-            )
-            SELECT
-                c.answer_submission,
-                c.students_count,
-                CASE
-                  WHEN t.total_students > 0
-                  THEN c.students_count::numeric / t.total_students::numeric
-                  ELSE 0
-                END                                              AS share_of_attempts,
-                CASE
-                  WHEN c.total_possible_point > 0
-                       AND c.total_score >= c.total_possible_point
-                  THEN TRUE ELSE FALSE
-                END                                              AS is_correct
-            FROM choices c
-            CROSS JOIN totals t
-            ORDER BY c.students_count DESC NULLS LAST, c.answer_submission
-            """
-        )
-        result = await self.session.execute(
-            sql, {"item_id": item_id, "question_id": question_id}
-        )
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_per_student_attempts(
-        self, item_id: str, question_id: str
-    ) -> List[Dict[str, Any]]:
-        """Every student × this question row for the IAD per-student table.
-
-        `fact_student_submission` is keyed at `(user, question, standard)`
-        grain, so every question with N Schoology standards produces N rows
-        per (student, submission). All N rows in a cluster share identical
-        points_received / points_possible / answer_submission — only the
-        standard column differs. We collapse with DISTINCT ON to restore
-        one row per (user, submission) for display.
-
-        ``answer_submission`` / ``correct_answer`` arrive prefixed with the
-        random option-letter ("b. …") that Schoology shuffled for this
-        student. The letter is per-submission metadata, not part of the
-        answer's identity, so we strip it for display — same handling as
-        :meth:`get_distractor_breakdown`.
-        """
-        sql = text(
-            r"""
-            SELECT
+                section_instructors,
                 user_uid,
                 user_name,
-                answer_submission,
-                correct_answer,
-                points_received,
-                points_possible,
-                score_pct,
-                is_correct,
-                latest_attempt
-            FROM (
-                SELECT DISTINCT ON (fss.user_uid, fss.submission)
-                    COALESCE(fss.user_uid, '')                       AS user_uid,
-                    COALESCE(NULLIF(fss.user_name, ''), '—')         AS user_name,
-                    regexp_replace(
-                        COALESCE(fss.answer_submission, ''),
-                        '^\s*[a-zA-Z]\.\s+', ''
-                    )                                                AS answer_submission,
-                    regexp_replace(
-                        COALESCE(fss.correct_answer, ''),
-                        '^\s*[a-zA-Z]\.\s+', ''
-                    )                                                AS correct_answer,
-                    COALESCE(fss.points_received, 0)::numeric        AS points_received,
-                    COALESCE(fss.points_possible, 0)::numeric        AS points_possible,
-                    CASE
-                      WHEN COALESCE(fss.points_possible, 0) > 0
-                      THEN COALESCE(fss.points_received, 0)::numeric
-                           / COALESCE(fss.points_possible, 0)::numeric
-                      ELSE 0
-                    END                                              AS score_pct,
-                    CASE
-                      WHEN COALESCE(fss.points_possible, 0) > 0
-                           AND COALESCE(fss.points_received, 0) >= COALESCE(fss.points_possible, 0)
-                      THEN TRUE ELSE FALSE
-                    END                                              AS is_correct,
-                    fss.latest_attempt
-                FROM fact_student_submission fss
-                WHERE fss.item_id = :item_id
-                  AND fss.question_id = :question_id
-                  AND fss.user_uid IS NOT NULL
-                ORDER BY fss.user_uid, fss.submission
-            ) deduped
-            ORDER BY user_name
-            """
-        )
-        result = await self.session.execute(
-            sql, {"item_id": item_id, "question_id": question_id}
-        )
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_ytd_strand_heatmap(
-        self,
-        session_filter: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        category: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        # cube_standard_summary is at (school_id, item_id, strand_id, …) grain;
-        # we scope through dim_item → dim_subject for the 4 dim-subject filters
-        # and dim_section for section.
-        sql = text(
-            """
-            SELECT
-                ds.strand                                              AS strand,
-                di.assessment_date                                     AS date,
-                CASE WHEN SUM(cs.total_possible_point) > 0
-                     THEN SUM(cs.total_score)::numeric
-                          / SUM(cs.total_possible_point)::numeric
-                     ELSE 0
-                END                                                    AS grade_average
-            FROM cube_standard_summary cs
-            JOIN dim_item di
-              ON di.item_id = cs.item_id
-            LEFT JOIN dim_subject dsubj
-              ON dsubj.school_id = di.school_id
-             AND dsubj.subject_id = di.subject_id
-            JOIN dim_strand ds
-              ON ds.strand_id = cs.strand_id
-             AND ds.identifier = cs.identifier
-            WHERE ds.strand IS NOT NULL
-              AND di.assessment_date IS NOT NULL
-              AND (CAST(:session_filter AS TEXT) IS NULL OR dsubj.session = CAST(:session_filter AS TEXT))
-              AND (CAST(:subject AS TEXT) IS NULL OR dsubj.subject = CAST(:subject AS TEXT))
-              AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
-              AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))
-              AND (
-                    CAST(:section AS TEXT) IS NULL
-                 OR EXISTS (
-                      SELECT 1 FROM dim_section dsec
-                      WHERE dsec.school_id = di.school_id
-                        AND dsec.item_id = di.item_id
-                        AND (
-                          dsec.section_name = CAST(:section AS TEXT)
-                       OR dsec.section_code = CAST(:section AS TEXT)
-                       OR dsec.section_nid  = CAST(:section AS TEXT)
-                        )
-                    )
-                  )
-            GROUP BY ds.strand, di.assessment_date
-            ORDER BY ds.strand, di.assessment_date
+                standard_label,
+                MIN(schoology_standard)              AS schoology_standard,
+                SUM(points_received)::float          AS points_received,
+                SUM(points_possible)::float          AS points_possible,
+                COUNT(DISTINCT item_id)              AS items_for_standard
+            FROM joined
+            GROUP BY section_instructors, user_uid, user_name, standard_label
+            ORDER BY section_instructors, user_name, standard_label
             """
         )
         result = await self.session.execute(
             sql,
-            _school_filter_params(
-                session_filter, subject, grade, category, section
+            {
+                "session_filter": session_filter,
+                "subject": subject,
+                "grade": grade,
+                "category": category,
+            },
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
+    async def get_ytd_longitudinal_tests_taken(
+        self,
+        session_filter: Optional[str],
+        subject: Optional[str],
+        grade: Optional[str],
+        category: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        """Per-student count of distinct assessments attempted YTD (Tests Taken)."""
+        sql = text(
+            """
+            SELECT user_uid,
+                   COUNT(DISTINCT item_id) AS tests_taken
+            FROM fact_student_submission fss
+            WHERE (CAST(:session_filter AS TEXT) IS NULL OR fss.session = CAST(:session_filter AS TEXT))
+              AND (CAST(:subject AS TEXT) IS NULL OR fss.subject = CAST(:subject AS TEXT))
+              AND (CAST(:grade AS TEXT) IS NULL OR fss.grade = CAST(:grade AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR fss.assessment_type = CAST(:category AS TEXT))
+            GROUP BY user_uid
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            {
+                "session_filter": session_filter,
+                "subject": subject,
+                "grade": grade,
+                "category": category,
+            },
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
+    async def get_ytd_longitudinal_standard_units(
+        self,
+        session_filter: Optional[str],
+        subject: Optional[str],
+        grade: Optional[str],
+        category: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        """Per-standard list of assessment (unit) names — V3 secondary header."""
+        sql = text(
+            """
+            WITH qd_first AS (
+                SELECT qd.item_id, qd.question_id,
+                       MIN(qd.standard) FILTER (
+                           WHERE qd.standard IS NOT NULL
+                             AND qd.standard <> ''
+                             AND LOWER(qd.standard) <> 'other'
+                       ) AS canon_std
+                FROM dim_question_data qd
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qd.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR qd.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR qd.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR qd.assessment_type = CAST(:category AS TEXT))
+                GROUP BY qd.item_id, qd.question_id
             ),
+            items AS (
+                SELECT DISTINCT fss.item_id, fss.item_name
+                FROM fact_student_submission fss
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR fss.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR fss.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR fss.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR fss.assessment_type = CAST(:category AS TEXT))
+            )
+            SELECT
+                COALESCE(ds.cpalms_standard, qf.canon_std, 'Other') AS standard_label,
+                STRING_AGG(DISTINCT it.item_name, ' / ' ORDER BY it.item_name)
+                                                                    AS unit_names
+            FROM qd_first qf
+            JOIN items it ON it.item_id = qf.item_id
+            LEFT JOIN dim_standard ds ON ds.schoology_standard = qf.canon_std
+            WHERE qf.canon_std IS NOT NULL
+            GROUP BY COALESCE(ds.cpalms_standard, qf.canon_std, 'Other')
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            {
+                "session_filter": session_filter,
+                "subject": subject,
+                "grade": grade,
+                "category": category,
+            },
         )
         return [_row_to_dict(r) for r in result.all()]
 

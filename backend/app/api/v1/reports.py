@@ -97,12 +97,16 @@ async def year_to_date_performance(
     section: Optional[str] = None,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> YearToDatePerformancePayload:
-    """Cross-assessment, school-wide YTD performance dashboard.
+    """Legacy YTD Longitudinal paginated matrix (PBIX ord 8/9/10 rdlVisual).
 
-    Composes the legacy PBIX "Key Measures" KPI card plus our extended
-    Additional Insights (timeline, grade distribution, student
-    progression, strand heatmap). All filter params optional; default =
-    whole-school rollup. Requires: reports:read.
+    POINTS-based per-(Classroom Instructor → Student) matrix with one column
+    per standard assessed YTD, per-teacher subtotals, and grand totals — a
+    faithful clone of the three legacy "Longitudinal Report - Year To Date"
+    reports (the variant differences are purely client-side rendering). The
+    report is one longitudinal unit per (session, grade, subject,
+    assessment_type); ``category`` carries the assessment type. ``section`` is
+    accepted for filter-bar compatibility but not applied at this grain.
+    Requires: reports:read.
     """
     service = ReportService(db)
     return await service.build_year_to_date_performance(

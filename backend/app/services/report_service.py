@@ -71,15 +71,14 @@ from app.schemas.reports import (
     StrandSummaryRollupRow,
     StrandSummaryStandardRow,
     YearToDatePerformancePayload,
+    YtdCell,
     YTDFilters,
-    YTDGradeDistribution,
-    YTDHeatmapCell,
-    YTDKpis,
-    YTDPeriodInfo,
+    YtdGrandTotal,
     YTDSchoolInfo,
-    YTDStudentScatter,
-    YTDStudentSummary,
-    YTDTimelinePoint,
+    YtdStandardColumn,
+    YtdStandardTotal,
+    YtdStudentRow,
+    YtdTeacherGroup,
 )
 
 
@@ -790,6 +789,14 @@ class ReportService:
         self,
         filters: Optional["YTDFilters"] = None,
     ) -> YearToDatePerformancePayload:
+        """Legacy YTD Longitudinal paginated matrix (PBIX ord 8/9/10).
+
+        Rows are grouped Classroom Instructor → Student; columns are the
+        standards assessed YTD for the (session, grade, subject,
+        assessment_type) scope. Every cell + subtotal + grand total is
+        POINTS-based: Score = SUM(points_received)/SUM(points_possible) at
+        that grain (matching the legacy SSRS PDFs, e.g. grand 36/45 = 80%).
+        """
         f = filters or YTDFilters()
         meta = await self.cube.get_ytd_school_meta(
             session_filter=f.session,
@@ -798,44 +805,16 @@ class ReportService:
             category=f.category,
             section=f.section,
         ) or {}
-        kpi_row = await self.cube.get_ytd_overall_kpis(
-            session_filter=f.session,
-            subject=f.subject,
-            grade=f.grade,
-            category=f.category,
-            section=f.section,
-        ) or {}
-        timeline_rows = await self.cube.get_ytd_timeline(
-            session_filter=f.session,
-            subject=f.subject,
-            grade=f.grade,
-            category=f.category,
-            section=f.section,
+        cell_rows = await self.cube.get_ytd_longitudinal_cells(
+            f.session, f.subject, f.grade, f.category
         )
-        grade_dist_rows = await self.cube.get_ytd_grade_distribution(
-            session_filter=f.session,
-            subject=f.subject,
-            grade=f.grade,
-            category=f.category,
-            section=f.section,
+        tests_rows = await self.cube.get_ytd_longitudinal_tests_taken(
+            f.session, f.subject, f.grade, f.category
         )
-        prog_rows = await self.cube.get_ytd_student_progression(
-            session_filter=f.session,
-            subject=f.subject,
-            grade=f.grade,
-            category=f.category,
-            section=f.section,
-        )
-        heatmap_rows = await self.cube.get_ytd_strand_heatmap(
-            session_filter=f.session,
-            subject=f.subject,
-            grade=f.grade,
-            category=f.category,
-            section=f.section,
+        unit_rows = await self.cube.get_ytd_longitudinal_standard_units(
+            f.session, f.subject, f.grade, f.category
         )
 
-        date_from = meta.get("date_from")
-        date_to = meta.get("date_to")
         school = YTDSchoolInfo(
             name=safe_str(meta.get("name")),
             logo_url=meta.get("logo_url") or None,
@@ -843,127 +822,136 @@ class ReportService:
             course_unit=safe_str(meta.get("course_unit")),
             assessment_types=_coerce_str_list(meta.get("assessment_types")),
         )
-        period = YTDPeriodInfo(
-            date_from=date_from.isoformat() if date_from else "",
-            date_to=date_to.isoformat() if date_to else "",
-        )
 
-        timeline_by_date: dict[str, dict[str, Any]] = {}
-        for row in timeline_rows:
-            d = row.get("date")
-            d_str = d.isoformat() if d else ""
-            entry = timeline_by_date.setdefault(
-                d_str,
-                {
-                    "date": d_str,
-                    "overall_avg": to_float(row.get("overall_avg")),
-                    "assessments_count": to_int(row.get("assessments_count")),
-                    "per_subject": {},
-                },
+        tests_taken_by_user: dict[str, int] = {
+            safe_str(r.get("user_uid")): to_int(r.get("tests_taken"))
+            for r in tests_rows
+        }
+        unit_names_by_std: dict[str, str] = {
+            safe_str(r.get("standard_label")): safe_str(r.get("unit_names"))
+            for r in unit_rows
+        }
+
+        # ── Standard columns (sorted by label, the legacy column order) ──────
+        std_meta: dict[str, str] = {}  # label → schoology code
+        for r in cell_rows:
+            label = safe_str(r.get("standard_label"))
+            if label and label not in std_meta:
+                std_meta[label] = safe_str(r.get("schoology_standard")) or label
+        ordered_labels = sorted(std_meta)
+        standards = [
+            YtdStandardColumn(
+                standard_label=label,
+                schoology_standard=std_meta[label],
+                unit_names=unit_names_by_std.get(label, ""),
             )
-            subject = safe_str(row.get("subject"))
-            if subject:
-                entry["per_subject"][subject] = round(
-                    to_float(row.get("subject_avg")), 6
+            for label in ordered_labels
+        ]
+
+        # ── Teacher → student → (standard) accumulation ─────────────────────
+        # teacher → user_uid → {name, cells: {label: [recv, poss]}}
+        teachers: dict[str, dict[str, dict[str, Any]]] = {}
+        for r in cell_rows:
+            teacher = safe_str(r.get("section_instructors")) or "Unassigned"
+            uid = safe_str(r.get("user_uid"))
+            label = safe_str(r.get("standard_label"))
+            recv = to_float(r.get("points_received"))
+            poss = to_float(r.get("points_possible"))
+            student = teachers.setdefault(teacher, {}).setdefault(
+                uid,
+                {"user_name": safe_str(r.get("user_name")), "cells": {}},
+            )
+            cur = student["cells"].setdefault(label, [0.0, 0.0])
+            cur[0] += recv
+            cur[1] += poss
+
+        def _pct(recv: float, poss: float) -> float:
+            return round(recv / poss, 6) if poss > 0 else 0.0
+
+        teacher_groups: list[YtdTeacherGroup] = []
+        grand_recv = 0.0
+        grand_poss = 0.0
+        grand_std: dict[str, list[float]] = {}
+
+        for teacher in sorted(teachers):
+            students_list: list[YtdStudentRow] = []
+            t_recv = 0.0
+            t_poss = 0.0
+            t_std: dict[str, list[float]] = {}
+            for uid, s in teachers[teacher].items():
+                s_recv = sum(v[0] for v in s["cells"].values())
+                s_poss = sum(v[1] for v in s["cells"].values())
+                cells = {
+                    label: YtdCell(
+                        points_received=round(v[0], 4),
+                        points_possible=round(v[1], 4),
+                        score_pct=_pct(v[0], v[1]),
+                    )
+                    for label, v in s["cells"].items()
+                }
+                students_list.append(
+                    YtdStudentRow(
+                        user_uid=uid,
+                        user_name=s["user_name"],
+                        score_pct=_pct(s_recv, s_poss),
+                        tests_taken=tests_taken_by_user.get(uid, 0),
+                        points_received=round(s_recv, 4),
+                        points_possible=round(s_poss, 4),
+                        cells=cells,
+                    )
                 )
-        timeline = [
-            YTDTimelinePoint(
-                date=v["date"],
-                overall_avg=round(v["overall_avg"], 6),
-                per_subject=v["per_subject"],
-                assessments_count=v["assessments_count"],
-            )
-            for v in sorted(timeline_by_date.values(), key=lambda r: r["date"])
-        ]
-
-        grade_distribution = [
-            YTDGradeDistribution(
-                date=row["date"].isoformat() if row.get("date") else "",
-                band_high=to_int(row.get("band_high")),
-                band_mid=to_int(row.get("band_mid")),
-                band_low=to_int(row.get("band_low")),
-            )
-            for row in grade_dist_rows
-        ]
-
-        student_progression: list[YTDStudentScatter] = []
-        improving = 0
-        declining = 0
-        for row in prog_rows:
-            first = to_float(row.get("first_avg"))
-            latest = to_float(row.get("latest_avg"))
-            taken = to_int(row.get("assessments_taken"))
-            delta = latest - first
-            if taken < 2:
-                continue
-            if delta >= 0.05:
-                improving += 1
-            elif delta <= -0.05:
-                declining += 1
-            student_progression.append(
-                YTDStudentScatter(
-                    user_uid=safe_str(row.get("user_uid")),
-                    user_name=safe_str(row.get("user_name")),
-                    first_avg=round(first, 6),
-                    latest_avg=round(latest, 6),
-                    delta=round(delta, 6),
-                    assessments_taken=taken,
+                t_recv += s_recv
+                t_poss += s_poss
+                for label, v in s["cells"].items():
+                    agg = t_std.setdefault(label, [0.0, 0.0])
+                    agg[0] += v[0]
+                    agg[1] += v[1]
+                    g = grand_std.setdefault(label, [0.0, 0.0])
+                    g[0] += v[0]
+                    g[1] += v[1]
+            # Legacy sorts students ascending by overall Score %.
+            students_list.sort(key=lambda x: x.score_pct)
+            teacher_groups.append(
+                YtdTeacherGroup(
+                    section_instructor=teacher,
+                    teacher_score_pct=_pct(t_recv, t_poss),
+                    students=students_list,
+                    standard_subtotals={
+                        label: YtdStandardTotal(
+                            points_received=round(v[0], 4),
+                            points_possible=round(v[1], 4),
+                            score_pct=_pct(v[0], v[1]),
+                        )
+                        for label, v in t_std.items()
+                    },
                 )
             )
+            grand_recv += t_recv
+            grand_poss += t_poss
 
-        sorted_by_delta = sorted(
-            student_progression, key=lambda s: s.delta, reverse=True
+        grand_total = YtdGrandTotal(
+            points_received=round(grand_recv, 4),
+            points_possible=round(grand_poss, 4),
+            score_pct=_pct(grand_recv, grand_poss),
+            standard_totals={
+                label: YtdStandardTotal(
+                    points_received=round(v[0], 4),
+                    points_possible=round(v[1], 4),
+                    score_pct=_pct(v[0], v[1]),
+                )
+                for label, v in grand_std.items()
+            },
         )
-        most_improved = [
-            YTDStudentSummary(
-                user_uid=s.user_uid, user_name=s.user_name, delta=s.delta
-            )
-            for s in sorted_by_delta[:3]
-            if s.delta > 0
-        ]
-        biggest_drops = [
-            YTDStudentSummary(
-                user_uid=s.user_uid, user_name=s.user_name, delta=s.delta
-            )
-            for s in sorted(student_progression, key=lambda s: s.delta)[:3]
-            if s.delta < 0
-        ]
-
-        overall_avg = to_float(kpi_row.get("overall_avg"))
-        kpis = YTDKpis(
-            total_questions=to_int(kpi_row.get("total_questions")),
-            total_students=to_int(kpi_row.get("total_students")),
-            total_points_earned=round(
-                to_float(kpi_row.get("total_points_earned")), 2
-            ),
-            total_points_possible=round(
-                to_float(kpi_row.get("total_points_possible")), 2
-            ),
-            overall_avg_pct=_format_pct(overall_avg),
-            total_assessments=to_int(kpi_row.get("total_assessments")),
-            students_improving=improving,
-            students_declining=declining,
-            most_improved=most_improved,
-            biggest_drops=biggest_drops,
-        )
-
-        strand_heatmap = [
-            YTDHeatmapCell(
-                strand=safe_str(row.get("strand")),
-                date=row["date"].isoformat() if row.get("date") else "",
-                grade_average=round(to_float(row.get("grade_average")), 6),
-            )
-            for row in heatmap_rows
-        ]
 
         return YearToDatePerformancePayload(
             school=school,
-            period=period,
-            kpis=kpis,
-            timeline=timeline,
-            grade_distribution=grade_distribution,
-            student_progression=student_progression,
-            strand_heatmap=strand_heatmap,
+            subject=safe_str(f.subject),
+            grade=safe_str(f.grade),
+            session=safe_str(f.session) or safe_str(meta.get("current_session")),
+            assessment_type=safe_str(f.category),
+            standards=standards,
+            teacher_groups=teacher_groups,
+            grand_total=grand_total,
         )
 
     # ────────────────────────────────────────────────────────────────────

@@ -226,67 +226,65 @@ export interface YTDSchoolInfo {
   assessment_types: string[];
 }
 
-export interface YTDPeriodInfo {
-  date_from: string;
-  date_to: string;
+// ─── YTD Longitudinal paginated matrix (PBIX ord 8 / 9 / 10) ─────────────────
+// The three legacy "Longitudinal Report - Year To Date" reports (1/2/3) are
+// the same POINTS-based matrix; the variants differ only in what this client
+// renders:
+//   • variant 1 — Tests Taken column + per-standard Score AND %
+//   • variant 2 — no Tests Taken, per-standard % only
+//   • variant 3 — Tests Taken + Score AND % + assessment/unit name under code
+
+export interface YtdStandardColumn {
+  standard_label: string;
+  schoology_standard: string;
+  unit_names: string;
 }
 
-export interface YTDStudentSummary {
+export interface YtdCell {
+  points_received: number;
+  points_possible: number;
+  score_pct: number;
+}
+
+export interface YtdStudentRow {
   user_uid: string;
   user_name: string;
-  delta: number;
+  score_pct: number;
+  tests_taken: number;
+  points_received: number;
+  points_possible: number;
+  cells: Record<string, YtdCell>;
 }
 
-export interface YTDKpis {
-  total_questions: number;
-  total_students: number;
-  total_points_earned: number;
-  total_points_possible: number;
-  overall_avg_pct: string;
-  total_assessments: number;
-  students_improving: number;
-  students_declining: number;
-  most_improved: YTDStudentSummary[];
-  biggest_drops: YTDStudentSummary[];
+export interface YtdStandardTotal {
+  points_received: number;
+  points_possible: number;
+  score_pct: number;
 }
 
-export interface YTDTimelinePoint {
-  date: string;
-  overall_avg: number;
-  per_subject: Record<string, number>;
-  assessments_count: number;
+export interface YtdTeacherGroup {
+  section_instructor: string;
+  teacher_score_pct: number;
+  students: YtdStudentRow[];
+  standard_subtotals: Record<string, YtdStandardTotal>;
 }
 
-export interface YTDGradeDistribution {
-  date: string;
-  band_high: number;
-  band_mid: number;
-  band_low: number;
-}
-
-export interface YTDStudentScatter {
-  user_uid: string;
-  user_name: string;
-  first_avg: number;
-  latest_avg: number;
-  delta: number;
-  assessments_taken: number;
-}
-
-export interface YTDHeatmapCell {
-  strand: string;
-  date: string;
-  grade_average: number;
+export interface YtdGrandTotal {
+  points_received: number;
+  points_possible: number;
+  score_pct: number;
+  standard_totals: Record<string, YtdStandardTotal>;
 }
 
 export interface YearToDatePerformancePayload {
   school: YTDSchoolInfo;
-  period: YTDPeriodInfo;
-  kpis: YTDKpis;
-  timeline: YTDTimelinePoint[];
-  grade_distribution: YTDGradeDistribution[];
-  student_progression: YTDStudentScatter[];
-  strand_heatmap: YTDHeatmapCell[];
+  subject: string;
+  grade: string;
+  session: string;
+  assessment_type: string;
+  standards: YtdStandardColumn[];
+  teacher_groups: YtdTeacherGroup[];
+  grand_total: YtdGrandTotal;
 }
 
 // ─── Incorrect Answer Details (drill-through from QRA) ───────────────────

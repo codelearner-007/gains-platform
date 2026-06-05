@@ -247,17 +247,6 @@ class YTDSchoolInfo(BaseModel):
     assessment_types: List[str] = []
 
 
-class YTDPeriodInfo(BaseModel):
-    date_from: str
-    date_to: str
-
-
-class YTDStudentSummary(BaseModel):
-    user_uid: str
-    user_name: str
-    delta: float
-
-
 class YTDFilters(BaseModel):
     session: Optional[str] = None
     category: Optional[str] = None
@@ -266,59 +255,89 @@ class YTDFilters(BaseModel):
     section: Optional[str] = None
 
 
-class YTDKpis(BaseModel):
-    """PBIX "Key Measures" card plus derived counters used by the
-    Additional Insights zone."""
-
-    total_questions: int
-    total_students: int
-    total_points_earned: float
-    total_points_possible: float
-    overall_avg_pct: str
-    total_assessments: int
-    students_improving: int
-    students_declining: int
-    most_improved: List[YTDStudentSummary]
-    biggest_drops: List[YTDStudentSummary]
+# ─── YTD Longitudinal paginated matrix (PBIX ord 8 / 9 / 10 rdlVisual) ────────
+#
+# The three legacy "Longitudinal Report - Year To Date" reports (1/2/3) are the
+# same POINTS-based matrix — rows grouped Classroom Instructor → Student, one
+# column per standard assessed YTD (Score = earned/possible, % = SUM/SUM), with
+# per-teacher subtotal rows and grand-total rows. The three variants differ only
+# in client rendering (see frontend types.ts):
+#   • 1 — Tests Taken column + per-standard Score AND %
+#   • 2 — no Tests Taken, per-standard % only
+#   • 3 — Tests Taken + Score AND % + assessment/unit name under each standard
+# The payload below is variant-agnostic; the page selects what to show.
 
 
-class YTDTimelinePoint(BaseModel):
-    date: str
-    overall_avg: float
-    per_subject: dict[str, float]
-    assessments_count: int
+class YtdStandardColumn(BaseModel):
+    """One per-standard column in the YTD matrix."""
+
+    standard_label: str
+    schoology_standard: str
+    # Newline/' / '-joined assessment names that touched this standard YTD;
+    # rendered under the code in variant 3 only.
+    unit_names: str = ""
 
 
-class YTDGradeDistribution(BaseModel):
-    date: str
-    band_high: int
-    band_mid: int
-    band_low: int
+class YtdCell(BaseModel):
+    points_received: float
+    points_possible: float
+    score_pct: float
 
 
-class YTDStudentScatter(BaseModel):
+class YtdStudentRow(BaseModel):
+    """One per-student row inside a Classroom-Instructor group."""
+
     user_uid: str
     user_name: str
-    first_avg: float
-    latest_avg: float
-    delta: float
-    assessments_taken: int
+    score_pct: float
+    tests_taken: int
+    points_received: float
+    points_possible: float
+    # Per-standard cells keyed by ``standard_label``. Absent key ⇒ "-" (the
+    # standard was not assessed for this student); legacy prints a dash.
+    cells: dict[str, YtdCell]
 
 
-class YTDHeatmapCell(BaseModel):
-    strand: str
-    date: str
-    grade_average: float
+class YtdStandardTotal(BaseModel):
+    """Per-standard footer values (teacher subtotal + grand total)."""
+
+    points_received: float
+    points_possible: float
+    score_pct: float
+
+
+class YtdTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_score_pct: float
+    students: List[YtdStudentRow]
+    # Per-standard subtotal: # Correct Answers (points_received) + Score %.
+    standard_subtotals: dict[str, YtdStandardTotal]
+
+
+class YtdGrandTotal(BaseModel):
+    points_received: float
+    points_possible: float
+    score_pct: float
+    # Per-standard grand totals (Possible Points / # Correct / Score %).
+    standard_totals: dict[str, YtdStandardTotal]
 
 
 class YearToDatePerformancePayload(BaseModel):
+    """Legacy YTD Longitudinal matrix (replaces the prior analytics dashboard).
+
+    Faithful clone of the three legacy paginated matrices. ``standards`` are the
+    column order; ``teacher_groups`` carry the row data + per-teacher subtotals;
+    ``grand_total`` carries the report footer rows.
+    """
+
     school: YTDSchoolInfo
-    period: YTDPeriodInfo
-    kpis: YTDKpis
-    timeline: List[YTDTimelinePoint]
-    grade_distribution: List[YTDGradeDistribution]
-    student_progression: List[YTDStudentScatter]
-    strand_heatmap: List[YTDHeatmapCell]
+    subject: str
+    grade: str
+    session: str
+    assessment_type: str
+    standards: List[YtdStandardColumn]
+    teacher_groups: List[YtdTeacherGroup]
+    grand_total: YtdGrandTotal
 
 
 # ─── Incorrect Answer Details (drill-through from QRA) ─────────────────────
