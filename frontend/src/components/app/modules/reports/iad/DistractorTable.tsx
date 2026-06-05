@@ -10,7 +10,7 @@ import {
   STATUS_CORRECT_FG,
   STATUS_INCORRECT_FG,
 } from '@/lib/reports/colors';
-import { distractorFill, maxIncorrectShareOf } from './distractorFill';
+import { distractorFill } from './distractorFill';
 import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
@@ -48,10 +48,12 @@ const DISTRACTOR_INITIAL_DIRECTIONS: Partial<
 };
 
 /**
- * Distractor frequency table — replicates the pivotTable (visual #3)
- * on the PBIX IAD page. Shows every distinct answer_submission with
- * the # of students who chose it, % share, status (correct/incorrect),
- * and an inline % bar (PERF colour-graded for wrong choices).
+ * Distractor frequency table — replicates the "Answer Distribution"
+ * tableEx (visual #4) on the PBIX IAD page. Shows every distinct
+ * answer_submission with the # of students who chose it, % share,
+ * status (correct/incorrect), and an inline % bar. The bar uses a
+ * neutral fill (no traffic-light encoding) to match legacy, which sets
+ * no per-cell color rule on this table (01_legacy_logic.md §4.3).
  */
 export default function DistractorTable({ rows }: Props) {
   const { sortedRows: sorted, sortColumn, sortDirection, onHeaderClick } =
@@ -62,10 +64,6 @@ export default function DistractorTable({ rows }: Props) {
       defaultDirection: 'desc',
       initialDirections: DISTRACTOR_INITIAL_DIRECTIONS,
     });
-  const maxIncorrectShare = useMemo(
-    () => maxIncorrectShareOf(sorted),
-    [sorted],
-  );
   const maxShare = useMemo(
     () => sorted.reduce((m, r) => Math.max(m, r.share_of_attempts), 0),
     [sorted],
@@ -143,7 +141,7 @@ export default function DistractorTable({ rows }: Props) {
           </thead>
           <tbody>
             {sorted.map((r, idx) => {
-              const fill = distractorFill(r, maxIncorrectShare);
+              const fill = distractorFill(r);
               const widthPct =
                 maxShare > 0 ? (r.share_of_attempts / maxShare) * 100 : 0;
               return (

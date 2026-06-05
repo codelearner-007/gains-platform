@@ -13,7 +13,7 @@ import {
 import type { IadDistractorRow } from '@/lib/reports/types';
 import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
-import { distractorFill, maxIncorrectShareOf } from './distractorFill';
+import { distractorFill } from './distractorFill';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -36,18 +36,17 @@ function truncate(s: string, n: number): string {
 }
 
 /**
- * Horizontal bar chart of # students per answer_submission. Replaces
- * the PBIX treemap (visual #14) with a more readable bar chart that
- * keeps the answer text legible and uses traffic-light colours for
- * the wrong answers (PERF_PINK = dominant wrong, PERF_YELLOW =
- * secondary wrong, INCORRECT_GREY = minor wrong).
+ * Horizontal bar chart of # students per answer_submission — a readable
+ * nav aid over the legacy "Answer Distribution" tableEx (visual #4) that
+ * keeps the answer text legible. Bars use a neutral fill (correct answer
+ * in soft green, wrong choices in grey): legacy sets no per-cell color
+ * rule on this data (01_legacy_logic.md §4.3 / §4.6).
  */
 export default function DistractorChart({ rows }: Props) {
   const data = useMemo<ChartRow[]>(() => {
     const sorted = [...rows].sort(
       (a, b) => b.students_count - a.students_count,
     );
-    const maxIncorrectShare = maxIncorrectShareOf(sorted);
     return sorted.map((r) => {
       const clean = sanitizeShortAnswer(r.answer_submission);
       return {
@@ -56,7 +55,7 @@ export default function DistractorChart({ rows }: Props) {
         count: r.students_count,
         share: r.share_of_attempts,
         isCorrect: r.is_correct,
-        fill: distractorFill(r, maxIncorrectShare),
+        fill: distractorFill(r),
       };
     });
   }, [rows]);

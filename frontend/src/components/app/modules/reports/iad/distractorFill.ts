@@ -1,45 +1,20 @@
-import {
-  INCORRECT_GREY,
-  PERF_GREEN,
-  PERF_PINK,
-  PERF_YELLOW,
-} from '@/lib/reports/colors';
+import { INCORRECT_GREY, PERF_GREEN } from '@/lib/reports/colors';
 import type { IadDistractorRow } from '@/lib/reports/types';
 
-// Dominance thresholds (relative to the largest wrong-answer share). Match
-// PBIX visuals #3 and #14 — the "most-picked wrong" gets pink, secondary
-// gets yellow, the long tail goes neutral grey.
-const DOMINANT_WRONG_THRESHOLD = 0.66;
-const SECONDARY_WRONG_THRESHOLD = 0.33;
+// Legacy parity: the PBIX IAD "Answer Distribution" tableEx (#4) and the
+// hidden treemap (#14) carry NO per-cell color rule (01_legacy_logic.md
+// §4.3 / §4.6 — "a per-cell color rule was never written in DAX for this
+// treemap"). The earlier traffic-light encoding (pink = dominant wrong,
+// yellow = secondary wrong) was a non-legacy invention and has been
+// removed (MASTER_PLAN §6 Decision 3). Distractor cells now render with a
+// neutral grey fill; the saturated correct/incorrect colors live only on
+// the per-student "Correct?" column where legacy uses them.
 
 /**
- * Maximum share-of-attempts among the wrong-answer rows. Used to scale the
- * pink/yellow/grey gradient on each row's fill.
+ * Neutral fill for one distractor row. The correct answer keeps a soft
+ * green so it remains visually distinguishable from the wrong choices;
+ * every wrong choice renders neutral grey (no relative-share encoding).
  */
-export function maxIncorrectShareOf(rows: IadDistractorRow[]): number {
-  return rows
-    .filter((r) => !r.is_correct)
-    .reduce((m, r) => Math.max(m, r.share_of_attempts), 0);
-}
-
-/**
- * Pick the traffic-light fill for one distractor row, given the
- * pre-computed maximum incorrect share for the question.
- *
- *   correct                      → PERF_GREEN
- *   wrong, no other wrongs       → INCORRECT_GREY
- *   wrong, share ≥ 66% of max    → PERF_PINK   (the dominant wrong choice)
- *   wrong, share ≥ 33% of max    → PERF_YELLOW (a secondary wrong choice)
- *   wrong, share <  33% of max   → INCORRECT_GREY (long-tail wrongs)
- */
-export function distractorFill(
-  row: IadDistractorRow,
-  maxIncorrectShare: number,
-): string {
-  if (row.is_correct) return PERF_GREEN;
-  if (maxIncorrectShare <= 0) return INCORRECT_GREY;
-  const ratio = row.share_of_attempts / maxIncorrectShare;
-  if (ratio >= DOMINANT_WRONG_THRESHOLD) return PERF_PINK;
-  if (ratio >= SECONDARY_WRONG_THRESHOLD) return PERF_YELLOW;
-  return INCORRECT_GREY;
+export function distractorFill(row: IadDistractorRow): string {
+  return row.is_correct ? PERF_GREEN : INCORRECT_GREY;
 }

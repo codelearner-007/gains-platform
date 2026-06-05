@@ -231,6 +231,10 @@ export default function StudentAttemptTable({ attempts }: Props) {
                     '—'
                   )}
                 </td>
+                {/* Binary green/red on is_correct. Legacy's per-cell rule is
+                    3-band on partial-credit Points_Received, but that grain
+                    isn't surfaced at this per-attempt level — intentional
+                    divergence (MASTER_PLAN §6, IAD-PALETTE-2). */}
                 <td
                   style={{
                     ...cellBase,
