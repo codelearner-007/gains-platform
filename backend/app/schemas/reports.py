@@ -454,9 +454,16 @@ class StandardSummaryKpis(BaseModel):
 
 class StandardSummaryRollupRow(BaseModel):
     """One card per Schoology canonical standard aggregated across the
-    filter scope."""
+    filter scope.
+
+    ``cpalms_standard`` is the CPALMS code the legacy PBIX renders in the
+    card banner (multiRowCard #3, ``dim_standard.cPalms_Standard``;
+    55_standard_summary_spec.md §4); ``schoology_standard`` is the longer
+    canonical alias retained for keys/filters.
+    """
 
     schoology_standard: str
+    cpalms_standard: str
     strand: str
     cluster: str
     cognitive_complexity: str

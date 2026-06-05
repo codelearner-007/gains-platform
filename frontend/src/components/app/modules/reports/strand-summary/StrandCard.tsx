@@ -8,7 +8,6 @@ import {
   STRAND_CHIP_BG,
   STRAND_CHIP_FG,
 } from '@/lib/reports/colors';
-import StrandIncorrectBarChart from './StrandIncorrectBarChart';
 import StrandCorrectColumnChart from './StrandCorrectColumnChart';
 
 interface StrandCardProps {
@@ -72,8 +71,11 @@ export default function StrandCard({ strand, standards }: StrandCardProps) {
           </span>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-2 p-2 lg:grid-cols-2">
-        <StrandIncorrectBarChart rows={ownStandards} />
+      {/* Single Correct-% per Standard column chart (legacy visual #10).
+          The legacy incorrect overlay (#9) is display.mode:"hidden" and the
+          mini #17/#18 pair is collapsed in the school-wide rebuild
+          (56_strand_summary_spec.md §4.4/§8; MASTER_PLAN §6, STRANDSUM-1). */}
+      <div className="p-2">
         <StrandCorrectColumnChart rows={ownStandards} />
       </div>
     </div>

@@ -1011,6 +1011,8 @@ class ReportService:
             standards.append(
                 StandardSummaryRollupRow(
                     schoology_standard=schoology,
+                    cpalms_standard=safe_str(row.get("cpalms_standard"))
+                    or schoology,
                     strand=strand,
                     cluster=safe_str(row.get("cluster")),
                     cognitive_complexity=safe_str(row.get("cognitive_complexity")),

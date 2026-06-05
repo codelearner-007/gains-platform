@@ -917,28 +917,50 @@ class CubeRepository:
         category: Optional[str] = None,
         section: Optional[str] = None,
     ) -> int:
-        """Distinct students within the chosen filter scope."""
+        """Total Students for the Standard/Strand Summary, legacy semantics.
+
+        Replicates the PBIX DAX measure (``04_dax_measures.csv:103``)::
+
+            Total Student =
+            SUMX(
+                SUMMARIZE(
+                    'cube_school_summary',
+                    'cube_school_summary'[Item_ID],
+                    "UniqueTotalQuestions", MAX('cube_school_summary'[Total_Students])
+                ),
+                [UniqueTotalQuestions]
+            )
+
+        i.e. SUM over distinct ``Item_ID`` of the per-item ``MAX(Total_
+        Students)`` — a student who sits N assessments contributes N times.
+        This is **not** a DISTINCT headcount (the prior implementation,
+        which under-counted: Athenian school-wide = 332 distinct vs the
+        legacy 1049). MASTER_PLAN §6 Decision 7 / §7 STDSUM-1.
+
+        ``cube_school_summary`` is the Spark ``rollup`` cube
+        (40_schoology_py_spec.md §`Cube_School_Summary`), so the
+        subject/year/grade rollup rows carry a NULL ``Item_ID``; those
+        collapse into a single SUMMARIZE group exactly as legacy's DAX
+        groups them. Filters dereference via ``dim_subject`` (cube only
+        carries ``subject_id``), mirroring ``_CQSO_YTD_FILTER_SQL``;
+        ``section`` is below this grain and intentionally ignored.
+        """
         sql = text(
             """
-            SELECT COUNT(DISTINCT cus.user_uid) AS total_students
-            FROM cube_user_summary cus
-            WHERE (CAST(:session_filter AS TEXT) IS NULL OR cus.session = CAST(:session_filter AS TEXT))
-              AND (CAST(:subject AS TEXT) IS NULL OR cus.subject = CAST(:subject AS TEXT))
-              AND (CAST(:grade AS TEXT) IS NULL OR cus.grade = CAST(:grade AS TEXT))
-              AND (CAST(:category AS TEXT) IS NULL OR cus.assessment_type = CAST(:category AS TEXT))
-              AND (
-                    CAST(:section AS TEXT) IS NULL
-                 OR EXISTS (
-                      SELECT 1 FROM dim_section dsec
-                      WHERE dsec.school_id = cus.school_id
-                        AND dsec.section_nid = cus.section_nid
-                        AND (
-                          dsec.section_name = CAST(:section AS TEXT)
-                       OR dsec.section_code = CAST(:section AS TEXT)
-                       OR dsec.section_nid  = CAST(:section AS TEXT)
-                        )
-                    )
-                  )
+            SELECT COALESCE(SUM(per_item_students), 0)::bigint AS total_students
+            FROM (
+                SELECT COALESCE(css.item_id, '')   AS item_key,
+                       MAX(css.total_students)     AS per_item_students
+                FROM cube_school_summary css
+                LEFT JOIN dim_subject dsubj
+                  ON dsubj.school_id = css.school_id
+                 AND dsubj.subject_id = css.subject_id
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR dsubj.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR dsubj.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))
+                GROUP BY COALESCE(css.item_id, '')
+            ) per_item
             """
         )
         result = await self.session.execute(
@@ -1055,6 +1077,7 @@ class CubeRepository:
                     iq.grade,
                     ds.strand,
                     dst.schoology_standard,
+                    dst.cpalms_standard,
                     dst.cluster,
                     dst.cognitive_complexity_rating,
                     dst.subject AS std_subject,
@@ -1065,7 +1088,7 @@ class CubeRepository:
                 LEFT JOIN dim_strand ds
                   ON ds.identifier = iq.identifier
                 LEFT JOIN LATERAL (
-                    SELECT schoology_standard, cluster,
+                    SELECT schoology_standard, cpalms_standard, cluster,
                            cognitive_complexity_rating, subject,
                            custom_cleaned_description, description,
                            last_change_date_time
@@ -1083,6 +1106,8 @@ class CubeRepository:
             )
             SELECT
                 COALESCE(sq.schoology_standard, '')                AS schoology_standard,
+                COALESCE(NULLIF(sq.cpalms_standard, ''),
+                         sq.schoology_standard, '')                AS cpalms_standard,
                 COALESCE(sq.strand, '')                            AS strand,
                 COALESCE(sq.cluster, '')                           AS cluster,
                 COALESCE(sq.cognitive_complexity_rating, '')       AS cognitive_complexity,
@@ -1100,8 +1125,8 @@ class CubeRepository:
                 MAX(sq.last_change_date_time)                      AS last_change_date_time
             FROM std_q sq
             LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
-            GROUP BY 1, 2, 3, 4, 5, 6
-            ORDER BY 2 NULLS LAST, 1
+            GROUP BY 1, 2, 3, 4, 5, 6, 7
+            ORDER BY 3 NULLS LAST, 1
             """
         )
         result = await self.session.execute(

@@ -373,6 +373,8 @@ export interface StandardSummaryKpis {
 
 export interface StandardSummaryRollupRow {
   schoology_standard: string;
+  // CPALMS code shown in the card banner (legacy multiRowCard #3).
+  cpalms_standard: string;
   strand: string;
   cluster: string;
   cognitive_complexity: string;
