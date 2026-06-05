@@ -1891,3 +1891,259 @@ class CubeRepository:
         )
         result = await self.session.execute(sql, {"item_id": item_id})
         return [_row_to_dict(r) for r in result.all()]
+
+
+    async def get_question_overall(
+        self, item_id: str, question_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """One question's overall metadata (joined to qso for description).
+
+        Same dedup pattern as :meth:`get_questions_overall_for_item` to avoid
+        the qs × qso cartesian product when a question has multiple
+        sub-question rows or qso has multiple per-section rows.
+
+        Standards: ``STRING_AGG`` over ``dim_question_data`` so every alias
+        the parser emitted reaches the frontend. Description follows the
+        legacy ``CombineDescriptionsColumn`` DAX: alphabetical-first non-
+        "Other" standard, then look up its row in ``dim_standard``.
+        """
+        sql = text(
+            """
+            WITH qs_pick AS (
+                SELECT school_id, item_id, question_id, ukey, position_number,
+                       question_type, standard
+                FROM cube_question_summary
+                WHERE item_id = :item_id AND question_id = :question_id
+                ORDER BY NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                         position_number
+                LIMIT 1
+            ),
+            qs_agg AS (
+                SELECT item_id, question_id,
+                       MAX(question)                                  AS question,
+                       MAX(correct_answer)                            AS correct_answer,
+                       AVG(grade_average)                             AS grade_average,
+                       SUM(total_possible_point)                      AS total_possible_point,
+                       SUM(total_score)                               AS total_score,
+                       MIN(NULLIF(question_no, ''))                   AS question_no
+                FROM cube_question_summary
+                WHERE item_id = :item_id AND question_id = :question_id
+                GROUP BY item_id, question_id
+            ),
+            qd_standards AS (
+                SELECT
+                    item_id,
+                    question_id,
+                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND question_id = :question_id
+                  AND standard IS NOT NULL AND standard <> ''
+                GROUP BY item_id, question_id
+            ),
+            qd_first_standard AS (
+                SELECT
+                    item_id,
+                    question_id,
+                    MIN(standard) FILTER (
+                        WHERE standard IS NOT NULL
+                          AND standard <> ''
+                          AND LOWER(standard) <> 'other'
+                    ) AS first_standard
+                FROM dim_question_data
+                WHERE item_id = :item_id
+                  AND question_id = :question_id
+                GROUP BY item_id, question_id
+            ),
+            qd_description AS (
+                SELECT
+                    qfs.item_id,
+                    qfs.question_id,
+                    MAX(ds.description) AS description
+                FROM qd_first_standard qfs
+                LEFT JOIN dim_standard ds
+                  ON ds.schoology_standard = qfs.first_standard
+                GROUP BY qfs.item_id, qfs.question_id
+            ),
+            qso_pick AS (
+                SELECT DISTINCT ON (school_id, ukey)
+                       school_id, ukey, question_no, question, correct_answer
+                FROM cube_question_summary_overall
+                ORDER BY school_id, ukey
+            ),
+            qso_num AS (
+                SELECT school_id, ukey,
+                       AVG(grade_average)        AS grade_average,
+                       SUM(total_possible_point) AS total_possible_point,
+                       SUM(total_score)          AS total_score
+                FROM cube_question_summary_overall
+                GROUP BY school_id, ukey
+            )
+            SELECT
+                qsp.question_id,
+                COALESCE(qso.question_no, qsa.question_no)                  AS question_no,
+                COALESCE(qsp.position_number, '')                           AS position_number,
+                COALESCE(qso.question, qsa.question)                        AS question,
+                COALESCE(qsp.question_type, '')                             AS question_type,
+                COALESCE(qso.correct_answer, qsa.correct_answer)            AS correct_answer,
+                COALESCE(qsa.total_possible_point, qson.total_possible_point) AS total_possible_point,
+                COALESCE(qsa.total_score, qson.total_score)                 AS total_score,
+                COALESCE(qsa.grade_average, qson.grade_average)             AS grade_average,
+                COALESCE(qdst.standards, '')                                AS standards,
+                COALESCE(qsp.standard, '')                                  AS strand_raw,
+                COALESCE(qdd.description, '')                               AS description
+            FROM qs_pick qsp
+            JOIN qs_agg qsa
+              ON qsa.item_id = qsp.item_id AND qsa.question_id = qsp.question_id
+            LEFT JOIN qd_standards qdst
+              ON qdst.item_id = qsp.item_id AND qdst.question_id = qsp.question_id
+            LEFT JOIN qd_description qdd
+              ON qdd.item_id  = qsp.item_id AND qdd.question_id  = qsp.question_id
+            LEFT JOIN qso_pick qso
+              ON qso.school_id = qsp.school_id AND qso.ukey = qsp.ukey
+            LEFT JOIN qso_num qson
+              ON qson.school_id = qsp.school_id AND qson.ukey = qsp.ukey
+            LIMIT 1
+            """
+        )
+        result = await self.session.execute(
+            sql, {"item_id": item_id, "question_id": question_id}
+        )
+        row = result.first()
+        return _row_to_dict(row) if row else None
+
+
+    async def get_distractor_breakdown(
+        self, item_id: str, question_id: str
+    ) -> List[Dict[str, Any]]:
+        """Per-answer-choice rollup for one question (cube_questionincorrectchoice_summary).
+
+        Empty/null answer_submission rows are dropped (matches PBIX M filter).
+
+        ``answer_submission`` arrives prefixed with a randomised option
+        letter ("a. ", "b. ", …) — Schoology shuffles option positions per
+        student, so the same logical answer can appear under 4 different
+        letters. The cube preserves the raw string for legacy parity (per
+        notebook lines 1772-1798), so we strip the prefix and re-aggregate
+        here at the read layer — same precedent as
+        ``get_canonical_kpis_for_item`` which collapses the
+        (user, question, position_number) alias fan-out before averaging.
+        """
+        sql = text(
+            r"""
+            WITH item_qids AS (
+                SELECT DISTINCT question_id
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                  AND question_id = :question_id
+            ),
+            choices AS (
+                SELECT
+                    regexp_replace(qic.answer_submission, '^\s*[a-zA-Z]\.\s+', '')
+                                                          AS answer_submission,
+                    SUM(qic.total_student)                AS students_count,
+                    SUM(qic.total_score)                  AS total_score,
+                    SUM(qic.total_possible_point)         AS total_possible_point
+                FROM cube_questionincorrectchoice_summary qic
+                JOIN item_qids iq ON iq.question_id = qic.question_id
+                WHERE qic.answer_submission IS NOT NULL
+                  AND qic.answer_submission <> ''
+                GROUP BY regexp_replace(qic.answer_submission, '^\s*[a-zA-Z]\.\s+', '')
+            ),
+            totals AS (
+                SELECT SUM(students_count) AS total_students FROM choices
+            )
+            SELECT
+                c.answer_submission,
+                c.students_count,
+                CASE
+                  WHEN t.total_students > 0
+                  THEN c.students_count::numeric / t.total_students::numeric
+                  ELSE 0
+                END                                              AS share_of_attempts,
+                CASE
+                  WHEN c.total_possible_point > 0
+                       AND c.total_score >= c.total_possible_point
+                  THEN TRUE ELSE FALSE
+                END                                              AS is_correct
+            FROM choices c
+            CROSS JOIN totals t
+            ORDER BY c.students_count DESC NULLS LAST, c.answer_submission
+            """
+        )
+        result = await self.session.execute(
+            sql, {"item_id": item_id, "question_id": question_id}
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
+
+    async def get_per_student_attempts(
+        self, item_id: str, question_id: str
+    ) -> List[Dict[str, Any]]:
+        """Every student × this question row for the IAD per-student table.
+
+        `fact_student_submission` is keyed at `(user, question, standard)`
+        grain, so every question with N Schoology standards produces N rows
+        per (student, submission). All N rows in a cluster share identical
+        points_received / points_possible / answer_submission — only the
+        standard column differs. We collapse with DISTINCT ON to restore
+        one row per (user, submission) for display.
+
+        ``answer_submission`` / ``correct_answer`` arrive prefixed with the
+        random option-letter ("b. …") that Schoology shuffled for this
+        student. The letter is per-submission metadata, not part of the
+        answer's identity, so we strip it for display — same handling as
+        :meth:`get_distractor_breakdown`.
+        """
+        sql = text(
+            r"""
+            SELECT
+                user_uid,
+                user_name,
+                answer_submission,
+                correct_answer,
+                points_received,
+                points_possible,
+                score_pct,
+                is_correct,
+                latest_attempt
+            FROM (
+                SELECT DISTINCT ON (fss.user_uid, fss.submission)
+                    COALESCE(fss.user_uid, '')                       AS user_uid,
+                    COALESCE(NULLIF(fss.user_name, ''), '—')         AS user_name,
+                    regexp_replace(
+                        COALESCE(fss.answer_submission, ''),
+                        '^\s*[a-zA-Z]\.\s+', ''
+                    )                                                AS answer_submission,
+                    regexp_replace(
+                        COALESCE(fss.correct_answer, ''),
+                        '^\s*[a-zA-Z]\.\s+', ''
+                    )                                                AS correct_answer,
+                    COALESCE(fss.points_received, 0)::numeric        AS points_received,
+                    COALESCE(fss.points_possible, 0)::numeric        AS points_possible,
+                    CASE
+                      WHEN COALESCE(fss.points_possible, 0) > 0
+                      THEN COALESCE(fss.points_received, 0)::numeric
+                           / COALESCE(fss.points_possible, 0)::numeric
+                      ELSE 0
+                    END                                              AS score_pct,
+                    CASE
+                      WHEN COALESCE(fss.points_possible, 0) > 0
+                           AND COALESCE(fss.points_received, 0) >= COALESCE(fss.points_possible, 0)
+                      THEN TRUE ELSE FALSE
+                    END                                              AS is_correct,
+                    fss.latest_attempt
+                FROM fact_student_submission fss
+                WHERE fss.item_id = :item_id
+                  AND fss.question_id = :question_id
+                  AND fss.user_uid IS NOT NULL
+                ORDER BY fss.user_uid, fss.submission
+            ) deduped
+            ORDER BY user_name
+            """
+        )
+        result = await self.session.execute(
+            sql, {"item_id": item_id, "question_id": question_id}
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
