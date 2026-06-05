@@ -35,7 +35,10 @@ async def test_roles_list_requires_roles_read_permission(client: AsyncClient):
         ):
             response = await client.get("/api/v1/roles")
         assert response.status_code == 403
-        assert "roles:read" in response.json()["error"]
+        # Error must be generic — the required permission is never leaked.
+        body = response.json()
+        assert body["error"] == "Insufficient permissions"
+        assert "roles:read" not in body["error"]
     finally:
         app.dependency_overrides = {}
 
@@ -97,7 +100,10 @@ async def test_permissions_list_requires_permissions_read_permission(client: Asy
         ):
             response = await client.get("/api/v1/permissions")
         assert response.status_code == 403
-        assert "permissions:read" in response.json()["error"]
+        # Error must be generic — the required permission is never leaked.
+        body = response.json()
+        assert body["error"] == "Insufficient permissions"
+        assert "permissions:read" not in body["error"]
     finally:
         app.dependency_overrides = {}
 

@@ -38,7 +38,11 @@ async def test_permission_guard_requires_specific_permission():
         await permission_checker(mock_user)
 
     assert exc_info.value.status_code == 403
-    assert "roles:create" in exc_info.value.message
+    # Public-facing message is generic — the required permission must not leak.
+    assert exc_info.value.message == "Insufficient permissions"
+    assert "roles:create" not in exc_info.value.message
+    # The required permission is retained internally for server-side logging only.
+    assert exc_info.value._required_permission == "roles:create"
 
 
 @pytest.mark.anyio
