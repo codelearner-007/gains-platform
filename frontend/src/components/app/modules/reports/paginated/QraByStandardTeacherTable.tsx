@@ -25,7 +25,7 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
           style={{ borderColor: LAYOUT_BORDER }}
         >
           <div
-            className="px-3 py-2 border-b flex items-baseline justify-between gap-3"
+            className="px-3 py-2 border-b"
             style={{
               borderColor: LAYOUT_BORDER,
               backgroundColor: PBIX_ACCENT_NAVY,
@@ -40,12 +40,6 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
                   {sg.standard_description}
                 </div>
               )}
-            </div>
-            <div
-              className="text-right tabular-nums font-bold text-[14px] px-3 py-1 rounded"
-              style={{ backgroundColor: performanceColor(sg.standard_average) }}
-            >
-              Standard Average: {sg.standard_average_pct}
             </div>
           </div>
           <table className="min-w-full text-[11px] border-collapse">
@@ -101,6 +95,28 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
                 </Fragment>
               ))}
             </tbody>
+            {/* Standard Average in the FOOTER, matching the legacy SSRS
+                render (the *By Standard And Teacher.pdf* set; PAG-7). */}
+            <tfoot>
+              <tr
+                className="font-bold border-t-2"
+                style={{ borderColor: LAYOUT_BORDER }}
+              >
+                <td colSpan={2} className="px-2 py-1 text-right">
+                  Standard Average:
+                </td>
+                <td
+                  className="border-l px-2 py-1 text-right tabular-nums"
+                  style={{
+                    borderColor: LAYOUT_BORDER,
+                    backgroundColor: performanceColor(sg.standard_average),
+                  }}
+                >
+                  {sg.standard_average_pct}
+                </td>
+                <td colSpan={2} className="px-2 py-1" />
+              </tr>
+            </tfoot>
           </table>
         </div>
       ))}

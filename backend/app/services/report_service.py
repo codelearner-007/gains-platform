@@ -1621,10 +1621,14 @@ class ReportService:
                     "standard_avg": to_float(r.get("standard_avg")),
                 }
 
+        # Iterate in SQL insertion order (dicts preserve it). The query
+        # ORDERs BY the full Schoology code then section_instructor, which
+        # IS the legacy SSRS group order (PAG-7) — re-sorting here would
+        # risk a different collation than the DB.
         standard_groups: list[QraStandardGroup] = []
-        for std in sorted(nested):
+        for std in nested:
             t_groups: list[QraStandardTeacherGroup] = []
-            for teacher in sorted(nested[std]):
+            for teacher in nested[std]:
                 qs = nested[std][teacher]
                 t_avg = to_float(qs[0].get("teacher_standard_avg")) if qs else 0.0
                 t_groups.append(

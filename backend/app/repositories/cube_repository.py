@@ -1888,7 +1888,11 @@ class CubeRepository:
                 GROUP BY school_id, item_id, question_id
             )
             SELECT
-                COALESCE(NULLIF(ds.cpalms_standard, ''), b.standard) AS cpalms_standard,
+                -- Legacy paginated (SSRS) renders AND sorts the FULL
+                -- Schoology code (e.g. "SC.3.N.1.6", "MA.1.NSO.1.1"),
+                -- not the stripped cPalms sub-code. Verified across the
+                -- historical *By Standard And Teacher.pdf* set (PAG-7).
+                b.standard                                          AS cpalms_standard,
                 ds.description                                       AS standard_description,
                 b.section_instructors,
                 b.question_id,
@@ -1903,11 +1907,10 @@ class CubeRepository:
                 b.incorrect_choice_details,
                 b.incorrect_details_name,
                 AVG(b.grade_average) OVER (
-                    PARTITION BY COALESCE(NULLIF(ds.cpalms_standard, ''), b.standard),
-                                 b.section_instructors
+                    PARTITION BY b.standard, b.section_instructors
                 )                                                     AS teacher_standard_avg,
                 AVG(b.grade_average) OVER (
-                    PARTITION BY COALESCE(NULLIF(ds.cpalms_standard, ''), b.standard)
+                    PARTITION BY b.standard
                 )                                                     AS standard_avg
             FROM base b
             -- dim_standard is global (no school_id) — RLS not applicable.
@@ -1917,7 +1920,9 @@ class CubeRepository:
               ON qds.item_id = b.item_id
              AND qds.question_id = b.question_id
              AND qds.school_id = b.school_id
-            ORDER BY cpalms_standard, b.section_instructors,
+            -- Group ordering: lexical ascending by the full Schoology code,
+            -- matching the legacy SSRS render order (PAG-7).
+            ORDER BY b.standard, b.section_instructors,
                      b.grade_average ASC NULLS LAST,
                      b.sorting_question_no NULLS LAST, b.question_no
             """
