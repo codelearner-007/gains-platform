@@ -1,10 +1,18 @@
 """Role-Permission junction model."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, CreatedAtMixin
+
+if TYPE_CHECKING:
+    from app.models.permission import Permission
+    from app.models.role import Role
 
 
 class RolePermission(Base, CreatedAtMixin):
