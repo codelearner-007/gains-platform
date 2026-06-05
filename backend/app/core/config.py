@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
 
+    # LTI 1.3 — disabled by default. Flip to true to expose /api/v1/lti/* routes.
+    # Off by default keeps the LTI protocol surface from provisioning auth.users /
+    # user_schools while the integration is dormant. Code/tables/migrations remain
+    # intact so enabling restores full function.
+    LTI_ENABLED: bool = False
+
     # Redis
     REDIS_URL: str | None = None
     REDIS_PREFIX: str = "starter_template"

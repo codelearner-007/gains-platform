@@ -140,6 +140,30 @@ def _make_id_token(platform_key, nonce: str, *, roles, sub="user-sub-1",
                       headers={"kid": PLAT_KID})
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _lti_routes_enabled():
+    """Mount the LTI router for this module so the protocol surface is reachable.
+
+    LTI is disabled by default (settings.LTI_ENABLED is False), which leaves
+    /api/v1/lti/* unregistered on the app. These end-to-end tests exercise the
+    LTI feature itself, so we mount the router here (the LTI_ENABLED=true case)
+    and remove it on teardown. test_lti_disabled.py covers the default-off 404.
+    """
+    from app.api.v1 import lti as lti_module
+
+    already_mounted = any(
+        getattr(r, "path", "").startswith("/api/v1/lti") for r in app.router.routes
+    )
+    added_paths: set[str] = set()
+    if not already_mounted:
+        before = {id(r) for r in app.router.routes}
+        app.include_router(lti_module.router, prefix="/api/v1")
+        added_paths = {id(r) for r in app.router.routes} - before
+    yield
+    if added_paths:
+        app.router.routes = [r for r in app.router.routes if id(r) not in added_paths]
+
+
 @pytest_asyncio.fixture(autouse=True)
 async def _reset_session_manager():
     import app.db.session as sm
