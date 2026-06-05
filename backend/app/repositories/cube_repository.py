@@ -502,15 +502,25 @@ class CubeRepository:
     ) -> List[Dict[str, Any]]:
         """One row per Strand for a given assessment.
 
-        Per ``_pbix_extract/50_sdd_spec.md`` §4.5 the per-strand row strip
-        reports ``COUNT(DISTINCT question_no)`` and the question-weighted
-        grade average. Sourced from ``cube_question_summary`` joined to
-        ``dim_standard`` for the strand label.
-
         ``num_standards`` is counted at the **schoology_standard grain** —
         the Schoology canonical long form rendered by
         ``get_standard_rollup_for_item``. Each unique Schoology code per
-        strand contributes one entry.
+        strand contributes one entry. ``num_questions`` =
+        ``COUNT(DISTINCT question_no)`` over the matched identifiers in
+        ``cube_question_summary``.
+
+        ``grade_average`` reproduces legacy DAX
+        ``Grade_Average_Strand_Measure = AVERAGE('cube_question_summary_overall'[Grade_Average])``
+        filtered to the strand (``04_dax_measures.csv:142-146``). It is
+        therefore sourced from ``cube_question_summary_overall`` — one row
+        per ``(question_no, position_number, correct_answer, standards)`` —
+        **not** from ``cube_question_summary`` (per-identifier, per-position),
+        whose ``AVG(grade_average)`` diverged from PBIX (audit
+        ``06_cubes_and_reports.md`` §D4). The cqso bridge maps
+        ``cqso.standards`` (the Schoology canonical code) to the strand via
+        ``dim_standard.schoology_standard``. Alias strands carrying no cqso
+        rows resolve to BLANK (0) — matching legacy where the DAX measure
+        returns BLANK for an unassessed standard.
 
         Restricts identifiers via an exact-match join on the item's
         ``dim_question_data.standard`` set so unaligned assessments yield
@@ -524,6 +534,12 @@ class CubeRepository:
                 WHERE item_id = :item_id
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
+            ),
+            subj_ids AS (
+                SELECT DISTINCT subject_id
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                  AND subject_id IS NOT NULL
             ),
             labeled AS (
                 SELECT DISTINCT
@@ -543,11 +559,10 @@ class CubeRepository:
                 FROM labeled
                 GROUP BY strand
             ),
-            strand_metrics AS (
+            strand_questions AS (
                 SELECT
                     ds.strand                              AS strand,
-                    COUNT(DISTINCT cqs.question_no)        AS num_questions,
-                    AVG(cqs.grade_average)                 AS grade_average
+                    COUNT(DISTINCT cqs.question_no)        AS num_questions
                 FROM cube_question_summary cqs
                 JOIN dim_standard ds
                   ON ds.identifier = cqs.identifier
@@ -557,15 +572,30 @@ class CubeRepository:
                   AND ds.strand IS NOT NULL
                   AND ds.strand <> ''
                 GROUP BY ds.strand
+            ),
+            strand_grade AS (
+                -- Legacy Grade_Average_Strand_Measure: AVERAGE(cqso.grade_average)
+                -- over the cqso rows whose Schoology standard rolls up to the
+                -- strand. cqso.standards == dim_standard.schoology_standard.
+                SELECT
+                    ds.strand               AS strand,
+                    AVG(cqso.grade_average) AS grade_average
+                FROM cube_question_summary_overall cqso
+                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                JOIN dim_standard ds
+                  ON ds.schoology_standard = cqso.standards
+                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                GROUP BY ds.strand
             )
             SELECT
-                sm.strand          AS strand,
-                ss.num_standards   AS num_standards,
-                sm.num_questions   AS num_questions,
-                sm.grade_average   AS grade_average
-            FROM strand_metrics sm
-            JOIN strand_standards ss ON ss.strand = sm.strand
-            ORDER BY sm.strand
+                sq.strand                       AS strand,
+                ss.num_standards                AS num_standards,
+                sq.num_questions                AS num_questions,
+                COALESCE(sg.grade_average, 0)   AS grade_average
+            FROM strand_questions sq
+            JOIN strand_standards ss ON ss.strand = sq.strand
+            LEFT JOIN strand_grade sg ON sg.strand = sq.strand
+            ORDER BY sq.strand
             """
         )
         result = await self.session.execute(sql, {"item_id": item_id})
@@ -588,8 +618,29 @@ class CubeRepository:
         for this item.
 
         ``num_questions`` = ``COUNT(DISTINCT question_no)`` per matched
-        identifier. ``grade_average`` = AVG of per-question grade_average
-        from ``cube_question_summary`` for the identifier.
+        identifier (from ``cube_question_summary``).
+
+        ``grade_average`` reproduces legacy DAX
+        ``Grade_Average_Standard_Measure = AVERAGE('cube_question_summary_overall'[Grade_Average])``
+        filtered by ``cqso[Standards]`` (``04_dax_measures.csv:148-176``).
+        It is sourced from ``cube_question_summary_overall`` (one row per
+        ``(question_no, position_number, correct_answer, standards)``) —
+        **not** from ``cube_question_summary`` whose per-identifier
+        ``AVG(grade_average)`` leaked grades across alias identifiers and
+        diverged from PBIX (audit ``06_cubes_and_reports.md`` §D3).
+
+        Two cqso bridges, in preference order:
+          1. ``cqso_by_code`` — exact match on the Schoology code that
+             appears in the raw data (``cqso.standards = schoology_standard``).
+             This keeps standards that share a ``dim_standard.identifier`` but
+             differ in their cqso rows distinct (e.g. ``A-REI.2.4.a`` vs
+             ``.b``, both identifier ``15b9…``, target 48.1 vs 68.6).
+          2. ``cqso_by_id`` — identifier-level average, used as the fallback
+             so a Schoology **alias** code (e.g. ``MA.912.AR.3.1``, which
+             never appears literally in cqso but shares an identifier with
+             ``AI.MA.912.AR.3.1``) still inherits its canonical target.
+        Alias codes whose identifier carries no cqso rows resolve to 0
+        (legacy BLANK).
         """
         sql = text(
             """
@@ -599,6 +650,12 @@ class CubeRepository:
                 WHERE item_id = :item_id
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
+            ),
+            subj_ids AS (
+                SELECT DISTINCT subject_id
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+                  AND subject_id IS NOT NULL
             ),
             labeled AS (
                 SELECT DISTINCT
@@ -614,19 +671,38 @@ class CubeRepository:
             per_identifier AS (
                 SELECT
                     cqs.identifier,
-                    COUNT(DISTINCT cqs.question_no) AS num_questions,
-                    AVG(cqs.grade_average)          AS grade_average
+                    COUNT(DISTINCT cqs.question_no) AS num_questions
                 FROM cube_question_summary cqs
                 WHERE cqs.item_id = :item_id
                 GROUP BY cqs.identifier
+            ),
+            cqso_by_code AS (
+                SELECT
+                    cqso.standards          AS schoology_standard,
+                    AVG(cqso.grade_average) AS grade_average
+                FROM cube_question_summary_overall cqso
+                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                GROUP BY cqso.standards
+            ),
+            cqso_by_id AS (
+                SELECT
+                    ds.identifier           AS identifier,
+                    AVG(cqso.grade_average) AS grade_average
+                FROM cube_question_summary_overall cqso
+                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                JOIN dim_standard ds
+                  ON ds.schoology_standard = cqso.standards
+                GROUP BY ds.identifier
             )
             SELECT
                 l.schoology_standard                                         AS schoology_standard,
                 l.strand                                                     AS strand,
                 MAX(COALESCE(p.num_questions, 0))                            AS num_questions,
-                MAX(COALESCE(p.grade_average, 0))                            AS grade_average
+                MAX(COALESCE(bc.grade_average, bi.grade_average, 0))         AS grade_average
             FROM labeled l
             LEFT JOIN per_identifier p ON p.identifier = l.identifier
+            LEFT JOIN cqso_by_code bc ON bc.schoology_standard = l.schoology_standard
+            LEFT JOIN cqso_by_id   bi ON bi.identifier = l.identifier
             GROUP BY l.schoology_standard, l.strand
             ORDER BY l.strand, l.schoology_standard
             """

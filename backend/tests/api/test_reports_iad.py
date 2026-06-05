@@ -94,7 +94,14 @@ async def test_iad_returns_all_standards_for_multi_aligned_question(
 async def test_iad_returns_total_incorrect_choices(
     admin_client: AsyncClient,
 ) -> None:
-    """Hybrid 6th KPI tile: Total Incorrect Choices = DISTINCTCOUNT(wrong answers)."""
+    """6th KPI tile: Total Incorrect Choices =
+    DISTINCTCOUNT(fact_student_submission[Answer_Submission]).
+
+    Legacy DAX (``04_dax_measures.csv:405``) has no ``[Score]=0`` filter,
+    so the DISTINCTCOUNT spans ALL distinct answer submissions for the
+    question — including the correct answer. The tile therefore equals
+    the total distinct distractor rows, not just the wrong ones.
+    """
     if not _item_has_question(CHAPTER_9_TEST_ITEM, CHAPTER_9_TEST_Q2):
         pytest.skip("fixture missing")
 
@@ -105,9 +112,9 @@ async def test_iad_returns_total_incorrect_choices(
     assert response.status_code == 200
     payload = IncorrectAnswerDetailsPayload.model_validate(response.json())
 
-    # `total_incorrect_choices` equals the number of wrong distractor rows.
-    wrong_distractor_count = sum(
-        1 for d in payload.distractors if not d.is_correct
-    )
-    assert payload.kpis.total_incorrect_choices == wrong_distractor_count
+    # `total_incorrect_choices` = DISTINCTCOUNT of all answer submissions,
+    # i.e. every distinct distractor row (correct answer included).
+    distinct_answer_count = len(payload.distractors)
+    assert payload.kpis.total_incorrect_choices == distinct_answer_count
+    assert payload.kpis.total_incorrect_choices == payload.kpis.distinct_answers
     assert payload.kpis.total_incorrect_choices >= 1
