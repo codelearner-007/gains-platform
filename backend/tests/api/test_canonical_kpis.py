@@ -32,6 +32,15 @@ Two fixture items are pinned:
 * ``7892351049`` (single-strand control). Used to assert single-strand
   assessments still render cleanly post-fix and that the rollup is
   symmetric.
+
+NOTE — legacy bulk diff is blocked. The legacy backup cubes key on salted
+SHA-256 hashes (``Subject_ID`` / ``ID`` / ``uKey`` are hashes), so they
+cannot be joined back to the raw ``item_id``; a per-item modern-vs-legacy
+number diff across all assessments is impossible. ``test_canonical_kpis_multi.py``
+therefore locks the rollup grain on *additional* assessments via internal
+self-consistency invariants (cube-count match, strand-column ==
+standards-table == KPI, QRA/SDD parity, strand grade == AVG(cqso)) rather
+than a legacy diff.
 """
 
 from __future__ import annotations
