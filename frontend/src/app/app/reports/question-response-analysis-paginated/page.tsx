@@ -11,9 +11,9 @@ import ReportBreadcrumb, {
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import PaginatedReportHeader from '@/components/app/modules/reports/paginated/PaginatedReportHeader';
-import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/PaginatedKpiStrip';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraPaginatedTable from '@/components/app/modules/reports/paginated/QraPaginatedTable';
+import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function QraPaginatedPage() {
@@ -49,24 +49,24 @@ export default function QraPaginatedPage() {
 
   return (
     <ReportCanvas>
-      <div className="mb-3 print:hidden">
+      <div className="mb-3 flex flex-col gap-2 print:hidden">
         <ReportBreadcrumb
           crumbs={assessmentCrumbs({
             label: data.assessment.item_name || data.assessment.item_id,
           })}
         />
+        <ReportTypeSwitcher group="assessment" itemId={itemId} />
       </div>
 
       <div className="mb-2">
         <PaginatedReportHeader
           assessment={data.assessment}
           title="Question Response Analysis"
+          showInstructorLine
         />
       </div>
 
-      <div className="mb-2">
-        <PaginatedKpiStrip kpis={data.kpis} />
-      </div>
+      {/* Legacy QRA paginated PDF has no KPI strip — intentionally omitted. */}
 
       <QraPaginatedTable questions={data.questions} />
 

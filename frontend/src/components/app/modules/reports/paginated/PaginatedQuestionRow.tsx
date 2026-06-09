@@ -48,7 +48,10 @@ export default function PaginatedQuestionRowCells({
   const namesHtml =
     row.grade_average >= 1 ? '' : formatAnswerHtml(namesRaw, 'incorrect choice');
 
-  const standards = splitStandards(row.standards);
+  // Legacy QRA renders the SHORT cPalms code(s) in the Standard column. Prefer
+  // ``cpalms_standard``; fall back to the verbose Schoology ``standards`` only
+  // when no cPalms mapping exists. Unaligned questions show "Other".
+  const standards = splitStandards(row.cpalms_standard || row.standards);
 
   return (
     <Fragment>
@@ -76,7 +79,7 @@ export default function PaginatedQuestionRowCells({
             ? standards.map((s, i) => (
                 <div key={`${row.question_id}-std-${i}`}>{s}</div>
               ))
-            : '—'}
+            : 'Other'}
         </td>
       )}
       <td

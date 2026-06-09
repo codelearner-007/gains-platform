@@ -296,7 +296,7 @@ class CubeRepository:
                 SELECT DISTINCT ON (item_id, question_id)
                     school_id, item_id, question_id, ukey, question_no,
                     position_number, question, question_type, correct_answer,
-                    standard
+                    standard, standards AS cube_standards
                 FROM cube_question_summary
                 WHERE item_id = :item_id
                 ORDER BY item_id, question_id,
@@ -330,6 +330,36 @@ class CubeRepository:
                 WHERE item_id = :item_id
                   AND standard IS NOT NULL AND standard <> ''
                 GROUP BY item_id, question_id
+            ),
+            -- Legacy paginated QRA renders the SHORT cPalms code(s) in the
+            -- Standard column (e.g. "AR.1.7"), not the verbose Schoology codes.
+            -- Map each question's Schoology standard(s) to
+            -- ``dim_standard.cpalms_standard`` (same join the standard/strand
+            -- rollups use), deduped + newline-joined so the frontend renders
+            -- one clean code per line.
+            --
+            -- We skip the ``AI.MA.912.*`` rows: those are Schoology's
+            -- course-prefix ALIASES of the canonical ``MA.912.*`` B.E.S.T.
+            -- codes (same dim_standard.identifier — see
+            -- docs/audit/legacy-schoology-cpalms-mapping.md). They map to a
+            -- noisy ``912.*`` cpalms duplicate of the clean code (e.g.
+            -- ``912.AR.3.1`` alongside ``AR.3.1``). Dropping the alias yields
+            -- the single clean short code legacy renders, while genuinely
+            -- distinct alignments (e.g. older ``MAFS.912.*`` codes) are kept.
+            qd_cpalms AS (
+                SELECT
+                    qd.item_id,
+                    qd.question_id,
+                    STRING_AGG(DISTINCT ds.cpalms_standard, E'\n'
+                               ORDER BY ds.cpalms_standard) AS cpalms_standard
+                FROM dim_question_data qd
+                JOIN dim_standard ds
+                  ON ds.schoology_standard = qd.standard
+                WHERE qd.item_id = :item_id
+                  AND qd.standard IS NOT NULL AND qd.standard <> ''
+                  AND qd.standard NOT LIKE 'AI.%'
+                  AND ds.cpalms_standard IS NOT NULL AND ds.cpalms_standard <> ''
+                GROUP BY qd.item_id, qd.question_id
             ),
             -- Mirrors legacy DAX `CombineDescriptionsColumn`
             -- (04_dax_measures.dax:1200-1254). Legacy concatenates all
@@ -397,12 +427,21 @@ class CubeRepository:
                 COALESCE(qsn.percentage_incorrect, qson.percentage_incorrect)   AS percentage_incorrect,
                 COALESCE(qso.incorrect_choice_details, qsn.incorrect_choice_details, '') AS incorrect_choice_details,
                 COALESCE(qso.incorrect_details_name, qsn.incorrect_details_name, '')     AS incorrect_details_name,
-                COALESCE(qdst.standards, '')                                    AS standards,
+                -- Prefer the full newline-joined Schoology standard list from
+                -- dim_question_data. When a question is genuinely unaligned
+                -- (no source standards), dim_question_data carries none, so
+                -- fall back to the cube's own ``standards`` label — which
+                -- legacy coerces to "Other" for unaligned questions. This keeps
+                -- the paginated Standard cell showing "Other" (never blank) for
+                -- unaligned items, matching the legacy SSRS render.
+                COALESCE(NULLIF(qdst.standards, ''), NULLIF(qs.cube_standards, ''), '') AS standards,
+                COALESCE(qdc.cpalms_standard, '')                               AS cpalms_standard,
                 qs.standard                                                     AS strand_raw,
                 COALESCE(qdd.description, qso.description, '')                  AS description
             FROM qs_agg qs
             LEFT JOIN qs_num         qsn  ON qsn.item_id    = qs.item_id  AND qsn.question_id = qs.question_id
             LEFT JOIN qd_standards   qdst ON qdst.item_id   = qs.item_id  AND qdst.question_id = qs.question_id
+            LEFT JOIN qd_cpalms      qdc  ON qdc.item_id    = qs.item_id  AND qdc.question_id = qs.question_id
             LEFT JOIN qd_description qdd  ON qdd.item_id    = qs.item_id  AND qdd.question_id  = qs.question_id
             LEFT JOIN qso_agg        qso  ON qso.school_id  = qs.school_id AND qso.ukey       = qs.ukey
             LEFT JOIN qso_num        qson ON qson.school_id = qs.school_id AND qson.ukey      = qs.ukey
@@ -1369,6 +1408,7 @@ class CubeRepository:
                 COALESCE(dsubj.grade, '')              AS grade,
                 COALESCE(dsubj.session, '')            AS session,
                 COALESCE(dsubj.assessment_type, '')    AS assessment_type,
+                di.assessment_date,
                 di.school_id,
                 COALESCE(s.name, '')                   AS school_name,
                 s.logo_url                             AS school_logo_url

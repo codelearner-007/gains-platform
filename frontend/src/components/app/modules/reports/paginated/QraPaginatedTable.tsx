@@ -19,10 +19,10 @@ export default function QraPaginatedTable({ questions }: Props) {
           <tr className="font-semibold" style={{ backgroundColor: HEADER_BAR_BG }}>
             <th scope="col" className="border-r border-b px-2 py-1 text-left w-[44px]" style={{ borderColor: LAYOUT_BORDER }}>No.</th>
             <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>Question</th>
-            <th scope="col" className="border-r border-b px-2 py-1 text-left w-[140px]" style={{ borderColor: LAYOUT_BORDER }}>Standards</th>
-            <th scope="col" className="border-r border-b px-2 py-1 text-right w-[80px]" style={{ borderColor: LAYOUT_BORDER }}>% Correct</th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-left w-[140px]" style={{ borderColor: LAYOUT_BORDER }}>Standard</th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-right w-[80px]" style={{ borderColor: LAYOUT_BORDER }}>% of Correct Answers</th>
             <th scope="col" className="border-r border-b px-2 py-1 text-left w-[160px]" style={{ borderColor: LAYOUT_BORDER }}>Correct Answer</th>
-            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>Incorrect Choice Details</th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>Incorrect Choice details</th>
             <th scope="col" className="border-b px-2 py-1 text-left w-[220px]" style={{ borderColor: LAYOUT_BORDER }}>Students with Incorrect Choice</th>
           </tr>
         </thead>

@@ -251,6 +251,11 @@ class ReportService:
             grade=safe_str(meta_row.get("grade")),
             session=safe_str(meta_row.get("session")),
             assessment_type=safe_str(meta_row.get("assessment_type")),
+            assessment_date=(
+                meta_row.get("assessment_date").isoformat()
+                if meta_row.get("assessment_date")
+                else None
+            ),
             first_access=first_access.isoformat() if first_access else "",
             latest_attempt=latest_attempt.isoformat() if latest_attempt else "",
         )

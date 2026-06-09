@@ -14,6 +14,7 @@ export interface AssessmentMeta {
   grade: string;
   session: string;
   assessment_type: string;
+  assessment_date: string | null;
   first_access: string;
   latest_attempt: string;
 }

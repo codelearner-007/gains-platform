@@ -86,6 +86,7 @@ class AssessmentMeta(BaseModel):
     grade: str
     session: str
     assessment_type: str
+    assessment_date: Optional[str] = None
     first_access: str
     latest_attempt: str
 
