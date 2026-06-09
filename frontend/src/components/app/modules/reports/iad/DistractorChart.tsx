@@ -5,7 +5,6 @@ import {
   Bar,
   BarChart,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -14,6 +13,7 @@ import type { IadDistractorRow } from '@/lib/reports/types';
 import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
 import { distractorFill } from './distractorFill';
+import ChartContainer from '../shared/ChartContainer';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -80,7 +80,7 @@ export default function DistractorChart({ rows }: Props) {
             No answer data.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={height}>
+          <ChartContainer height={height}>
             <BarChart
               data={data}
               layout="vertical"
@@ -127,7 +127,7 @@ export default function DistractorChart({ rows }: Props) {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>

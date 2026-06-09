@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { StrandSummaryStandardRow } from '@/lib/reports/types';
 import {
   cellColor,
@@ -13,6 +13,7 @@ import {
   tableCellStyle as cellStyle,
   tableHeaderStyle,
 } from '../shared/tableStyles';
+import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
 type SortKey =
   | 'strand'
@@ -20,6 +21,28 @@ type SortKey =
   | 'num_questions'
   | 'num_assessments'
   | 'grade_average';
+
+const SORT_ACCESSORS: Record<
+  SortKey,
+  (r: StrandSummaryStandardRow) => string | number
+> = {
+  // Strand sort keeps the legacy tie-break on standard so rows within a
+  // strand stay in standard order.
+  strand: (r) =>
+    `${(r.strand || '').toLowerCase()}\u0000${(
+      r.schoology_standard || ''
+    ).toLowerCase()}`,
+  schoology_standard: (r) => (r.schoology_standard || '').toLowerCase(),
+  num_questions: (r) => r.num_questions,
+  num_assessments: (r) => r.num_assessments,
+  grade_average: (r) => r.grade_average,
+};
+
+const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
+  num_questions: 'desc',
+  num_assessments: 'desc',
+  grade_average: 'desc',
+};
 
 interface Props {
   standards: StrandSummaryStandardRow[];
@@ -37,64 +60,16 @@ export default function StrandStandardsTable({
         : standards,
     [standards, selectedStrand],
   );
-  const [sortKey, setSortKey] = useState<SortKey>('strand');
-  const [sortDesc, setSortDesc] = useState(false);
 
-  const sorted = useMemo(() => {
-    const copy = [...filtered];
-    copy.sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === 'strand' || sortKey === 'schoology_standard') {
-        cmp = String(a[sortKey] ?? '').localeCompare(
-          String(b[sortKey] ?? ''),
-        );
-        if (sortKey === 'strand' && cmp === 0) {
-          cmp = a.schoology_standard.localeCompare(b.schoology_standard);
-        }
-      } else {
-        cmp = (a[sortKey] as number) - (b[sortKey] as number);
-      }
-      return sortDesc ? -cmp : cmp;
+  // Legacy default: Strand ascending (with standard tie-break).
+  const { sortedRows: sorted, sortColumn, sortDirection, onHeaderClick } =
+    useTableSort<StrandSummaryStandardRow, SortKey>({
+      rows: filtered,
+      accessors: SORT_ACCESSORS,
+      defaultColumn: 'strand',
+      defaultDirection: 'asc',
+      initialDirections: INITIAL_DIRECTIONS,
     });
-    return copy;
-  }, [filtered, sortKey, sortDesc]);
-
-  function toggleSort(key: SortKey) {
-    if (key === sortKey) {
-      setSortDesc((d) => !d);
-    } else {
-      setSortKey(key);
-      setSortDesc(
-        key === 'num_questions' ||
-          key === 'num_assessments' ||
-          key === 'grade_average',
-      );
-    }
-  }
-
-  const headerWith = (
-    label: string,
-    key: SortKey,
-    align: 'left' | 'center' = 'left',
-  ) => (
-    <th
-      style={{
-        ...tableHeaderStyle,
-        textAlign: align,
-        cursor: 'pointer',
-        userSelect: 'none',
-      }}
-      onClick={() => toggleSort(key)}
-      title={`Sort by ${label}`}
-    >
-      {label}
-      {sortKey === key && (
-        <span className="ml-1 text-[10px] text-neutral-500">
-          {sortDesc ? '▼' : '▲'}
-        </span>
-      )}
-    </th>
-  );
 
   return (
     <div
@@ -116,16 +91,55 @@ export default function StrandStandardsTable({
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
-              {headerWith('Standard', 'schoology_standard')}
-              {headerWith('Strand', 'strand')}
+              <th style={tableHeaderStyle}>
+                <SortableHeader
+                  column="schoology_standard"
+                  label="Standard"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
+              <th style={tableHeaderStyle}>
+                <SortableHeader
+                  column="strand"
+                  label="Strand"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
               <th style={tableHeaderStyle}>Cluster</th>
-              {headerWith('# Questions', 'num_questions', 'center')}
-              {headerWith(
-                '# Assessments',
-                'num_assessments',
-                'center',
-              )}
-              {headerWith('Grade Avg', 'grade_average', 'center')}
+              <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="num_questions"
+                  label="# Questions"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
+              <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="num_assessments"
+                  label="# Assessments"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
+              <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="grade_average"
+                  label="Grade Avg"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
                 Performance
               </th>

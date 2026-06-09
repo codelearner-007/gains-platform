@@ -4,7 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -18,6 +17,7 @@ import {
   PERF_PINK,
   PERF_YELLOW,
 } from '@/lib/reports/colors';
+import ChartContainer from '../shared/ChartContainer';
 
 interface BandPanelProps {
   title: string;
@@ -70,7 +70,7 @@ function BandPanel({
             {emptyMessage}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={Math.max(rowHeight, 240)}>
+          <ChartContainer height={Math.max(rowHeight, 240)}>
             <BarChart
               data={data}
               layout="vertical"
@@ -112,7 +112,7 @@ function BandPanel({
                 isAnimationActive={false}
               />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>

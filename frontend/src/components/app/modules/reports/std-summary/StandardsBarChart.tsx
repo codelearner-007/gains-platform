@@ -6,7 +6,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -18,6 +17,7 @@ import {
   performanceColor,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
+import ChartContainer from '../shared/ChartContainer';
 
 interface Props {
   rows: StandardSummaryRollupRow[];
@@ -98,7 +98,7 @@ export default function StandardsBarChart({ rows }: Props) {
             No standards match the current filters
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer height="100%">
             <BarChart
               data={data}
               layout="vertical"
@@ -132,7 +132,7 @@ export default function StandardsBarChart({ rows }: Props) {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>

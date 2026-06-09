@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import type { StrandSummaryRollupRow } from '@/lib/reports/types';
 import {
   cellColor,
@@ -15,6 +14,7 @@ import {
   tableCellStyle as cellStyle,
   tableHeaderStyle,
 } from '../shared/tableStyles';
+import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
 type SortKey =
   | 'strand'
@@ -22,6 +22,24 @@ type SortKey =
   | 'num_questions'
   | 'num_assessments'
   | 'grade_average';
+
+const SORT_ACCESSORS: Record<
+  SortKey,
+  (r: StrandSummaryRollupRow) => string | number
+> = {
+  strand: (r) => (r.strand || '').toLowerCase(),
+  num_standards: (r) => r.num_standards,
+  num_questions: (r) => r.num_questions,
+  num_assessments: (r) => r.num_assessments,
+  grade_average: (r) => r.grade_average,
+};
+
+const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
+  num_standards: 'desc',
+  num_questions: 'desc',
+  num_assessments: 'desc',
+  grade_average: 'desc',
+};
 
 interface Props {
   strands: StrandSummaryRollupRow[];
@@ -34,55 +52,15 @@ export default function StrandRollupTable({
   selectedStrand,
   onSelectStrand,
 }: Props) {
-  const [sortKey, setSortKey] = useState<SortKey>('strand');
-  const [sortDesc, setSortDesc] = useState(false);
-
-  const sorted = useMemo(() => {
-    const copy = [...strands];
-    copy.sort((a, b) => {
-      let cmp = 0;
-      if (sortKey === 'strand') {
-        cmp = a.strand.localeCompare(b.strand);
-      } else {
-        cmp = (a[sortKey] as number) - (b[sortKey] as number);
-      }
-      return sortDesc ? -cmp : cmp;
+  // Legacy default: Strand ascending.
+  const { sortedRows: sorted, sortColumn, sortDirection, onHeaderClick } =
+    useTableSort<StrandSummaryRollupRow, SortKey>({
+      rows: strands,
+      accessors: SORT_ACCESSORS,
+      defaultColumn: 'strand',
+      defaultDirection: 'asc',
+      initialDirections: INITIAL_DIRECTIONS,
     });
-    return copy;
-  }, [strands, sortKey, sortDesc]);
-
-  function toggleSort(key: SortKey) {
-    if (key === sortKey) {
-      setSortDesc((d) => !d);
-    } else {
-      setSortKey(key);
-      setSortDesc(key !== 'strand');
-    }
-  }
-
-  const headerWith = (
-    label: string,
-    key: SortKey,
-    align: 'left' | 'center' = 'left',
-  ) => (
-    <th
-      style={{
-        ...tableHeaderStyle,
-        textAlign: align,
-        cursor: 'pointer',
-        userSelect: 'none',
-      }}
-      onClick={() => toggleSort(key)}
-      title={`Sort by ${label}`}
-    >
-      {label}
-      {sortKey === key && (
-        <span className="ml-1 text-[10px] text-neutral-500">
-          {sortDesc ? '▼' : '▲'}
-        </span>
-      )}
-    </th>
-  );
 
   const clickable = !!onSelectStrand;
 
@@ -109,16 +87,56 @@ export default function StrandRollupTable({
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
-              {headerWith('Strand', 'strand')}
-              {headerWith('# Standards', 'num_standards', 'center')}
-              {headerWith('# Questions', 'num_questions', 'center')}
-              {headerWith(
-                '# Assessments',
-                'num_assessments',
-                'center',
-              )}
+              <th style={tableHeaderStyle}>
+                <SortableHeader
+                  column="strand"
+                  label="Strand"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
+              <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="num_standards"
+                  label="# Standards"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
+              <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="num_questions"
+                  label="# Questions"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
+              <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="num_assessments"
+                  label="# Assessments"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
               <th style={tableHeaderStyle}>Subjects</th>
-              {headerWith('Grade Avg', 'grade_average', 'center')}
+              <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+                <SortableHeader
+                  column="grade_average"
+                  label="Grade Avg"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
+              </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
                 Performance
               </th>

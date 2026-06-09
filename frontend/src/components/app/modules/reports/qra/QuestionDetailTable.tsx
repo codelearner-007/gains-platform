@@ -55,12 +55,14 @@ export default function QuestionDetailTable({
   questions,
   itemId,
 }: QuestionDetailTableProps) {
-  // Legacy paginated PDF default: ascending by % Correct (worst first).
+  // Legacy PBIX default (QRA Interactive, ord 2): the question-detail tableEx
+  // binds `Sum(cube_question_summary_overall.Sorting Question_No)` as its first
+  // field, i.e. question-number ascending (Q1 → Q18).
   const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<QuestionOverall, QraSortKey>({
       rows: questions,
       accessors: QRA_SORT_ACCESSORS,
-      defaultColumn: 'grade_average',
+      defaultColumn: 'question_no',
       defaultDirection: 'asc',
       initialDirections: QRA_INITIAL_DIRECTIONS,
     });

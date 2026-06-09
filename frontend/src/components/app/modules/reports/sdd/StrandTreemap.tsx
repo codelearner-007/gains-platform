@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ResponsiveContainer, Treemap, Tooltip } from 'recharts';
+import { Treemap, Tooltip } from 'recharts';
 import type { SddStrandRow } from '@/lib/reports/types';
 import {
   HEADER_BAR_BG,
@@ -10,6 +10,7 @@ import {
   performanceColor,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
+import ChartContainer from '../shared/ChartContainer';
 
 interface StrandTreemapProps {
   strands: SddStrandRow[];
@@ -69,7 +70,7 @@ export default function StrandTreemap({
             No strand data available
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer height="100%">
             <Treemap
               data={data}
               dataKey="size"
@@ -85,7 +86,7 @@ export default function StrandTreemap({
             >
               <Tooltip content={<TreemapTooltip />} />
             </Treemap>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>

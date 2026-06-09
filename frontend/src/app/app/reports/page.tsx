@@ -8,7 +8,8 @@ import {
 import AssessmentBrowser from '@/components/app/modules/reports/AssessmentBrowser';
 
 export const metadata = {
-  title: 'Reports',
+  // Absolute so the landing tab reads "GAINS Reports", not "Reports | GAINS Reports".
+  title: { absolute: 'GAINS Reports' },
 };
 
 const PROGRAM_REPORTS = [

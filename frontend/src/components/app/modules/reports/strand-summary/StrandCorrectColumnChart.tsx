@@ -6,7 +6,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -18,6 +17,7 @@ import {
   performanceColor,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
+import ChartContainer from '../shared/ChartContainer';
 
 interface Props {
   rows: StrandSummaryStandardRow[];
@@ -90,7 +90,7 @@ export default function StrandCorrectColumnChart({ rows }: Props) {
             No standards in this strand
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer height="100%">
             <BarChart
               data={data}
               margin={{ top: 8, right: 16, left: 8, bottom: 60 }}
@@ -123,7 +123,7 @@ export default function StrandCorrectColumnChart({ rows }: Props) {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>

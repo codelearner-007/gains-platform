@@ -1,3 +1,15 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  // Override the root "Starter Template" branding for the whole report family.
+  // Child report layouts set string titles (e.g. "Standard Summary"), which
+  // this template wraps as "Standard Summary | GAINS Reports".
+  title: {
+    default: 'GAINS Reports',
+    template: '%s | GAINS Reports',
+  },
+};
+
 export default function ReportsLayout({
   children,
 }: {

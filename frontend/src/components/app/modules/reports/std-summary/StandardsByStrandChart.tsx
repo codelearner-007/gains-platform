@@ -5,7 +5,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -17,6 +16,7 @@ import {
   performanceColor,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
+import ChartContainer from '../shared/ChartContainer';
 
 interface Props {
   rows: StandardSummaryStrandCount[];
@@ -79,7 +79,7 @@ export default function StandardsByStrandChart({ rows }: Props) {
             No strand data available
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer height="100%">
             <BarChart
               data={data}
               layout="vertical"
@@ -109,7 +109,7 @@ export default function StandardsByStrandChart({ rows }: Props) {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>

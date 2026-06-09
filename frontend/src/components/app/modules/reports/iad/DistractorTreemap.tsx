@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ResponsiveContainer, Tooltip, Treemap } from 'recharts';
+import { Tooltip, Treemap } from 'recharts';
 import type { IadDistractorRow } from '@/lib/reports/types';
 import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
 import { distractorFill } from './distractorFill';
+import ChartContainer from '../shared/ChartContainer';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -149,7 +150,7 @@ export default function DistractorTreemap({ rows }: Props) {
             No answer data.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer height="100%">
             <Treemap
               data={data}
               dataKey="size"
@@ -160,7 +161,7 @@ export default function DistractorTreemap({ rows }: Props) {
             >
               <Tooltip content={<ChartTooltip />} />
             </Treemap>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>
