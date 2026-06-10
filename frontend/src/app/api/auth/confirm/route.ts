@@ -12,7 +12,13 @@ const ALLOWED_TYPES = [
 
 type ConfirmType = (typeof ALLOWED_TYPES)[number];
 
-const ALLOWED_NEXT_PREFIXES = ['/app', '/admin', '/auth/reset-password', '/auth/2fa'];
+const ALLOWED_NEXT_PREFIXES = [
+  '/app',
+  '/admin',
+  '/auth/reset-password',
+  '/auth/accept-invite',
+  '/auth/2fa',
+];
 
 function isAllowedNext(next: string | null): boolean {
   if (!next) return false;
@@ -50,9 +56,10 @@ export async function GET(request: Request) {
     );
   }
 
-  // Recovery flow: verifyOtp issues a session for password reset; route to the
-  // reset-password page so the user can set a new password.
-  if (type === 'recovery') {
+  // Recovery + invite flows: verifyOtp issues a session so the user can set a
+  // password. Route straight to the set-password page (no MFA gate — a freshly
+  // invited user has none, and password-set must happen before app access).
+  if (type === 'recovery' || type === 'invite') {
     return NextResponse.redirect(new URL(next, request.url));
   }
 

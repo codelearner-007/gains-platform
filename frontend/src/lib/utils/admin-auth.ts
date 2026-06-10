@@ -12,23 +12,31 @@ interface AdminAuthSuccess {
   actorUserId: string;
 }
 
+interface AdminRequestSuccess {
+  adminClient: SupabaseClient;
+  /** The admin (caller) user id — useful for audit logs. */
+  actorUserId: string;
+}
+
 /**
- * Shared authorization for admin user-management routes.
+ * Shared authorization for admin routes that do NOT act on an existing target
+ * user (e.g. inviting a brand-new user, which has no row to superadmin-protect).
  *
  * Performs, in order:
  * 1. CSRF origin check (`enforceSameOrigin`)
  * 2. Session authentication
  * 3. JWT-claims permission check
- * 4. Live superadmin protection (fetches target user from auth.admin)
  *
- * Returns a `NextResponse` error if any check fails, or an `AdminAuthSuccess`
- * object containing the admin Supabase client and the validated target userId.
+ * Returns a `NextResponse` error if any check fails, or an `AdminRequestSuccess`
+ * object containing the service-role admin client and the caller's user id.
+ *
+ * This is the building block `authorizeAdminAction` composes with the live
+ * superadmin-protection step for routes that target an existing user.
  */
-export async function authorizeAdminAction(
+export async function authorizeAdminRequest(
   request: NextRequest,
-  targetUserId: string,
   requiredPermission: string
-): Promise<NextResponse | AdminAuthSuccess> {
+): Promise<NextResponse | AdminRequestSuccess> {
   // 1. CSRF check
   const originError = enforceSameOrigin(request);
   if (originError) return originError;
@@ -48,11 +56,37 @@ export async function authorizeAdminAction(
   const permissions =
     ((claimsData?.claims as Record<string, unknown>)?.permissions as string[]) || [];
   if (!permissions.includes(requiredPermission)) {
+    // Generic message — never echo the caller's permission set.
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // 4. Superadmin protection - fetch LIVE data for the target user
   const adminClient = await createServerAdminClient();
+  return { adminClient, actorUserId: user.id };
+}
+
+/**
+ * Shared authorization for admin user-management routes.
+ *
+ * Performs, in order:
+ * 1. CSRF origin check (`enforceSameOrigin`)
+ * 2. Session authentication
+ * 3. JWT-claims permission check
+ * 4. Live superadmin protection (fetches target user from auth.admin)
+ *
+ * Returns a `NextResponse` error if any check fails, or an `AdminAuthSuccess`
+ * object containing the admin Supabase client and the validated target userId.
+ */
+export async function authorizeAdminAction(
+  request: NextRequest,
+  targetUserId: string,
+  requiredPermission: string
+): Promise<NextResponse | AdminAuthSuccess> {
+  // Steps 1-3 (CSRF, auth, permission) are shared.
+  const base = await authorizeAdminRequest(request, requiredPermission);
+  if (base instanceof NextResponse) return base;
+  const { adminClient, actorUserId } = base;
+
+  // 4. Superadmin protection - fetch LIVE data for the target user
   const { data: targetUserData, error: targetUserError } =
     await adminClient.auth.admin.getUserById(targetUserId);
 
@@ -68,5 +102,5 @@ export async function authorizeAdminAction(
     );
   }
 
-  return { adminClient, userId: targetUserId, actorUserId: user.id };
+  return { adminClient, userId: targetUserId, actorUserId };
 }

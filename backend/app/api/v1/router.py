@@ -16,6 +16,7 @@ from app.api.v1 import (
     schools,
     sessions,
     user_roles,
+    user_schools,
     users,
 )
 from app.api.v1.admin import admin_router
@@ -30,6 +31,7 @@ api_router.include_router(profile.router)
 api_router.include_router(roles.router)
 api_router.include_router(permissions.router)
 api_router.include_router(user_roles.router)
+api_router.include_router(user_schools.router)
 api_router.include_router(users.router)
 api_router.include_router(audit.router)
 api_router.include_router(dashboard.router)
