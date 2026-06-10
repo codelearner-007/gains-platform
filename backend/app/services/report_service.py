@@ -52,8 +52,13 @@ from app.schemas.reports import (
     QsmStudentRow,
     QsmTeacherGroup,
     QuestionOverall,
+    QspGrandTotal,
+    QspStandardBand,
+    QspStudentRow,
+    QspTeacherGroup,
     QuestionResponseAnalysisPayload,
     QuestionSummaryMatrixPayload,
+    QuestionSummaryPointsPayload,
     SddBandStandardRow,
     SddKpis,
     SddStandardRow,
@@ -1491,6 +1496,170 @@ class ReportService:
             assessment=assessment,
             kpis=kpis,
             questions=questions,
+            teacher_groups=teacher_groups,
+            grand_total=grand_total,
+        )
+
+    async def build_question_summary_matrix_points(
+        self, item_id: str
+    ) -> QuestionSummaryPointsPayload:
+        """Partial-credit QSR matrix for the xlsx export (legacy SSRS parity).
+
+        Unlike :meth:`build_question_summary_matrix` (count-of-green binary,
+        PAG-6), this reproduces the legacy .xlsx / PDF exactly: each cell is
+        ``points_received`` (possibly fractional), "Possible Points" is
+        SUM(points_possible), "# Correct Answers" is SUM(points_received), and
+        every Score% (overall, per-band, per-question, per-teacher, grand) is
+        SUM(received)/SUM(possible). Verified cell-for-cell against the legacy
+        Chapter 9 Test 8359960427 xlsx (grand 318/486 = 65.4%).
+        """
+        meta_row = await self.cube.get_assessment_meta(item_id)
+        if not meta_row:
+            raise ResourceNotFoundError("Assessment", item_id)
+        assessment = self._build_assessment_meta(
+            meta_row, meta_row.get("first_access"), meta_row.get("latest_attempt")
+        )
+
+        rows = await self.cube.get_question_summary_matrix_rows(item_id)
+
+        # ── Question columns (deduplicated, sorted by cpalms then question_no)
+        questions_by_id: dict[str, QsmQuestionColumn] = {}
+        for r in rows:
+            qid = safe_str(r.get("question_id"))
+            if qid and qid not in questions_by_id:
+                questions_by_id[qid] = QsmQuestionColumn(
+                    question_id=qid,
+                    question_no=safe_str(r.get("question_no")),
+                    sorting_question_no=to_int(r.get("sorting_question_no")),
+                    standard=safe_str(r.get("schoology_standard")),
+                    cpalms_standard=safe_str(r.get("cpalms_standard"))
+                    or safe_str(r.get("schoology_standard")),
+                    position_number=safe_str(r.get("position_number")),
+                    correct_answer=safe_str(r.get("correct_answer")),
+                )
+        questions = sorted(
+            questions_by_id.values(),
+            key=lambda q: (q.cpalms_standard or "~", q.sorting_question_no or 0),
+        )
+
+        # Contiguous CPALMS bands over the sorted question list. Every band —
+        # even a single-question one — owns a trailing Score% sub-column in the
+        # legacy layout, so map qid → band code for the per-band roll-up.
+        bands: list[QspStandardBand] = []
+        qid_band: dict[str, str] = {}
+        for q in questions:
+            code = q.cpalms_standard or q.standard or "Other"
+            qid_band[q.question_id] = code
+            if bands and bands[-1].cpalms_standard == code:
+                bands[-1].question_ids.append(q.question_id)
+            else:
+                bands.append(
+                    QspStandardBand(cpalms_standard=code, question_ids=[q.question_id])
+                )
+
+        # ── Per-(teacher, student) accumulation of fractional points ──────────
+        teacher_students: dict[str, dict[str, dict[str, Any]]] = {}
+        per_q_poss: dict[str, float] = {}
+        per_q_recv: dict[str, float] = {}
+        band_poss: dict[str, float] = {}
+        band_recv: dict[str, float] = {}
+
+        for r in rows:
+            teacher = safe_str(r.get("section_instructors")) or "Unassigned"
+            user_uid = safe_str(r.get("user_uid"))
+            user_name = safe_str(r.get("user_name"))
+            qid = safe_str(r.get("question_id"))
+            pr = to_float(r.get("points_received"))
+            pp = to_float(r.get("points_possible"))
+            student = teacher_students.setdefault(teacher, {}).setdefault(
+                user_uid,
+                {
+                    "user_uid": user_uid,
+                    "user_name": user_name,
+                    "cells": {},
+                    "band_recv": {},
+                    "band_poss": {},
+                },
+            )
+            if pp > 0:
+                student["cells"][qid] = pr
+                code = qid_band.get(qid, "Other")
+                student["band_recv"][code] = student["band_recv"].get(code, 0.0) + pr
+                student["band_poss"][code] = student["band_poss"].get(code, 0.0) + pp
+                per_q_poss[qid] = per_q_poss.get(qid, 0.0) + pp
+                per_q_recv[qid] = per_q_recv.get(qid, 0.0) + pr
+                band_poss[code] = band_poss.get(code, 0.0) + pp
+                band_recv[code] = band_recv.get(code, 0.0) + pr
+            else:
+                student["cells"].setdefault(qid, None)
+
+        def _pct2(recv: float, poss: float) -> Optional[float]:
+            # Legacy rounds band / per-question Score% to 2 decimals.
+            return round(recv / poss, 2) if poss > 0 else None
+
+        teacher_groups: list[QspTeacherGroup] = []
+        grand_recv = 0.0
+        grand_poss = 0.0
+        for teacher in sorted(teacher_students):
+            students_list: list[QspStudentRow] = []
+            t_recv = 0.0
+            t_poss = 0.0
+            for s in teacher_students[teacher].values():
+                s_recv = sum(s["band_recv"].values())
+                s_poss = sum(s["band_poss"].values())
+                students_list.append(
+                    QspStudentRow(
+                        user_uid=s["user_uid"],
+                        user_name=s["user_name"],
+                        score_pct=round(s_recv / s_poss, 6) if s_poss > 0 else 0.0,
+                        possible_points=round(s_poss, 4),
+                        correct_count=round(s_recv, 4),
+                        cells=dict(s["cells"]),
+                        band_pct={
+                            b.cpalms_standard: _pct2(
+                                s["band_recv"].get(b.cpalms_standard, 0.0),
+                                s["band_poss"].get(b.cpalms_standard, 0.0),
+                            )
+                            for b in bands
+                        },
+                    )
+                )
+                t_recv += s_recv
+                t_poss += s_poss
+            # Sort students asc by overall score (PBIX ord 6/7 default).
+            students_list.sort(key=lambda x: x.score_pct)
+            teacher_groups.append(
+                QspTeacherGroup(
+                    section_instructor=teacher,
+                    teacher_score_pct=round(t_recv / t_poss, 6) if t_poss > 0 else 0.0,
+                    students=students_list,
+                )
+            )
+            grand_recv += t_recv
+            grand_poss += t_poss
+
+        grand_total = QspGrandTotal(
+            possible_points=round(grand_poss, 4),
+            correct_count=round(grand_recv, 4),
+            score_pct=round(grand_recv / grand_poss, 6) if grand_poss > 0 else 0.0,
+            per_question_possible={k: round(v, 4) for k, v in per_q_poss.items()},
+            per_question_correct={k: round(v, 4) for k, v in per_q_recv.items()},
+            per_question_pct={
+                k: (_pct2(per_q_recv.get(k, 0.0), v) or 0.0)
+                for k, v in per_q_poss.items()
+            },
+            band_possible={k: round(v, 4) for k, v in band_poss.items()},
+            band_correct={k: round(v, 4) for k, v in band_recv.items()},
+            band_pct={
+                k: (_pct2(band_recv.get(k, 0.0), v) or 0.0)
+                for k, v in band_poss.items()
+            },
+        )
+
+        return QuestionSummaryPointsPayload(
+            assessment=assessment,
+            questions=questions,
+            bands=bands,
             teacher_groups=teacher_groups,
             grand_total=grand_total,
         )

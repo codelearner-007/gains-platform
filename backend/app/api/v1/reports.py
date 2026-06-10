@@ -455,8 +455,12 @@ async def qsr_export_xlsx(
     item_id: str,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StreamingResponse:
-    """XLSX export of the QSR paginated matrix. Requires: reports:read"""
-    payload = await ReportService(db).build_question_summary_matrix(item_id)
+    """XLSX export of the QSR paginated matrix. Requires: reports:read
+
+    Uses the partial-credit point model (legacy SSRS .xlsx / PDF parity), which
+    intentionally differs from the count-of-green model served to the web.
+    """
+    payload = await ReportService(db).build_question_summary_matrix_points(item_id)
     return _xlsx_response("qsr", payload.assessment.item_name, payload)
 
 

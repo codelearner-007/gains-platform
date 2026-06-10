@@ -680,6 +680,75 @@ class QuestionSummaryMatrixPayload(BaseModel):
     grand_total: QsmGrandTotal
 
 
+# ── QSR partial-credit model (xlsx / SSRS parity) ────────────────────────────
+# The legacy SSRS QSR .xlsx AND the color/teacher PDFs both render *partial
+# credit*: each (student × question) cell carries ``points_received`` (which
+# may be fractional, e.g. 0.5 / 0.25 / 0.33), "Possible Points" is
+# SUM(points_possible), "# Correct Answers" is SUM(points_received), and every
+# Score% is SUM(received)/SUM(possible). This is verified cell-for-cell against
+# both legacy artifacts for Chapter 9 Test 8359960427 (grand 318 / 486 = 65.4%)
+# and Central FL Prep 8244629174 (grand 255.55 correct). The on-screen / JSON
+# ``QuestionSummaryMatrixPayload`` instead uses a count-of-green binary model
+# (PAG-6) — these payloads intentionally diverge; only the xlsx mirrors legacy.
+
+
+class QspStandardBand(BaseModel):
+    """A contiguous CPALMS column band (one or more leaf question columns)."""
+
+    cpalms_standard: str
+    question_ids: List[str]
+
+
+class QspStudentRow(BaseModel):
+    """One per-student row with fractional point cells."""
+
+    user_uid: str
+    user_name: str
+    score_pct: float
+    possible_points: float
+    correct_count: float
+    # qid → points_received (may be fractional); None = not attempted.
+    cells: dict[str, Optional[float]]
+    # cpalms_standard → band Score% (SUM received / SUM possible in the band).
+    band_pct: dict[str, Optional[float]]
+
+
+class QspTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_score_pct: float
+    students: List[QspStudentRow]
+
+
+class QspGrandTotal(BaseModel):
+    possible_points: float
+    correct_count: float
+    score_pct: float
+    # Per-leaf-question footer rows (SSRS "Possible Points" / "# Correct
+    # Answers" / "Score %"). per_question_pct = received/possible per question.
+    per_question_possible: dict[str, float]
+    per_question_correct: dict[str, float]
+    per_question_pct: dict[str, float]
+    # Per-band footer Score% sub-columns (grey C0C0C0, not perf-banded).
+    band_possible: dict[str, float]
+    band_correct: dict[str, float]
+    band_pct: dict[str, float]
+
+
+class QuestionSummaryPointsPayload(BaseModel):
+    """Partial-credit QSR matrix consumed ONLY by the xlsx export.
+
+    Mirrors the legacy SSRS .xlsx exactly: fractional cells, per-band Score%
+    sub-columns, summed-points totals. The web/JSON surfaces keep the
+    count-based :class:`QuestionSummaryMatrixPayload`.
+    """
+
+    assessment: AssessmentMeta
+    questions: List[QsmQuestionColumn]
+    bands: List[QspStandardBand]
+    teacher_groups: List[QspTeacherGroup]
+    grand_total: QspGrandTotal
+
+
 class PaginatedQuestionRow(BaseModel):
     """One detail-table row in the QRA paginated reports.
 

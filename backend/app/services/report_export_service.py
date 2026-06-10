@@ -40,7 +40,7 @@ from app.schemas.reports import (
     QraByTeacherPayload,
     QraPaginatedPayload,
     QuestionResponseAnalysisPayload,
-    QuestionSummaryMatrixPayload,
+    QuestionSummaryPointsPayload,
     StandardsDeepDivePayload,
     StandardSummaryPayload,
     StrandSummaryPayload,
@@ -64,6 +64,15 @@ PERF_GREEN = "FF7BE38C"  # colors.ts PERF_GREEN  #7BE38C (≥80)
 QSR_PINK = "FFFFCCFF"  # colors.ts QSR_PINK   #FFCCFF (<70)
 QSR_YELLOW = "FFFFF591"  # colors.ts QSR_YELLOW #FFF591 (70–80)
 QSR_GREEN = "FF99FF99"  # colors.ts QSR_GREEN  #99FF99 (≥80)
+# xlsx-LOCAL yellow: the real legacy SSRS .xlsx uses #FFF492 (NOT colors.ts's
+# #FFF591). colors.ts drives the web and must NOT change, so the QSR xlsx
+# Score% banding uses this local override for exact .xlsx parity.
+QSR_YELLOW_XLSX = "FFFFF492"
+# QSR SSRS chrome (verbatim from the legacy .xlsx, not part of colors.ts):
+QSR_NAVY = "FF4472C4"  # header bars (matches PBIX_ACCENT_NAVY)
+QSR_GREY_SCORE = "FFC0C0C0"  # per-band / per-question Score% sub-columns
+QSR_GREY_TOTAL = "FFD3D3D3"  # footer Possible Points / # Correct / label cells
+QSR_WHITE = "FFFFFFFF"
 # Chrome:
 HEADER_BAR_BG = "FFB8DBFF"  # colors.ts HEADER_BAR_BG #B8DBFF
 LAYOUT_BORDER = "FFB3B3B3"  # colors.ts LAYOUT_BORDER #B3B3B3
@@ -321,152 +330,262 @@ def _qra_by_standard_teacher_to_xlsx(payload: QraByStandardTeacherPayload) -> Wo
     return wb
 
 
-# ─── QSR: student × question matrix, standard column bands ───────────────────
+# ─── QSR: SSRS partial-credit student × question matrix ──────────────────────
+
+# Legacy SSRS .xlsx number/locale format for percents (en-US locale tag).
+_QSR_PCT_FMT = "[$-010409]0%"
+# QSR cells use the body font Segoe UI 9 / #333333; headers white on navy.
+_QSR_FONT = Font(name="Segoe UI", size=9, color="FF333333")
+_QSR_FONT_BOLD = Font(name="Segoe UI", size=9, color="FF333333", bold=True)
+_QSR_HEADER_FONT = Font(name="Segoe UI", size=9, color=QSR_WHITE)
+_QSR_TITLE_FONT = Font(name="Segoe UI", size=20, bold=True, color="FF000000")
+_QSR_SUB_FONT = Font(name="Segoe UI", size=12, color="FF000000")
+
+_QSR_NAVY_FILL = PatternFill("solid", fgColor=QSR_NAVY)
+_QSR_GREY_SCORE_FILL = PatternFill("solid", fgColor=QSR_GREY_SCORE)
+_QSR_GREY_TOTAL_FILL = PatternFill("solid", fgColor=QSR_GREY_TOTAL)
+_QSR_GREEN_FILL = PatternFill("solid", fgColor=QSR_GREEN)
+_QSR_PINK_FILL = PatternFill("solid", fgColor=QSR_PINK)
+_QSR_CENTER_TOP = Alignment(horizontal="center", vertical="top", wrap_text=True)
+_QSR_LEFT_TOP = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
 
-def _qsr_to_xlsx(payload: QuestionSummaryMatrixPayload) -> Workbook:
-    """Student × question binary matrix, columns grouped into standard bands.
+def _qsr_score_fill(pct: Optional[float]) -> PatternFill:
+    """Overall / per-question Score% 3-band fill: <70 pink, 70–<80 yellow,
+    ≥80 green. Uses the xlsx-LOCAL yellow (#FFF492) — the real legacy value."""
+    if pct is None:
+        return _QSR_PINK_FILL
+    if pct < _BAND_MID:
+        return _QSR_PINK_FILL
+    if pct < _BAND_HIGH:
+        return PatternFill("solid", fgColor=QSR_YELLOW_XLSX)
+    return _QSR_GREEN_FILL
 
-    Layout (mirrors the on-screen QuestionSummaryMatrix + the legacy SSRS
-    xlsx column semantics):
 
-      Row 1 (band header, navy): "Standards" | <cpalms band, merged> … | "Totals"
-      Row 2 (col header, navy):  Classroom Instructors | Student Name | Score %
-                                 | <question_no per leaf> | Possible Points
-                                 | # Correct Answers
-      Body: one row per (teacher → student); the Score % cell + each 0/1
-            question cell carry the QSR_* fill; binary 1 cells green, 0 pink.
-      Footer trio (grey): Possible Points / # Correct Answers / Score % grand
-            totals, with the Score % row's per-question cells QSR-banded.
+def _qsr_cell_fill(received: Optional[float]) -> PatternFill:
+    """Leaf-question point cell fill: <0.5 pink, ≥0.5 green (legacy binary
+    threshold on the fractional points_received)."""
+    return _QSR_GREEN_FILL if (received is not None and received >= 0.5) else _QSR_PINK_FILL
+
+
+def _qsr_to_xlsx(payload: QuestionSummaryPointsPayload) -> Workbook:
+    """SSRS partial-credit QSR matrix — exact legacy .xlsx parity.
+
+    Layout (verified cell-for-cell against the legacy Chapter 9 Test
+    8359960427 .xlsx):
+
+      Rows 2/4/6  SSRS title block: "Question Summary Report" (A) /
+                  "<assessment_type>" (B) / "<Subject> - <Grade>: <Item>" (C).
+      Row 8       band header (navy): Classroom Instructors | Student Name |
+                  Score % | <CPALMS band, merged over its leaf cols> … |
+                  Possible Points | # Correct Answers.
+      Row 9       leaf header (navy): question_no per leaf col + a "Score %"
+                  sub-column at the end of every band.
+      Freeze A8.
+      Body        one row per (teacher → student); instructor name + overall %
+                  merged down the teacher's rows (cols A:C). Each leaf cell is
+                  ``points_received`` (fractional), <0.5 pink / ≥0.5 green; the
+                  overall Score% (col C) is perf-banded; per-band Score% sub-
+                  columns are grey. Possible Points = SUM(possible),
+                  # Correct = SUM(received).
+      Footer trio Possible Points / # Correct Answers / Score % (grey labels);
+                  the Score% footer perf-bands the leaf + overall cells, greys
+                  the per-band sub-columns.
     """
     wb = Workbook()
     ws = wb.active
-    _set_title(ws, "Question Summary")
+    _set_title(ws, "Paginated - Question Summary Re")
 
+    a = payload.assessment
     questions = payload.questions
-    # Contiguous standard bands over the (already standard-sorted) question list.
-    bands: list[tuple[str, int]] = []
-    for q in questions:
-        code = q.cpalms_standard or q.standard or "Other"
-        if bands and bands[-1][0] == code:
-            bands[-1] = (code, bands[-1][1] + 1)
-        else:
-            bands.append((code, 1))
+    bands = payload.bands
 
-    n_q = len(questions)
-    first_q_col = 4  # A=Instructor, B=Student, C=Score %, then leaf q columns
-    last_q_col = first_q_col + n_q - 1
-    possible_col = last_q_col + 1
-    correct_col = last_q_col + 2
+    # ── Column model ────────────────────────────────────────────────────────
+    # A:C = Classroom Instructors (merged), D = Student Name, E = Score %.
+    # Then per band: one column per leaf question + one band Score% sub-column.
+    # Finally Possible Points + # Correct Answers.
+    INSTR_C, STU_C, SCORE_C = 1, 4, 5
+    qid_col: dict[str, int] = {}
+    band_score_col: dict[str, int] = {}
+    col = 6
+    for b in bands:
+        for qid in b.question_ids:
+            qid_col[qid] = col
+            col += 1
+        band_score_col[b.cpalms_standard] = col
+        col += 1
+    possible_col = col
+    correct_col = col + 1
+    last_col = correct_col
 
-    # ── Row 1: band header ──────────────────────────────────────────────────
-    c = ws.cell(row=1, column=1, value="Standards")
-    c.fill = _NAVY_FILL
-    c.font = _HEADER_FONT_WHITE
-    c.alignment = _LEFT
-    c.border = _BORDER
-    if first_q_col > 3:
-        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3)
-        for col in (2, 3):
-            ws.cell(row=1, column=col).fill = _NAVY_FILL
-            ws.cell(row=1, column=col).border = _BORDER
-    col = first_q_col
-    for code, span in bands:
-        bc = ws.cell(row=1, column=col, value=code)
-        bc.fill = _NAVY_FILL
-        bc.font = _HEADER_FONT_WHITE
-        bc.alignment = _CENTER
-        bc.border = _BORDER
-        if span > 1:
-            ws.merge_cells(start_row=1, start_column=col, end_row=1, end_column=col + span - 1)
-            for k in range(col + 1, col + span):
-                ws.cell(row=1, column=k).fill = _NAVY_FILL
-                ws.cell(row=1, column=k).border = _BORDER
-        col += span
-    tot = ws.cell(row=1, column=possible_col, value="Totals")
-    tot.fill = _NAVY_FILL
-    tot.font = _HEADER_FONT_WHITE
-    tot.alignment = _CENTER
-    tot.border = _BORDER
-    ws.merge_cells(start_row=1, start_column=possible_col, end_row=1, end_column=correct_col)
-    ws.cell(row=1, column=correct_col).fill = _NAVY_FILL
-    ws.cell(row=1, column=correct_col).border = _BORDER
+    qcol = {q.question_id: q for q in questions}
 
-    # ── Row 2: column header ────────────────────────────────────────────────
-    header = ["Classroom Instructors", "Student Name", "Score %"]
-    header += [q.question_no for q in questions]
-    header += ["Possible Points", "# Correct Answers"]
-    _write_header(ws, 2, header, fill=_NAVY_FILL, white=True)
+    # ── Title block (rows 2 / 4 / 6) ────────────────────────────────────────
+    t = ws.cell(row=2, column=1, value="Question Summary Report")
+    t.font = _QSR_TITLE_FONT
+    t.alignment = Alignment(vertical="top", wrap_text=True)
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=max(22, last_col))
+    # Leading space mirrors the legacy SSRS render of the assessment-type line.
+    sub = ws.cell(row=4, column=2, value=f" {a.assessment_type}" if a.assessment_type else "")
+    sub.font = _QSR_SUB_FONT
+    sub.alignment = Alignment(vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=4, start_column=2, end_row=4, end_column=12)
+    course_line = ": ".join(
+        p for p in (" - ".join(x for x in (a.subject, a.grade) if x), a.item_name) if p
+    )
+    cl = ws.cell(row=6, column=3, value=course_line)
+    cl.font = _QSR_SUB_FONT
+    cl.alignment = Alignment(vertical="center", wrap_text=True)
+    ws.merge_cells(start_row=6, start_column=3, end_row=6, end_column=max(23, last_col))
+
+    # ── Row 8: band header (navy) ───────────────────────────────────────────
+    def _navy(row: int, col: int, value=None, *, center=True):
+        c = ws.cell(row=row, column=col, value=value)
+        c.fill = _QSR_NAVY_FILL
+        c.font = _QSR_HEADER_FONT
+        c.alignment = _CENTER if center else _LEFT
+        c.border = _BORDER
+        return c
+
+    _navy(8, INSTR_C, "Classroom Instructors", center=False)
+    ws.merge_cells(start_row=8, start_column=INSTR_C, end_row=9, end_column=3)
+    for cc in (2, 3):
+        _navy(8, cc)
+        _navy(9, cc)
+    _navy(8, STU_C, "Student Name", center=False)
+    ws.merge_cells(start_row=8, start_column=STU_C, end_row=9, end_column=STU_C)
+    _navy(9, STU_C)
+    _navy(8, SCORE_C, "Score %", center=False)
+    ws.merge_cells(start_row=8, start_column=SCORE_C, end_row=9, end_column=SCORE_C)
+    _navy(9, SCORE_C)
+    for b in bands:
+        start = qid_col[b.question_ids[0]]
+        end = band_score_col[b.cpalms_standard]  # band header spans up to score col
+        _navy(8, start, b.cpalms_standard)
+        if end > start:
+            ws.merge_cells(start_row=8, start_column=start, end_row=8, end_column=end)
+            for k in range(start + 1, end + 1):
+                _navy(8, k)
+        # Row 9 leaf question_no headers + band Score% sub-column.
+        for qid in b.question_ids:
+            _navy(9, qid_col[qid], qcol[qid].question_no)
+        _navy(9, band_score_col[b.cpalms_standard], "Score %")
+    _navy(8, possible_col, "Possible Points")
+    ws.merge_cells(start_row=8, start_column=possible_col, end_row=9, end_column=possible_col)
+    _navy(9, possible_col)
+    _navy(8, correct_col, "# Correct Answers")
+    ws.merge_cells(start_row=8, start_column=correct_col, end_row=9, end_column=correct_col)
+    _navy(9, correct_col)
 
     # ── Body ────────────────────────────────────────────────────────────────
-    r = 3
+    def _body(row, col, value, *, fill=None, fmt=None):
+        c = ws.cell(row=row, column=col, value=value)
+        c.font = _QSR_FONT
+        c.alignment = _QSR_CENTER_TOP
+        c.border = _BORDER
+        if fill is not None:
+            c.fill = fill
+        if fmt is not None:
+            c.number_format = fmt
+        return c
+
+    r = 9 + 1  # first body row = 10
     for g in payload.teacher_groups:
-        for idx, s in enumerate(g.students):
-            _txt_cell(ws, r, 1, g.section_instructor if idx == 0 else "", bold=(idx == 0))
-            if idx == 0:
-                ws.cell(row=r, column=1).fill = _HEADER_FILL
-            _txt_cell(ws, r, 2, s.user_name)
-            _pct_cell(ws, r, 3, s.score_pct, fill=_qsr_fill(s.score_pct), fmt=_PCT_FMT_INT)
-            for qi, q in enumerate(questions):
-                cell_val = s.cells.get(q.question_id)
-                cc = ws.cell(row=r, column=first_q_col + qi)
-                cc.alignment = _CENTER
-                cc.border = _BORDER
-                if cell_val == 1:
-                    cc.value = 1
-                    cc.fill = PatternFill("solid", fgColor=QSR_GREEN)
-                elif cell_val == 0:
-                    cc.value = 0
-                    cc.fill = PatternFill("solid", fgColor=QSR_PINK)
-                else:
-                    cc.value = None
-            _txt_cell(ws, r, possible_col, s.possible_points, align=_RIGHT)
-            _txt_cell(ws, r, correct_col, s.correct_count, align=_RIGHT)
+        first_row = r
+        for s in g.students:
+            # Student name (D), overall Score% (E, perf-banded).
+            sc = _body(r, STU_C, s.user_name, fill=_qsr_score_fill(s.score_pct))
+            sc.alignment = _QSR_LEFT_TOP
+            _body(r, SCORE_C, s.score_pct, fill=_qsr_score_fill(s.score_pct), fmt=_QSR_PCT_FMT)
+            # Leaf point cells.
+            for qid, ccol in qid_col.items():
+                recv = s.cells.get(qid)
+                _body(r, ccol, recv, fill=_qsr_cell_fill(recv))
+            # Per-band Score% sub-columns (grey).
+            for b in bands:
+                _body(
+                    r,
+                    band_score_col[b.cpalms_standard],
+                    s.band_pct.get(b.cpalms_standard),
+                    fill=_QSR_GREY_SCORE_FILL,
+                    fmt=_QSR_PCT_FMT,
+                )
+            # Totals (grey).
+            _body(r, possible_col, s.possible_points, fill=_QSR_GREY_TOTAL_FILL)
+            _body(r, correct_col, s.correct_count, fill=_QSR_GREY_TOTAL_FILL)
             r += 1
-        # Per-teacher subtotal: Score % row only (mirrors the on-screen "Score %"
-        # subtotal band for the teacher group).
-        _txt_cell(ws, r, 1, f"Subtotal: {g.section_instructor}", bold=True)
-        ws.cell(row=r, column=1).fill = _HEADER_FILL
-        _txt_cell(ws, r, 2, "")
-        _pct_cell(ws, r, 3, g.teacher_score_pct, fill=_qsr_fill(g.teacher_score_pct), fmt=_PCT_FMT_INT)
-        ws.cell(row=r, column=3).font = _BOLD
-        r += 1
+        # Instructor block merged down the teacher's student rows (A:C),
+        # carrying "<instructor> <overall %>".
+        label = f"{g.section_instructor} {round(g.teacher_score_pct * 100, 1)}%"
+        ib = ws.cell(row=first_row, column=INSTR_C, value=label)
+        ib.font = _QSR_FONT
+        ib.fill = PatternFill("solid", fgColor=QSR_WHITE)
+        ib.alignment = Alignment(vertical="top", wrap_text=True)
+        ib.border = _BORDER
+        if r - 1 >= first_row:
+            ws.merge_cells(start_row=first_row, start_column=INSTR_C, end_row=r - 1, end_column=3)
 
-    # ── Grand-total trio (Possible Points / # Correct Answers / Score %) ─────
+    # ── Footer trio ─────────────────────────────────────────────────────────
     gt = payload.grand_total
-    # Possible Points
-    _txt_cell(ws, r, 1, "Possible Points", bold=True)
-    ws.cell(row=r, column=1).fill = _GREY_FILL
-    _txt_cell(ws, r, 3, gt.possible_points, align=_RIGHT, bold=True)
-    for qi, q in enumerate(questions):
-        _txt_cell(ws, r, first_q_col + qi, gt.per_question_possible.get(q.question_id, 0), align=_CENTER)
-    _txt_cell(ws, r, possible_col, gt.possible_points, align=_RIGHT, bold=True)
-    r += 1
-    # # Correct Answers
-    _txt_cell(ws, r, 1, "# Correct Answers", bold=True)
-    ws.cell(row=r, column=1).fill = _GREY_FILL
-    _txt_cell(ws, r, 3, gt.correct_count, align=_RIGHT, bold=True)
-    for qi, q in enumerate(questions):
-        _txt_cell(ws, r, first_q_col + qi, gt.per_question_correct.get(q.question_id, 0), align=_CENTER)
-    _txt_cell(ws, r, correct_col, gt.correct_count, align=_RIGHT, bold=True)
-    r += 1
-    # Score %
-    _txt_cell(ws, r, 1, "Score %", bold=True)
-    ws.cell(row=r, column=1).fill = _GREY_FILL
-    _pct_cell(ws, r, 3, gt.score_pct, fill=_qsr_fill(gt.score_pct), fmt=_PCT_FMT_INT)
-    ws.cell(row=r, column=3).font = _BOLD
-    for qi, q in enumerate(questions):
-        p = gt.per_question_pct.get(q.question_id, 0.0)
-        _pct_cell(ws, r, first_q_col + qi, p, fill=_qsr_fill(p), fmt=_PCT_FMT_INT)
-    r += 1
 
-    ws.freeze_panes = ws.cell(row=3, column=first_q_col).coordinate
-    widths = {1: 22, 2: 22, 3: 9}
-    for qi in range(n_q):
-        widths[first_q_col + qi] = 5
-    widths[possible_col] = 15
-    widths[correct_col] = 16
-    _autosize(ws, widths)
+    def _footer_label(row, text):
+        c = ws.cell(row=row, column=INSTR_C, value=text)
+        c.font = _QSR_FONT_BOLD
+        c.fill = _QSR_GREY_TOTAL_FILL
+        c.alignment = _QSR_LEFT_TOP
+        c.border = _BORDER
+        ws.merge_cells(start_row=row, start_column=INSTR_C, end_row=row, end_column=STU_C)
+        for k in range(2, STU_C + 1):
+            cc = ws.cell(row=row, column=k)
+            cc.fill = _QSR_GREY_TOTAL_FILL
+            cc.border = _BORDER
+
+    # Possible Points row.
+    _footer_label(r, "Possible Points")
+    _body(r, SCORE_C, gt.possible_points, fill=_QSR_GREY_TOTAL_FILL)
+    for qid, ccol in qid_col.items():
+        _body(r, ccol, gt.per_question_possible.get(qid, 0.0), fill=_QSR_GREY_TOTAL_FILL)
+    for b in bands:
+        _body(r, band_score_col[b.cpalms_standard], gt.band_possible.get(b.cpalms_standard, 0.0), fill=_QSR_GREY_SCORE_FILL)
+    _body(r, possible_col, gt.possible_points, fill=_QSR_GREY_TOTAL_FILL)
+    _body(r, correct_col, gt.correct_count, fill=_QSR_GREY_TOTAL_FILL)
+    r += 1
+    # # Correct Answers row.
+    _footer_label(r, "# Correct Answers")
+    _body(r, SCORE_C, gt.correct_count, fill=_QSR_GREY_TOTAL_FILL)
+    for qid, ccol in qid_col.items():
+        _body(r, ccol, gt.per_question_correct.get(qid, 0.0), fill=_QSR_GREY_TOTAL_FILL)
+    for b in bands:
+        _body(r, band_score_col[b.cpalms_standard], gt.band_correct.get(b.cpalms_standard, 0.0), fill=_QSR_GREY_SCORE_FILL)
+    r += 1
+    # Score % row (perf-banded leaf + overall; grey per-band sub-columns).
+    _footer_label(r, "Score %")
+    _body(r, SCORE_C, gt.score_pct, fill=_qsr_score_fill(gt.score_pct), fmt=_QSR_PCT_FMT)
+    for qid, ccol in qid_col.items():
+        p = gt.per_question_pct.get(qid, 0.0)
+        _body(r, ccol, p, fill=_qsr_score_fill(p), fmt=_QSR_PCT_FMT)
+    for b in bands:
+        _body(
+            r,
+            band_score_col[b.cpalms_standard],
+            gt.band_pct.get(b.cpalms_standard, 0.0),
+            fill=_QSR_GREY_SCORE_FILL,
+            fmt=_QSR_PCT_FMT,
+        )
+
+    # ── Freeze + widths ─────────────────────────────────────────────────────
+    ws.freeze_panes = "A8"
+    ws.column_dimensions["A"].width = 0.2
+    ws.column_dimensions["B"].width = 0.2
+    ws.column_dimensions["C"].width = 13.33
+    ws.column_dimensions[get_column_letter(STU_C)].width = 14.61
+    ws.column_dimensions[get_column_letter(SCORE_C)].width = 8.0
+    for ccol in qid_col.values():
+        ws.column_dimensions[get_column_letter(ccol)].width = 8.23
+    for ccol in band_score_col.values():
+        ws.column_dimensions[get_column_letter(ccol)].width = 6.73
+    ws.column_dimensions[get_column_letter(possible_col)].width = 7.76
+    ws.column_dimensions[get_column_letter(correct_col)].width = 8.37
     return wb
 
 

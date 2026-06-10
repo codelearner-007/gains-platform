@@ -17,7 +17,6 @@ from openpyxl import load_workbook
 
 from app.schemas.reports import (
     QuestionResponseAnalysisPayload,
-    QuestionSummaryMatrixPayload,
     StandardSummaryPayload,
 )
 from app.services import report_export_service as X
@@ -78,15 +77,29 @@ async def test_qra_export_xlsx_structure_and_fills(
 
 
 @pytest.mark.anyio
-async def test_qsr_export_xlsx_matrix_bands_and_fills(
+async def test_qsr_export_xlsx_partial_credit_ssrs_parity(
     admin_client: AsyncClient,
 ) -> None:
+    """The QSR .xlsx mirrors the legacy SSRS partial-credit layout exactly.
+
+    Distinct from the on-screen count-of-green model: cells carry fractional
+    ``points_received``, "# Correct Answers" sums points, and every Score% is
+    SUM(received)/SUM(possible). The legacy Chapter 9 Test 8359960427 grand
+    totals are 318 / 486 / 65.4%.
+
+    The leaf question_no ordering equals the count-based JSON payload (same
+    cube query + sort), so we anchor the column model on that payload while
+    asserting the partial-credit values come straight from the workbook.
+    """
     j = await admin_client.get(
         f"/api/v1/reports/question-summary-paginated/{_CHAPTER9}"
     )
     if j.status_code == 404:
         pytest.skip("Chapter 9 fixture item missing")
-    payload = QuestionSummaryMatrixPayload.model_validate(j.json())
+    from app.schemas.reports import QuestionSummaryMatrixPayload
+
+    count_payload = QuestionSummaryMatrixPayload.model_validate(j.json())
+    question_nos = [q.question_no for q in count_payload.questions]
 
     r = await admin_client.get(
         f"/api/v1/reports/question-summary-paginated/{_CHAPTER9}/export.xlsx"
@@ -94,35 +107,63 @@ async def test_qsr_export_xlsx_matrix_bands_and_fills(
     assert r.status_code == 200, r.text
     wb = _load(r.content)
     ws = wb.active
-    assert ws.title == "Question Summary"
+    assert ws.title == "Paginated - Question Summary Re"
 
-    nq = len(payload.questions)
-    # Band header row 1, navy.
-    assert ws.cell(1, 1).value == "Standards"
-    assert ws.cell(1, 1).fill.fgColor.rgb == X.PBIX_ACCENT_NAVY
-    # Column header row 2, leaf question_no order.
-    assert ws.cell(2, 1).value == "Classroom Instructors"
-    assert ws.cell(2, 3).value == "Score %"
-    leaf = [ws.cell(2, 4 + i).value for i in range(nq)]
-    assert leaf == [q.question_no for q in payload.questions]
-    assert ws.cell(2, 4 + nq).value == "Possible Points"
-    assert ws.cell(2, 4 + nq + 1).value == "# Correct Answers"
-    # Freeze at body start (D3).
-    assert ws.freeze_panes == ws.cell(3, 4).coordinate
+    # SSRS title block (rows 2 / 4 / 6) + freeze A8.
+    assert ws.cell(2, 1).value == "Question Summary Report"
+    assert ws.cell(2, 1).font.size == 20
+    assert ws.freeze_panes == "A8"
+    assert count_payload.assessment.item_name in (ws.cell(6, 3).value or "")
 
-    # First student's first attempted binary cell carries a QSR fill.
-    s0 = payload.teacher_groups[0].students[0]
-    for i, q in enumerate(payload.questions):
-        cv = s0.cells.get(q.question_id)
-        if cv in (0, 1):
-            cell = ws.cell(3, 4 + i)
-            assert cell.value == cv
-            assert cell.fill.fgColor.rgb == (X.QSR_GREEN if cv == 1 else X.QSR_PINK)
-            break
+    # Header rows 8/9: navy band header + leaf question_no order, with a
+    # grey "Score %" sub-column at the end of every band.
+    assert ws.cell(8, 1).value == "Classroom Instructors"
+    assert ws.cell(8, 1).fill.fgColor.rgb == X.QSR_NAVY
+    assert ws.cell(8, 5).value == "Score %"
+    leaf_cols = [
+        c
+        for c in range(6, ws.max_column - 1)
+        if str(ws.cell(9, c).value or "").isdigit()
+    ]
+    assert [ws.cell(9, c).value for c in leaf_cols] == question_nos
+    assert ws.cell(8, ws.max_column - 1).value == "Possible Points"
+    assert ws.cell(8, ws.max_column).value == "# Correct Answers"
+    # A band Score% sub-column exists and is grey C0C0C0 (not perf-banded).
+    score_cols = [
+        c for c in range(6, ws.max_column - 1) if ws.cell(9, c).value == "Score %"
+    ]
+    assert score_cols
+    assert ws.cell(10, score_cols[0]).fill.fgColor.rgb == X.QSR_GREY_SCORE
+    assert ws.cell(10, score_cols[0]).number_format == "[$-010409]0%"
 
-    # Grand-total trio labels at the foot.
+    # Overall Score% (col E) is a 0–1 fraction, perf-banded, locale percent fmt.
+    e0 = ws.cell(10, 5)
+    assert isinstance(e0.value, float) and 0.0 <= e0.value <= 1.0
+    assert e0.number_format == "[$-010409]0%"
+    assert e0.fill.fgColor.rgb in (X.QSR_PINK, X.QSR_YELLOW_XLSX, X.QSR_GREEN)
+
+    # Body leaf cells carry raw (possibly fractional) points; <0.5 pink, else
+    # green. Chapter 9 has partial-credit questions → at least one fraction.
+    saw_fraction = False
+    for c in leaf_cols:
+        v = ws.cell(10, c).value
+        if v is None:
+            continue
+        assert ws.cell(10, c).fill.fgColor.rgb == (
+            X.QSR_GREEN if v >= 0.5 else X.QSR_PINK
+        )
+        if v not in (0, 1):
+            saw_fraction = True
+    assert saw_fraction
+
+    # Instructor block (col A) carries the overall % and the grand-total trio
+    # sits at the foot with SUMMED points (Possible 486 / # Correct 318).
+    assert "%" in str(ws.cell(10, 1).value)
     labels = [ws.cell(ws.max_row - 2 + k, 1).value for k in range(3)]
     assert labels == ["Possible Points", "# Correct Answers", "Score %"]
+    assert ws.cell(ws.max_row - 2, 5).value == pytest.approx(486)
+    assert ws.cell(ws.max_row - 1, 5).value == pytest.approx(318)
+    assert ws.cell(ws.max_row, 5).value == pytest.approx(318 / 486, abs=1e-4)
 
 
 @pytest.mark.anyio
