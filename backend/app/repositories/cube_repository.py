@@ -173,14 +173,55 @@ class CubeRepository:
                 WHERE item_id = :item_id
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
+            ),
+            -- Cube fallback for fact-less (parquet-loaded) schools. The fact
+            -- table is empty for items loaded directly from stage3 cube
+            -- parquet, so the per-(question,user) collapse above yields no
+            -- rows and Total Questions / Grade Average would render as 0.
+            -- For those items only, derive Total Questions from the
+            -- per-question cube (DISTINCTCOUNT(Question_No)) and the overall
+            -- grade average from cube_question_summary_overall (legacy DAX
+            -- AVERAGE(cqso.Grade_Average)). Gated on fact-absence below so
+            -- raw-ingested schools (Athenian) are byte-identical — when
+            -- per_q has rows the fact path always wins.
+            cube_q AS (
+                SELECT COUNT(DISTINCT question_no) AS total_questions
+                FROM cube_question_summary
+                WHERE item_id = :item_id
+            ),
+            cube_ga AS (
+                SELECT AVG(grade_average) AS grade_average,
+                       MAX(grade_average) AS grade_max,
+                       MIN(grade_average) AS grade_min
+                FROM cube_question_summary_overall
+                WHERE subject_id IN (
+                    SELECT DISTINCT subject_id
+                    FROM cube_question_summary
+                    WHERE item_id = :item_id
+                )
+            ),
+            fact_present AS (
+                SELECT EXISTS (SELECT 1 FROM per_q) AS has_fact
             )
             SELECT
                 (SELECT total_students FROM school)        AS total_students,
-                (SELECT COUNT(*) FROM per_q)               AS total_questions,
+                CASE WHEN (SELECT has_fact FROM fact_present)
+                     THEN (SELECT COUNT(*) FROM per_q)
+                     ELSE (SELECT total_questions FROM cube_q)
+                END                                        AS total_questions,
                 (SELECT total_standards FROM std)          AS total_standards,
-                (SELECT AVG(qga) FROM per_q)               AS grade_average,
-                (SELECT MAX(qga) FROM per_q)               AS grade_max,
-                (SELECT MIN(qga) FROM per_q)               AS grade_min,
+                CASE WHEN (SELECT has_fact FROM fact_present)
+                     THEN (SELECT AVG(qga) FROM per_q)
+                     ELSE (SELECT grade_average FROM cube_ga)
+                END                                        AS grade_average,
+                CASE WHEN (SELECT has_fact FROM fact_present)
+                     THEN (SELECT MAX(qga) FROM per_q)
+                     ELSE (SELECT grade_max FROM cube_ga)
+                END                                        AS grade_max,
+                CASE WHEN (SELECT has_fact FROM fact_present)
+                     THEN (SELECT MIN(qga) FROM per_q)
+                     ELSE (SELECT grade_min FROM cube_ga)
+                END                                        AS grade_min,
                 (SELECT total_possible_point FROM school)  AS total_possible_point,
                 (SELECT total_score FROM school)           AS total_score
             """
