@@ -18,9 +18,11 @@ import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 type SortKey =
   | 'strand'
   | 'schoology_standard'
+  | 'cluster'
   | 'num_questions'
   | 'num_assessments'
-  | 'grade_average';
+  | 'grade_average'
+  | 'performance';
 
 const SORT_ACCESSORS: Record<
   SortKey,
@@ -33,15 +35,19 @@ const SORT_ACCESSORS: Record<
       r.schoology_standard || ''
     ).toLowerCase()}`,
   schoology_standard: (r) => (r.schoology_standard || '').toLowerCase(),
+  cluster: (r) => (r.cluster || '').toLowerCase(),
   num_questions: (r) => r.num_questions,
   num_assessments: (r) => r.num_assessments,
   grade_average: (r) => r.grade_average,
+  // Performance band tracks the underlying grade average.
+  performance: (r) => r.grade_average,
 };
 
 const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
   num_questions: 'desc',
   num_assessments: 'desc',
   grade_average: 'desc',
+  performance: 'desc',
 };
 
 interface Props {
@@ -109,7 +115,15 @@ export default function StrandStandardsTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={tableHeaderStyle}>Cluster</th>
+              <th style={tableHeaderStyle}>
+                <SortableHeader
+                  column="cluster"
+                  label="Cluster"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
                 <SortableHeader
                   column="num_questions"
@@ -141,7 +155,14 @@ export default function StrandStandardsTable({
                 />
               </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-                Performance
+                <SortableHeader
+                  column="performance"
+                  label="Performance"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
               </th>
             </tr>
           </thead>

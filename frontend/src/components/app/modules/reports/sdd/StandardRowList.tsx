@@ -12,7 +12,8 @@ import { formatPercent } from '@/lib/reports/format';
 
 interface StandardRowListProps {
   standards: SddStandardRow[];
-  selectedStandard?: string | null;
+  // Multi-select: every active standard code. Clicking a row toggles membership.
+  selectedStandards?: string[];
   onSelectStandard?: (schoology_standard: string) => void;
 }
 
@@ -21,9 +22,14 @@ interface StandardRowListProps {
 // at the bottom).
 export default function StandardRowList({
   standards,
-  selectedStandard,
+  selectedStandards,
   onSelectStandard,
 }: StandardRowListProps) {
+  const selectedSet = useMemo(
+    () => new Set(selectedStandards ?? []),
+    [selectedStandards],
+  );
+  const hasSelection = selectedSet.size > 0;
   const rows = useMemo(
     // Unassessed standards (grade_average === null) sort to the top of the
     // worst-first list; their bar is empty and the % label is blank.
@@ -58,8 +64,8 @@ export default function StandardRowList({
             const fill = performanceColor(pct);
             const pctLabel = unassessed ? '' : formatPercent(pct, 1);
             const subLine = `(${row.num_questions} Q${row.num_questions === 1 ? '' : 's'})`;
-            const isSelected = selectedStandard === row.schoology_standard;
-            const dim = !!selectedStandard && !isSelected;
+            const isSelected = selectedSet.has(row.schoology_standard);
+            const dim = hasSelection && !isSelected;
             return (
               <li
                 key={`${row.schoology_standard}-${row.strand}-${i}`}

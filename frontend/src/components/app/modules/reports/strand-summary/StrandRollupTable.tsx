@@ -21,7 +21,9 @@ type SortKey =
   | 'num_standards'
   | 'num_questions'
   | 'num_assessments'
-  | 'grade_average';
+  | 'subjects'
+  | 'grade_average'
+  | 'performance';
 
 const SORT_ACCESSORS: Record<
   SortKey,
@@ -31,7 +33,11 @@ const SORT_ACCESSORS: Record<
   num_standards: (r) => r.num_standards,
   num_questions: (r) => r.num_questions,
   num_assessments: (r) => r.num_assessments,
+  // Sort by the rendered subject-chip order (joined, lowercased).
+  subjects: (r) => (r.subjects || []).join(', ').toLowerCase(),
   grade_average: (r) => r.grade_average,
+  // Performance band tracks the underlying grade average.
+  performance: (r) => r.grade_average,
 };
 
 const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
@@ -39,6 +45,7 @@ const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
   num_questions: 'desc',
   num_assessments: 'desc',
   grade_average: 'desc',
+  performance: 'desc',
 };
 
 interface Props {
@@ -126,7 +133,15 @@ export default function StrandRollupTable({
                   align="center"
                 />
               </th>
-              <th style={tableHeaderStyle}>Subjects</th>
+              <th style={tableHeaderStyle}>
+                <SortableHeader
+                  column="subjects"
+                  label="Subjects"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
                 <SortableHeader
                   column="grade_average"
@@ -138,7 +153,14 @@ export default function StrandRollupTable({
                 />
               </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-                Performance
+                <SortableHeader
+                  column="performance"
+                  label="Performance"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
               </th>
             </tr>
           </thead>

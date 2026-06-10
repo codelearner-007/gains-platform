@@ -1,7 +1,12 @@
+'use client';
+
+import { useMemo } from 'react';
 import type {
   YearToDatePerformancePayload,
   YtdCell,
   YtdStandardTotal,
+  YtdStudentRow,
+  YtdTeacherGroup,
 } from '@/lib/reports/types';
 import {
   GRID_LINE,
@@ -9,6 +14,12 @@ import {
   PBIX_ACCENT_LIGHT_BLUE,
   GROUP_HEADER_CYAN,
 } from '@/lib/reports/colors';
+import {
+  SortableHeader,
+  sortRowsBy,
+  useSharedSort,
+  type SortDirection,
+} from '@/lib/reports/useTableSort';
 
 /**
  * Legacy "Longitudinal Report - Year To Date" paginated matrix (PBIX ord
@@ -38,6 +49,25 @@ const fmtPts = (n: number) =>
 const fmtScore = (c: YtdCell) =>
   `${fmtPts(c.points_received)}/${fmtPts(c.points_possible)}`;
 
+type YtdSortKey =
+  | 'instructor'
+  | 'student'
+  | 'score'
+  | 'tests_taken'
+  | 'points_possible'
+  | 'points_received';
+
+const STUDENT_ACCESSORS: Record<
+  Exclude<YtdSortKey, 'instructor'>,
+  (s: YtdStudentRow) => string | number | null
+> = {
+  student: (s) => (s.user_name || '').toLowerCase(),
+  score: (s) => s.score_pct ?? null,
+  tests_taken: (s) => s.tests_taken ?? null,
+  points_possible: (s) => s.points_possible ?? null,
+  points_received: (s) => s.points_received ?? null,
+};
+
 export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
   const { standards, teacher_groups, grand_total } = payload;
   const showTestsTaken = variant === 1 || variant === 3;
@@ -45,6 +75,24 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
   const showUnitNames = variant === 3;
   // V1/V3 standard columns span two sub-columns (Score, %); V2 spans one (%).
   const subCols = showScore ? 2 : 1;
+
+  // Fixed row-label columns are click-to-sortable (legacy tableEx matrix).
+  // Default keeps the server/legacy row order. "Classroom Instructors"
+  // reorders teacher groups; the rest reorder students WITHIN each group.
+  // Per-standard matrix columns are not row-sortable.
+  const { sortColumn, sortDirection, onHeaderClick } = useSharedSort<YtdSortKey>(
+    'instructor',
+    'asc',
+  );
+
+  const orderedGroups = useMemo(() => {
+    if (sortColumn !== 'instructor') return teacher_groups;
+    return sortRowsBy(
+      teacher_groups,
+      (g: YtdTeacherGroup) => (g.section_instructor || '').toLowerCase(),
+      sortDirection,
+    );
+  }, [teacher_groups, sortColumn, sortDirection]);
 
   const border = `1px solid ${GRID_LINE}`;
   const headStyle = {
@@ -65,17 +113,17 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
           {/* Row 1: standard codes (span sub-cols) + leading/trailing labels */}
           <tr>
             <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={headStyle}>
-              Classroom Instructors
+              <SortableHeader column="instructor" label="Classroom Instructors" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} className="text-white" />
             </th>
             <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={headStyle}>
-              Student Name
+              <SortableHeader column="student" label="Student Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} className="text-white" />
             </th>
             <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-              Score %
+              <SortableHeader column="score" label="Score %" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
             {showTestsTaken && (
               <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-                Tests Taken
+                <SortableHeader column="tests_taken" label="Tests Taken" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
               </th>
             )}
             {standards.map((s) => (
@@ -94,10 +142,10 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
               </th>
             ))}
             <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-              Possible Points
+              <SortableHeader column="points_possible" label="Possible Points" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
             <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-              # Correct Answers
+              <SortableHeader column="points_received" label="# Correct Answers" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
           </tr>
           {/* Row 2: per-standard Score / % sub-headers */}
@@ -122,7 +170,7 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
         </thead>
 
         <tbody>
-          {teacher_groups.map((tg) => (
+          {orderedGroups.map((tg) => (
             <TeacherBlock
               key={tg.section_instructor}
               group={tg}
@@ -131,6 +179,8 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
               showScore={showScore}
               subCols={subCols}
               border={border}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
             />
           ))}
 
@@ -204,6 +254,8 @@ function TeacherBlock({
   showScore,
   subCols,
   border,
+  sortColumn,
+  sortDirection,
 }: {
   group: YearToDatePerformancePayload['teacher_groups'][number];
   standards: YearToDatePerformancePayload['standards'];
@@ -211,9 +263,15 @@ function TeacherBlock({
   showScore: boolean;
   subCols: number;
   border: string;
+  sortColumn: YtdSortKey;
+  sortDirection: SortDirection;
 }) {
   const totalCols =
     (showTestsTaken ? 4 : 3) + standards.length * subCols + 2;
+  const students =
+    sortColumn === 'instructor'
+      ? group.students
+      : sortRowsBy(group.students, STUDENT_ACCESSORS[sortColumn], sortDirection);
   return (
     <>
       {/* Teacher group header — instructor name + overall % */}
@@ -226,7 +284,7 @@ function TeacherBlock({
         </td>
       </tr>
 
-      {group.students.map((st) => (
+      {students.map((st) => (
         <tr key={st.user_uid}>
           <td className="px-2 py-1" style={{ border }} />
           <td className="px-2 py-1 whitespace-nowrap" style={{ border }}>

@@ -45,14 +45,17 @@ export function SummaryByStandardsHeader() {
 export function StrandsTable({
   kpis,
   strands,
-  selectedStrand,
+  selectedStrands,
   onSelectStrand,
 }: {
   kpis: KPIs;
   strands?: SddStrandRow[];
-  selectedStrand?: string | null;
+  // Multi-select: every active strand value. A clicked row toggles membership.
+  selectedStrands?: string[];
   onSelectStrand?: (strand: string) => void;
 }) {
+  const selectedSet = new Set(selectedStrands ?? []);
+  const hasSelection = selectedSet.size > 0;
   const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<SddStrandRow, StrandSortKey>({
       rows: strands ?? [],
@@ -143,8 +146,8 @@ export function StrandsTable({
             </tr>
           ) : (
             rows.map((row, i) => {
-              const isSelected = selectedStrand === row.strand;
-              const dim = !!selectedStrand && !isSelected;
+              const isSelected = selectedSet.has(row.strand);
+              const dim = hasSelection && !isSelected;
               return (
                 <tr
                   key={`strand-${i}-${row.strand}`}
@@ -202,17 +205,24 @@ export function StrandsTable({
 export function StandardsTable({
   kpis,
   standards,
-  selectedStandard,
+  selectedStandards,
   onSelectStandard,
 }: {
   kpis: KPIs;
   standards?: SddStandardRow[];
-  selectedStandard?: string | null;
+  // Multi-select: every active standard code. A clicked row toggles membership.
+  selectedStandards?: string[];
   onSelectStandard?: (schoology_standard: string) => void;
 }) {
+  const selectedSet = new Set(selectedStandards ?? []);
+  const hasSelection = selectedSet.size > 0;
+  // PBIX dropped rows whose Grade_Average_Standard_Measure was null (the
+  // visual-level "is not blank" filter). Mirror it: hide unassessed Schoology
+  // aliases (grade_average === null) so the table shows only scored standards.
+  const assessed = (standards ?? []).filter((r) => r.grade_average != null);
   const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<SddStandardRow, StandardSortKey>({
-      rows: standards ?? [],
+      rows: assessed,
       accessors: STANDARD_SORT_ACCESSORS,
       defaultColumn: 'schoology_standard',
       defaultDirection: 'asc',
@@ -286,8 +296,8 @@ export function StandardsTable({
             </tr>
           ) : (
             rows.map((row, i) => {
-              const isSelected = selectedStandard === row.schoology_standard;
-              const dim = !!selectedStandard && !isSelected;
+              const isSelected = selectedSet.has(row.schoology_standard);
+              const dim = hasSelection && !isSelected;
               return (
               <tr
                 key={`standard-${i}-${row.schoology_standard}-${row.strand}`}

@@ -19,7 +19,8 @@ type SortKey =
   | 'strand'
   | 'subject'
   | 'num_questions'
-  | 'grade_average';
+  | 'grade_average'
+  | 'performance';
 
 const SORT_ACCESSORS: Record<
   SortKey,
@@ -30,11 +31,14 @@ const SORT_ACCESSORS: Record<
   subject: (r) => (r.subject || '').toLowerCase(),
   num_questions: (r) => r.num_questions,
   grade_average: (r) => r.grade_average,
+  // Performance band tracks the underlying grade average.
+  performance: (r) => r.grade_average,
 };
 
 const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
   num_questions: 'desc',
   grade_average: 'desc',
+  performance: 'desc',
 };
 
 interface Props {
@@ -118,7 +122,14 @@ export default function StandardsTable({ standards }: Props) {
                 />
               </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
-                Performance
+                <SortableHeader
+                  column="performance"
+                  label="Performance"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                  align="center"
+                />
               </th>
             </tr>
           </thead>

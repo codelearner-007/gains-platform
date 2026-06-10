@@ -4,6 +4,7 @@ import { Fragment, useMemo } from 'react';
 import type {
   QuestionSummaryMatrixPayload,
   QsmQuestionColumn,
+  QsmStudentRow,
   QsmTeacherGroup,
 } from '@/lib/reports/types';
 import {
@@ -15,6 +16,11 @@ import {
   qsrPerformanceColor,
 } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
+import {
+  SortableHeader,
+  sortRowsBy,
+  useSharedSort,
+} from '@/lib/reports/useTableSort';
 
 interface Props {
   payload: QuestionSummaryMatrixPayload;
@@ -85,6 +91,16 @@ function buildStandardSpans(questions: QsmQuestionColumn[]): StandardSpan[] {
   return spans;
 }
 
+type QsmSortKey = 'instructor' | 'student' | 'score';
+
+const STUDENT_ACCESSORS: Record<
+  Extract<QsmSortKey, 'student' | 'score'>,
+  (s: QsmStudentRow) => string | number | null
+> = {
+  student: (s) => (s.user_name || '').toLowerCase(),
+  score: (s) => s.score_pct ?? null,
+};
+
 export default function QuestionSummaryMatrix({
   payload,
   showTeacherSubtotal = false,
@@ -94,6 +110,30 @@ export default function QuestionSummaryMatrix({
     payload;
 
   const spans = useMemo(() => buildStandardSpans(questions), [questions]);
+
+  // The fixed row-label columns are click-to-sortable (the legacy tableEx
+  // matrix sorted on its row headers). Default keeps the server/legacy row
+  // order. "Classroom Instructors" reorders the teacher groups; "Student
+  // Name"/"Score %" reorder students WITHIN each group (rowSpan + subtotal
+  // blocks stay intact). The per-question matrix columns are not row-sortable.
+  const { sortColumn, sortDirection, onHeaderClick } = useSharedSort<QsmSortKey>(
+    'instructor',
+    'asc',
+  );
+
+  const orderedGroups = useMemo(() => {
+    if (sortColumn !== 'instructor') return teacherGroups;
+    return sortRowsBy(
+      teacherGroups,
+      (g) => (g.section_instructor || '').toLowerCase(),
+      sortDirection,
+    );
+  }, [teacherGroups, sortColumn, sortDirection]);
+
+  const orderStudents = (students: QsmStudentRow[]): QsmStudentRow[] => {
+    if (sortColumn === 'instructor') return students;
+    return sortRowsBy(students, STUDENT_ACCESSORS[sortColumn], sortDirection);
+  };
 
   return (
     <div
@@ -141,21 +181,21 @@ export default function QuestionSummaryMatrix({
               className="border-r border-b text-left px-2 py-1 sticky left-0 z-10"
               style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
             >
-              Classroom Instructors
+              <SortableHeader column="instructor" label="Classroom Instructors" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th
               scope="col"
               className="border-r border-b text-left px-2 py-1"
               style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
             >
-              Student Name
+              <SortableHeader column="student" label="Student Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th
               scope="col"
               className="border-r border-b text-right px-2 py-1"
               style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
             >
-              Score %
+              <SortableHeader column="score" label="Score %" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
             {questions.map((q) => (
               <th
@@ -185,9 +225,11 @@ export default function QuestionSummaryMatrix({
           </tr>
         </thead>
         <tbody>
-          {teacherGroups.map((group: QsmTeacherGroup) => (
+          {orderedGroups.map((group: QsmTeacherGroup) => {
+            const students = orderStudents(group.students);
+            return (
             <Fragment key={group.section_instructor}>
-              {group.students.map((student, idx) => (
+              {students.map((student, idx) => (
                 <tr
                   key={student.user_uid}
                   className="border-b"
@@ -378,7 +420,8 @@ export default function QuestionSummaryMatrix({
                   );
                 })()}
             </Fragment>
-          ))}
+            );
+          })}
 
           {/* Grand totals */}
           <tr

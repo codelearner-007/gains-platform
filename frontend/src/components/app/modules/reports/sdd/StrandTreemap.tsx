@@ -14,7 +14,8 @@ import ChartContainer from '../shared/ChartContainer';
 
 interface StrandTreemapProps {
   strands: SddStrandRow[];
-  selectedStrand?: string | null;
+  // Multi-select: every active strand value. Clicking a tile toggles membership.
+  selectedStrands?: string[];
   onSelectStrand?: (strand: string) => void;
 }
 
@@ -29,9 +30,13 @@ interface TreemapDatum {
 
 export default function StrandTreemap({
   strands,
-  selectedStrand,
+  selectedStrands,
   onSelectStrand,
 }: StrandTreemapProps) {
+  const selectedSet = useMemo(
+    () => new Set(selectedStrands ?? []),
+    [selectedStrands],
+  );
   // Memoise — Recharts re-layouts when the data reference changes.
   const data = useMemo<TreemapDatum[]>(
     () =>
@@ -79,7 +84,7 @@ export default function StrandTreemap({
               content={
                 <TreemapNode
                   onSelect={onSelectStrand}
-                  selectedStrand={selectedStrand ?? null}
+                  selectedSet={selectedSet}
                 />
               }
               onClick={handleNodeClick}
@@ -104,8 +109,8 @@ interface NodeProps {
   // So our `color` field arrives at this level, not under `payload`.
   color?: string;
   percentage?: number;
-  /** Injected by parent — used for the selection ring. */
-  selectedStrand?: string | null;
+  /** Injected by parent — the active strand set, used for the selection ring. */
+  selectedSet?: Set<string>;
   /** Injected by parent — clicking the tile cross-filters the dashboard. */
   onSelect?: (strand: string) => void;
 }
@@ -119,12 +124,13 @@ function TreemapNode(props: NodeProps) {
     name,
     color,
     percentage,
-    selectedStrand,
+    selectedSet,
     onSelect,
   } = props;
   const fill = color || PERF_PINK;
   if (width <= 0 || height <= 0) return null;
-  const isSelected = !!name && selectedStrand === name;
+  const hasSelection = !!selectedSet && selectedSet.size > 0;
+  const isSelected = !!name && !!selectedSet && selectedSet.has(name);
   // Wrap long labels onto multiple lines so multi-word strands ("Algebra:
   // Reasoning with Equations & Inequalities") remain legible on narrow tiles.
   const lines = wrapLabel(name ?? '', Math.max(6, Math.floor(width / 7)), 3);
@@ -156,7 +162,7 @@ function TreemapNode(props: NodeProps) {
           fill,
           stroke: isSelected ? '#1f2937' : '#fff',
           strokeWidth: isSelected ? 3 : 2,
-          opacity: selectedStrand && !isSelected ? 0.45 : 1,
+          opacity: hasSelection && !isSelected ? 0.45 : 1,
         }}
       />
       {width > 60 && height > 26 &&

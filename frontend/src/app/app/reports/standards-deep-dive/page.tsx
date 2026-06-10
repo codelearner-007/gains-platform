@@ -50,7 +50,7 @@ export default function StandardsDeepDivePage() {
     enabled: !!itemId,
   });
 
-  const { filters, setStrand, setStandard, reset, hasActiveFilter } =
+  const { filters, setStrand, setStandard, reset, activeChips } =
     useReportFilters();
 
   const filtered = useMemo(
@@ -104,9 +104,15 @@ export default function StandardsDeepDivePage() {
         <KpiStrip kpis={filtered.kpis} />
       </div>
 
-      {hasActiveFilter && (
-        <ActiveFilterBar filters={filters} onClear={reset} />
-      )}
+      <ActiveFilterBar
+        chips={activeChips}
+        onRemove={(chip) =>
+          chip.key === 'strand'
+            ? setStrand(chip.value)
+            : setStandard(chip.value)
+        }
+        onClear={reset}
+      />
 
       {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
@@ -122,14 +128,14 @@ export default function StandardsDeepDivePage() {
           <div className="min-w-0">
             <StrandRowList
               strands={filtered.strands_rollup}
-              selectedStrand={filters.strand}
+              selectedStrands={filters.strands}
               onSelectStrand={setStrand}
             />
           </div>
           <div className="min-w-0">
             <StrandTreemap
               strands={filtered.strands_rollup}
-              selectedStrand={filters.strand}
+              selectedStrands={filters.strands}
               onSelectStrand={setStrand}
             />
           </div>
@@ -142,7 +148,7 @@ export default function StandardsDeepDivePage() {
           <div className="md:col-span-3 min-w-0">
             <StandardRowList
               standards={filtered.standards_rollup}
-              selectedStandard={filters.standard}
+              selectedStandards={filters.standards}
               onSelectStandard={setStandard}
             />
           </div>
@@ -151,7 +157,7 @@ export default function StandardsDeepDivePage() {
               bandHigh={filtered.band_high}
               bandMid={filtered.band_mid}
               bandLow={filtered.band_low}
-              selectedStandard={filters.standard}
+              selectedStandards={filters.standards}
               onSelectStandard={setStandard}
             />
           </div>

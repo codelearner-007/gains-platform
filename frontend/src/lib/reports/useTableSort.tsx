@@ -28,6 +28,63 @@ export interface SortResult<T, K extends string> {
   onHeaderClick: (column: K) => void;
 }
 
+/**
+ * Pure comparator-based sort, decoupled from React state. Use for *grouped*
+ * tables where one shared sort column/direction must be applied independently
+ * to each group's rows (a hook can't be called per-group in a loop). Same
+ * NULLS-LAST + numeric/locale semantics as `useTableSort`'s internal sort.
+ */
+export function sortRowsBy<T, K extends string>(
+  rows: T[],
+  accessor: SortAccessor<T>,
+  direction: SortDirection,
+): T[] {
+  const factor = direction === 'asc' ? 1 : -1;
+  const copy = [...rows];
+  copy.sort((a, b) => {
+    const av = accessor(a);
+    const bv = accessor(b);
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === 'number' && typeof bv === 'number') {
+      return (av - bv) * factor;
+    }
+    return String(av).localeCompare(String(bv)) * factor;
+  });
+  return copy;
+}
+
+/**
+ * Shared sort state for grouped/matrix tables (one click-to-sort applied to
+ * every group). Mirrors `useTableSort`'s click cycling but exposes only the
+ * state so the caller sorts each group via `sortRowsBy`.
+ */
+export function useSharedSort<K extends string>(
+  defaultColumn: K,
+  defaultDirection: SortDirection = 'asc',
+  initialDirections?: Partial<Record<K, SortDirection>>,
+): {
+  sortColumn: K;
+  sortDirection: SortDirection;
+  onHeaderClick: (column: K) => void;
+} {
+  const [sortColumn, setSortColumn] = useState<K>(defaultColumn);
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>(defaultDirection);
+
+  const onHeaderClick = (column: K) => {
+    if (column === sortColumn) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(column);
+      setSortDirection(initialDirections?.[column] ?? 'asc');
+    }
+  };
+
+  return { sortColumn, sortDirection, onHeaderClick };
+}
+
 export function useTableSort<T, K extends string>({
   rows,
   accessors,

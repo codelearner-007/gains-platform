@@ -1,20 +1,57 @@
 'use client';
 
 import { Fragment } from 'react';
-import type { QraTeacherGroup } from '@/lib/reports/types';
+import type { PaginatedQuestionRow, QraTeacherGroup } from '@/lib/reports/types';
 import {
   HEADER_BAR_BG,
   GROUP_HEADER_CYAN,
   LAYOUT_BORDER,
   performanceColor,
 } from '@/lib/reports/colors';
+import {
+  SortableHeader,
+  sortRowsBy,
+  useSharedSort,
+} from '@/lib/reports/useTableSort';
 import PaginatedQuestionRowCells from './PaginatedQuestionRow';
 
 interface Props {
   teacherGroups: QraTeacherGroup[];
 }
 
+type ByTeacherSortKey =
+  | 'question_no'
+  | 'question'
+  | 'grade_average'
+  | 'correct_answer'
+  | 'incorrect_choice_details';
+
+const SORT_ACCESSORS: Record<
+  ByTeacherSortKey,
+  (q: PaginatedQuestionRow) => string | number | null
+> = {
+  question_no: (q) => {
+    const n = Number(q.sorting_question_no ?? q.question_no);
+    return Number.isFinite(n) ? n : (q.question_no ?? '');
+  },
+  question: (q) => (q.question || '').toLowerCase(),
+  grade_average: (q) => q.grade_average ?? null,
+  correct_answer: (q) => (q.correct_answer || '').toLowerCase(),
+  incorrect_choice_details: (q) =>
+    (q.incorrect_choice_details || '').toLowerCase(),
+};
+
+const INITIAL_DIRECTIONS: Partial<Record<ByTeacherSortKey, 'asc' | 'desc'>> = {
+  question_no: 'asc',
+  grade_average: 'asc',
+};
+
 export default function QraByTeacherTable({ teacherGroups }: Props) {
+  // Legacy clean by-teacher PDF order = % Correct ascending within each
+  // teacher group. One header click re-sorts every group consistently.
+  const { sortColumn, sortDirection, onHeaderClick } =
+    useSharedSort<ByTeacherSortKey>('grade_average', 'asc', INITIAL_DIRECTIONS);
+
   return (
     <div
       className="w-full bg-white border overflow-x-auto print:overflow-visible"
@@ -23,50 +60,67 @@ export default function QraByTeacherTable({ teacherGroups }: Props) {
       <table className="min-w-full text-[11px] border-collapse">
         <thead>
           <tr className="font-semibold" style={{ backgroundColor: HEADER_BAR_BG }}>
-            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>No.</th>
-            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>Question</th>
-            <th scope="col" className="border-r border-b px-2 py-1 text-right" style={{ borderColor: LAYOUT_BORDER }}>% Correct</th>
-            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>Correct Answer</th>
-            <th scope="col" className="border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>Incorrect Choice Details</th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+              <SortableHeader column="question_no" label="No." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+            </th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+              <SortableHeader column="question" label="Question" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+            </th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-right" style={{ borderColor: LAYOUT_BORDER }}>
+              <SortableHeader column="grade_average" label="% Correct" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
+            </th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+              <SortableHeader column="correct_answer" label="Correct Answer" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+            </th>
+            <th scope="col" className="border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+              <SortableHeader column="incorrect_choice_details" label="Incorrect Choice Details" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+            </th>
           </tr>
         </thead>
         <tbody>
-          {teacherGroups.map((group, idx) => (
-            <Fragment key={group.section_instructor}>
-              <tr
-                className={`font-semibold border-b border-t-2 ${idx > 0 ? 'print:break-before-page' : ''}`}
-                style={{
-                  borderColor: LAYOUT_BORDER,
-                  backgroundColor: GROUP_HEADER_CYAN,
-                }}
-              >
-                <td colSpan={2} className="px-2 py-1">
-                  Teacher: {group.section_instructor}
-                </td>
-                <td
-                  className="border-l px-2 py-1 text-right tabular-nums"
+          {teacherGroups.map((group, idx) => {
+            const sorted = sortRowsBy(
+              group.questions,
+              SORT_ACCESSORS[sortColumn],
+              sortDirection,
+            );
+            return (
+              <Fragment key={group.section_instructor}>
+                <tr
+                  className={`font-semibold border-b border-t-2 ${idx > 0 ? 'print:break-before-page' : ''}`}
                   style={{
                     borderColor: LAYOUT_BORDER,
-                    backgroundColor: performanceColor(group.teacher_grade_average),
+                    backgroundColor: GROUP_HEADER_CYAN,
                   }}
                 >
-                  {group.teacher_grade_average_pct}
-                </td>
-                <td colSpan={2} className="px-2 py-1 text-neutral-700 italic">
-                  {group.questions.length} questions
-                </td>
-              </tr>
-              {group.questions.map((q) => (
-                <tr
-                  key={`${group.section_instructor}-${q.question_id}`}
-                  className="border-b align-top"
-                  style={{ borderColor: LAYOUT_BORDER }}
-                >
-                  <PaginatedQuestionRowCells row={q} />
+                  <td colSpan={2} className="px-2 py-1">
+                    Teacher: {group.section_instructor}
+                  </td>
+                  <td
+                    className="border-l px-2 py-1 text-right tabular-nums"
+                    style={{
+                      borderColor: LAYOUT_BORDER,
+                      backgroundColor: performanceColor(group.teacher_grade_average),
+                    }}
+                  >
+                    {group.teacher_grade_average_pct}
+                  </td>
+                  <td colSpan={2} className="px-2 py-1 text-neutral-700 italic">
+                    {group.questions.length} questions
+                  </td>
                 </tr>
-              ))}
-            </Fragment>
-          ))}
+                {sorted.map((q) => (
+                  <tr
+                    key={`${group.section_instructor}-${q.question_id}`}
+                    className="border-b align-top"
+                    style={{ borderColor: LAYOUT_BORDER }}
+                  >
+                    <PaginatedQuestionRowCells row={q} />
+                  </tr>
+                ))}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

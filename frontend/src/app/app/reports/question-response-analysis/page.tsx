@@ -19,6 +19,7 @@ import {
   SummaryByStandardsHeader,
 } from '@/components/app/modules/reports/qra/Strands_StandardsTables';
 import ActiveFilterBar from '@/components/app/modules/reports/shared/ActiveFilterBar';
+import ReportSlicer from '@/components/app/modules/reports/shared/ReportSlicer';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
@@ -44,12 +45,37 @@ export default function QuestionResponseAnalysisPage() {
     enabled: !!itemId,
   });
 
-  const { filters, setStrand, setStandard, reset, hasActiveFilter } =
-    useReportFilters();
+  const {
+    filters,
+    setStrand,
+    setStandard,
+    clearStrands,
+    reset,
+    activeChips,
+  } = useReportFilters();
 
   const filtered = useMemo(
     () => (data ? deriveQra(data, filters) : null),
     [data, filters],
+  );
+
+  // Slicer options are the distinct strands of the FULL (unfiltered) payload
+  // so the slicer never collapses to only the strands left after a selection.
+  const strandOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const r of data?.strands_rollup ?? []) {
+      if (r.strand && !seen.has(r.strand)) {
+        seen.add(r.strand);
+        out.push(r.strand);
+      }
+    }
+    return out.sort((a, b) => a.localeCompare(b));
+  }, [data]);
+
+  const selectedStrandsSet = useMemo(
+    () => new Set(filters.strands),
+    [filters.strands],
   );
 
   if (!itemId) return null;
@@ -100,9 +126,27 @@ export default function QuestionResponseAnalysisPage() {
         <KpiStrip kpis={filtered.kpis} />
       </div>
 
-      {hasActiveFilter && (
-        <ActiveFilterBar filters={filters} onClear={reset} />
+      {strandOptions.length > 0 && (
+        <div className="mb-2 print:hidden">
+          <ReportSlicer
+            label="Strand"
+            options={strandOptions}
+            selected={selectedStrandsSet}
+            onToggle={setStrand}
+            onClear={clearStrands}
+          />
+        </div>
       )}
+
+      <ActiveFilterBar
+        chips={activeChips}
+        onRemove={(chip) =>
+          chip.key === 'strand'
+            ? setStrand(chip.value)
+            : setStandard(chip.value)
+        }
+        onClear={reset}
+      />
 
       {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
@@ -118,13 +162,13 @@ export default function QuestionResponseAnalysisPage() {
           <StrandsTable
             kpis={filtered.kpis}
             strands={filtered.strands_rollup}
-            selectedStrand={filters.strand}
+            selectedStrands={filters.strands}
             onSelectStrand={setStrand}
           />
           <StandardsTable
             kpis={filtered.kpis}
             standards={filtered.standards_rollup}
-            selectedStandard={filters.standard}
+            selectedStandards={filters.standards}
             onSelectStandard={setStandard}
           />
         </div>
@@ -134,6 +178,8 @@ export default function QuestionResponseAnalysisPage() {
         <QuestionDetailTable
           questions={filtered.questions_overall}
           itemId={itemId}
+          onSelectStandard={setStandard}
+          selectedStandards={filters.standards}
         />
       </div>
     </ReportCanvas>

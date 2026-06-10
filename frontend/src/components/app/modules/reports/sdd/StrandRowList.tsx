@@ -11,15 +11,21 @@ import { formatPercent } from '@/lib/reports/format';
 
 interface StrandRowListProps {
   strands: SddStrandRow[];
-  selectedStrand?: string | null;
+  // Multi-select: every active strand value. Clicking a row toggles membership.
+  selectedStrands?: string[];
   onSelectStrand?: (strand: string) => void;
 }
 
 export default function StrandRowList({
   strands,
-  selectedStrand,
+  selectedStrands,
   onSelectStrand,
 }: StrandRowListProps) {
+  const selectedSet = useMemo(
+    () => new Set(selectedStrands ?? []),
+    [selectedStrands],
+  );
+  const hasSelection = selectedSet.size > 0;
   const rows = useMemo(
     // Unassessed strands (grade_average === null) sort first; blank label.
     () =>
@@ -44,8 +50,8 @@ export default function StrandRowList({
             const pct = Math.max(0, Math.min(1, row.grade_average ?? 0));
             const fill = performanceColor(pct);
             const pctLabel = row.grade_average == null ? '' : formatPercent(pct, 1);
-            const isSelected = selectedStrand === row.strand;
-            const dim = !!selectedStrand && !isSelected;
+            const isSelected = selectedSet.has(row.strand);
+            const dim = hasSelection && !isSelected;
             return (
               <li
                 key={`${row.strand}-${i}`}
