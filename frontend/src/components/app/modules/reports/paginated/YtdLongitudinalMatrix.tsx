@@ -50,6 +50,7 @@ const fmtScore = (c: YtdCell) =>
   `${fmtPts(c.points_received)}/${fmtPts(c.points_possible)}`;
 
 type YtdSortKey =
+  | 'none'
   | 'instructor'
   | 'student'
   | 'score'
@@ -58,7 +59,7 @@ type YtdSortKey =
   | 'points_received';
 
 const STUDENT_ACCESSORS: Record<
-  Exclude<YtdSortKey, 'instructor'>,
+  Exclude<YtdSortKey, 'instructor' | 'none'>,
   (s: YtdStudentRow) => string | number | null
 > = {
   student: (s) => (s.user_name || '').toLowerCase(),
@@ -77,11 +78,12 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
   const subCols = showScore ? 2 : 1;
 
   // Fixed row-label columns are click-to-sortable (legacy tableEx matrix).
-  // Default keeps the server/legacy row order. "Classroom Instructors"
-  // reorders teacher groups; the rest reorder students WITHIN each group.
-  // Per-standard matrix columns are not row-sortable.
+  // Default ('none') keeps the server/legacy row order — which is already the
+  // legacy score-ascending teacher-group + standard-column order. "Classroom
+  // Instructors" reorders teacher groups; the rest reorder students WITHIN each
+  // group. Per-standard matrix columns are not row-sortable.
   const { sortColumn, sortDirection, onHeaderClick } = useSharedSort<YtdSortKey>(
-    'instructor',
+    'none',
     'asc',
   );
 
@@ -269,7 +271,7 @@ function TeacherBlock({
   const totalCols =
     (showTestsTaken ? 4 : 3) + standards.length * subCols + 2;
   const students =
-    sortColumn === 'instructor'
+    sortColumn === 'instructor' || sortColumn === 'none'
       ? group.students
       : sortRowsBy(group.students, STUDENT_ACCESSORS[sortColumn], sortDirection);
   return (
