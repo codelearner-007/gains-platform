@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { Button } from '@/components/ui/button';
 import ReportFilters from './shared/ReportFilters';
@@ -64,11 +65,12 @@ const ROW_ACTIONS: Array<{
 ];
 
 export default function AssessmentBrowser() {
+  const { schoolId } = useSelectedSchool();
   const [filters, setFilters] = useState<AssessmentFilters>({});
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.assessments(filters),
-    queryFn: () => reportsApi.assessments(filters),
+    queryKey: reportsKeys.assessments(filters, schoolId ?? undefined),
+    queryFn: () => reportsApi.assessments(filters, schoolId ?? undefined),
   });
 
   return (

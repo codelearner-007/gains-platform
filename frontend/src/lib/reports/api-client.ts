@@ -118,30 +118,30 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<QraByStandardTeacherPayload>),
 
-  assessments: (filters?: AssessmentFilters) =>
-    fetch(`/api/v1/assessments${buildQuery(filters)}`, {
+  assessments: (filters?: AssessmentFilters, schoolId?: string) =>
+    fetch(`/api/v1/assessments${buildQuery({ ...filters, school_id: schoolId })}`, {
       credentials: 'include',
     }).then(handleResponse<AssessmentListRow[]>),
 
-  sessions: () =>
-    fetch('/api/v1/dim/sessions', { credentials: 'include' }).then(
-      handleResponse<SessionRow[]>,
-    ),
+  sessions: (schoolId?: string) =>
+    fetch(`/api/v1/dim/sessions${buildQuery({ school_id: schoolId })}`, {
+      credentials: 'include',
+    }).then(handleResponse<SessionRow[]>),
 
-  subjects: () =>
-    fetch('/api/v1/dim/subjects', { credentials: 'include' }).then(
-      handleResponse<SubjectRow[]>,
-    ),
+  subjects: (schoolId?: string) =>
+    fetch(`/api/v1/dim/subjects${buildQuery({ school_id: schoolId })}`, {
+      credentials: 'include',
+    }).then(handleResponse<SubjectRow[]>),
 
-  grades: () =>
-    fetch('/api/v1/dim/grades', { credentials: 'include' }).then(
-      handleResponse<GradeRow[]>,
-    ),
+  grades: (schoolId?: string) =>
+    fetch(`/api/v1/dim/grades${buildQuery({ school_id: schoolId })}`, {
+      credentials: 'include',
+    }).then(handleResponse<GradeRow[]>),
 
-  sections: () =>
-    fetch('/api/v1/dim/sections', { credentials: 'include' }).then(
-      handleResponse<SectionRow[]>,
-    ),
+  sections: (schoolId?: string) =>
+    fetch(`/api/v1/dim/sections${buildQuery({ school_id: schoolId })}`, {
+      credentials: 'include',
+    }).then(handleResponse<SectionRow[]>),
 };
 
 export const reportsKeys = {
@@ -169,10 +169,14 @@ export const reportsKeys = {
     [...reportsKeys.all, 'strandSummary', filters ?? {}] as const,
   alignmentDataQuality: () =>
     [...reportsKeys.all, 'dq', 'standards-alignment'] as const,
-  assessments: (filters?: AssessmentFilters) =>
-    [...reportsKeys.all, 'assessments', filters ?? {}] as const,
-  sessions: () => [...reportsKeys.all, 'dim', 'sessions'] as const,
-  subjects: () => [...reportsKeys.all, 'dim', 'subjects'] as const,
-  grades: () => [...reportsKeys.all, 'dim', 'grades'] as const,
-  sections: () => [...reportsKeys.all, 'dim', 'sections'] as const,
+  assessments: (filters?: AssessmentFilters, schoolId?: string) =>
+    [...reportsKeys.all, 'assessments', filters ?? {}, schoolId ?? null] as const,
+  sessions: (schoolId?: string) =>
+    [...reportsKeys.all, 'dim', 'sessions', schoolId ?? null] as const,
+  subjects: (schoolId?: string) =>
+    [...reportsKeys.all, 'dim', 'subjects', schoolId ?? null] as const,
+  grades: (schoolId?: string) =>
+    [...reportsKeys.all, 'dim', 'grades', schoolId ?? null] as const,
+  sections: (schoolId?: string) =>
+    [...reportsKeys.all, 'dim', 'sections', schoolId ?? null] as const,
 };

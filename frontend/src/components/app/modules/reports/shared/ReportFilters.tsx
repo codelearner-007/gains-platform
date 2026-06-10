@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import type { AssessmentFilters } from '@/lib/reports/types';
 
 const ANY = '__any__';
@@ -20,21 +21,22 @@ interface ReportFiltersProps {
 }
 
 export default function ReportFilters({ value, onChange }: ReportFiltersProps) {
+  const { schoolId } = useSelectedSchool();
   const sessionsQ = useQuery({
-    queryKey: reportsKeys.sessions(),
-    queryFn: () => reportsApi.sessions(),
+    queryKey: reportsKeys.sessions(schoolId ?? undefined),
+    queryFn: () => reportsApi.sessions(schoolId ?? undefined),
   });
   const subjectsQ = useQuery({
-    queryKey: reportsKeys.subjects(),
-    queryFn: () => reportsApi.subjects(),
+    queryKey: reportsKeys.subjects(schoolId ?? undefined),
+    queryFn: () => reportsApi.subjects(schoolId ?? undefined),
   });
   const gradesQ = useQuery({
-    queryKey: reportsKeys.grades(),
-    queryFn: () => reportsApi.grades(),
+    queryKey: reportsKeys.grades(schoolId ?? undefined),
+    queryFn: () => reportsApi.grades(schoolId ?? undefined),
   });
   const sectionsQ = useQuery({
-    queryKey: reportsKeys.sections(),
-    queryFn: () => reportsApi.sections(),
+    queryKey: reportsKeys.sections(schoolId ?? undefined),
+    queryFn: () => reportsApi.sections(schoolId ?? undefined),
   });
 
   function update(field: keyof AssessmentFilters, raw: string) {
