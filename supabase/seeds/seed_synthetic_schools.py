@@ -27,8 +27,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import os
 import random
 import re
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -36,6 +38,30 @@ import psycopg2
 import pyarrow.dataset as ds
 
 PG = "postgresql://postgres:postgres@127.0.0.1:56322/postgres"
+
+# ── DEMO-ONLY SEED — DISABLED BY DEFAULT ──────────────────────────────────────
+# This script fabricates synthetic multi-tenant schools by re-keying Athenian
+# cube data. The platform is now invite-only and these synthetic tenants have
+# been removed (see cleanup_synthetic.py). Running this again would repopulate
+# them, so it refuses to run unless you explicitly opt in:
+#   GAINS_SEED_DEMO=i-understand   (or pass --i-understand)
+SEED_OPT_IN_ENV = "GAINS_SEED_DEMO"
+SEED_OPT_IN_VALUE = "i-understand"
+
+
+def _require_demo_seed_optin() -> None:
+    opted_in = (
+        os.environ.get(SEED_OPT_IN_ENV) == SEED_OPT_IN_VALUE
+        or "--i-understand" in sys.argv
+    )
+    if not opted_in:
+        print(
+            "REFUSING TO RUN: synthetic-school seeding is disabled (invite-only platform).\n"
+            "These tenants were intentionally removed by cleanup_synthetic.py.\n"
+            f"To override, set {SEED_OPT_IN_ENV}={SEED_OPT_IN_VALUE} or pass --i-understand.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 CUBES = Path("/Users/mac/Desktop/PS_P/legacy-backup-20260529/synapse/stage3_cubes")
 DONOR_SCHOOL = "186370968"  # Athenian — largest, all subjects/grades
 
@@ -222,12 +248,16 @@ def project(df: pd.DataFrame, target_cols: set[str], school_uuid: str,
 
 
 def main() -> int:
+    _require_demo_seed_optin()
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--schools", type=int, default=25)
     ap.add_argument("--items-min", type=int, default=8)
     ap.add_argument("--items-max", type=int, default=14)
     ap.add_argument("--reset", action="store_true",
                     help="delete previously-seeded synthetic schools first")
+    ap.add_argument("--i-understand", action="store_true",
+                    help="opt in to re-seeding synthetic demo tenants (disabled by default)")
     args = ap.parse_args()
 
     print("Loading donor cube data (Athenian)…", flush=True)

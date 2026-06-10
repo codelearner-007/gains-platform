@@ -14,10 +14,36 @@ Usage:
 """
 from __future__ import annotations
 
+import os
+import sys
+
 import psycopg2
 
 PG = "postgresql://postgres:postgres@127.0.0.1:56322/postgres"
 DEMO_PASSWORD = "GainsDemo123!"
+
+# ── DEMO-ONLY SEED — DISABLED BY DEFAULT ──────────────────────────────────────
+# This script creates synthetic demo users. The platform is now invite-only and
+# the synthetic/demo tenants have been removed (see cleanup_synthetic.py).
+# Running this again would repopulate demo accounts, so it refuses to run unless
+# you explicitly opt in:  GAINS_SEED_DEMO=i-understand  (or pass --i-understand).
+SEED_OPT_IN_ENV = "GAINS_SEED_DEMO"
+SEED_OPT_IN_VALUE = "i-understand"
+
+
+def _require_demo_seed_optin() -> None:
+    opted_in = (
+        os.environ.get(SEED_OPT_IN_ENV) == SEED_OPT_IN_VALUE
+        or "--i-understand" in sys.argv
+    )
+    if not opted_in:
+        print(
+            "REFUSING TO RUN: demo-user seeding is disabled (invite-only platform).\n"
+            "These accounts were intentionally removed by cleanup_synthetic.py.\n"
+            f"To override, set {SEED_OPT_IN_ENV}={SEED_OPT_IN_VALUE} or pass --i-understand.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
 # (email, school building_id, school_role within that school)
 DEMO_USERS = [
@@ -29,6 +55,8 @@ DEMO_USERS = [
 
 
 def main() -> int:
+    _require_demo_seed_optin()
+
     conn = psycopg2.connect(PG)
     conn.autocommit = False
     cur = conn.cursor()
