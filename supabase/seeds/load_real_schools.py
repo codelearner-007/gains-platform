@@ -78,7 +78,8 @@ CUBE_TABLES = (
     "cube_questionincorrectchoice_summary",
     "cube_question_summary_overall",
 )
-DIM_TABLES = ("dim_item", "dim_subject", "dim_section", "dim_question_data")
+DIM_TABLES = ("dim_item", "dim_subject", "dim_section", "dim_question_data",
+              "dim_grade", "dim_session")
 
 # ── column-name normalisation (backup PascalCase -> target snake_case) ──
 SPECIAL = {
@@ -273,6 +274,28 @@ def _seed_dims(cur, school_uuid, csv, qs_s, totals):
                                   "subject", "assessment_type", "grade", "session",
                                   "item_name", "grade_sort", "show_history_subject",
                                   "grade_no"]])
+
+    # dim_grade / dim_session — distinct values that power the Grade/Session
+    # filter dropdowns. The list filter itself matches dim_subject.grade/session;
+    # without these option rows the dropdowns are empty and parquet schools look
+    # un-filterable on grade/session even though the data is there.
+    dg = dsub[["grade"]].dropna().drop_duplicates()
+    dg = dg[dg["grade"].astype(str).str.strip() != ""]
+    if not dg.empty:
+        dg["school_id"] = school_uuid
+        dg["school_id_csv"] = csv
+        dg["grade_id"] = dg["grade"].map(lambda g: rehash(school_uuid, f"grade:{g}"))
+        totals["dim_grade"] = totals.get("dim_grade", 0) + copy_df(
+            cur, "dim_grade", dg[["grade_id", "school_id", "school_id_csv", "grade"]])
+
+    dse = dsub[["session"]].dropna().drop_duplicates()
+    dse = dse[dse["session"].astype(str).str.strip() != ""]
+    if not dse.empty:
+        dse["school_id"] = school_uuid
+        dse["school_id_csv"] = csv
+        dse["session_id"] = dse["session"].map(lambda s: rehash(school_uuid, f"session:{s}"))
+        totals["dim_session"] = totals.get("dim_session", 0) + copy_df(
+            cur, "dim_session", dse[["session_id", "school_id", "school_id_csv", "session"]])
 
     # dim_section — keyed by Section name as the synthetic section_nid.
     dsec = (qs_s.dropna(subset=["Section"]).groupby("Section", as_index=False)
