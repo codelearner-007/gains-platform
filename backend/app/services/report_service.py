@@ -856,13 +856,28 @@ class ReportService:
             for r in unit_rows
         }
 
-        # ── Standard columns (sorted by label, the legacy column order) ──────
+        # ── Standard columns ─────────────────────────────────────────────────
+        # Legacy SSRS orders the standard columns ASCENDING by the standard's
+        # overall Score% (lowest-scoring standard first) — the grand-total
+        # "Score %" row in the legacy PDF reads left→right 48%, 61%, 65%, …,
+        # 96%. Ties break alphabetically by label for determinism.
         std_meta: dict[str, str] = {}  # label → schoology code
+        std_totals: dict[str, list[float]] = {}  # label → [recv, poss]
         for r in cell_rows:
             label = safe_str(r.get("standard_label"))
-            if label and label not in std_meta:
+            if not label:
+                continue
+            if label not in std_meta:
                 std_meta[label] = safe_str(r.get("schoology_standard")) or label
-        ordered_labels = sorted(std_meta)
+            agg = std_totals.setdefault(label, [0.0, 0.0])
+            agg[0] += to_float(r.get("points_received"))
+            agg[1] += to_float(r.get("points_possible"))
+
+        def _std_score(label: str) -> float:
+            recv, poss = std_totals.get(label, [0.0, 0.0])
+            return round(recv / poss, 6) if poss > 0 else 0.0
+
+        ordered_labels = sorted(std_meta, key=lambda lab: (_std_score(lab), lab))
         standards = [
             YtdStandardColumn(
                 standard_label=label,
@@ -897,7 +912,15 @@ class ReportService:
         grand_poss = 0.0
         grand_std: dict[str, list[float]] = {}
 
-        for teacher in sorted(teachers):
+        # Legacy SSRS orders the Classroom Instructor groups ASCENDING by the
+        # teacher's overall Score% (lowest-scoring teacher first) — the legacy
+        # PDF runs 80.9% → 81.8% → 84.7%. Ties break alphabetically by name.
+        def _teacher_score(name: str) -> float:
+            recv = sum(v[0] for s in teachers[name].values() for v in s["cells"].values())
+            poss = sum(v[1] for s in teachers[name].values() for v in s["cells"].values())
+            return round(recv / poss, 6) if poss > 0 else 0.0
+
+        for teacher in sorted(teachers, key=lambda t: (_teacher_score(t), t)):
             students_list: list[YtdStudentRow] = []
             t_recv = 0.0
             t_poss = 0.0
