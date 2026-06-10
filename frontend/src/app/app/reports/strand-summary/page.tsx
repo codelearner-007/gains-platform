@@ -16,6 +16,7 @@ import ReportBreadcrumb, {
   programCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
 import KpiStrip from '@/components/app/modules/reports/strand-summary/KpiStrip';
 import StrandCard from '@/components/app/modules/reports/strand-summary/StrandCard';
@@ -90,8 +91,15 @@ export default function StrandSummaryPage() {
 
   return (
     <ReportCanvas>
-      <div className="mb-3 flex flex-col gap-2">
-        <ReportBreadcrumb crumbs={programCrumbs('Strand Summary')} />
+      <div className="mb-3 flex flex-col gap-2 print:hidden">
+        <div className="flex items-start justify-between gap-2">
+          <ReportBreadcrumb crumbs={programCrumbs('Strand Summary')} />
+          <ExportMenu
+            kind="strand-summary"
+            payload={data}
+            name={data.school.name || 'strand-summary'}
+          />
+        </div>
         <ReportTypeSwitcher group="program" />
       </div>
 

@@ -14,6 +14,7 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraPaginatedTable from '@/components/app/modules/reports/paginated/QraPaginatedTable';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function QraPaginatedPage() {
@@ -50,11 +51,18 @@ export default function QraPaginatedPage() {
   return (
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2 print:hidden">
-        <ReportBreadcrumb
-          crumbs={assessmentCrumbs({
-            label: data.assessment.item_name || data.assessment.item_id,
-          })}
-        />
+        <div className="flex items-start justify-between gap-2">
+          <ReportBreadcrumb
+            crumbs={assessmentCrumbs({
+              label: data.assessment.item_name || data.assessment.item_id,
+            })}
+          />
+          <ExportMenu
+            kind="qra-paginated"
+            payload={data}
+            name={data.assessment.item_name}
+          />
+        </div>
         <ReportTypeSwitcher group="assessment" itemId={itemId} />
       </div>
 

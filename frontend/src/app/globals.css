@@ -366,3 +366,51 @@
   0% { background-position: 100% 0; }
   100% { background-position: 0 0; }
 }
+
+/* ============================================================
+   Print stylesheet (Export → PDF, Phase 1: window.print()).
+
+   Legacy SSRS paginated reports (QSR / QRA / YTD) print in A4
+   LANDSCAPE — the wide student×question and student×standard
+   matrices only fit across the long edge, matching the sample
+   PDFs in data/sample reports/. `print-color-adjust: exact`
+   (and the -webkit- prefix) forces browsers to keep the
+   PERF_* / QSR_* / IAD_* traffic-light cell fills instead of
+   dropping backgrounds to save ink.
+
+   Report components already carry the layout-side print hints:
+   `print:hidden` on chrome, `print:break-before-page` between
+   groups, `print:overflow-visible` on wide tables, and
+   `PaginatedFooter.tsx` is print-only. This block only adds the
+   page geometry + color fidelity those rely on.
+   ============================================================ */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  /* Preserve background fills (traffic-light cells, header bands). */
+  html,
+  body,
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* White page; drop app chrome shadows/tints that waste ink. */
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  /* Don't clip wide report tables at the print boundary. */
+  table {
+    overflow: visible !important;
+  }
+
+  /* Avoid splitting a row across two printed pages where possible. */
+  tr {
+    break-inside: avoid;
+  }
+}

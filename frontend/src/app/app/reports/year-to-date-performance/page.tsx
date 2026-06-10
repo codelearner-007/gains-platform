@@ -15,6 +15,7 @@ import ReportBreadcrumb, {
   programCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import ReportFilters from '@/components/app/modules/reports/shared/ReportFilters';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
@@ -56,9 +57,16 @@ export default function YearToDatePerformancePage() {
   return (
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2 print:hidden">
-        <ReportBreadcrumb
-          crumbs={programCrumbs('Year To Date - Longitudinal Report')}
-        />
+        <div className="flex items-start justify-between gap-2">
+          <ReportBreadcrumb
+            crumbs={programCrumbs('Year To Date - Longitudinal Report')}
+          />
+          <ExportMenu
+            kind="ytd"
+            payload={data}
+            name={data?.school.name || 'year-to-date'}
+          />
+        </div>
         <ReportTypeSwitcher group="program" />
         <ReportFilters value={filters} onChange={setFilters} />
         <VariantTabs active={variant} />

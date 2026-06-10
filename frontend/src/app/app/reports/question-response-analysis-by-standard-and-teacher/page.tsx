@@ -14,6 +14,7 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/PaginatedKpiStrip';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraByStandardTeacherTable from '@/components/app/modules/reports/paginated/QraByStandardTeacherTable';
+import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function QraByStandardTeacherPage() {
@@ -50,11 +51,16 @@ export default function QraByStandardTeacherPage() {
 
   return (
     <ReportCanvas>
-      <div className="mb-3 print:hidden">
+      <div className="mb-3 flex items-start justify-between gap-2 print:hidden">
         <ReportBreadcrumb
           crumbs={assessmentCrumbs({
             label: data.assessment.item_name || data.assessment.item_id,
           })}
+        />
+        <ExportMenu
+          kind="qra-by-standard-teacher"
+          payload={data}
+          name={data.assessment.item_name}
         />
       </div>
 

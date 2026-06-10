@@ -9,6 +9,7 @@ import ReportBreadcrumb, {
   assessmentCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
@@ -55,18 +56,25 @@ export default function IncorrectAnswerDetailsPage() {
 
   return (
     <ReportCanvas>
-      <div className="mb-3 flex flex-col gap-2">
-        <ReportBreadcrumb
-          crumbs={assessmentCrumbs(
-            {
-              label: data.assessment.item_name || data.assessment.item_id,
-              href: `/app/reports/question-response-analysis?item_id=${itemId}`,
-            },
-            {
-              label: `Question ${data.question.question_no || data.question.position_number}`,
-            },
-          )}
-        />
+      <div className="mb-3 flex flex-col gap-2 print:hidden">
+        <div className="flex items-start justify-between gap-2">
+          <ReportBreadcrumb
+            crumbs={assessmentCrumbs(
+              {
+                label: data.assessment.item_name || data.assessment.item_id,
+                href: `/app/reports/question-response-analysis?item_id=${itemId}`,
+              },
+              {
+                label: `Question ${data.question.question_no || data.question.position_number}`,
+              },
+            )}
+          />
+          <ExportMenu
+            kind="iad"
+            payload={data}
+            name={`${data.assessment.item_name}-q${data.question.question_no || data.question.position_number}`}
+          />
+        </div>
         <ReportTypeSwitcher
           group="assessment"
           itemId={itemId}

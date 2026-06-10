@@ -15,6 +15,7 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QuestionSummaryMatrix from '@/components/app/modules/reports/paginated/QuestionSummaryMatrix';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 // Legacy QSR paginated variants (PAG-4 / PAG-5, Decision 5):
@@ -72,11 +73,14 @@ export default function QuestionSummaryPaginatedPage() {
   return (
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2 print:hidden">
-        <ReportBreadcrumb
-          crumbs={assessmentCrumbs({
-            label: data.assessment.item_name || data.assessment.item_id,
-          })}
-        />
+        <div className="flex items-start justify-between gap-2">
+          <ReportBreadcrumb
+            crumbs={assessmentCrumbs({
+              label: data.assessment.item_name || data.assessment.item_id,
+            })}
+          />
+          <ExportMenu kind="qsr" payload={data} name={data.assessment.item_name} />
+        </div>
         <ReportTypeSwitcher group="assessment" itemId={itemId} />
         <VariantTabs itemId={itemId} active={variant} />
       </div>
