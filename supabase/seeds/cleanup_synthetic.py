@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Idempotent, transactional cleanup of synthetic / demo tenants + demo users.
+"""Idempotent, transactional cleanup of synthetic / demo / test tenants + users.
 
-Removes the demo data that was seeded for multi-tenant demos so the platform
-contains only real tenants:
+Removes the demo + verification data that was seeded for multi-tenant demos and
+created during testing so the platform contains only real tenants:
 
-  * schools whose ``schoology_building_id`` matches ``synth-%`` (25) or
-    ``phase5-test-%`` (5), plus ALL rows scoped to those ``school_id``s in every
-    ``public.*`` table that has a ``school_id`` column;
-  * six named demo / test ``auth.users`` and their app rows
+  * schools whose ``schoology_building_id`` matches a TEST prefix
+    (``synth-%`` / ``phase5-test-%`` / ``ws-test-%`` / ``iso-test-%``), plus ALL
+    rows scoped to those ``school_id``s in every ``public.*`` table that has a
+    ``school_id`` column;
+  * named demo / test ``auth.users`` AND any user whose email matches a TEST
+    pattern (``%isotest%`` / ``inv-test%@example.com`` / ``%@gains.demo`` except
+    the kept super-admin / ``ws-target@example.com``), plus their app rows
     (user_roles / user_schools / user_profiles / lti_user_identity / audit_logs).
 
 KEEPS: Athenian Academy (schoology_building_id='186370968') and ALL its data;
-keeps user super.admin@gains.demo.
+keeps users super.admin@gains.demo and m.arham@insightanalytics.net.
 
 Safety:
   * Runs inside a single BEGIN/COMMIT transaction.
@@ -37,13 +40,25 @@ PG = "postgresql://postgres:postgres@127.0.0.1:56322/postgres"
 
 ATHENIAN_BUILDING_ID = "186370968"
 
-# Tenants to remove (matched on schoology_building_id prefix).
+# Tenants to remove (matched on schoology_building_id prefix). Covers every
+# test/demo tenant family: original synthetic demo schools, phase-5 test schools,
+# WS-test schools, and the isolation-test School B.
 SYNTH_SCHOOL_PREDICATE = (
     "schoology_building_id LIKE 'synth-%' "
-    "OR schoology_building_id LIKE 'phase5-test-%'"
+    "OR schoology_building_id LIKE 'phase5-test-%' "
+    "OR schoology_building_id LIKE 'ws-test-%' "
+    "OR schoology_building_id LIKE 'iso-test-%'"
 )
 
-# Demo / test users to remove (exact emails). super.admin@gains.demo is NOT here.
+# Users to KEEP no matter what (the only real / operator accounts).
+KEEP_USER_EMAILS = (
+    "super.admin@gains.demo",
+    "m.arham@insightanalytics.net",
+)
+
+# Demo / test users to remove. Exact emails for named seed/test accounts; the
+# pattern predicate below catches verification-created users by shape. The kept
+# accounts above are always excluded.
 DEMO_USER_EMAILS = (
     "admin.riverside@gains.demo",
     "student.oakwood@gains.demo",
@@ -51,6 +66,21 @@ DEMO_USER_EMAILS = (
     "teacher.oakwood@gains.demo",
     "learner-9@school.test",
     "user-sub-1@school.test",
+    # lingering named test users
+    "demo-student@lti.demo",
+    "demo-teacher@lti.demo",
+    "phase5-tester@example.com",
+    "playwright-tester@athenian.edu",
+    "ws-target@example.com",
+)
+
+# Pattern-based test-user match (verification artifacts). super.admin /
+# m.arham are excluded explicitly in the SQL below.
+DEMO_USER_PATTERNS = (
+    "%isotest%",
+    "inv-test%@example.com",
+    "%@gains.demo",
+    "%@lti.demo",
 )
 
 # Anchor item for the Athenian QSR grade-average baseline (65.4% / 18 questions).
@@ -190,9 +220,19 @@ def main() -> int:
                 deleted["schools"] = cur.rowcount
 
         # ---- Demo / test users -------------------------------------------------
+        # Match exact emails OR any test pattern, but NEVER the kept accounts.
+        pattern_clause = " OR ".join("email LIKE %s" for _ in DEMO_USER_PATTERNS)
         cur.execute(
-            "SELECT id::text, email FROM auth.users WHERE email = ANY(%s)",
-            (list(DEMO_USER_EMAILS),),
+            f"""
+            SELECT id::text, email FROM auth.users
+            WHERE (email = ANY(%s) OR {pattern_clause})
+              AND email <> ALL(%s)
+            """,
+            (
+                list(DEMO_USER_EMAILS),
+                *DEMO_USER_PATTERNS,
+                list(KEEP_USER_EMAILS),
+            ),
         )
         demo_users = cur.fetchall()
         demo_user_ids = [u[0] for u in demo_users]
@@ -249,8 +289,16 @@ def main() -> int:
         remaining_synth = cur.fetchone()[0]
 
         cur.execute(
-            "SELECT count(*) FROM auth.users WHERE email = ANY(%s)",
-            (list(DEMO_USER_EMAILS),),
+            f"""
+            SELECT count(*) FROM auth.users
+            WHERE (email = ANY(%s) OR {pattern_clause})
+              AND email <> ALL(%s)
+            """,
+            (
+                list(DEMO_USER_EMAILS),
+                *DEMO_USER_PATTERNS,
+                list(KEEP_USER_EMAILS),
+            ),
         )
         remaining_demo = cur.fetchone()[0]
 
