@@ -16,6 +16,7 @@ import ReportBreadcrumb, {
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import KpiStrip from '@/components/app/modules/reports/std-summary/KpiStrip';
 import StandardCard from '@/components/app/modules/reports/std-summary/StandardCard';
 import StandardsTable from '@/components/app/modules/reports/std-summary/StandardsTable';
@@ -66,6 +67,10 @@ export default function StandardSummaryPage() {
             kind="standard-summary"
             payload={data}
             name={data.school.name || 'standard-summary'}
+            xlsxUrl={buildXlsxUrl('standard-summary', {
+              schoolId: schoolId ?? undefined,
+              filters,
+            })}
           />
         </div>
         <ReportTypeSwitcher group="program" />

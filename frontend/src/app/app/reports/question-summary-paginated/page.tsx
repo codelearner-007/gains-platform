@@ -16,6 +16,7 @@ import PaginatedFooter from '@/components/app/modules/reports/paginated/Paginate
 import QuestionSummaryMatrix from '@/components/app/modules/reports/paginated/QuestionSummaryMatrix';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 // Legacy QSR paginated variants (PAG-4 / PAG-5, Decision 5):
@@ -79,7 +80,15 @@ export default function QuestionSummaryPaginatedPage() {
               label: data.assessment.item_name || data.assessment.item_id,
             })}
           />
-          <ExportMenu kind="qsr" payload={data} name={data.assessment.item_name} />
+          <ExportMenu
+            kind="qsr"
+            payload={data}
+            name={data.assessment.item_name}
+            xlsxUrl={buildXlsxUrl('qsr', {
+              itemId,
+              schoolId: schoolId ?? undefined,
+            })}
+          />
         </div>
         <ReportTypeSwitcher group="assessment" itemId={itemId} />
         <VariantTabs itemId={itemId} active={variant} />

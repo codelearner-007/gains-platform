@@ -17,6 +17,7 @@ import ReportBreadcrumb, {
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
 import KpiStrip from '@/components/app/modules/reports/strand-summary/KpiStrip';
 import StrandCard from '@/components/app/modules/reports/strand-summary/StrandCard';
@@ -98,6 +99,10 @@ export default function StrandSummaryPage() {
             kind="strand-summary"
             payload={data}
             name={data.school.name || 'strand-summary'}
+            xlsxUrl={buildXlsxUrl('strand-summary', {
+              schoolId: schoolId ?? undefined,
+              filters: { ...filters, strand: selectedStrand ?? undefined },
+            })}
           />
         </div>
         <ReportTypeSwitcher group="program" />

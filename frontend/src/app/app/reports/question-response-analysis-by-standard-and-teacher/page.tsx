@@ -15,6 +15,7 @@ import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/Pagina
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraByStandardTeacherTable from '@/components/app/modules/reports/paginated/QraByStandardTeacherTable';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function QraByStandardTeacherPage() {
@@ -61,6 +62,10 @@ export default function QraByStandardTeacherPage() {
           kind="qra-by-standard-teacher"
           payload={data}
           name={data.assessment.item_name}
+          xlsxUrl={buildXlsxUrl('qra-by-standard-teacher', {
+            itemId,
+            schoolId: schoolId ?? undefined,
+          })}
         />
       </div>
 

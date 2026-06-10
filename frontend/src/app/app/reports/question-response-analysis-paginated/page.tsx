@@ -15,6 +15,7 @@ import PaginatedFooter from '@/components/app/modules/reports/paginated/Paginate
 import QraPaginatedTable from '@/components/app/modules/reports/paginated/QraPaginatedTable';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 export default function QraPaginatedPage() {
@@ -61,6 +62,10 @@ export default function QraPaginatedPage() {
             kind="qra-paginated"
             payload={data}
             name={data.assessment.item_name}
+            xlsxUrl={buildXlsxUrl('qra-paginated', {
+              itemId,
+              schoolId: schoolId ?? undefined,
+            })}
           />
         </div>
         <ReportTypeSwitcher group="assessment" itemId={itemId} />

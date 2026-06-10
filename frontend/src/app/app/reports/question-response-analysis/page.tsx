@@ -11,6 +11,7 @@ import ReportBreadcrumb, {
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import QuestionDetailTable from '@/components/app/modules/reports/qra/QuestionDetailTable';
 import {
   StrandsTable,
@@ -75,7 +76,15 @@ export default function QuestionResponseAnalysisPage() {
               label: data.assessment.item_name || data.assessment.item_id,
             })}
           />
-          <ExportMenu kind="qra" payload={data} name={data.assessment.item_name} />
+          <ExportMenu
+            kind="qra"
+            payload={data}
+            name={data.assessment.item_name}
+            xlsxUrl={buildXlsxUrl('qra', {
+              itemId,
+              schoolId: schoolId ?? undefined,
+            })}
+          />
         </div>
         <ReportTypeSwitcher group="assessment" itemId={itemId} />
       </div>

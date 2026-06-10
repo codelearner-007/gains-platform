@@ -16,6 +16,7 @@ import ReportBreadcrumb, {
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import ReportFilters from '@/components/app/modules/reports/shared/ReportFilters';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
@@ -65,6 +66,10 @@ export default function YearToDatePerformancePage() {
             kind="ytd"
             payload={data}
             name={data?.school.name || 'year-to-date'}
+            xlsxUrl={buildXlsxUrl('ytd', {
+              schoolId: schoolId ?? undefined,
+              filters,
+            })}
           />
         </div>
         <ReportTypeSwitcher group="program" />

@@ -10,6 +10,7 @@ import ReportBreadcrumb, {
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
+import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
@@ -73,6 +74,11 @@ export default function IncorrectAnswerDetailsPage() {
             kind="iad"
             payload={data}
             name={`${data.assessment.item_name}-q${data.question.question_no || data.question.position_number}`}
+            xlsxUrl={buildXlsxUrl('iad', {
+              itemId,
+              questionId,
+              schoolId: schoolId ?? undefined,
+            })}
           />
         </div>
         <ReportTypeSwitcher

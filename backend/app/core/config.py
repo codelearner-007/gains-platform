@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_AUTH_ME: str = "30/minute"
     RATE_LIMIT_USER_ROLES_ASSIGN: str = "30/minute"
     RATE_LIMIT_USER_ROLES_REMOVE: str = "30/minute"
+    # Report XLSX export is CPU/memory heavy (large student×question matrices);
+    # cap it well below the read endpoints.
+    RATE_LIMIT_REPORTS_EXPORT: str = "20/minute"
 
     # CORS (optional, disabled by default for Vercel rewrites)
     ENABLE_CORS: bool = False
