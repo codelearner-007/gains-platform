@@ -72,7 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out z-30
+        className={`print:hidden fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out z-30
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         <div className="h-16 flex items-center justify-between px-5 border-b border-border flex-shrink-0">
@@ -204,8 +204,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="lg:pl-64 min-h-screen flex flex-col">
-        <div className="sticky top-0 z-10 flex items-center h-14 px-4 lg:hidden surface-blur bg-background/80 border-b border-border">
+      <div className="lg:pl-64 print:pl-0 min-h-screen flex flex-col">
+        <div className="sticky top-0 z-10 flex items-center h-14 px-4 lg:hidden print:hidden surface-blur bg-background/80 border-b border-border">
           <Button
             onClick={toggleSidebar}
             variant="ghost"
