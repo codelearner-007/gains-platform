@@ -3,7 +3,6 @@ import { trackEvent } from '@/lib/analytics/ga';
 import { AnalyticsEvent } from '@/lib/analytics/events';
 import type {
   LoginCredentials,
-  RegisterData,
   AuthResponse,
   ForgotPasswordData,
   ResetPasswordData,
@@ -36,31 +35,6 @@ export const authService = {
       });
       throw err;
     }
-  },
-
-  async register(data: RegisterData): Promise<AuthResponse & { message?: string }> {
-    try {
-      const result = await apiClient.post<AuthResponse & { message?: string }>('/auth/register', data);
-      trackEvent(AnalyticsEvent.signup_success, {
-        user_id: result.user?.id,
-        source: 'auth_register',
-      });
-      return result;
-    } catch (err) {
-      const status_code = err instanceof ApiError ? err.status : undefined;
-      const error_kind =
-        err instanceof ApiError ? 'api_error' : err instanceof TypeError ? 'network_error' : 'unknown_error';
-      trackEvent(AnalyticsEvent.signup_failed, {
-        source: 'auth_register',
-        status_code,
-        error_kind,
-      });
-      throw err;
-    }
-  },
-
-  async resendVerificationEmail(email: string): Promise<{ message: string }> {
-    return apiClient.post('/auth/resend-verification', { email });
   },
 
   async logout(): Promise<{ message: string }> {

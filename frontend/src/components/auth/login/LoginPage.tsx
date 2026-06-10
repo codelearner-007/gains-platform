@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useId } from 'react';
-import Link from 'next/link';
 import { Mail, KeyRound } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { LoginForm } from '@/components/forms/auth/LoginForm';
@@ -95,13 +94,7 @@ export function LoginPage() {
         </div>
 
         <div className="border-t border-border/60 pt-4 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link
-            href="/auth/register"
-            className="font-medium text-foreground hover:text-primary transition-colors"
-          >
-            Sign up
-          </Link>
+          Access is by invitation only. Contact your administrator if you need an account.
         </div>
       </CardContent>
     </Card>

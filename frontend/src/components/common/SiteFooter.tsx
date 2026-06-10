@@ -56,11 +56,6 @@ export function SiteFooter() {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/auth/register" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Sign up
-                </Link>
-              </li>
-              <li>
                 <Link href="/auth/login" className="text-muted-foreground hover:text-foreground transition-colors">
                   Sign in
                 </Link>

@@ -1,10 +1,7 @@
-import type { Metadata } from 'next';
-import { VerifyEmailPage } from '@/components/auth/verify-email/VerifyEmailPage';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Verify Email',
-};
-
+// The verify-email page was only reachable from the (now removed) public signup flow.
+// Invite-only provisioning handles confirmation links directly via /api/auth/callback.
 export default function Page() {
-  return <VerifyEmailPage />;
+  redirect('/auth/login');
 }

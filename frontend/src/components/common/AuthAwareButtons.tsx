@@ -21,7 +21,7 @@ export default async function AuthAwareButtons({ variant = 'primary' }: { varian
           Sign in
         </Link>
         <Button asChild size="sm">
-          <Link href="/auth/register">Get started</Link>
+          <Link href="/auth/login">Sign in</Link>
         </Button>
       </div>
     );
@@ -37,8 +37,8 @@ export default async function AuthAwareButtons({ variant = 'primary' }: { varian
   ) : (
     <>
       <Button asChild size="xl" className="btn-glow">
-        <Link href="/auth/register">
-          Start building free
+        <Link href="/auth/login">
+          Sign in
           <ArrowRight className="ml-1 h-4 w-4" />
         </Link>
       </Button>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { authService } from '@/lib/services/auth.service';
-import type { LoginCredentials, RegisterData } from '@/lib/types/auth.types';
+import type { LoginCredentials } from '@/lib/types/auth.types';
 
 export function useAuth() {
   const [loading, setLoading] = useState(false);
@@ -43,22 +43,6 @@ export function useAuth() {
       return { success: true };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
-      return { success: false, error: message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (data: RegisterData) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await authService.register(data);
-      router.push('/auth/verify-email');
-      return { success: true, message: response.message };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -131,5 +115,5 @@ export function useAuth() {
     }
   };
 
-  return { login, register, logout, forgotPassword, resetPassword, loading, error };
+  return { login, logout, forgotPassword, resetPassword, loading, error };
 }
