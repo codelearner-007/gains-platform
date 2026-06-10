@@ -281,8 +281,10 @@ function qraByStandardTeacherToCsv(p: QraByStandardTeacherPayload): string {
 }
 
 /**
- * QSR matrix: student × question wide matrix of binary 0/1 cells, with a
- * per-student total column, per-teacher subtotal rows, and a grand-total row.
+ * QSR matrix: student × question wide matrix of partial-credit cells
+ * (points_received, may be fractional), with a per-student total column,
+ * per-teacher subtotal rows, and a grand-total row. Mirrors the legacy SSRS:
+ * every Score% is SUM(received)/SUM(possible).
  */
 function qsrToCsv(p: QuestionSummaryMatrixPayload): string {
   const header: CsvRow = ['Student', ...p.questions.map((q) => q.question_no), 'Total %'];
@@ -293,13 +295,13 @@ function qsrToCsv(p: QuestionSummaryMatrixPayload): string {
     for (const s of g.students) {
       const cells = p.questions.map((q) => {
         const v = s.cells[q.question_id];
-        return v === null || v === undefined ? '' : v;
+        return v === null || v === undefined ? '' : num(v);
       });
       rows.push([s.user_name, ...cells, pct(s.score_pct)]);
     }
     rows.push([
       `Subtotal: ${g.section_instructor}`,
-      ...p.questions.map(() => ''),
+      ...p.questions.map((q) => pct(g.per_question_pct[q.question_id])),
       pct(g.teacher_score_pct),
     ]);
   }

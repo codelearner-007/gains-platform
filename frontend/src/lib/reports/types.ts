@@ -515,34 +515,61 @@ export interface QsmQuestionColumn {
   correct_answer: string;
 }
 
+// QSR is partial-credit (legacy SSRS / xlsx / grade-average-KPI parity): each
+// (student × question) cell is `points_received` (may be fractional, e.g.
+// 0 / 0.5 / 1); "# Correct Answers" is SUM(points_received) and every Score% is
+// SUM(received)/SUM(possible). The web matrix and the xlsx export consume this
+// SAME payload so they cannot diverge.
+
+/** A contiguous CPALMS column band (one or more leaf question columns). */
+export interface QspStandardBand {
+  cpalms_standard: string;
+  question_ids: string[];
+}
+
 export interface QsmStudentRow {
   user_uid: string;
   user_name: string;
   score_pct: number;
+  // SUM(points_possible) / SUM(points_received) across the student's cells.
   possible_points: number;
   correct_count: number;
-  cells: Record<string, 0 | 1 | null>;
+  // qid → points_received (may be fractional); null = not attempted.
+  cells: Record<string, number | null>;
+  // cpalms_standard → band Score% (SUM received / SUM possible in the band).
+  band_pct: Record<string, number | null>;
 }
 
 export interface QsmTeacherGroup {
   section_instructor: string;
   teacher_score_pct: number;
   students: QsmStudentRow[];
+  // Per-leaf-question teacher subtotals (partial credit) for the "- Teacher"
+  // subtotal block: correct = SUM(received), possible = SUM(possible).
+  per_question_correct: Record<string, number>;
+  per_question_possible: Record<string, number>;
+  per_question_pct: Record<string, number>;
 }
 
 export interface QsmGrandTotal {
   possible_points: number;
   correct_count: number;
   score_pct: number;
+  // Per-leaf-question footer rows (summed points; pct = received/possible).
   per_question_possible: Record<string, number>;
   per_question_correct: Record<string, number>;
   per_question_pct: Record<string, number>;
+  // Per-band footer Score% sub-columns.
+  band_possible: Record<string, number>;
+  band_correct: Record<string, number>;
+  band_pct: Record<string, number>;
 }
 
 export interface QuestionSummaryMatrixPayload {
   assessment: AssessmentMeta;
-  kpis: PaginatedKpis;
+  kpis?: PaginatedKpis | null;
   questions: QsmQuestionColumn[];
+  bands: QspStandardBand[];
   teacher_groups: QsmTeacherGroup[];
   grand_total: QsmGrandTotal;
 }

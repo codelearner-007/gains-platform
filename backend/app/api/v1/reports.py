@@ -25,7 +25,7 @@ from app.schemas.reports import (
     QraByTeacherPayload,
     QraPaginatedPayload,
     QuestionResponseAnalysisPayload,
-    QuestionSummaryMatrixPayload,
+    QuestionSummaryPointsPayload,
     StandardSummaryFilters,
     StandardSummaryPayload,
     StandardsDeepDivePayload,
@@ -240,20 +240,23 @@ async def strand_summary(
 
 @router.get(
     "/question-summary-paginated/{item_id}",
-    response_model=QuestionSummaryMatrixPayload,
+    response_model=QuestionSummaryPointsPayload,
     dependencies=[Depends(require_permission("reports:read"))],
 )
 async def question_summary_paginated(
     item_id: str,
     db: AsyncSession = Depends(get_db_with_rls),
-) -> QuestionSummaryMatrixPayload:
-    """Per-(student × question) matrix for the QSR paginated family
-    (PBIX ord 6, 7, 16). Variants (base / teacher subtotal / header
-    highlights) are rendered from the same payload via query-string flags
-    on the frontend. Requires: reports:read.
+) -> QuestionSummaryPointsPayload:
+    """Per-(student × question) partial-credit matrix for the QSR paginated
+    family (PBIX ord 6, 7, 16). Each cell is ``points_received`` (may be
+    fractional); "# Correct Answers" is SUM(received) and every Score% is
+    SUM(received)/SUM(possible) — matching the legacy SSRS PDFs, the xlsx
+    export, and the grade-average KPI. Variants (base / teacher subtotal /
+    redacted) are rendered from this same payload via query-string flags on
+    the frontend. Requires: reports:read.
     """
     service = ReportService(db)
-    return await service.build_question_summary_matrix(item_id)
+    return await service.build_question_summary_matrix_points(item_id)
 
 
 @router.get(

@@ -82,24 +82,29 @@ async def test_qsr_export_xlsx_partial_credit_ssrs_parity(
 ) -> None:
     """The QSR .xlsx mirrors the legacy SSRS partial-credit layout exactly.
 
-    Distinct from the on-screen count-of-green model: cells carry fractional
-    ``points_received``, "# Correct Answers" sums points, and every Score% is
-    SUM(received)/SUM(possible). The legacy Chapter 9 Test 8359960427 grand
-    totals are 318 / 486 / 65.4%.
+    Cells carry fractional ``points_received``, "# Correct Answers" sums
+    points, and every Score% is SUM(received)/SUM(possible). The legacy
+    Chapter 9 Test 8359960427 grand totals are 318 / 486 / 65.4%.
 
-    The leaf question_no ordering equals the count-based JSON payload (same
-    cube query + sort), so we anchor the column model on that payload while
-    asserting the partial-credit values come straight from the workbook.
+    The web/JSON QSR endpoint now serves the SAME partial-credit payload as
+    the xlsx (single source of truth), so we anchor the leaf-column order on
+    that payload while asserting the values come straight from the workbook.
     """
     j = await admin_client.get(
         f"/api/v1/reports/question-summary-paginated/{_CHAPTER9}"
     )
     if j.status_code == 404:
         pytest.skip("Chapter 9 fixture item missing")
-    from app.schemas.reports import QuestionSummaryMatrixPayload
+    from app.schemas.reports import QuestionSummaryPointsPayload
 
-    count_payload = QuestionSummaryMatrixPayload.model_validate(j.json())
+    count_payload = QuestionSummaryPointsPayload.model_validate(j.json())
     question_nos = [q.question_no for q in count_payload.questions]
+
+    # The web/JSON QSR grand total is partial-credit and equals the grade-
+    # average KPI: 318 / 486 = 65.4% (NOT the old binary 308 / 63.4%).
+    assert count_payload.grand_total.correct_count == pytest.approx(318, abs=0.5)
+    assert count_payload.grand_total.possible_points == pytest.approx(486, abs=0.5)
+    assert count_payload.grand_total.score_pct == pytest.approx(318 / 486, abs=1e-3)
 
     r = await admin_client.get(
         f"/api/v1/reports/question-summary-paginated/{_CHAPTER9}/export.xlsx"

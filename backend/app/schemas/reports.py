@@ -636,60 +636,17 @@ class QsmQuestionColumn(BaseModel):
     correct_answer: str
 
 
-class QsmStudentRow(BaseModel):
-    """One per-student row inside a teacher group."""
-
-    user_uid: str
-    user_name: str
-    score_pct: float
-    # Count-based (PAG-6): possible_points = attempted-cell count,
-    # correct_count = count of fully-correct (green) cells.
-    possible_points: int
-    correct_count: int
-    cells: dict[str, int | None]
-
-
-class QsmTeacherGroup(BaseModel):
-    section_instructor: str
-    teacher_score_pct: float
-    students: List[QsmStudentRow]
-
-
-class QsmGrandTotal(BaseModel):
-    # Count-based (PAG-6): possible_points / correct_count are cell counts,
-    # not summed points; per_question_* mirror the legacy footer rows.
-    possible_points: int
-    correct_count: int
-    score_pct: float
-    per_question_possible: dict[str, int]
-    per_question_correct: dict[str, int]
-    per_question_pct: dict[str, float]
-
-
-class QuestionSummaryMatrixPayload(BaseModel):
-    """Per-(student × question) matrix for the QSR paginated family
-    (PBIX ord 6 / 7 / 16). The three rendering variants — base, teacher
-    subtotal, header highlights — all consume this same payload; the
-    differences are purely client-side.
-    """
-
-    assessment: AssessmentMeta
-    kpis: PaginatedKpis
-    questions: List[QsmQuestionColumn]
-    teacher_groups: List[QsmTeacherGroup]
-    grand_total: QsmGrandTotal
-
-
-# ── QSR partial-credit model (xlsx / SSRS parity) ────────────────────────────
+# ── QSR partial-credit model (web JSON + xlsx / SSRS parity) ─────────────────
 # The legacy SSRS QSR .xlsx AND the color/teacher PDFs both render *partial
 # credit*: each (student × question) cell carries ``points_received`` (which
 # may be fractional, e.g. 0.5 / 0.25 / 0.33), "Possible Points" is
 # SUM(points_possible), "# Correct Answers" is SUM(points_received), and every
 # Score% is SUM(received)/SUM(possible). This is verified cell-for-cell against
-# both legacy artifacts for Chapter 9 Test 8359960427 (grand 318 / 486 = 65.4%)
-# and Central FL Prep 8244629174 (grand 255.55 correct). The on-screen / JSON
-# ``QuestionSummaryMatrixPayload`` instead uses a count-of-green binary model
-# (PAG-6) — these payloads intentionally diverge; only the xlsx mirrors legacy.
+# both legacy artifacts for Chapter 9 Test 8359960427 (grand 318 / 486 = 65.4%,
+# matching the grade-average KPI) and Central FL Prep 8244629174 (grand 255.55
+# correct). The web/JSON QSR matrix and the xlsx export BOTH consume this single
+# partial-credit payload (``QuestionSummaryPointsPayload``) so they cannot
+# diverge. The legacy binary count-of-green model is retired.
 
 
 class QspStandardBand(BaseModel):
@@ -717,6 +674,12 @@ class QspTeacherGroup(BaseModel):
     section_instructor: str
     teacher_score_pct: float
     students: List[QspStudentRow]
+    # Per-leaf-question teacher subtotals, used by the web "- Teacher" subtotal
+    # block (PBIX ord 7). Partial-credit: correct = SUM(points_received),
+    # possible = SUM(points_possible), pct = correct/possible.
+    per_question_correct: dict[str, float] = {}
+    per_question_possible: dict[str, float] = {}
+    per_question_pct: dict[str, float] = {}
 
 
 class QspGrandTotal(BaseModel):
@@ -735,14 +698,18 @@ class QspGrandTotal(BaseModel):
 
 
 class QuestionSummaryPointsPayload(BaseModel):
-    """Partial-credit QSR matrix consumed ONLY by the xlsx export.
+    """Partial-credit QSR matrix — single source of truth for the web/JSON
+    matrix AND the xlsx export.
 
     Mirrors the legacy SSRS .xlsx exactly: fractional cells, per-band Score%
-    sub-columns, summed-points totals. The web/JSON surfaces keep the
-    count-based :class:`QuestionSummaryMatrixPayload`.
+    sub-columns, summed-points totals. ``kpis`` is populated for the web/JSON
+    surface (the xlsx ignores it); the QSR page itself omits the KPI strip
+    (PAG-3) but the field keeps the payload aligned with the other paginated
+    reports and available to future consumers.
     """
 
     assessment: AssessmentMeta
+    kpis: Optional[PaginatedKpis] = None
     questions: List[QsmQuestionColumn]
     bands: List[QspStandardBand]
     teacher_groups: List[QspTeacherGroup]

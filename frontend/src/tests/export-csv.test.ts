@@ -271,7 +271,11 @@ describe('QRA-by-standard-teacher flattener (nested groups)', () => {
   });
 });
 
-describe('QSR matrix flattener (wide binary + subtotal + grand total)', () => {
+describe('QSR matrix flattener (partial-credit points + subtotal + grand total)', () => {
+  // Partial credit: cells carry points_received (may be fractional). Alice has
+  // q1=1, q2=0.5 (half credit) → 1.5/2 = 75%; Bob has q1=1, q2 not attempted
+  // → 1/1 = 100%. Per-question Score% = SUM(received)/SUM(possible): q1 = 2/2 =
+  // 100%, q2 = 0.5/1 = 50%.
   const payload = {
     questions: [
       { question_id: 'q1', question_no: '1' },
@@ -280,41 +284,52 @@ describe('QSR matrix flattener (wide binary + subtotal + grand total)', () => {
     teacher_groups: [
       {
         section_instructor: 'Ms. Lee',
-        teacher_score_pct: 0.75,
+        teacher_score_pct: 0.833333,
         students: [
           {
             user_uid: 'u1',
             user_name: 'Alice',
-            score_pct: 0.5,
-            cells: { q1: 1, q2: 0 },
+            score_pct: 0.75,
+            cells: { q1: 1, q2: 0.5 },
+            band_pct: {},
           },
           {
             user_uid: 'u2',
             user_name: 'Bob',
             score_pct: 1,
             cells: { q1: 1, q2: null },
+            band_pct: {},
           },
         ],
+        per_question_correct: { q1: 2, q2: 0.5 },
+        per_question_possible: { q1: 2, q2: 1 },
+        per_question_pct: { q1: 1, q2: 0.5 },
       },
     ],
     grand_total: {
-      score_pct: 0.75,
-      per_question_pct: { q1: 1, q2: 0 },
+      score_pct: 0.833333,
+      per_question_pct: { q1: 1, q2: 0.5 },
     },
   } as unknown as QuestionSummaryMatrixPayload;
 
-  it('renders student rows with binary cells and labeled subtotal/grand rows', () => {
+  it('renders student rows with partial-credit point cells and labeled subtotal/grand rows', () => {
     const rows = parse(reportToCsv('qsr', payload));
     expect(rows[0]).toEqual(['Student', '1', '2', 'Total %']);
     expect(rows[1][0]).toBe('Teacher: Ms. Lee');
-    expect(rows[2]).toEqual(['Alice', '1', '0', '50.0%']);
+    // Fractional credit renders as the points value (0.5), not a binary 0/1.
+    expect(rows[2]).toEqual(['Alice', '1', '0.5', '75.0%']);
     // null cell renders blank, not 0.
     expect(rows[3]).toEqual(['Bob', '1', '', '100.0%']);
     expect(rows[4][0]).toBe('Subtotal: Ms. Lee');
-    expect(rows[4][3]).toBe('75.0%');
+    // Per-question Score% in the subtotal: q1 100%, q2 50%.
+    expect(rows[4][1]).toBe('100.0%');
+    expect(rows[4][2]).toBe('50.0%');
+    expect(rows[4][3]).toBe('83.3%');
     const last = rows[rows.length - 1];
     expect(last[0]).toBe('Grand Total');
-    expect(last[3]).toBe('75.0%');
+    expect(last[1]).toBe('100.0%');
+    expect(last[2]).toBe('50.0%');
+    expect(last[3]).toBe('83.3%');
   });
 });
 

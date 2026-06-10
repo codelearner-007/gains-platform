@@ -60,6 +60,18 @@ export function qsrPerformanceColor(grade: number): string {
   return QSR_GREEN;
 }
 
+/**
+ * Partial-credit QSR leaf-cell fill. A cell carries `points_received` (may be
+ * fractional); the legacy SSRS / xlsx colors it green at >=0.5 received, pink
+ * below (matches `_qsr_cell_fill` in report_export_service.py). `null`
+ * (not attempted) gets no fill. Two-band ONLY — distinct from the three-band
+ * Score% fill above; do NOT collapse the two.
+ */
+export function qsrCellColor(received: number | null): string | undefined {
+  if (received === null) return undefined;
+  return received >= 0.5 ? QSR_GREEN : QSR_PINK;
+}
+
 // ── Status icon hexes (used inside cells for the Check / X marks) ───────────
 // Tailwind `green-700` and `red-700` from the project palette, hard-coded so
 // the icons stay legible on the green/pink traffic-light cell backgrounds.

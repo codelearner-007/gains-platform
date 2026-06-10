@@ -47,17 +47,13 @@ from app.schemas.reports import (
     QraStandardGroup,
     QraStandardTeacherGroup,
     QraTeacherGroup,
-    QsmGrandTotal,
     QsmQuestionColumn,
-    QsmStudentRow,
-    QsmTeacherGroup,
     QuestionOverall,
     QspGrandTotal,
     QspStandardBand,
     QspStudentRow,
     QspTeacherGroup,
     QuestionResponseAnalysisPayload,
-    QuestionSummaryMatrixPayload,
     QuestionSummaryPointsPayload,
     SddBandStandardRow,
     SddKpis,
@@ -1368,150 +1364,20 @@ class ReportService:
             grade_average_pct=_format_pct(canon["grade_average"]),
         )
 
-    async def build_question_summary_matrix(
-        self, item_id: str
-    ) -> QuestionSummaryMatrixPayload:
-        meta_row = await self.cube.get_assessment_meta(item_id)
-        if not meta_row:
-            raise ResourceNotFoundError("Assessment", item_id)
-
-        assessment = self._build_assessment_meta(
-            meta_row, meta_row.get("first_access"), meta_row.get("latest_attempt")
-        )
-        kpis = await self._build_paginated_kpis(item_id)
-
-        rows = await self.cube.get_question_summary_matrix_rows(item_id)
-
-        # ── Question columns (deduplicated, sorted by cpalms then question_no)
-        questions_by_id: dict[str, QsmQuestionColumn] = {}
-        for r in rows:
-            qid = safe_str(r.get("question_id"))
-            if qid and qid not in questions_by_id:
-                questions_by_id[qid] = QsmQuestionColumn(
-                    question_id=qid,
-                    question_no=safe_str(r.get("question_no")),
-                    sorting_question_no=to_int(r.get("sorting_question_no")),
-                    standard=safe_str(r.get("schoology_standard")),
-                    cpalms_standard=safe_str(r.get("cpalms_standard"))
-                    or safe_str(r.get("schoology_standard")),
-                    position_number=safe_str(r.get("position_number")),
-                    correct_answer=safe_str(r.get("correct_answer")),
-                )
-        questions = sorted(
-            questions_by_id.values(),
-            key=lambda q: (q.cpalms_standard or "~", q.sorting_question_no or 0),
-        )
-
-        # ── Per-(teacher, student) accumulation ────────────────────────────
-        # Legacy QSR semantics (PAG-6): "# Correct Answers" is the COUNT of
-        # fully-correct cells (the green 1-cells), NOT a sum of points_received.
-        # A partial-credit / multi-select answer (0 < received < possible) is
-        # rendered as a 0-cell and therefore is NOT counted as correct.
-        # "Possible Points" is the count of attempted cells, and Score% is
-        # correct-cells / attempted-cells at every grain — this reproduces the
-        # legacy SSRS PDFs exactly (e.g. grand total 953 correct / 1166 = 82%).
-        teacher_students: dict[str, dict[str, dict[str, Any]]] = {}
-        per_q_possible: dict[str, int] = {}
-        per_q_correct: dict[str, int] = {}
-
-        for r in rows:
-            teacher = safe_str(r.get("section_instructors")) or "Unassigned"
-            user_uid = safe_str(r.get("user_uid"))
-            user_name = safe_str(r.get("user_name"))
-            qid = safe_str(r.get("question_id"))
-            pr = to_float(r.get("points_received"))
-            pp = to_float(r.get("points_possible"))
-            cell: int | None = None
-            if pp > 0:
-                cell = 1 if pr >= pp else 0
-            student = teacher_students.setdefault(teacher, {}).setdefault(
-                user_uid,
-                {
-                    "user_uid": user_uid,
-                    "user_name": user_name,
-                    "possible": 0,
-                    "correct": 0,
-                    "cells": {},
-                },
-            )
-            if cell is not None:
-                student["possible"] += 1
-                student["correct"] += cell
-                per_q_possible[qid] = per_q_possible.get(qid, 0) + 1
-                per_q_correct[qid] = per_q_correct.get(qid, 0) + cell
-            student["cells"][qid] = cell
-
-        teacher_groups: list[QsmTeacherGroup] = []
-        total_possible = 0
-        total_correct = 0
-        for teacher in sorted(teacher_students):
-            students_list: list[QsmStudentRow] = []
-            teach_poss = 0
-            teach_corr = 0
-            for s in teacher_students[teacher].values():
-                poss = s["possible"]
-                corr = s["correct"]
-                pct = (corr / poss) if poss > 0 else 0.0
-                students_list.append(
-                    QsmStudentRow(
-                        user_uid=s["user_uid"],
-                        user_name=s["user_name"],
-                        score_pct=round(pct, 6),
-                        possible_points=poss,
-                        correct_count=corr,
-                        cells={k: v for k, v in s["cells"].items()},
-                    )
-                )
-                teach_poss += poss
-                teach_corr += corr
-            # Sort students asc by score_pct (PBIX ord 6/7 default)
-            students_list.sort(key=lambda x: x.score_pct)
-            teacher_pct = (teach_corr / teach_poss) if teach_poss > 0 else 0.0
-            teacher_groups.append(
-                QsmTeacherGroup(
-                    section_instructor=teacher,
-                    teacher_score_pct=round(teacher_pct, 6),
-                    students=students_list,
-                )
-            )
-            total_possible += teach_poss
-            total_correct += teach_corr
-
-        grand_pct = (total_correct / total_possible) if total_possible > 0 else 0.0
-        grand_total = QsmGrandTotal(
-            possible_points=total_possible,
-            correct_count=total_correct,
-            score_pct=round(grand_pct, 6),
-            per_question_possible=dict(per_q_possible),
-            per_question_correct=dict(per_q_correct),
-            per_question_pct={
-                k: round(
-                    (per_q_correct.get(k, 0) / v) if v > 0 else 0.0, 6
-                )
-                for k, v in per_q_possible.items()
-            },
-        )
-
-        return QuestionSummaryMatrixPayload(
-            assessment=assessment,
-            kpis=kpis,
-            questions=questions,
-            teacher_groups=teacher_groups,
-            grand_total=grand_total,
-        )
-
     async def build_question_summary_matrix_points(
         self, item_id: str
     ) -> QuestionSummaryPointsPayload:
-        """Partial-credit QSR matrix for the xlsx export (legacy SSRS parity).
+        """Partial-credit QSR matrix — single source of truth for the web/JSON
+        matrix AND the xlsx export (legacy SSRS parity).
 
-        Unlike :meth:`build_question_summary_matrix` (count-of-green binary,
-        PAG-6), this reproduces the legacy .xlsx / PDF exactly: each cell is
+        Reproduces the legacy .xlsx / PDF exactly: each cell is
         ``points_received`` (possibly fractional), "Possible Points" is
         SUM(points_possible), "# Correct Answers" is SUM(points_received), and
         every Score% (overall, per-band, per-question, per-teacher, grand) is
         SUM(received)/SUM(possible). Verified cell-for-cell against the legacy
-        Chapter 9 Test 8359960427 xlsx (grand 318/486 = 65.4%).
+        Chapter 9 Test 8359960427 xlsx (grand 318/486 = 65.4%, which equals the
+        grade-average KPI). Both the web endpoint and the xlsx export consume
+        this payload so they cannot diverge.
         """
         meta_row = await self.cube.get_assessment_meta(item_id)
         if not meta_row:
@@ -1519,6 +1385,7 @@ class ReportService:
         assessment = self._build_assessment_meta(
             meta_row, meta_row.get("first_access"), meta_row.get("latest_attempt")
         )
+        kpis = await self._build_paginated_kpis(item_id)
 
         rows = await self.cube.get_question_summary_matrix_rows(item_id)
 
@@ -1563,6 +1430,8 @@ class ReportService:
         per_q_recv: dict[str, float] = {}
         band_poss: dict[str, float] = {}
         band_recv: dict[str, float] = {}
+        # teacher → qid → [recv, poss], for the web "- Teacher" subtotal block.
+        teacher_q: dict[str, dict[str, list[float]]] = {}
 
         for r in rows:
             teacher = safe_str(r.get("section_instructors")) or "Unassigned"
@@ -1581,6 +1450,7 @@ class ReportService:
                     "band_poss": {},
                 },
             )
+            t_q = teacher_q.setdefault(teacher, {})
             if pp > 0:
                 student["cells"][qid] = pr
                 code = qid_band.get(qid, "Other")
@@ -1590,6 +1460,9 @@ class ReportService:
                 per_q_recv[qid] = per_q_recv.get(qid, 0.0) + pr
                 band_poss[code] = band_poss.get(code, 0.0) + pp
                 band_recv[code] = band_recv.get(code, 0.0) + pr
+                tq = t_q.setdefault(qid, [0.0, 0.0])
+                tq[0] += pr
+                tq[1] += pp
             else:
                 student["cells"].setdefault(qid, None)
 
@@ -1628,11 +1501,21 @@ class ReportService:
                 t_poss += s_poss
             # Sort students asc by overall score (PBIX ord 6/7 default).
             students_list.sort(key=lambda x: x.score_pct)
+            t_q = teacher_q.get(teacher, {})
             teacher_groups.append(
                 QspTeacherGroup(
                     section_instructor=teacher,
                     teacher_score_pct=round(t_recv / t_poss, 6) if t_poss > 0 else 0.0,
                     students=students_list,
+                    per_question_correct={
+                        qid: round(v[0], 4) for qid, v in t_q.items()
+                    },
+                    per_question_possible={
+                        qid: round(v[1], 4) for qid, v in t_q.items()
+                    },
+                    per_question_pct={
+                        qid: (_pct2(v[0], v[1]) or 0.0) for qid, v in t_q.items()
+                    },
                 )
             )
             grand_recv += t_recv
@@ -1658,6 +1541,7 @@ class ReportService:
 
         return QuestionSummaryPointsPayload(
             assessment=assessment,
+            kpis=kpis,
             questions=questions,
             bands=bands,
             teacher_groups=teacher_groups,

@@ -11,8 +11,7 @@ import {
   LAYOUT_BORDER,
   PBIX_ACCENT_LIGHT_BLUE,
   PBIX_ACCENT_NAVY,
-  QSR_GREEN,
-  QSR_PINK,
+  qsrCellColor,
   qsrPerformanceColor,
 } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
@@ -36,6 +35,15 @@ interface Props {
 
 function pct(v: number): string {
   return `${(v * 100).toFixed(0)}%`;
+}
+
+/**
+ * Format a partial-credit points value (cell, total, subtotal). Integers
+ * render bare (1, 0, 318); fractionals keep up to two decimals (0.5, 0.33).
+ */
+function pts(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '';
+  return Number.isInteger(v) ? String(v) : String(Number(v.toFixed(2)));
 }
 
 /**
@@ -225,31 +233,26 @@ export default function QuestionSummaryMatrix({
                     {pct(student.score_pct)}
                   </td>
                   {questions.map((q) => {
-                    const cell = student.cells[q.question_id];
-                    let bg = '#fff';
-                    let label = '';
-                    let aria = 'not attempted';
-                    if (cell === 1) {
-                      bg = QSR_GREEN;
-                      label = '1';
-                      aria = 'correct';
-                    } else if (cell === 0) {
-                      bg = QSR_PINK;
-                      label = '0';
-                      aria = 'incorrect';
-                    }
+                    const cell = student.cells[q.question_id] ?? null;
+                    const bg = cell === null ? '#fff' : qsrCellColor(cell);
+                    const aria =
+                      cell === null
+                        ? 'not attempted'
+                        : cell >= 0.5
+                          ? 'correct'
+                          : 'incorrect';
                     return (
                       <td
                         key={q.question_id}
                         className="border-r px-1 py-0.5 text-center font-semibold tabular-nums"
                         style={{
-                          backgroundColor: bg,
+                          backgroundColor: bg ?? '#fff',
                           color: '#000',
                           borderColor: LAYOUT_BORDER,
                         }}
                         aria-label={`${q.question_no} ${aria}`}
                       >
-                        {label || (cell === null ? '—' : '')}
+                        {cell === null ? '—' : pts(cell)}
                       </td>
                     );
                   })}
@@ -257,40 +260,37 @@ export default function QuestionSummaryMatrix({
                     className="border-r px-2 py-1 text-right tabular-nums"
                     style={{ borderColor: LAYOUT_BORDER }}
                   >
-                    {student.possible_points}
+                    {pts(student.possible_points)}
                   </td>
                   <td
                     className="px-2 py-1 text-right tabular-nums"
                     style={{ borderColor: LAYOUT_BORDER }}
                   >
-                    {student.correct_count}
+                    {pts(student.correct_count)}
                   </td>
                 </tr>
               ))}
               {showTeacherSubtotal &&
                 (() => {
                   // Legacy "- Teacher" two-row subtotal block (PBIX ord 7):
-                  // a "# Correct Answers" row (per-question correct counts) and
-                  // a "Score %" row (per-question pct, 3-band colored), both
-                  // nested inside the teacher group before the next teacher.
+                  // a "# Correct Answers" row (per-question SUM(points_received))
+                  // and a "Score %" row (per-question SUM(recv)/SUM(poss),
+                  // 3-band colored), both nested inside the teacher group before
+                  // the next teacher. Partial-credit, matching the legacy SSRS.
                   const teacherCorrect = group.students.reduce(
                     (acc, s) => acc + s.correct_count,
                     0,
                   );
                   const perQ = questions.map((q) => {
-                    let correct = 0;
-                    let attempted = 0;
-                    for (const s of group.students) {
-                      const c = s.cells[q.question_id];
-                      if (c === null || c === undefined) continue;
-                      attempted += 1;
-                      correct += c;
-                    }
+                    const possible =
+                      group.per_question_possible[q.question_id] ?? 0;
+                    const correct =
+                      group.per_question_correct[q.question_id] ?? 0;
                     return {
                       qid: q.question_id,
                       correct,
-                      attempted,
-                      pct: attempted > 0 ? correct / attempted : 0,
+                      attempted: possible,
+                      pct: group.per_question_pct[q.question_id] ?? 0,
                     };
                   });
                   return (
@@ -312,7 +312,7 @@ export default function QuestionSummaryMatrix({
                           className="border-r px-2 py-1 text-right tabular-nums"
                           style={{ borderColor: LAYOUT_BORDER }}
                         >
-                          {teacherCorrect}
+                          {pts(teacherCorrect)}
                         </td>
                         {perQ.map((p) => (
                           <td
@@ -320,7 +320,7 @@ export default function QuestionSummaryMatrix({
                             className="border-r px-1 py-0.5 text-center tabular-nums"
                             style={{ borderColor: LAYOUT_BORDER }}
                           >
-                            {p.attempted > 0 ? p.correct : '—'}
+                            {p.attempted > 0 ? pts(p.correct) : '—'}
                           </td>
                         ))}
                         <td
@@ -399,7 +399,7 @@ export default function QuestionSummaryMatrix({
               className="border-r px-2 py-1 text-right tabular-nums"
               style={{ borderColor: LAYOUT_BORDER }}
             >
-              {grandTotal.possible_points}
+              {pts(grandTotal.possible_points)}
             </td>
             {questions.map((q) => (
               <td
@@ -407,20 +407,20 @@ export default function QuestionSummaryMatrix({
                 className="border-r px-1 py-1 text-center tabular-nums"
                 style={{ borderColor: LAYOUT_BORDER }}
               >
-                {grandTotal.per_question_possible[q.question_id] ?? 0}
+                {pts(grandTotal.per_question_possible[q.question_id] ?? 0)}
               </td>
             ))}
             <td
               className="border-r px-2 py-1 text-right tabular-nums"
               style={{ borderColor: LAYOUT_BORDER }}
             >
-              {grandTotal.possible_points}
+              {pts(grandTotal.possible_points)}
             </td>
             <td
               className="px-2 py-1 text-right tabular-nums"
               style={{ borderColor: LAYOUT_BORDER }}
             >
-              {grandTotal.correct_count}
+              {pts(grandTotal.correct_count)}
             </td>
           </tr>
           <tr
@@ -441,7 +441,7 @@ export default function QuestionSummaryMatrix({
               className="border-r px-2 py-1 text-right tabular-nums"
               style={{ borderColor: LAYOUT_BORDER }}
             >
-              {grandTotal.correct_count}
+              {pts(grandTotal.correct_count)}
             </td>
             {questions.map((q) => (
               <td
@@ -449,7 +449,7 @@ export default function QuestionSummaryMatrix({
                 className="border-r px-1 py-1 text-center tabular-nums"
                 style={{ borderColor: LAYOUT_BORDER }}
               >
-                {grandTotal.per_question_correct[q.question_id] ?? 0}
+                {pts(grandTotal.per_question_correct[q.question_id] ?? 0)}
               </td>
             ))}
             <td className="border-r" style={{ borderColor: LAYOUT_BORDER }} />
