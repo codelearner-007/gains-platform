@@ -291,8 +291,12 @@ async def _record_ingested_file(
 
 # ───────────────────────────────────────────────────────────────────────────
 # INSERT helpers — one per raw_* table.
-# Use ON CONFLICT DO NOTHING on (school_id, source_file_hash, unique_key) so
-# retries within a single failed run cannot fail-loud on duplicate rows.
+# Use ON CONFLICT DO NOTHING on (school_id, source_file_hash, md5(unique_key))
+# so retries within a single failed run cannot fail-loud on duplicate rows.
+# The dedup index is on md5(unique_key) (not the raw text) because some
+# Schoology answer options embed multi-KB base64 image URIs that overflow the
+# 8191-byte B-tree limit — see migration 20260611000100. The inference clause
+# must match that expression index exactly.
 # ───────────────────────────────────────────────────────────────────────────
 
 
@@ -308,7 +312,7 @@ _RAW_SUBMISSION_SUMMARY_SQL = text(
       :schoology_id, :first_name, :last_name, :unique_id_csv, :job_title, :gradebook_grade,
       :submission_no, :submission_score, :question_label, :question_score
     )
-    ON CONFLICT (school_id, source_file_hash, unique_key) DO NOTHING
+    ON CONFLICT (school_id, source_file_hash, md5(unique_key)) DO NOTHING
     """
 )
 
@@ -335,7 +339,7 @@ _RAW_STUDENT_SUBMISSION_SQL = text(
       :answer_submission, :correct_answer, :points_received, :points_possible,
       :session, :assessment_type, :subject, :grade, :section, :file_name
     )
-    ON CONFLICT (school_id, source_file_hash, unique_key) DO NOTHING
+    ON CONFLICT (school_id, source_file_hash, md5(unique_key)) DO NOTHING
     """
 )
 
@@ -358,7 +362,7 @@ _RAW_QUESTION_DATA_SQL = text(
       :correctly_answered, :most_points_earned, :least_points_earned, :average_points_earned,
       :standards_val, :session, :assessment_type, :subject, :grade, :section, :file_name, :question_no
     )
-    ON CONFLICT (school_id, source_file_hash, unique_key) DO NOTHING
+    ON CONFLICT (school_id, source_file_hash, md5(unique_key)) DO NOTHING
     """
 )
 
@@ -511,12 +515,20 @@ async def run_ingestion(
     *,
     school_filter: str | None = None,
     blob_client: BlobClient | None = None,
+    whole_tree_root: str | None = None,
 ) -> IngestSummary:
     """Run a single ingestion pass.
 
     Args:
         school_filter: Optional short_name / schoology_building_id / name to limit to one school.
         blob_client: Override the default (env-derived) blob client. Used in tests.
+        whole_tree_root: When set, the backup is a single MIXED tree (not split
+            per-school folder). All schools' CSVs live under one root and each row
+            carries its own "User School ID"; the staging layer resolves the real
+            school per row. In that mode we make ONE pass over `whole_tree_root`
+            (not one pass per school) to avoid ingesting every file 5×, then let
+            staging distribute rows to all schools. `school_filter` then only
+            restricts which schools' rows survive staging (None = all).
 
     Returns:
         IngestSummary with totals.
@@ -556,7 +568,16 @@ async def run_ingestion(
     final_error: Exception | None = None
     try:
         async with session_scope() as session:
-            for school in schools:
+            # Whole-tree mode: the backup is one mixed tree, so we make a SINGLE
+            # raw pass over it (stamping a representative school) instead of one
+            # pass per school. Staging then resolves each row's real school from
+            # the CSV "User School ID", distributing rows to every school.
+            if whole_tree_root is not None:
+                ingest_passes = [(schools[0], whole_tree_root)]
+            else:
+                ingest_passes = [(s, _school_root_for(s)) for s in schools]
+
+            for school, school_root in ingest_passes:
                 # Per-school advisory lock — prevents concurrent ingestion of
                 # the same school from racing on UNIQUE (school_id, file_hash)
                 # in `ingested_files`. Released automatically on txn end.
@@ -572,7 +593,6 @@ async def run_ingestion(
                     )
                     continue
 
-                school_root = _school_root_for(school)
                 blobs: list[BlobInfo] = list(bc.list_files(school_root))
                 logger.info(
                     "[%s] discovered %d blob(s) under %s",

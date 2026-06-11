@@ -119,15 +119,39 @@ def _item_id_from_csv(raw_bytes: bytes, source_name: str) -> str | None:
     Each assessment folder/trio maps to exactly one Item ID. We read the first
     non-empty 'Item ID' cell. Returns None if the column is absent/empty.
     """
+    item_id, _ = _item_and_school_from_csv(raw_bytes, source_name)
+    return item_id
+
+
+def _item_and_school_from_csv(
+    raw_bytes: bytes, source_name: str
+) -> tuple[str | None, str | None]:
+    """Recover (Item ID, User School ID) from a trio member's CSV rows.
+
+    Each assessment folder/trio maps to exactly one Item ID and one school. We
+    read the first non-empty 'Item ID' / 'User School ID' cells. Either may be
+    None if the column is absent/empty (Question-Data has no User School ID).
+    """
     decoded = decode_csv_bytes(raw_bytes, source_name=source_name)
     headers, rows = read_csv_text(decoded, source_name=source_name)
-    if "Item ID" not in headers:
-        return None
+    item_id: str | None = None
+    school_id: str | None = None
+    have_item = "Item ID" in headers
+    have_school = "User School ID" in headers
+    if not have_item and not have_school:
+        return None, None
     for row in rows:
-        val = (row.get("Item ID") or "").strip()
-        if val:
-            return val
-    return None
+        if item_id is None and have_item:
+            v = (row.get("Item ID") or "").strip()
+            if v:
+                item_id = v
+        if school_id is None and have_school:
+            v = (row.get("User School ID") or "").strip()
+            if v:
+                school_id = v
+        if (item_id or not have_item) and (school_id or not have_school):
+            break
+    return item_id, school_id
 
 
 def _stable_seed(seed: int, school_root: str) -> int:
@@ -143,21 +167,25 @@ def _stable_seed(seed: int, school_root: str) -> int:
 
 class SamplingBlobClient:
     """Wraps a BlobClient and limits `list_files` to a deterministic sample of
-    N assessments (distinct Item IDs) per school.
+    N assessments (distinct Item IDs) PER SCHOOL.
 
-    Implements the BlobClient protocol so the orchestrator is unchanged. The
-    sample is computed by:
-      1. listing every blob under the school root,
-      2. grouping into trios by (folder, filename-suffix),
-      3. recovering each trio's Item ID from CSV rows (NOT folder names),
-      4. seeding random.Random with a per-school-stable seed and sampling N
-         distinct Item IDs,
-      5. returning ONLY the blobs belonging to the selected items' trios — so a
-         trio is never split.
+    Implements the BlobClient protocol so the orchestrator is unchanged. Because
+    the legacy backup is a single MIXED tree (all schools share one root and each
+    row carries its own "User School ID"), a sample taken over the whole root
+    must be partitioned by school first, then sampled N-per-school — otherwise a
+    flat "N total" sample would starve the smaller schools. The sample is:
+      1. list every blob under the (whole-tree) root,
+      2. group into trios by (folder, filename-suffix),
+      3. recover each trio's Item ID AND User School ID from its CSV rows (the
+         Student-Submissions member carries both; Item ID maps 1:1 to a school),
+      4. bucket items by school, seed random.Random with a per-school-stable seed
+         (keyed off seed + school id) and sample N distinct Item IDs per school,
+      5. return ONLY the blobs belonging to the selected items' trios — so a trio
+         is never split.
 
     `--limit-per-school 0` (or None) is handled by the caller (it just uses the
-    base client). Trios whose Item ID cannot be recovered are kept intact and
-    treated as their own (folder, suffix) sampling units so nothing is dropped.
+    base client). Trios whose Item ID/School cannot be recovered are kept intact
+    and bucketed under a sentinel school so nothing is dropped.
     """
 
     def __init__(self, base: BlobClient, *, limit: int, seed: int) -> None:
@@ -171,7 +199,8 @@ class SamplingBlobClient:
     def list_files(self, school_root: str | Path) -> Iterable[BlobInfo]:
         all_blobs: list[BlobInfo] = list(self._base.list_files(school_root))
 
-        # Group blobs into trios; collect the item-bearing member to read Item ID.
+        # Group blobs into trios; collect the item-bearing member to read Item ID
+        # + User School ID. Prefer Student-Submissions (carries BOTH columns).
         trios: dict[tuple[str, str], list[BlobInfo]] = defaultdict(list)
         item_source: dict[tuple[str, str], BlobInfo] = {}
         for blob in all_blobs:
@@ -181,50 +210,66 @@ class SamplingBlobClient:
                 key = ("__loose__", blob.path)
             trios[key].append(blob)
             fn = PurePosixPath(blob.path).name
-            if key not in item_source and any(
-                fn.startswith(p) for p in _ITEM_BEARING_PREFIXES
-            ):
+            is_student_sub = fn.startswith("Student-Submissions-")
+            is_item_bearing = any(fn.startswith(p) for p in _ITEM_BEARING_PREFIXES)
+            cur = item_source.get(key)
+            cur_is_student = cur is not None and PurePosixPath(
+                cur.path
+            ).name.startswith("Student-Submissions-")
+            # Prefer a Student-Submissions member (has User School ID); else any
+            # item-bearing member (Question-Data → Item ID only, no school).
+            if is_item_bearing and (cur is None or (is_student_sub and not cur_is_student)):
                 item_source[key] = blob
 
-        # Recover each trio's Item ID (sampling unit). Trios with no readable
-        # Item ID fall back to a unit id derived from the trio key so they are
-        # still sampleable and never split.
+        # Recover each trio's (Item ID, School ID). Trios with no readable Item ID
+        # fall back to a unit id derived from the trio key; trios with no readable
+        # School ID are bucketed under a sentinel so they are still sampleable.
         unit_for_trio: dict[tuple[str, str], str] = {}
-        for key, members in trios.items():
+        school_for_trio: dict[tuple[str, str], str] = {}
+        for key, _members in trios.items():
             src = item_source.get(key)
             item_id: str | None = None
+            school_id: str | None = None
             if src is not None:
                 try:
                     raw = self._base.download(src.path, school_root)
-                    item_id = _item_id_from_csv(raw, src.path)
+                    item_id, school_id = _item_and_school_from_csv(raw, src.path)
                 except Exception as exc:  # pragma: no cover - defensive
                     logger.warning(
-                        "sampling: could not read Item ID from %s: %s",
+                        "sampling: could not read Item ID/School from %s: %s",
                         src.path, exc,
                     )
             unit_for_trio[key] = item_id if item_id else f"__nokey__:{key[0]}|{key[1]}"
+            school_for_trio[key] = school_id if school_id else "__noschool__"
 
-        # Map each sampling unit (Item ID) → the trio keys that belong to it.
-        # In practice one item == one trio, but two folders can share an item
+        # Map (school, sampling-unit) → the trio keys that belong to it. In
+        # practice one item == one trio, but two folders can share an item
         # (e.g. Sec 1 / Sec 2 of a shared course) — keep them together.
-        units: dict[str, list[tuple[str, str]]] = defaultdict(list)
+        units: dict[tuple[str, str], list[tuple[str, str]]] = defaultdict(list)
+        units_by_school: dict[str, set[str]] = defaultdict(set)
         for key, unit in unit_for_trio.items():
-            units[unit].append(key)
+            sc = school_for_trio[key]
+            units[(sc, unit)].append(key)
+            units_by_school[sc].add(unit)
 
-        unit_ids = sorted(units.keys())
-        rng = random.Random(_stable_seed(self._seed, str(school_root)))
-        n = min(self._limit, len(unit_ids))
-        selected = set(rng.sample(unit_ids, n)) if n else set()
+        # Sample N distinct items PER SCHOOL, each with its own stable seed.
+        selected: set[tuple[str, str]] = set()
+        for sc in sorted(units_by_school.keys()):
+            unit_ids = sorted(units_by_school[sc])
+            rng = random.Random(_stable_seed(self._seed, f"{school_root}|{sc}"))
+            n = min(self._limit, len(unit_ids))
+            chosen = set(rng.sample(unit_ids, n)) if n else set()
+            for u in chosen:
+                selected.add((sc, u))
+            logger.info(
+                "sampling[school=%s]: %d assessments available, selecting %d (seed=%d)",
+                sc, len(unit_ids), len(chosen), self._seed,
+            )
 
-        logger.info(
-            "sampling[%s]: %d assessments available, selecting %d (seed=%d)",
-            school_root, len(unit_ids), len(selected), self._seed,
-        )
-
-        for unit in unit_ids:
-            if unit not in selected:
+        for skey in sorted(units.keys()):
+            if skey not in selected:
                 continue
-            for key in units[unit]:
+            for key in units[skey]:
                 yield from trios[key]
 
 
@@ -528,9 +573,17 @@ async def cmd_ingest(
 ) -> IngestSummary:
     """Run ingest for one school or ALL active schools, optionally sampled.
 
-    Because the staging join now resolves school_id from the CSV user_school_id,
-    a single mixed --data-root ingests every school correctly; --school just
-    scopes which school roots the loader walks.
+    Because the staging layer resolves each row's real school from the CSV
+    "User School ID", a single MIXED backup tree (the legacy
+    synapse/pre_landing/Schoology year-rooted tree, NOT split per-school)
+    ingests every school correctly. When `--data-root` points at such a tree
+    we make ONE raw pass over the whole root (`whole_tree_root`) rather than
+    looking for a per-`short_name` subfolder per school (which the mixed tree
+    does not have), then staging distributes rows to all schools.
+
+    Sampling, when requested, deterministically samples N assessments
+    (distinct Item IDs) over that whole tree — the school-stable seed keys off
+    the (seed, root) pair so it is reproducible.
     """
     base = make_blob_client(source=source, data_root=data_root)
     bc: BlobClient
@@ -540,7 +593,14 @@ async def cmd_ingest(
         bc = base
 
     school_filter = None if school.upper() == "ALL" else school
-    summary = await run_ingestion(school_filter=school_filter, blob_client=bc)
+    # A supplied local --data-root is the mixed legacy backup tree → whole-tree
+    # mode. With no --data-root we fall back to the per-school <repo>/data layout.
+    whole_tree_root = "." if data_root else None
+    summary = await run_ingestion(
+        school_filter=school_filter,
+        blob_client=bc,
+        whole_tree_root=whole_tree_root,
+    )
     return summary
 
 

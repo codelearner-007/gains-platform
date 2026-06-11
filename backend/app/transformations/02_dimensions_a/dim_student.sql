@@ -63,12 +63,19 @@ SET id                       = EXCLUDED.id,
     tz_name                  = EXCLUDED.tz_name,
     language                 = EXCLUDED.language;
 
--- (2) Fallback from stg_student_submission for (school_id, uid) not in stg_user
+-- (2) Fallback from stg_student_submission for (school_id, uid) not in stg_user.
+-- DISTINCT ON (school_id, user_uid) collapses to exactly ONE row per student:
+-- a plain DISTINCT over the full projection would keep multiple rows for a
+-- student whose name/username was recorded inconsistently across submissions
+-- (common once >1 school is ingested), and those rows then collide on the
+-- (school_id, uid) conflict key within a single INSERT → CardinalityViolation
+-- ("ON CONFLICT DO UPDATE command cannot affect row a second time"). The
+-- ORDER BY makes the pick deterministic (prefer the most complete name row).
 INSERT INTO dim_student (
   uid, school_id, school_id_csv,
   name_first, name_last, username, role_id
 )
-SELECT DISTINCT
+SELECT DISTINCT ON (src.school_id, src.user_uid)
   src.user_uid                 AS uid,
   src.school_id,
   src.user_school_id           AS school_id_csv,
@@ -80,6 +87,9 @@ FROM stg_student_submission src
 JOIN schools sch ON sch.school_id = src.school_id
 WHERE src.user_role_id = sch.student_role_id
   AND src.user_uid IS NOT NULL
+ORDER BY src.school_id, src.user_uid,
+         src.first_name NULLS LAST, src.last_name NULLS LAST,
+         src.username NULLS LAST, src.user_school_id NULLS LAST
 ON CONFLICT (school_id, uid) DO UPDATE
 SET school_id_csv = COALESCE(dim_student.school_id_csv, EXCLUDED.school_id_csv),
     name_first    = COALESCE(dim_student.name_first,    EXCLUDED.name_first),
