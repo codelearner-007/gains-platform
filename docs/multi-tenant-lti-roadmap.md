@@ -91,34 +91,27 @@ The load-bearing gap. Make tenant isolation *real per authenticated user*.
 
 ---
 
-## Running the demo vs. running the test suite (IMPORTANT)
+## Local data + credentials
 
-The seeded demo data and the backend test suite are **mutually exclusive on the
-shared local DB**. The transformations tests assert table-global invariants on
-the cube/dim tables (`count(dim_item) == distinct staging items`, cube
-idempotency, etc.). The synthetic seed rows live in those same tables, so with
-demo data present those ~30 transformations/RLS tests fail on inflated counts —
-this is data coexistence, **not** a code regression. On a synth-free DB every
-test that exercises this work passes.
+The synthetic demo tier (25 fabricated tenants, `gains.demo` users) has been
+retired — the platform is invite-only and the demo seeders were removed. To
+stand up a local environment, use the consolidated data toolchain (see
+`supabase/seeds/README.md`):
 
-- **To run the full suite:** clear synthetic data first —
-  `DELETE FROM schools WHERE schoology_building_id LIKE 'synth-%';` (FK cascade
-  clears its cube/dim rows), then `cd backend && ./venv/bin/python -m pytest tests/`.
-- **To restore the demo afterwards:** re-run the three seeders
-  (`seed_synthetic_schools.py --schools 25 --reset`, `seed_demo_users.py`,
-  `seed_lti.py seed`).
+```
+cd supabase && npx supabase db reset                 # rbac + schools + overrides
+cd ../backend && python -m app.jobs.gains_data seed   # standards + ONE superadmin
+python -m app.jobs.gains_data ingest --school ALL --data-root <backup>
+```
+
+`gains_data seed` creates a single superadmin — default
+`m.arham@insightanalytics.net` / `!Password123` — which sees the school
+switcher across all active schools.
 
 Pre-existing failures unrelated to this work (fail on `main` too): the
 permission-message assertions in `test_permissions.py` /
 `test_rbac_endpoints_permissions.py` (error text is intentionally redacted to
 "Insufficient permissions") and the data-dependent `test_reports_sdd` case.
-
-## Demo credentials (local)
-Password for all demo users: `GainsDemo123!`
-- `super.admin@gains.demo` — super_admin, sees the switcher with all 26 schools.
-- `teacher.oakwood@gains.demo` / `student.oakwood@gains.demo` — Oakwood Middle.
-- `admin.riverside@gains.demo` — Riverside Elementary.
-- `teacher.lincoln@gains.demo` — Lincoln Elementary.
 
 LTI mock launch (proves the Schoology-style flow):
 `backend/venv/bin/python supabase/seeds/seed_lti.py launch --role teacher`

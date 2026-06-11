@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""Set up LTI registrations for demo + a runnable mock-platform launch harness.
+"""LTI 1.3 setup for the GAINS tool.
 
 Two modes:
 
-    seed        Register (a) a Schoology 1.3 template (real endpoints, placeholder
-                client_id — fill in after a real org install) and (b) a local mock
-                platform bound to a synthetic school for end-to-end testing. Also
-                generates the tool's RSA keypair.
+    seed        Register the Schoology 1.3 platform template (real endpoints,
+                placeholder client_id — the org admin fills it in after
+                installing the app in Schoology) and generate the tool's RSA
+                keypair. This is the only registration shipped by default.
 
-    launch      Run a FULL mock LTI 1.3 launch against the local backend: stand up
-                a JWKS server, drive /lti/login -> sign an id_token -> POST
-                /lti/launch, and print the final redirect. Proves the flow without
-                a real Schoology org.
+    launch      Run a FULL mock LTI 1.3 launch against the local backend to
+                prove the flow without a real Schoology org. The mock platform
+                registration + its deployment are created TRANSIENTLY at the
+                start of the run (bound to the first active school) and removed
+                afterward, so this command never depends on demo/synthetic data
+                and leaves no rows behind. Dev/test only.
 
 Usage:
     backend/venv/bin/python supabase/seeds/seed_lti.py seed
@@ -46,6 +48,8 @@ SCHOOLOGY = {
     "jwks_url": "https://lti-service.svc.schoology.com/lti-service/.well-known/jwks",
 }
 
+# Mock platform constants — used ONLY by the `launch` test harness, which
+# registers + tears these down within a single run (never persisted by `seed`).
 MOCK_ISS = "https://mock.lti/platform"
 MOCK_CLIENT = "mock-client-1"
 MOCK_DEPLOYMENT = "mock-client-1-1"
@@ -59,6 +63,7 @@ def pem(key: rsa.RSAPrivateKey) -> str:
 
 
 def cmd_seed() -> int:
+    """Register the Schoology 1.3 template (the only persistent registration)."""
     tool_key = pem(rsa.generate_private_key(public_exponent=65537, key_size=2048))
     conn = psycopg2.connect(PG)
     conn.autocommit = True
@@ -74,8 +79,21 @@ def cmd_seed() -> int:
         (SCHOOLOGY["issuer"], SCHOOLOGY["auth_login_url"],
          SCHOOLOGY["auth_token_url"], SCHOOLOGY["jwks_url"], tool_key),
     )
+    conn.close()
+    print("Seeded LTI registration:")
+    print(f"  - Schoology template ({SCHOOLOGY['issuer']}) — fill client_id post-install")
+    print("Run a mock launch (dev/test):  "
+          "backend/venv/bin/python supabase/seeds/seed_lti.py launch")
+    return 0
 
-    # Local mock platform, bound to a synthetic school for the launch harness.
+
+def _register_mock_platform(conn, tool_key: str) -> tuple[str, str]:
+    """Create a transient mock registration + deployment for the launch harness.
+
+    Bound to the FIRST active school (not a deleted synthetic one). Returns
+    (registration_id, school_id). Caller is responsible for cleanup.
+    """
+    c = conn.cursor()
     c.execute("DELETE FROM lti_registration WHERE issuer=%s", (MOCK_ISS,))
     c.execute(
         """INSERT INTO lti_registration (issuer, client_id, platform_name,
@@ -88,17 +106,23 @@ def cmd_seed() -> int:
     )
     reg_id = c.fetchone()[0]
     c.execute("SELECT school_id::text, name FROM schools "
-              "WHERE schoology_building_id='synth-005'")
-    school_id, school_name = c.fetchone()
+              "WHERE is_active = TRUE ORDER BY short_name LIMIT 1")
+    row = c.fetchone()
+    if row is None:
+        raise SystemExit("no active school to bind the mock LTI deployment to — "
+                         "run gains_data seed first")
+    school_id, school_name = row
     c.execute("INSERT INTO lti_deployment (registration_id, deployment_id, school_id) "
               "VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
               (reg_id, MOCK_DEPLOYMENT, school_id))
-    conn.close()
-    print("Seeded LTI registrations:")
-    print(f"  - Schoology template ({SCHOOLOGY['issuer']}) — fill client_id post-install")
-    print(f"  - Mock platform ({MOCK_ISS}) -> {school_name}")
-    print("Run a launch:  backend/venv/bin/python supabase/seeds/seed_lti.py launch")
-    return 0
+    print(f"  mock platform ({MOCK_ISS}) -> {school_name} (transient)")
+    return reg_id, school_id
+
+
+def _cleanup_mock_platform(conn) -> None:
+    """Remove the transient mock registration + its deployments/sessions."""
+    c = conn.cursor()
+    c.execute("DELETE FROM lti_registration WHERE issuer=%s", (MOCK_ISS,))
 
 
 def cmd_launch(role: str) -> int:
@@ -107,6 +131,12 @@ def cmd_launch(role: str) -> int:
         "student": "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner",
         "admin": "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator",
     }[role]
+
+    # Register a transient mock platform for this run (cleaned up in finally).
+    tool_key = pem(rsa.generate_private_key(public_exponent=65537, key_size=2048))
+    reg_conn = psycopg2.connect(PG)
+    reg_conn.autocommit = True
+    _register_mock_platform(reg_conn, tool_key)
 
     # platform keypair + JWKS server
     plat = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -159,6 +189,8 @@ def cmd_launch(role: str) -> int:
             return 0 if r.status_code == 302 else 1
     finally:
         srv.shutdown()
+        _cleanup_mock_platform(reg_conn)
+        reg_conn.close()
 
 
 def main() -> int:
