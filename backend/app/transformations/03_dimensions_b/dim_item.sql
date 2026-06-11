@@ -48,7 +48,9 @@ WITH ss_keys AS (
     -- order key, then cast to DATE on final SELECT.
     to_char(src.latest_attempt, 'MM/DD/YYYY') AS assessment_date_str
   FROM stg_student_submission src
-  WHERE src.user_role_id = '286170'  -- students only (notebook 924-927)
+  -- students only (notebook 924-927); per-school role via schools.student_role_id
+  JOIN schools sch ON sch.school_id = src.school_id
+  WHERE src.user_role_id = sch.student_role_id
 ),
 distinct_items AS (
   SELECT DISTINCT

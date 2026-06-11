@@ -42,7 +42,8 @@ SELECT DISTINCT ON (school_id, subject_id)
   END AS show_history_subject,
   RIGHT(src.grade, 1) AS grade_no
 FROM stg_student_submission src
-WHERE src.user_role_id    = '286170'
+JOIN schools sch ON sch.school_id = src.school_id
+WHERE src.user_role_id    = sch.student_role_id
   AND src.subject         IS NOT NULL
   AND src.assessment_type IS NOT NULL
   AND src.grade           IS NOT NULL

@@ -1,7 +1,9 @@
 """Shared utilities for CSV parsing.
 
-* BOM-aware UTF-8 reading (notebook uses ISO-8859-1 for pre-landing — but the scraper
-  writes UTF-8 with BOM, so we use utf-8-sig).
+* Encoding-tolerant reading: try utf-8-sig first (the scraper writes UTF-8 with
+  BOM), then fall back to cp1252 / latin-1 (the legacy notebook reads pre-landing
+  as ISO-8859-1; ~67% of the backup CSVs carry cp1252 bytes like 0xa0). Any file
+  that needs the fallback is LOGGED — never silently skipped.
 * Numeric/text/datetime/interval coercion with NULL-tolerance.
 * 7500-character truncation for `Question` and `Answer Submission` (notebook lines 482-488).
 * Duplicate-header disambiguation (Question-Data has "Answer Breakdown" twice and
@@ -22,6 +24,14 @@ logger = logging.getLogger("ingest_schoology.parsers")
 
 # Notebook lines 482-488 — truncate Question + Answer_Submission to 7500 chars
 QUESTION_TRUNCATE_LEN = 7500
+
+
+# Decode fallback chain. utf-8-sig handles the scraper's BOM-prefixed UTF-8; the
+# remaining codecs mirror the legacy notebook's ISO-8859-1 reads of the
+# pre-landing CSVs (cp1252 is a superset of latin-1 and decodes the Windows
+# punctuation bytes 0x80-0x9f, so it is tried first). latin-1 is a final
+# never-fails decoder (every byte 0x00-0xff maps to a code point).
+_DECODE_CHAIN = ("utf-8-sig", "cp1252", "latin-1")
 
 
 def disambiguate_headers(raw_headers: list[str]) -> list[str]:
@@ -48,17 +58,49 @@ def disambiguate_headers(raw_headers: list[str]) -> list[str]:
 def read_csv_bytes(
     data: bytes, *, source_name: str | None = None
 ) -> tuple[list[str], list[dict[str, str]]]:
-    """Read CSV bytes (utf-8 with optional BOM) and return (clean_headers, rows-as-dicts).
+    """Read CSV bytes and return (clean_headers, rows-as-dicts).
+
+    Decodes with a fallback chain (utf-8-sig -> cp1252 -> latin-1) so the
+    non-UTF-8 backup CSVs (cp1252/latin-1, e.g. byte 0xa0) are ingested instead
+    of being silently skipped by a UnicodeDecodeError. Any file that required a
+    fallback codec is logged at WARNING level (with its source name) so the
+    operator can spot-check that non-ASCII names decoded correctly.
 
     Rows shorter than the header row are padded with empty strings;
     extra cells are dropped (with a WARNING). Empty trailing lines are skipped.
 
     Args:
         data: raw CSV bytes.
-        source_name: optional file name / path to include in truncation warnings.
+        source_name: optional file name / path to include in warnings.
     """
-    text = data.decode("utf-8-sig")
+    text = decode_csv_bytes(data, source_name=source_name)
     return read_csv_text(text, source_name=source_name)
+
+
+def decode_csv_bytes(data: bytes, *, source_name: str | None = None) -> str:
+    """Decode raw CSV bytes via the utf-8-sig -> cp1252 -> latin-1 fallback chain.
+
+    Returns the decoded text. Logs a WARNING naming the codec used whenever the
+    primary utf-8-sig decode failed and a fallback was needed. latin-1 is the
+    final link and never raises, so this function always returns a string.
+    """
+    src = source_name or "<csv>"
+    last_error: UnicodeDecodeError | None = None
+    for idx, encoding in enumerate(_DECODE_CHAIN):
+        try:
+            text = data.decode(encoding)
+        except UnicodeDecodeError as e:
+            last_error = e
+            continue
+        if idx > 0:
+            logger.warning(
+                "%s: not valid utf-8-sig; decoded with fallback codec %r",
+                src, encoding,
+            )
+        return text
+    # _DECODE_CHAIN ends with latin-1, which decodes any byte sequence, so this
+    # is unreachable in practice; re-raise defensively to never silently drop.
+    raise last_error  # type: ignore[misc]
 
 
 def read_csv_text(

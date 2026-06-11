@@ -38,7 +38,8 @@ FROM (
     src.section_instructors,
     src.user_school_id AS school_id_csv
   FROM stg_student_submission src
-  WHERE src.user_role_id        = '286170'
+  JOIN schools sch ON sch.school_id = src.school_id
+  WHERE src.user_role_id        = sch.student_role_id
     AND src.section_nid         IS NOT NULL
     AND src.section_code        IS NOT NULL
     AND src.item_id             IS NOT NULL

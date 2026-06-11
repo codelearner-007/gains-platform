@@ -12,7 +12,8 @@ SELECT DISTINCT ON (school_id, grade_id)
   src.user_school_id AS school_id_csv,
   src.grade
 FROM stg_student_submission src
-WHERE src.user_role_id = '286170'
+JOIN schools sch ON sch.school_id = src.school_id
+WHERE src.user_role_id = sch.student_role_id
   AND src.grade        IS NOT NULL
 ORDER BY src.school_id, uuid_2(src.school_id::text, src.grade), src.user_school_id NULLS LAST
 ON CONFLICT (school_id, grade_id) DO UPDATE

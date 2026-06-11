@@ -49,7 +49,7 @@ enabled = true
 # Supports glob patterns relative to supabase directory: './seeds/*.sql'
 sql_paths = [
   './seeds/rbac_seed.sql',
-  './seeds/schools_athenian.sql',
+  './seeds/schools_all.sql',
   './seeds/teacher_pair_overrides.sql',
 ]
 

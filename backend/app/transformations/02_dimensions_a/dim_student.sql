@@ -33,7 +33,11 @@ SELECT
   u.primary_email, u.picture_url, u.gender, u.position, u.grad_year,
   u.username, u.password_hash, u.role_id, u.tz_offset, u.tz_name, u.language
 FROM stg_user u
-WHERE u.role_id = '286170'
+-- Per-school student role filter (schools.student_role_id; default 286170 for
+-- Athenian). Replaces the former hardcoded '286170' so each school keeps its
+-- own Student role id (Schoology assigns a different id per building).
+JOIN schools sch ON sch.school_id = u.school_id
+WHERE u.role_id = sch.student_role_id
   AND u.uid IS NOT NULL
 ON CONFLICT (school_id, uid) DO UPDATE
 SET id                       = EXCLUDED.id,
@@ -73,7 +77,8 @@ SELECT DISTINCT
   src.username,
   src.user_role_id             AS role_id
 FROM stg_student_submission src
-WHERE src.user_role_id = '286170'
+JOIN schools sch ON sch.school_id = src.school_id
+WHERE src.user_role_id = sch.student_role_id
   AND src.user_uid IS NOT NULL
 ON CONFLICT (school_id, uid) DO UPDATE
 SET school_id_csv = COALESCE(dim_student.school_id_csv, EXCLUDED.school_id_csv),

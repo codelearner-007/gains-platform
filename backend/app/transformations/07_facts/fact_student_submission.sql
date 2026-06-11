@@ -114,7 +114,9 @@ WITH base AS (
     src.points_received,
     src.points_possible
   FROM stg_student_submission src
-  WHERE src.user_role_id = '286170'
+  -- students only (notebook 1199); per-school role via schools.student_role_id
+  JOIN schools sch ON sch.school_id = src.school_id
+  WHERE src.user_role_id = sch.student_role_id
 ),
 deduped AS (
   -- Pre-INSERT dedupe (notebook lines 1185-1192). Partition columns are the

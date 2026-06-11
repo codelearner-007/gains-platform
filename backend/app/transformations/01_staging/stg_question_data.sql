@@ -47,6 +47,12 @@ SELECT
   NULLIF(TRIM(rqd.file_name), ''),
   NULLIF(TRIM(rqd.question_no), '')
 FROM raw_question_data rqd
+-- Question-Data CSVs carry NO "User School ID" column (unlike Student-Submissions),
+-- so there is no per-row CSV school key to resolve here. The ingest stamps the
+-- correct school on raw_question_data.school_id per source folder (one school per
+-- folder root), so the school is resolved directly from the stamped UUID. The
+-- sibling stg_student_submission resolves via schools.schoology_school_id from the
+-- CSV's user_school_id; both land each row under the same school.
 JOIN schools s ON s.school_id = rqd.school_id
 LEFT JOIN subject_overrides so
   ON so.school_id     = s.school_id
