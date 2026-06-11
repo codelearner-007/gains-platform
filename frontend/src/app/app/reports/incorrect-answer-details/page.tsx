@@ -109,7 +109,12 @@ export default function IncorrectAnswerDetailsPage() {
       </div>
 
       <div>
-        <StudentAttemptTable attempts={data.student_attempts} />
+        {/* Cube-only (parquet-loaded) schools return no per-student attempts
+            but still carry valid cube-derived KPIs / distractors above. */}
+        <StudentAttemptTable
+          attempts={data.student_attempts}
+          perStudentAvailable={data.student_attempts.length > 0}
+        />
       </div>
 
       <ReportAdditionalInsights>

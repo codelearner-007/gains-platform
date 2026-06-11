@@ -22,6 +22,13 @@ import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
 interface Props {
   attempts: IadStudentAttempt[];
+  /**
+   * False for cube-only (parquet-loaded) schools that have no
+   * fact_student_submission rows. The KPI strip / distractor breakdown on the
+   * rest of the page are still cube-derived, so we render an explicit note in
+   * place of the per-student table instead of an empty "no attempts" grid.
+   */
+  perStudentAvailable?: boolean;
 }
 
 type StudentSortKey =
@@ -68,7 +75,10 @@ function formatDate(iso: string): string {
   return dateFmt.format(d);
 }
 
-export default function StudentAttemptTable({ attempts }: Props) {
+export default function StudentAttemptTable({
+  attempts,
+  perStudentAvailable = true,
+}: Props) {
   // Legacy PBIX default: wrong-only (Points_Received = '0').
   const [scope, setScope] = useState<AttemptScope>('wrong');
   const wrong = useMemo(
@@ -85,6 +95,31 @@ export default function StudentAttemptTable({ attempts }: Props) {
       defaultDirection: 'asc',
       initialDirections: STUDENT_INITIAL_DIRECTIONS,
     });
+
+  // Cube-only (parquet-loaded) schools have no per-student fact rows. The KPI
+  // strip + distractor breakdown above are still cube-derived, so we show an
+  // explicit note here instead of a misleading empty per-attempt grid.
+  if (!perStudentAvailable) {
+    return (
+      <div
+        className="flex flex-col bg-white border"
+        style={{ borderColor: LAYOUT_BORDER }}
+      >
+        <div
+          className="px-3 py-1.5"
+          style={{ backgroundColor: HEADER_BAR_BG }}
+        >
+          <span className="text-[14px] font-bold text-black">
+            Per-Student Attempts
+          </span>
+        </div>
+        <p className="px-3 py-3 text-[12px]" style={{ color: EMPTY_TABLE_FG }}>
+          Per-student detail isn&rsquo;t available for this school — showing
+          assessment-level totals from the cube.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

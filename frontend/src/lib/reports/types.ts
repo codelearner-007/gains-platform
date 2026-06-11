@@ -572,6 +572,11 @@ export interface QuestionSummaryMatrixPayload {
   bands: QspStandardBand[];
   teacher_groups: QsmTeacherGroup[];
   grand_total: QsmGrandTotal;
+  // False for cube-only (parquet-loaded) schools with no fact_student_submission
+  // rows: questions / teacher_groups are empty by design but grand_total is
+  // still cube-derived. The frontend renders an explicit empty-state with the
+  // assessment-level totals instead of an all-zero per-student matrix.
+  per_student_available?: boolean;
 }
 
 export interface PaginatedQuestionRow {

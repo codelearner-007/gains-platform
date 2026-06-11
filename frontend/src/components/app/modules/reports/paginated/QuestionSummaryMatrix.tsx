@@ -8,6 +8,7 @@ import type {
   QsmTeacherGroup,
 } from '@/lib/reports/types';
 import {
+  EMPTY_TABLE_FG,
   HEADER_BAR_BG,
   LAYOUT_BORDER,
   PBIX_ACCENT_LIGHT_BLUE,
@@ -106,8 +107,12 @@ export default function QuestionSummaryMatrix({
   showTeacherSubtotal = false,
   redacted = false,
 }: Props) {
-  const { questions, teacher_groups: teacherGroups, grand_total: grandTotal } =
-    payload;
+  const {
+    questions,
+    teacher_groups: teacherGroups,
+    grand_total: grandTotal,
+    per_student_available: perStudentAvailable = true,
+  } = payload;
 
   const spans = useMemo(() => buildStandardSpans(questions), [questions]);
 
@@ -134,6 +139,115 @@ export default function QuestionSummaryMatrix({
     if (sortColumn === 'instructor') return students;
     return sortRowsBy(students, STUDENT_ACCESSORS[sortColumn], sortDirection);
   };
+
+  // Cube-only (parquet-loaded) schools carry no per-student fact rows, so the
+  // matrix body / question columns / teacher groups are empty by design. The
+  // grand_total is still cube-derived, so we render the assessment-level totals
+  // plus an explicit note instead of a misleading all-zero 0% matrix.
+  if (!perStudentAvailable) {
+    return (
+      <div
+        className="w-full bg-white border print:overflow-visible"
+        style={{ borderColor: LAYOUT_BORDER }}
+      >
+        <table className="min-w-full text-[11px] border-collapse">
+          <thead>
+            <tr>
+              <th
+                colSpan={2}
+                className="border-r border-b text-left text-white px-2 py-1"
+                style={{
+                  backgroundColor: PBIX_ACCENT_NAVY,
+                  borderColor: LAYOUT_BORDER,
+                }}
+              >
+                Assessment Total
+              </th>
+              <th
+                className="border-b text-white px-2 py-1 text-center"
+                style={{
+                  backgroundColor: PBIX_ACCENT_NAVY,
+                  borderColor: LAYOUT_BORDER,
+                }}
+              >
+                Score %
+              </th>
+            </tr>
+            <tr>
+              <th
+                scope="col"
+                className="border-r border-b text-right px-2 py-1"
+                style={{
+                  backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
+                  borderColor: LAYOUT_BORDER,
+                }}
+              >
+                Possible Points
+              </th>
+              <th
+                scope="col"
+                className="border-r border-b text-right px-2 py-1"
+                style={{
+                  backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
+                  borderColor: LAYOUT_BORDER,
+                }}
+              >
+                # Correct Answers
+              </th>
+              <th
+                scope="col"
+                className="border-b text-right px-2 py-1"
+                style={{
+                  backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
+                  borderColor: LAYOUT_BORDER,
+                }}
+              >
+                Score %
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              className="border-b font-semibold"
+              style={{
+                borderColor: LAYOUT_BORDER,
+                backgroundColor: HEADER_BAR_BG,
+              }}
+            >
+              <td
+                className="border-r px-2 py-1 text-right tabular-nums"
+                style={{ borderColor: LAYOUT_BORDER }}
+              >
+                {pts(grandTotal.possible_points)}
+              </td>
+              <td
+                className="border-r px-2 py-1 text-right tabular-nums"
+                style={{ borderColor: LAYOUT_BORDER }}
+              >
+                {pts(grandTotal.correct_count)}
+              </td>
+              <td
+                className="px-2 py-1 text-right tabular-nums"
+                style={{
+                  borderColor: LAYOUT_BORDER,
+                  backgroundColor: qsrPerformanceColor(grandTotal.score_pct),
+                }}
+              >
+                {pct(grandTotal.score_pct)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p
+          className="px-3 py-2 text-[11px]"
+          style={{ color: EMPTY_TABLE_FG }}
+        >
+          Per-student detail isn&rsquo;t available for this school — showing
+          assessment-level totals from the cube.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
