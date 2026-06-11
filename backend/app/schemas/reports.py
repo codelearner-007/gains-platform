@@ -714,6 +714,12 @@ class QuestionSummaryPointsPayload(BaseModel):
     bands: List[QspStandardBand]
     teacher_groups: List[QspTeacherGroup]
     grand_total: QspGrandTotal
+    # False for cube-only (parquet-loaded) schools that have no
+    # fact_student_submission rows: the per-student matrix body / question
+    # columns / teacher groups are empty by design and the frontend should
+    # render an explicit empty-state. The grand_total is still cube-derived
+    # so the page is not self-contradictory (KPI strip vs all-0 matrix).
+    per_student_available: bool = True
 
 
 class PaginatedQuestionRow(BaseModel):

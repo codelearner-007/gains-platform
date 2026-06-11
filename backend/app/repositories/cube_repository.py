@@ -161,10 +161,30 @@ class CubeRepository:
                 FROM per_user_q
                 GROUP BY question_id
             ),
+            -- DETERMINISTIC primary-subject pick. cube_school_summary can
+            -- carry several rows for one item (multiple subjects + exact
+            -- duplicate rows — e.g. Brightview 7566518630 has 291/192/21
+            -- twice and 91/74/7 once). A bare LIMIT 1 with no ORDER BY is
+            -- non-deterministic and total_students is especially fragile.
+            -- De-dup identical rows first, then pick the PRIMARY subject:
+            -- most students, then most questions, then highest possible /
+            -- score, with subject_id as a final stable tiebreak. A
+            -- single-row item (Athenian) is unchanged; Brightview
+            -- 7566518630 stably returns 291/192/21.
             school AS (
                 SELECT total_students, total_possible_point, total_score
-                FROM cube_school_summary
-                WHERE item_id = :item_id
+                FROM (
+                    SELECT DISTINCT
+                           subject_id, total_students, total_questions,
+                           total_possible_point, total_score
+                    FROM cube_school_summary
+                    WHERE item_id = :item_id
+                ) deduped
+                ORDER BY total_students DESC NULLS LAST,
+                         total_questions DESC NULLS LAST,
+                         total_possible_point DESC NULLS LAST,
+                         total_score DESC NULLS LAST,
+                         subject_id
                 LIMIT 1
             ),
             std AS (
@@ -189,16 +209,20 @@ class CubeRepository:
                 FROM cube_question_summary
                 WHERE item_id = :item_id
             ),
+            -- ITEM-SCOPED grade average for fact-less schools.
+            -- cube_question_summary_overall has no item_id, so the previous
+            -- subject-only filter over-aggregated when two items share a
+            -- subject (e.g. 7571884771's subject is shared by a second
+            -- item, pulling 0.659664 instead of the item's true 0.664021).
+            -- cube_question_summary IS item-scoped, so average its
+            -- per-question grade_average directly — deterministic and
+            -- correct per item.
             cube_ga AS (
                 SELECT AVG(grade_average) AS grade_average,
                        MAX(grade_average) AS grade_max,
                        MIN(grade_average) AS grade_min
-                FROM cube_question_summary_overall
-                WHERE subject_id IN (
-                    SELECT DISTINCT subject_id
-                    FROM cube_question_summary
-                    WHERE item_id = :item_id
-                )
+                FROM cube_question_summary
+                WHERE item_id = :item_id
             ),
             fact_present AS (
                 SELECT EXISTS (SELECT 1 FROM per_q) AS has_fact
@@ -1860,6 +1884,29 @@ class CubeRepository:
         )
         result = await self.session.execute(sql, {"item_id": item_id})
         return [_row_to_dict(r) for r in result.all()]
+
+    async def get_cube_grand_total_for_item(
+        self, item_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Cube-derived grand total for fact-less (parquet-loaded) schools.
+
+        When ``get_question_summary_matrix_rows`` returns no rows (no
+        ``fact_student_submission`` data), the QSR matrix has no per-student
+        body. Sum the per-question cube so the footer still shows the real
+        aggregate (== the cube-derived KPI strip) instead of 0/0/0%.
+        """
+        sql = text(
+            """
+            SELECT
+                SUM(total_possible_point) AS total_possible_point,
+                SUM(total_score)          AS total_score
+            FROM cube_question_summary
+            WHERE item_id = :item_id
+            """
+        )
+        result = await self.session.execute(sql, {"item_id": item_id})
+        row = result.first()
+        return _row_to_dict(row) if row else None
 
     async def get_qra_by_teacher_rows(
         self, item_id: str

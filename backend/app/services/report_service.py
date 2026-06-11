@@ -751,9 +751,33 @@ class ReportService:
                 )
             )
 
-        # ─── KPI strip (computed from the rolled-up data) ─────────────────
-        total_attempts = sum(d.students_count for d in distractors)
-        correct_count = sum(d.students_count for d in distractors if d.is_correct)
+        # ─── KPI strip ─────────────────────────────────────────────────────
+        # Prefer the PER-STUDENT grain (one row per student, is_correct =
+        # points_received >= points_possible at the student level) over the
+        # per-collapsed-answer distractor rows. The distractor breakdown
+        # splits multi-blank / partial-credit questions across positions, so
+        # summing its rows both inflates total_attempts (27 students × N
+        # blanks) and never marks any collapsed choice is_correct (no single
+        # choice reaches full credit) — yielding a spurious "0 correct / 0%".
+        # The per-student grain agrees with the per-student table on the same
+        # page (e.g. 19/27 correct = 70.4%).
+        #
+        # Cube-only (parquet-loaded) schools have NO per-student rows, so we
+        # fall back to the distractor-based derivation, which the audit
+        # verified renders correctly from the cube for single-answer
+        # questions (e.g. Brightview 7566518630/2074630261 = 19/22 = 86.4%).
+        if student_attempts:
+            distinct_students = {s.user_uid for s in student_attempts}
+            total_attempts = len(distinct_students)
+            correct_students = {
+                s.user_uid for s in student_attempts if s.is_correct
+            }
+            correct_count = len(correct_students)
+        else:
+            total_attempts = sum(d.students_count for d in distractors)
+            correct_count = sum(
+                d.students_count for d in distractors if d.is_correct
+            )
         incorrect_count = total_attempts - correct_count
         correct_pct = (
             correct_count / total_attempts if total_attempts > 0 else 0.0
@@ -1412,6 +1436,40 @@ class ReportService:
 
         rows = await self.cube.get_question_summary_matrix_rows(item_id)
 
+        # ── Cube-only (parquet-loaded) schools have ZERO fact rows, so the
+        # per-student matrix body is empty. Without a fallback the grand
+        # total renders 0/0/0% next to a correct cube KPI strip — a
+        # self-contradictory page. Derive the grand total from the cube
+        # (SUM per-question possible/score, == the KPI strip) and flag the
+        # per-student detail as unavailable so the frontend can show an
+        # explicit empty-state instead of zeros.
+        if not rows:
+            cube_total = await self.cube.get_cube_grand_total_for_item(item_id)
+            grand_poss = to_float((cube_total or {}).get("total_possible_point"))
+            grand_recv = to_float((cube_total or {}).get("total_score"))
+            grand_total = QspGrandTotal(
+                possible_points=round(grand_poss, 4),
+                correct_count=round(grand_recv, 4),
+                score_pct=round(grand_recv / grand_poss, 6)
+                if grand_poss > 0
+                else 0.0,
+                per_question_possible={},
+                per_question_correct={},
+                per_question_pct={},
+                band_possible={},
+                band_correct={},
+                band_pct={},
+            )
+            return QuestionSummaryPointsPayload(
+                assessment=assessment,
+                kpis=kpis,
+                questions=[],
+                bands=[],
+                teacher_groups=[],
+                grand_total=grand_total,
+                per_student_available=False,
+            )
+
         # ── Question columns (deduplicated, sorted by cpalms then question_no)
         questions_by_id: dict[str, QsmQuestionColumn] = {}
         for r in rows:
@@ -1569,6 +1627,7 @@ class ReportService:
             bands=bands,
             teacher_groups=teacher_groups,
             grand_total=grand_total,
+            per_student_available=True,
         )
 
     @staticmethod
@@ -1688,18 +1747,32 @@ class ReportService:
 
         rows = await self.cube.get_qra_by_standard_teacher_rows(item_id)
         # Group rows into (standard, teacher) nests preserving SQL order.
+        # dim_standard can map one schoology_standard to several rows (the
+        # course-prefix aliases — see
+        # docs/audit/legacy-schoology-cpalms-mapping.md), so the LEFT JOIN
+        # fans a single question out into duplicate rows under the same
+        # standard (identical grade_average, only the description differs).
+        # Dedup on question_id within each (standard, teacher) so a question
+        # renders ONCE and "# questions" / the standard average reflect the
+        # DISTINCT question set, not the fanned-out row count.
         nested: dict[str, dict[str, list[dict[str, Any]]]] = {}
+        seen_qid: dict[str, dict[str, set[str]]] = {}
         std_meta: dict[str, dict[str, Any]] = {}
         for r in rows:
             std = safe_str(r.get("cpalms_standard")) or "Unaligned"
             teacher = safe_str(r.get("section_instructors")) or "Unassigned"
+            qid = safe_str(r.get("question_id"))
+            teacher_seen = seen_qid.setdefault(std, {}).setdefault(teacher, set())
+            if qid and qid in teacher_seen:
+                continue
+            if qid:
+                teacher_seen.add(qid)
             nested.setdefault(std, {}).setdefault(teacher, []).append(r)
             if std not in std_meta:
                 std_meta[std] = {
                     "description": _strip_html(
                         safe_str(r.get("standard_description"))
                     ),
-                    "standard_avg": to_float(r.get("standard_avg")),
                 }
 
         # Iterate in SQL insertion order (dicts preserve it). The query
@@ -1709,9 +1782,14 @@ class ReportService:
         standard_groups: list[QraStandardGroup] = []
         for std in nested:
             t_groups: list[QraStandardTeacherGroup] = []
+            std_question_grades: list[float] = []
             for teacher in nested[std]:
                 qs = nested[std][teacher]
-                t_avg = to_float(qs[0].get("teacher_standard_avg")) if qs else 0.0
+                # Average over the DISTINCT per-question grade_averages now
+                # that the standard's alias fan-out is collapsed.
+                q_grades = [to_float(q.get("grade_average")) for q in qs]
+                t_avg = sum(q_grades) / len(q_grades) if q_grades else 0.0
+                std_question_grades.extend(q_grades)
                 t_groups.append(
                     QraStandardTeacherGroup(
                         section_instructor=teacher,
@@ -1722,7 +1800,11 @@ class ReportService:
                         ],
                     )
                 )
-            s_avg = std_meta[std]["standard_avg"]
+            s_avg = (
+                sum(std_question_grades) / len(std_question_grades)
+                if std_question_grades
+                else 0.0
+            )
             standard_groups.append(
                 QraStandardGroup(
                     cpalms_standard=std,
