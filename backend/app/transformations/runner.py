@@ -293,7 +293,117 @@ async def run_all(
             model_name, tag, last_rowcount,
         )
 
+    # Standard-alias augmentation: synthesize dim_standard rows for any
+    # Schoology course-prefix aliases the freshly built dim_question_data uses
+    # but the seed CSV never covered (see augment_standard_aliases.py). Must run
+    # AFTER dim_question_data exists; the cube files above join dim_standard, so
+    # re-run the cube tag when new aliases land to refresh their labels.
+    if only_tag is None or only_tag == "cubes":
+        added = await _augment_standard_aliases(session)
+        if added:
+            logger.info("transformations.alias_augment added=%d; refreshing cubes", added)
+            for relpath, tag in TRANSFORMATIONS_ORDER:
+                if tag != "cubes":
+                    continue
+                sql = (base / relpath).read_text(encoding="utf-8")
+                await _exec_statements(session, _split_sql_statements(sql))
+
     return results
+
+
+async def _augment_standard_aliases(session: AsyncSession) -> int:
+    """Insert missing Schoology-alias rows into dim_standard (idempotent).
+
+    Reuses the resolver in supabase/seeds/augment_standard_aliases.py — the
+    single source of truth for alias→base resolution — driven over the live
+    async session. Returns the number of rows inserted.
+    """
+    seeds_dir = _os.path.abspath(
+        _os.path.join(_BACKEND_DIR, "..", "supabase", "seeds")
+    )
+    if seeds_dir not in _sys.path:
+        _sys.path.insert(0, seeds_dir)
+    from augment_standard_aliases import (  # type: ignore
+        _CODE_SHAPE,
+        _COPY_COLS,
+        AliasResolver,
+        _cpalms_from_alias,
+    )
+
+    base_rows = (
+        await session.execute(
+            text(
+                "SELECT schoology_standard, subject FROM dim_standard "
+                "WHERE schoology_standard IS NOT NULL AND schoology_standard <> ''"
+            )
+        )
+    ).all()
+    codes = [r[0] for r in base_rows]
+    subject_by_code = {r[0]: r[1] for r in base_rows}
+    existing = set(codes)
+
+    missing = (
+        await session.execute(
+            text(
+                """
+                SELECT DISTINCT standard
+                FROM dim_question_data
+                WHERE standard IS NOT NULL
+                  AND standard NOT IN ('', 'null', 'Other')
+                  AND standard ~ :code_shape
+                  AND NOT EXISTS (
+                      SELECT 1 FROM dim_standard d
+                      WHERE d.schoology_standard = dim_question_data.standard
+                  )
+                ORDER BY standard
+                """
+            ),
+            {"code_shape": _CODE_SHAPE.pattern},
+        )
+    ).scalars().all()
+
+    resolver = AliasResolver(codes, subject_by_code)
+    copy_list = ", ".join(_COPY_COLS)
+    select_cols = ", ".join("b." + c for c in _COPY_COLS)
+    added = 0
+    unresolved: list[str] = []
+
+    for alias in missing:
+        if alias in existing:
+            continue
+        base_code = resolver.resolve(alias)
+        if base_code is None:
+            unresolved.append(alias)
+            continue
+        result = await session.execute(
+            text(
+                f"""
+                INSERT INTO dim_standard
+                    (uniques_id, schoology_standard, cpalms_standard, {copy_list})
+                SELECT
+                    b.identifier || '_' || :alias,
+                    :alias,
+                    :cpalms,
+                    {select_cols}
+                FROM dim_standard b
+                WHERE b.schoology_standard = :base
+                ORDER BY length(b.schoology_standard)
+                LIMIT 1
+                ON CONFLICT (uniques_id) DO NOTHING
+                """
+            ),
+            {"alias": alias, "base": base_code, "cpalms": _cpalms_from_alias(alias)},
+        )
+        added += result.rowcount or 0
+        existing.add(alias)
+
+    if unresolved:
+        logger.warning(
+            "transformations.alias_augment unresolved=%d (no base family in "
+            "dim_standard, reported not invented): %s",
+            len(unresolved), unresolved,
+        )
+    return added
 
 
 async def _exec_statements(session: AsyncSession, statements: list[str]) -> int:
