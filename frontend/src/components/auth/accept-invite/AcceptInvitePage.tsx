@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { authService } from '@/lib/services/auth.service';
+import { createSPAClient } from '@/lib/supabase/client';
 import { ResetPasswordForm } from '@/components/forms/auth/ResetPasswordForm';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, Loader2 } from 'lucide-react';
@@ -13,15 +14,16 @@ import { Button } from '@/components/ui/button';
 /**
  * Invite-acceptance page.
  *
- * Flow: the superadmin invites a user via `inviteUserByEmail`. The email links
- * to `/api/auth/confirm?type=invite&next=/auth/accept-invite`, which calls
- * `verifyOtp` server-side — that establishes the session (httpOnly cookies)
- * and redirects here. So by the time this page loads, the invited user already
- * has a session; they only need to SET a password.
+ * Flow: the superadmin invites a user via `inviteUserByEmail`. Supabase invite
+ * emails use the implicit flow — clicking the link verifies the invite and
+ * redirects here with the session in the URL HASH
+ * (`#access_token=…&refresh_token=…&type=invite`), which the server never sees.
+ * So we read those hash tokens and call `setSession` on the browser client;
+ * @supabase/ssr persists the session to the auth cookies, giving the
+ * subsequent server-side set-password call (`auth.updateUser`) a session.
  *
- * We confirm the session exists (`getCurrentUser`), then reuse the same
- * `resetPassword` machinery (`auth.updateUser({ password })`) to set it. On
- * success the user is fully logged in and lands in the app.
+ * After the session is established we reuse the `resetPassword` machinery to
+ * SET the password. On success the user is fully logged in and lands in the app.
  */
 export function AcceptInvitePage() {
   const { resetPassword, loading, error } = useAuth();
@@ -31,11 +33,40 @@ export function AcceptInvitePage() {
   const [verificationError, setVerificationError] = useState('');
   const router = useRouter();
 
-  // The session was established by /api/auth/confirm before redirecting here.
-  // Confirm it's present so we can render the set-password form.
+  // Establish the session from the invite hash tokens (implicit flow), then
+  // confirm it so we can render the set-password form.
   useEffect(() => {
-    const verifySession = async () => {
+    const acceptInvite = async () => {
       try {
+        const rawHash =
+          typeof window !== 'undefined'
+            ? window.location.hash.replace(/^#/, '')
+            : '';
+        const hashParams = new URLSearchParams(rawHash);
+
+        const linkError =
+          hashParams.get('error_description') || hashParams.get('error');
+        if (linkError) {
+          throw new Error(linkError);
+        }
+
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        if (accessToken && refreshToken) {
+          const supabase = createSPAClient();
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (sessionError) throw sessionError;
+          // Strip the tokens from the URL so they don't linger in history.
+          window.history.replaceState(
+            null,
+            '',
+            window.location.pathname + window.location.search,
+          );
+        }
+
         const me = await authService.getCurrentUser();
         setAuthFromLogin({ user: me.user, mfaRequired: !!me.requiresMFA });
         setVerifying(false);
@@ -47,7 +78,7 @@ export function AcceptInvitePage() {
       }
     };
 
-    verifySession();
+    acceptInvite();
   }, [setAuthFromLogin]);
 
   const handleSubmit = async (data: { newPassword: string; confirmPassword: string }) => {
@@ -146,7 +177,12 @@ export function AcceptInvitePage() {
           </div>
         )}
 
-        <ResetPasswordForm onSubmit={handleSubmit} loading={loading} />
+        <ResetPasswordForm
+          onSubmit={handleSubmit}
+          loading={loading}
+          submitLabel="Set password"
+          submittingLabel="Setting up your account…"
+        />
       </CardContent>
     </Card>
   );
