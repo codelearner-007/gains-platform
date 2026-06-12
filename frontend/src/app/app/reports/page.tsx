@@ -1,33 +1,41 @@
 import Link from 'next/link';
-import { ArrowUpRight, GraduationCap, LineChart, Network } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import AssessmentBrowser from '@/components/app/modules/reports/AssessmentBrowser';
 import { Separator } from '@/components/ui/separator';
+import {
+  getReportsByGroup,
+  buildHref,
+  type ReportSlug,
+} from '@/lib/reports/report-types';
 
 export const metadata = {
   // Absolute so the landing tab reads "GAINS Reports", not "Reports | GAINS Reports".
   title: { absolute: 'GAINS Reports' },
 };
 
-const PROGRAM_REPORTS = [
-  {
-    href: '/app/reports/year-to-date-performance',
-    title: 'Year To Date',
-    description: 'Longitudinal trend, grade distribution & most-improved students.',
-    icon: LineChart,
-  },
-  {
-    href: '/app/reports/standard-summary',
-    title: 'Standard Summary',
-    description: 'School-wide standards rollup, grouped by strand.',
-    icon: GraduationCap,
-  },
-  {
-    href: '/app/reports/strand-summary',
-    title: 'Strand Summary',
-    description: 'Strand rollup with treemap and per-standard drill-down.',
-    icon: Network,
-  },
-] as const;
+// One-line descriptions keyed by slug. Names + icons + routes come from the
+// report registry so the cards always match the rest of the app.
+const PROGRAM_DESCRIPTIONS: Record<ReportSlug, string> = {
+  'year-to-date-performance':
+    'Longitudinal trend, grade distribution & most-improved students.',
+  'standard-summary': 'School-wide standards rollup, grouped by strand.',
+  'strand-summary': 'Strand rollup with treemap and per-standard drill-down.',
+  // Assessment slugs are unused here but the record must be total.
+  'question-response-analysis': '',
+  'standards-deep-dive': '',
+  'question-summary-paginated': '',
+  'question-response-analysis-paginated': '',
+  'question-response-analysis-by-teacher': '',
+  'question-response-analysis-by-standard-and-teacher': '',
+  'incorrect-answer-details': '',
+};
+
+const PROGRAM_REPORTS = getReportsByGroup('program').map((report) => ({
+  href: buildHref(report.slug) as string,
+  title: report.canonicalName,
+  description: PROGRAM_DESCRIPTIONS[report.slug],
+  icon: report.icon,
+}));
 
 export default function ReportsLandingPage() {
   return (

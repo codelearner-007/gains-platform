@@ -17,6 +17,7 @@ import ReportBreadcrumb, {
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import KpiStrip from '@/components/app/modules/reports/std-summary/KpiStrip';
 import StandardCard from '@/components/app/modules/reports/std-summary/StandardCard';
 import StandardsTable from '@/components/app/modules/reports/std-summary/StandardsTable';
@@ -24,6 +25,8 @@ import StandardsBarChart from '@/components/app/modules/reports/std-summary/Stan
 import StandardsByStrandChart from '@/components/app/modules/reports/std-summary/StandardsByStrandChart';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
+
+const REPORT_NAME = getReportBySlug('standard-summary').canonicalName;
 
 export default function StandardSummaryPage() {
   const { filters, setFilters } = useSummaryFilters<StandardSummaryFilters>({
@@ -62,7 +65,7 @@ export default function StandardSummaryPage() {
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2 print:hidden">
         <div className="flex items-start justify-between gap-2">
-          <ReportBreadcrumb crumbs={programCrumbs('Standard Summary')} />
+          <ReportBreadcrumb crumbs={programCrumbs(REPORT_NAME)} />
           <ExportMenu
             kind="standard-summary"
             payload={data}
@@ -79,7 +82,7 @@ export default function StandardSummaryPage() {
       <div className="mb-2">
         <ReportPageHeader
           logoUrl={data.school.logo_url}
-          title="Standard Summary"
+          title={REPORT_NAME}
           subtitle={subtitle}
           meta={data.school.name || undefined}
         />
@@ -96,7 +99,7 @@ export default function StandardSummaryPage() {
       {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
           quality={data.data_quality}
-          reportLabel="Standard Summary"
+          reportLabel={REPORT_NAME}
           displayMode="banner"
         />
       )}

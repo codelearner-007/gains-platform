@@ -14,9 +14,15 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/PaginatedKpiStrip';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraByStandardTeacherTable from '@/components/app/modules/reports/paginated/QraByStandardTeacherTable';
+import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
+
+const REPORT_NAME = getReportBySlug(
+  'question-response-analysis-by-standard-and-teacher',
+).canonicalName;
 
 export default function QraByStandardTeacherPage() {
   const router = useRouter();
@@ -52,27 +58,30 @@ export default function QraByStandardTeacherPage() {
 
   return (
     <ReportCanvas>
-      <div className="mb-3 flex items-start justify-between gap-2 print:hidden">
-        <ReportBreadcrumb
-          crumbs={assessmentCrumbs({
-            label: data.assessment.item_name || data.assessment.item_id,
-          })}
-        />
-        <ExportMenu
-          kind="qra-by-standard-teacher"
-          payload={data}
-          name={data.assessment.item_name}
-          xlsxUrl={buildXlsxUrl('qra-by-standard-teacher', {
-            itemId,
-            schoolId: schoolId ?? undefined,
-          })}
-        />
+      <div className="mb-3 flex flex-col gap-2 print:hidden">
+        <div className="flex items-start justify-between gap-2">
+          <ReportBreadcrumb
+            crumbs={assessmentCrumbs({
+              label: data.assessment.item_name || data.assessment.item_id,
+            })}
+          />
+          <ExportMenu
+            kind="qra-by-standard-teacher"
+            payload={data}
+            name={data.assessment.item_name}
+            xlsxUrl={buildXlsxUrl('qra-by-standard-teacher', {
+              itemId,
+              schoolId: schoolId ?? undefined,
+            })}
+          />
+        </div>
+        <ReportTypeSwitcher group="assessment" itemId={itemId} />
       </div>
 
       <div className="mb-2">
         <PaginatedReportHeader
           assessment={data.assessment}
-          title="Question Response Analysis"
+          title={REPORT_NAME}
           subtitle="By Standard and by Classroom Instructor"
         />
       </div>

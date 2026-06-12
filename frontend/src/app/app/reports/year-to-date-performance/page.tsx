@@ -24,9 +24,11 @@ import PaginatedFooter from '@/components/app/modules/reports/paginated/Paginate
 import YtdLongitudinalMatrix, {
   type YtdVariant,
 } from '@/components/app/modules/reports/paginated/YtdLongitudinalMatrix';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import { LAYOUT_BORDER } from '@/lib/reports/colors';
 
 const BASE_PATH = '/app/reports/year-to-date-performance';
+const REPORT_NAME = getReportBySlug('year-to-date-performance').canonicalName;
 
 // Legacy YTD Longitudinal variants (PBIX ord 8/9/10). Same matrix payload;
 // only the rendered columns differ — see YtdLongitudinalMatrix.
@@ -59,9 +61,7 @@ export default function YearToDatePerformancePage() {
     <ReportCanvas>
       <div className="mb-3 flex flex-col gap-2 print:hidden">
         <div className="flex items-start justify-between gap-2">
-          <ReportBreadcrumb
-            crumbs={programCrumbs('Year To Date - Longitudinal Report')}
-          />
+          <ReportBreadcrumb crumbs={programCrumbs(REPORT_NAME)} />
           <ExportMenu
             kind="ytd"
             payload={data}

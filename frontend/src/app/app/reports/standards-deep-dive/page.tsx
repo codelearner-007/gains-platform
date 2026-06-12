@@ -24,7 +24,10 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 import { useReportFilters } from '@/lib/reports/filters';
 import { deriveSdd } from '@/lib/reports/filter-helpers';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
+
+const REPORT_NAME = getReportBySlug('standards-deep-dive').canonicalName;
 
 /**
  * Standards Deep Dive interactive — layout mirrors the legacy PBIX page #16
@@ -96,7 +99,7 @@ export default function StandardsDeepDivePage() {
       <div className="mb-2">
         <AssessmentReportHeader
           assessment={data.assessment}
-          title="Standards Deep Dive interactive"
+          title={REPORT_NAME}
         />
       </div>
 
@@ -117,7 +120,7 @@ export default function StandardsDeepDivePage() {
       {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
           quality={data.data_quality}
-          reportLabel="Standards Deep Dive interactive"
+          reportLabel={REPORT_NAME}
           displayMode="banner"
         />
       )}

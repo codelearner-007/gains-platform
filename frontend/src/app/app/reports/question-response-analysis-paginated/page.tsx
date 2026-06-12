@@ -16,7 +16,12 @@ import QraPaginatedTable from '@/components/app/modules/reports/paginated/QraPag
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
+
+const REPORT_NAME = getReportBySlug(
+  'question-response-analysis-paginated',
+).canonicalName;
 
 export default function QraPaginatedPage() {
   const router = useRouter();
@@ -74,7 +79,7 @@ export default function QraPaginatedPage() {
       <div className="mb-2">
         <PaginatedReportHeader
           assessment={data.assessment}
-          title="Question Response Analysis"
+          title={REPORT_NAME}
           showInstructorLine
         />
       </div>

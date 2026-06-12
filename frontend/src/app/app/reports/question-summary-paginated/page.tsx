@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
@@ -15,9 +14,13 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QuestionSummaryMatrix from '@/components/app/modules/reports/paginated/QuestionSummaryMatrix';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ReportVariantTabs from '@/components/app/modules/reports/shared/ReportVariantTabs';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
+
+const QSR_NAME = getReportBySlug('question-summary-paginated').canonicalName;
 
 // Legacy QSR paginated variants (PAG-4 / PAG-5, Decision 5):
 //   • base     — PBIX ord 6 "Question Summary Report"
@@ -26,12 +29,6 @@ import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 // The invented "Header Highlights" variant is dropped, and the broken-in-legacy
 // "Teacher Subtotal" report (ord 16) is intentionally NOT mirrored.
 type Variant = 'base' | 'teacher' | 'redacted';
-
-const VARIANT_LABEL: Record<Variant, string> = {
-  base: 'Question Summary Report',
-  teacher: 'Question Summary Report',
-  redacted: 'Question Summary Report',
-};
 
 function parseVariant(raw: string | null): Variant {
   if (raw === 'teacher' || raw === 'redacted') return raw;
@@ -91,14 +88,22 @@ export default function QuestionSummaryPaginatedPage() {
           />
         </div>
         <ReportTypeSwitcher group="assessment" itemId={itemId} />
-        <VariantTabs itemId={itemId} active={variant} />
+        <ReportVariantTabs
+          pathname="/app/reports/question-summary-paginated"
+          baseQuery={{ item_id: itemId }}
+          options={[
+            { value: 'base', label: 'Base' },
+            { value: 'teacher', label: 'Teacher' },
+            { value: 'redacted', label: 'Redacted' },
+          ]}
+          active={variant}
+          defaultValue="base"
+          ariaLabel="Question Summary Report variant"
+        />
       </div>
 
       <div className="mb-2">
-        <PaginatedReportHeader
-          assessment={data.assessment}
-          title={VARIANT_LABEL[variant]}
-        />
+        <PaginatedReportHeader assessment={data.assessment} title={QSR_NAME} />
       </div>
 
       {/* PAG-3: legacy QSR has no KPI strip — intentionally omitted. */}
@@ -111,46 +116,5 @@ export default function QuestionSummaryPaginatedPage() {
 
       <PaginatedFooter />
     </ReportCanvas>
-  );
-}
-
-function VariantTabs({
-  itemId,
-  active,
-}: {
-  itemId: string;
-  active: Variant;
-}) {
-  const variants: { slug: Variant; label: string }[] = [
-    { slug: 'base', label: 'Base' },
-    { slug: 'teacher', label: 'Teacher' },
-    { slug: 'redacted', label: 'Redacted' },
-  ];
-  return (
-    <div role="tablist" className="flex gap-1 rounded-md bg-muted/50 p-1 w-fit">
-      {variants.map((v) => {
-        const query: Record<string, string> = { item_id: itemId };
-        if (v.slug !== 'base') query.variant = v.slug;
-        return (
-          <Link
-            key={v.slug}
-            href={{
-              pathname: '/app/reports/question-summary-paginated',
-              query,
-            }}
-            scroll={false}
-            role="tab"
-            aria-selected={active === v.slug}
-            className={`px-3 py-1.5 text-sm rounded transition-colors ${
-              active === v.slug
-                ? 'bg-card text-primary shadow-sm font-medium'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-            }`}
-          >
-            {v.label}
-          </Link>
-        );
-      })}
-    </div>
   );
 }

@@ -11,6 +11,7 @@ import ReportBreadcrumb, {
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import LoadingState from '@/components/app/modules/reports/shared/LoadingState';
 import ErrorState from '@/components/app/modules/reports/shared/ErrorState';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
@@ -22,6 +23,8 @@ import DistractorChart from '@/components/app/modules/reports/iad/DistractorChar
 import StudentAttemptTable from '@/components/app/modules/reports/iad/StudentAttemptTable';
 import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
+
+const REPORT_NAME = getReportBySlug('incorrect-answer-details').canonicalName;
 
 export default function IncorrectAnswerDetailsPage() {
   const router = useRouter();
@@ -91,7 +94,7 @@ export default function IncorrectAnswerDetailsPage() {
       <div className="mb-2">
         <AssessmentReportHeader
           assessment={data.assessment}
-          title="Incorrect Answer Details"
+          title={REPORT_NAME}
         />
       </div>
 

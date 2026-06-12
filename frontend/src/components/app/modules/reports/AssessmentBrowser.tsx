@@ -7,19 +7,16 @@ import {
   BookOpen,
   CalendarDays,
   ChevronDown,
-  FileBarChart,
-  FileText,
   GraduationCap,
-  Grid3x3,
-  Layers,
   ListChecks,
-  Users,
-  UsersRound,
-  type LucideIcon,
 } from 'lucide-react';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import type { AssessmentFilters, AssessmentListRow } from '@/lib/reports/types';
+import {
+  getReportsByGroup,
+  buildHref,
+} from '@/lib/reports/report-types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -36,56 +33,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const PAGE_SIZE = 12;
 
-const ROW_ACTIONS: Array<{
-  pathname: string;
-  label: string;
-  fullLabel: string;
-  ariaPrefix: string;
-  icon: LucideIcon;
-}> = [
-  {
-    pathname: '/app/reports/question-response-analysis',
-    label: 'QRA',
-    fullLabel: 'Question Response Analysis',
-    ariaPrefix: 'Open Question Response Analysis Interactive for',
-    icon: FileBarChart,
-  },
-  {
-    pathname: '/app/reports/standards-deep-dive',
-    label: 'SDD',
-    fullLabel: 'Standards Deep Dive',
-    ariaPrefix: 'Open Standards Deep Dive interactive for',
-    icon: Layers,
-  },
-  {
-    pathname: '/app/reports/question-summary-paginated',
-    label: 'QSR',
-    fullLabel: 'Question Summary',
-    ariaPrefix: 'Open Question Summary Report for',
-    icon: Grid3x3,
-  },
-  {
-    pathname: '/app/reports/question-response-analysis-paginated',
-    label: 'QRA·P',
-    fullLabel: 'QRA — Paginated',
-    ariaPrefix: 'Open Question Response Analysis paginated for',
-    icon: FileText,
-  },
-  {
-    pathname: '/app/reports/question-response-analysis-by-teacher',
-    label: 'QRA·T',
-    fullLabel: 'QRA — by Teacher',
-    ariaPrefix: 'Open Question Response Analysis by Teacher for',
-    icon: Users,
-  },
-  {
-    pathname: '/app/reports/question-response-analysis-by-standard-and-teacher',
-    label: 'QRA·S·T',
-    fullLabel: 'QRA — by Standard & Teacher',
-    ariaPrefix: 'Open Question Response Analysis by Standard and Teacher for',
-    icon: UsersRound,
-  },
-];
+// Launch actions come straight from the report registry so this menu and the
+// in-report switcher can never disagree. The IAD drill-through is excluded:
+// it is only reachable from a specific question, not a whole assessment.
+const ROW_ACTIONS = getReportsByGroup('assessment').filter(
+  (r) => r.kind !== 'drilldown',
+);
 
 function distinctCount(rows: AssessmentListRow[], key: keyof AssessmentListRow) {
   return new Set(rows.map((r) => r[key]).filter(Boolean)).size;
@@ -248,20 +201,17 @@ function AssessmentRow({ row }: { row: AssessmentListRow }) {
           <DropdownMenuLabel className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Report type
           </DropdownMenuLabel>
-          {ROW_ACTIONS.map((action) => {
-            const Icon = action.icon;
+          {ROW_ACTIONS.map((report) => {
+            const Icon = report.icon;
             return (
-              <DropdownMenuItem key={action.pathname} asChild>
+              <DropdownMenuItem key={report.slug} asChild>
                 <Link
-                  href={{ pathname: action.pathname, query: { item_id: row.item_id } }}
-                  aria-label={`${action.ariaPrefix} ${name}`}
+                  href={buildHref(report.slug, { item_id: row.item_id })}
+                  aria-label={`Open ${report.canonicalName} for ${name}`}
                   className="cursor-pointer"
                 >
                   <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1 truncate">{action.fullLabel}</span>
-                  <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
-                    {action.label}
-                  </span>
+                  <span className="flex-1 truncate">{report.canonicalName}</span>
                 </Link>
               </DropdownMenuItem>
             );

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { getReportBySlug } from '@/lib/reports/report-types';
 
 export const metadata: Metadata = {
-  title: 'Year To Date - Longitudinal Report',
+  title: getReportBySlug('year-to-date-performance').canonicalName,
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -26,7 +26,10 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 import { useReportFilters } from '@/lib/reports/filters';
 import { deriveQra } from '@/lib/reports/filter-helpers';
+import { getReportBySlug } from '@/lib/reports/report-types';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
+
+const REPORT_NAME = getReportBySlug('question-response-analysis').canonicalName;
 
 export default function QuestionResponseAnalysisPage() {
   const router = useRouter();
@@ -118,7 +121,7 @@ export default function QuestionResponseAnalysisPage() {
       <div className="mb-2">
         <AssessmentReportHeader
           assessment={data.assessment}
-          title="Question Response Analysis Interactive"
+          title={REPORT_NAME}
         />
       </div>
 
@@ -151,7 +154,7 @@ export default function QuestionResponseAnalysisPage() {
       {data.data_quality?.alignment_status === 'missing' && (
         <AlignmentEmptyState
           quality={data.data_quality}
-          reportLabel="Question Response Analysis Interactive"
+          reportLabel={REPORT_NAME}
           displayMode="banner"
         />
       )}
