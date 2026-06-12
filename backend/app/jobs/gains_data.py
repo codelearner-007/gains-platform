@@ -16,8 +16,10 @@ Subcommands
 
     seed    [--superadmin-email …] [--superadmin-password …]
         Idempotent base bootstrap: ensure schools_all + standards + rbac present
-        and create exactly ONE superadmin (default m.arham@insightanalytics.net /
-        !Password123). GoTrue-safe; super_admin role assigned by name lookup.
+        and create exactly ONE superadmin. Credentials resolve from
+        $GAINS_SUPERADMIN_EMAIL / $GAINS_SUPERADMIN_PASSWORD (or the explicit
+        flags); a DEV fallback is used with a WARNING when unset — PRODUCTION
+        MUST set the env vars. GoTrue-safe; super_admin role by name lookup.
 
     ingest  [--school SHORT|ALL] [--data-root PATH] [--source local|azure]
             [--limit-per-school N] [--seed S]
@@ -71,8 +73,37 @@ from app.jobs.parsers.common import decode_csv_bytes, read_csv_text
 
 logger = logging.getLogger("gains_data")
 
-DEFAULT_SUPERADMIN_EMAIL = "m.arham@insightanalytics.net"
-DEFAULT_SUPERADMIN_PASSWORD = "!Password123"  # noqa: S105 - dev bootstrap default
+# DEV-ONLY bootstrap fallbacks. Production MUST set GAINS_SUPERADMIN_EMAIL and
+# GAINS_SUPERADMIN_PASSWORD in the environment; when either falls back to the
+# value below, `_resolve_superadmin_*` logs a WARNING so an unset prod env is
+# loud, never silent. Never commit a real prod credential here.
+_DEV_SUPERADMIN_EMAIL = "m.arham@insightanalytics.net"
+_DEV_SUPERADMIN_PASSWORD = "!Password123"  # noqa: S105 - dev bootstrap default
+
+
+def _resolve_superadmin_email() -> str:
+    """GAINS_SUPERADMIN_EMAIL or the dev fallback (with a WARNING on fallback)."""
+    env = _os.environ.get("GAINS_SUPERADMIN_EMAIL")
+    if env:
+        return env
+    logger.warning(
+        "GAINS_SUPERADMIN_EMAIL not set — using DEV fallback superadmin email "
+        "(%s). Production MUST set GAINS_SUPERADMIN_EMAIL.",
+        _DEV_SUPERADMIN_EMAIL,
+    )
+    return _DEV_SUPERADMIN_EMAIL
+
+
+def _resolve_superadmin_password() -> str:
+    """GAINS_SUPERADMIN_PASSWORD or the dev fallback (with a WARNING on fallback)."""
+    env = _os.environ.get("GAINS_SUPERADMIN_PASSWORD")
+    if env:
+        return env
+    logger.warning(
+        "GAINS_SUPERADMIN_PASSWORD not set — using the well-known DEV fallback "
+        "password. Production MUST set GAINS_SUPERADMIN_PASSWORD."
+    )
+    return _DEV_SUPERADMIN_PASSWORD
 
 # Table-name prefixes wiped by `wipe`. dim_standard / dim_strand are excluded
 # when --keep-standards (the default).
@@ -681,8 +712,14 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     p_seed = sub.add_parser("seed", help="Idempotent base seed + one superadmin.")
-    p_seed.add_argument("--superadmin-email", default=DEFAULT_SUPERADMIN_EMAIL)
-    p_seed.add_argument("--superadmin-password", default=DEFAULT_SUPERADMIN_PASSWORD)
+    p_seed.add_argument(
+        "--superadmin-email", default=None,
+        help="Defaults to $GAINS_SUPERADMIN_EMAIL (dev fallback if unset).",
+    )
+    p_seed.add_argument(
+        "--superadmin-password", default=None,
+        help="Defaults to $GAINS_SUPERADMIN_PASSWORD (dev fallback if unset).",
+    )
 
     p_ingest = sub.add_parser("ingest", help="Source-agnostic ingest (optionally sampled).")
     p_ingest.add_argument("--school", default="ALL", help="short_name | building_id | name | ALL.")
@@ -698,8 +735,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p_rebuild.add_argument("--limit-per-school", type=int, default=0)
     p_rebuild.add_argument("--seed", type=int, default=42)
     p_rebuild.add_argument("--yes", action="store_true")
-    p_rebuild.add_argument("--superadmin-email", default=DEFAULT_SUPERADMIN_EMAIL)
-    p_rebuild.add_argument("--superadmin-password", default=DEFAULT_SUPERADMIN_PASSWORD)
+    p_rebuild.add_argument(
+        "--superadmin-email", default=None,
+        help="Defaults to $GAINS_SUPERADMIN_EMAIL (dev fallback if unset).",
+    )
+    p_rebuild.add_argument(
+        "--superadmin-password", default=None,
+        help="Defaults to $GAINS_SUPERADMIN_PASSWORD (dev fallback if unset).",
+    )
     p_rebuild.add_argument("--data-root", default=None)
     p_rebuild.add_argument("--source", default=None, choices=("local", "azure"))
 
@@ -717,8 +760,10 @@ async def main(argv: list[str] | None = None) -> int:
             )
         if args.command == "seed":
             return await cmd_seed(
-                superadmin_email=args.superadmin_email,
-                superadmin_password=args.superadmin_password,
+                superadmin_email=args.superadmin_email or _resolve_superadmin_email(),
+                superadmin_password=(
+                    args.superadmin_password or _resolve_superadmin_password()
+                ),
             )
         if args.command == "ingest":
             summary = await cmd_ingest(
@@ -734,8 +779,10 @@ async def main(argv: list[str] | None = None) -> int:
                 limit_per_school=args.limit_per_school,
                 seed=args.seed,
                 yes=args.yes,
-                superadmin_email=args.superadmin_email,
-                superadmin_password=args.superadmin_password,
+                superadmin_email=args.superadmin_email or _resolve_superadmin_email(),
+                superadmin_password=(
+                    args.superadmin_password or _resolve_superadmin_password()
+                ),
                 data_root=args.data_root,
                 source=args.source,
             )
