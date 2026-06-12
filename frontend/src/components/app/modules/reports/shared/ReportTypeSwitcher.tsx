@@ -29,6 +29,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  TAB_BASE as TAB_PILL_BASE,
+  TAB_ACTIVE,
+  TAB_INACTIVE,
+} from './tabStyles';
 
 /**
  * Adaptive report-type navigation.
@@ -142,10 +147,9 @@ export default function ReportTypeSwitcher(props: Props) {
   );
 }
 
-const TAB_BASE =
-  'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-const TAB_ACTIVE = 'bg-card text-primary shadow-sm font-medium';
-const TAB_INACTIVE = 'text-muted-foreground hover:bg-accent hover:text-foreground';
+// Inline tabs carry a leading icon, so they prepend the flex layout to the
+// shared pill base. Active/inactive states are the shared constants verbatim.
+const TAB_BASE = `inline-flex items-center gap-1.5 ${TAB_PILL_BASE}`;
 
 function InlineTab({
   report,

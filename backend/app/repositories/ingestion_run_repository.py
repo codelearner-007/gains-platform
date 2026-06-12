@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.repositories.base_repository import row_to_dict
+
 
 class IngestionRunRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -56,7 +58,7 @@ class IngestionRunRepository:
         )
         result = await self.session.execute(sql, {"rid": run_id})
         row = result.first()
-        return dict(row._mapping) if row else None
+        return row_to_dict(row) if row else None
 
     async def create_pending(
         self, school_id: Optional[str], note: Optional[str] = None
@@ -93,4 +95,4 @@ class IngestionRunRepository:
             },
         )
         row = result.first()
-        return dict(row._mapping)
+        return row_to_dict(row)

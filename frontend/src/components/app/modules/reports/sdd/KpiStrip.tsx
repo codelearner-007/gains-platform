@@ -1,27 +1,11 @@
 import type { SddKpis } from '@/lib/reports/types';
-import KpiCard from '@/components/app/modules/reports/shared/KpiCard';
+import SharedKpiStrip from '@/components/app/modules/reports/shared/KpiStrip';
+import InstructorsValue from '@/components/app/modules/reports/shared/InstructorsValue';
 
-const SDD_CARD_CLASSNAME = 'min-h-[100px]';
 const SDD_VALUE_CLASSNAME = 'text-[24px]';
 
 interface KpiStripProps {
   kpis: SddKpis;
-}
-
-function InstructorsValue({ instructors }: { instructors: string[] }) {
-  const list = instructors.length > 0 ? instructors : ['—'];
-  return (
-    <div className="flex flex-col items-center justify-center gap-0.5 leading-tight">
-      {list.map((name, i) => (
-        <div
-          key={i}
-          className="text-[13px] font-bold text-black text-center leading-tight"
-        >
-          {name}
-        </div>
-      ))}
-    </div>
-  );
 }
 
 /**
@@ -32,37 +16,35 @@ function InstructorsValue({ instructors }: { instructors: string[] }) {
  */
 export default function KpiStrip({ kpis }: KpiStripProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 w-full h-full">
-      <KpiCard
-        className={SDD_CARD_CLASSNAME}
-        valueClassName="text-[14px]"
-        label="Instructor(s)"
-        value={<InstructorsValue instructors={kpis.instructors} />}
-      />
-      <KpiCard
-        className={SDD_CARD_CLASSNAME}
-        valueClassName={SDD_VALUE_CLASSNAME}
-        label="Total Students"
-        value={String(kpis.total_students)}
-      />
-      <KpiCard
-        className={SDD_CARD_CLASSNAME}
-        valueClassName={SDD_VALUE_CLASSNAME}
-        label="Number of Questions"
-        value={String(kpis.total_questions)}
-      />
-      <KpiCard
-        className={SDD_CARD_CLASSNAME}
-        valueClassName={SDD_VALUE_CLASSNAME}
-        label="Number of Standards"
-        value={String(kpis.total_standards)}
-      />
-      <KpiCard
-        className={SDD_CARD_CLASSNAME}
-        valueClassName={SDD_VALUE_CLASSNAME}
-        label="Grade Average"
-        value={kpis.grade_average_pct}
-      />
-    </div>
+    <SharedKpiStrip
+      cols={5}
+      tiles={[
+        {
+          label: 'Instructor(s)',
+          valueClassName: 'text-[14px]',
+          value: <InstructorsValue instructors={kpis.instructors} />,
+        },
+        {
+          label: 'Total Students',
+          valueClassName: SDD_VALUE_CLASSNAME,
+          value: String(kpis.total_students),
+        },
+        {
+          label: 'Number of Questions',
+          valueClassName: SDD_VALUE_CLASSNAME,
+          value: String(kpis.total_questions),
+        },
+        {
+          label: 'Number of Standards',
+          valueClassName: SDD_VALUE_CLASSNAME,
+          value: String(kpis.total_standards),
+        },
+        {
+          label: 'Grade Average',
+          valueClassName: SDD_VALUE_CLASSNAME,
+          value: kpis.grade_average_pct,
+        },
+      ]}
+    />
   );
 }

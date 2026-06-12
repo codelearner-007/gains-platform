@@ -1631,7 +1631,6 @@ class ReportService:
         )
 
     @staticmethod
-    @staticmethod
     def _sorting_question_no(qno: str) -> int:
         """Match the SQL ``regexp_replace`` int cast — returns 0 for non-numeric
         labels like ``"Q1"``. ``to_int("Q1")`` returns 0 from a different code

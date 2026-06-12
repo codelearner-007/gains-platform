@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.repositories.base_repository import row_to_dict
+
 
 class SchoolRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -86,7 +88,7 @@ class SchoolRepository:
         )
         result = await self.session.execute(sql, {"sid": school_id})
         row = result.first()
-        return dict(row._mapping) if row else None
+        return row_to_dict(row) if row else None
 
     async def get_by_building_id(self, building_id: str) -> Optional[Dict[str, Any]]:
         sql = text(
@@ -99,7 +101,7 @@ class SchoolRepository:
         )
         result = await self.session.execute(sql, {"bid": building_id})
         row = result.first()
-        return dict(row._mapping) if row else None
+        return row_to_dict(row) if row else None
 
     async def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
         # Build the column list dynamically from supplied keys to honour table
@@ -123,7 +125,7 @@ class SchoolRepository:
         )
         result = await self.session.execute(sql, data)
         row = result.first()
-        return dict(row._mapping)
+        return row_to_dict(row)
 
     async def update(
         self, school_id: str, data: Dict[str, Any]
@@ -150,4 +152,4 @@ class SchoolRepository:
         )
         result = await self.session.execute(sql, data)
         row = result.first()
-        return dict(row._mapping) if row else None
+        return row_to_dict(row) if row else None

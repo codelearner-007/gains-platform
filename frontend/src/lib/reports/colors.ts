@@ -85,7 +85,6 @@ export const STANDARD_HEADER_FG = '#FFFFFF';
 export const STRAND_CHIP_BG = '#E0E7FF';
 export const STRAND_CHIP_FG = '#1E1B4B';
 export const NEUTRAL_CHIP_BG = '#F3F4F6';
-export const NEUTRAL_CHIP_FG = '#111827';
 // Cognitive-complexity chips (low / mid / high contrast tones).
 export const COMPLEXITY_HIGH_BG = '#FECACA';
 export const COMPLEXITY_HIGH_FG = '#7F1D1D';
@@ -106,7 +105,3 @@ export function performanceColor(grade: number): string {
 // table, strands / standards summary tables). Mirrors PBIX semantics so the
 // pink/yellow/green traffic light is consistent across every report.
 export const cellColor = performanceColor;
-
-export function performanceTextColor(): string {
-  return '#000000';
-}

@@ -13,9 +13,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-def _row_to_dict(row: Any) -> Dict[str, Any]:
-    return dict(row._mapping)
+from app.repositories.base_repository import row_to_dict as _row_to_dict
 
 
 # Shared filter fragment for school-wide rollup queries that scope by

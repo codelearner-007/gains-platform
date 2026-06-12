@@ -68,13 +68,6 @@ export async function getMe(): Promise<CurrentUser | null> {
 }
 
 /**
- * Get user permissions from app_metadata
- */
-export function getUserPermissions(user: CurrentUser | null): PermissionString[] {
-  return user?.app_metadata?.permissions ?? [];
-}
-
-/**
  * Get user claims for RBAC checks
  */
 export function getUserClaims(user: CurrentUser | null) {

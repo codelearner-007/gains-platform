@@ -1,9 +1,6 @@
-import type { Metadata } from 'next';
-import { getReportBySlug } from '@/lib/reports/report-types';
+import { makeReportMetadata } from '@/lib/reports/report-types';
 
-export const metadata: Metadata = {
-  title: getReportBySlug('strand-summary').canonicalName,
-};
+export const metadata = makeReportMetadata('strand-summary');
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return children;

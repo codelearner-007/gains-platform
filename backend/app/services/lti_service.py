@@ -16,7 +16,6 @@ is published at ``/.well-known/jwks.json`` for outbound Advantage calls.
 from __future__ import annotations
 
 import secrets
-import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -365,7 +364,3 @@ def _public_jwk_from_pem(private_pem: str, kid: str) -> dict:
         "kty": "RSA", "use": "sig", "alg": "RS256", "kid": kid,
         "n": b64(nums.n), "e": b64(nums.e),
     }
-
-
-def now_ts() -> int:
-    return int(time.time())

@@ -13,15 +13,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   schoolUpdateSchema,
   type SchoolUpdateInput,
 } from '@/lib/schemas/schools.schema';
 import { updateSchool, type School } from '@/lib/services/schools.service';
+import SchoolFormFields from './SchoolFormFields';
 
 interface SchoolEditDialogProps {
   school: School | null;
@@ -91,96 +89,13 @@ export function SchoolEditDialog({
             <DialogDescription>Update school details.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Name *</Label>
-              <Input
-                id="edit-name"
-                placeholder="e.g., Springfield High School"
-                {...register('name')}
-                aria-invalid={!!errors.name}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-short_name">Short Name *</Label>
-              <Input
-                id="edit-short_name"
-                placeholder="e.g., SHS"
-                {...register('short_name')}
-                aria-invalid={!!errors.short_name}
-              />
-              {errors.short_name && (
-                <p className="text-sm text-destructive">
-                  {errors.short_name.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-schoology_building_id">
-                Schoology Building ID *
-              </Label>
-              <Input
-                id="edit-schoology_building_id"
-                placeholder="e.g., 1234567890"
-                {...register('schoology_building_id')}
-                aria-invalid={!!errors.schoology_building_id}
-              />
-              {errors.schoology_building_id && (
-                <p className="text-sm text-destructive">
-                  {errors.schoology_building_id.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-schoology_school_id">
-                Schoology School ID
-              </Label>
-              <Input
-                id="edit-schoology_school_id"
-                placeholder="Optional"
-                {...register('schoology_school_id')}
-              />
-              {errors.schoology_school_id && (
-                <p className="text-sm text-destructive">
-                  {errors.schoology_school_id.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-current_session">Current Session</Label>
-              <Input
-                id="edit-current_session"
-                placeholder="e.g., 2024-2025"
-                {...register('current_session')}
-              />
-              {errors.current_session && (
-                <p className="text-sm text-destructive">
-                  {errors.current_session.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between rounded-md border border-border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="edit-is_active">Active</Label>
-                <p className="text-xs text-muted-foreground">
-                  Inactive schools are hidden from report scoping.
-                </p>
-              </div>
-              <Switch
-                id="edit-is_active"
-                checked={isActive}
-                onCheckedChange={(checked) => setValue('is_active', checked)}
-              />
-            </div>
-          </div>
+          <SchoolFormFields
+            register={register}
+            errors={errors}
+            isActive={isActive}
+            onActiveChange={(checked) => setValue('is_active', checked)}
+            idPrefix="edit-"
+          />
 
           <DialogFooter>
             <Button

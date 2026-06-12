@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import {
   FileBarChart,
   Layers,
@@ -177,6 +178,17 @@ export function getReportsByGroup(group: ReportGroup): ReportType[] {
 /** Look up one report by its route slug. */
 export function getReportBySlug(slug: ReportSlug): ReportType {
   return BY_SLUG[slug];
+}
+
+/**
+ * Static `metadata` factory for per-report `layout.tsx` files.
+ *
+ * Next requires `metadata` to be a statically-resolvable export per route
+ * segment, so each report layout calls this with its own slug. Title still
+ * flows from the `canonicalName` registry above.
+ */
+export function makeReportMetadata(slug: ReportSlug): Metadata {
+  return { title: getReportBySlug(slug).canonicalName };
 }
 
 /** True when the pathname ends in this report's slug segment. */

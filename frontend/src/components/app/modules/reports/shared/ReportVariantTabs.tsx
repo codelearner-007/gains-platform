@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { TAB_BASE, TAB_ACTIVE, TAB_INACTIVE } from './tabStyles';
 
 /**
  * Shared variant sub-toggle for reports that have multiple renderings of the
@@ -55,11 +56,7 @@ export default function ReportVariantTabs<V extends string>({
             role="tab"
             aria-selected={isActive}
             aria-current={isActive ? 'page' : undefined}
-            className={`px-3 py-1.5 text-sm rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-              isActive
-                ? 'bg-card text-primary shadow-sm font-medium'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-            }`}
+            className={`${TAB_BASE} ${isActive ? TAB_ACTIVE : TAB_INACTIVE}`}
           >
             {opt.label}
           </Link>

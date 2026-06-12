@@ -4,6 +4,8 @@
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.repositories.base_repository import row_to_dict
+
 
 class SessionRepository:
     """Repository for querying auth.sessions directly via raw SQL."""
@@ -29,7 +31,7 @@ class SessionRepository:
             ORDER BY refreshed_at DESC NULLS LAST, created_at DESC
         """)
         result = await self.session.execute(query, {"user_id": user_id})
-        return [dict(row._mapping) for row in result.fetchall()]
+        return [row_to_dict(row) for row in result.fetchall()]
 
     async def revoke_session(self, session_id: str, user_id: str) -> bool:
         """

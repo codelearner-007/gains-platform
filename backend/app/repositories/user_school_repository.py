@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.repositories.base_repository import row_to_dict
+
 _MEMBERSHIP_COLUMNS = (
     "id::text AS id, "
     "user_id::text AS user_id, "
@@ -60,7 +62,7 @@ class UserSchoolRepository:
         )
         result = await self.session.execute(sql, {"uid": user_id, "sid": school_id})
         row = result.first()
-        return dict(row._mapping) if row else None
+        return row_to_dict(row) if row else None
 
     async def clear_primary_for_user(self, user_id: str) -> None:
         """Demote any existing primary membership for the user.
@@ -101,7 +103,7 @@ class UserSchoolRepository:
             {"uid": user_id, "sid": school_id, "role": school_role, "primary": is_primary},
         )
         row = result.first()
-        return dict(row._mapping)
+        return row_to_dict(row)
 
     async def delete(self, user_id: str, school_id: str) -> bool:
         result = await self.session.execute(

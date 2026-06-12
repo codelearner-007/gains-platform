@@ -12,6 +12,8 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.repositories.base_repository import row_to_dict
+
 
 class DimRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -166,4 +168,4 @@ class DimRepository:
         )
         result = await self.session.execute(sql, {"item_id": item_id})
         row = result.first()
-        return dict(row._mapping) if row else None
+        return row_to_dict(row) if row else None

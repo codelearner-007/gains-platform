@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { GRID_LINE, LAYOUT_BORDER } from '@/lib/reports/colors';
+import { GRID_LINE } from '@/lib/reports/colors';
 
 // Standard rollup-table header (12px, 6px-8px padding). Used by SDD
 // StandardsTable + QRA Strands_StandardsTables.
@@ -42,5 +42,3 @@ export const tableCellStyleLarge: CSSProperties = {
   verticalAlign: 'top',
   backgroundColor: '#FFFFFF',
 };
-
-export { GRID_LINE, LAYOUT_BORDER };

@@ -48,13 +48,6 @@ export async function listSchools(): Promise<School[]> {
 }
 
 /**
- * Get a single school by id
- */
-export async function getSchool(schoolId: string): Promise<School> {
-  return apiClient.get<School>(`/v1/admin/schools/${schoolId}`);
-}
-
-/**
  * Create a new school
  */
 export async function createSchool(data: CreateSchool): Promise<School> {

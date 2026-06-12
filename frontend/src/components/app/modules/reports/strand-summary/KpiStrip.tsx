@@ -1,7 +1,6 @@
 import type { StrandSummaryKpis } from '@/lib/reports/types';
-import KpiCard from '@/components/app/modules/reports/shared/KpiCard';
+import SharedKpiStrip from '@/components/app/modules/reports/shared/KpiStrip';
 
-const CARD_CLASSNAME = 'min-h-[100px]';
 const VALUE_CLASSNAME = 'text-[22px]';
 
 interface KpiStripProps {
@@ -10,43 +9,40 @@ interface KpiStripProps {
 
 export default function KpiStrip({ kpis }: KpiStripProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 w-full h-full">
-      <KpiCard
-        className={CARD_CLASSNAME}
-        valueClassName={VALUE_CLASSNAME}
-        label="Total Strands"
-        value={String(kpis.total_strands)}
-      />
-      <KpiCard
-        className={CARD_CLASSNAME}
-        valueClassName={VALUE_CLASSNAME}
-        label="Total Standards"
-        value={String(kpis.total_standards)}
-      />
-      <KpiCard
-        className={CARD_CLASSNAME}
-        valueClassName={VALUE_CLASSNAME}
-        label="Total Questions"
-        value={kpis.total_questions.toLocaleString()}
-      />
-      <KpiCard
-        className={CARD_CLASSNAME}
-        valueClassName={VALUE_CLASSNAME}
-        label="Total Assessments"
-        value={String(kpis.total_assessments)}
-      />
-      <KpiCard
-        className={CARD_CLASSNAME}
-        valueClassName={VALUE_CLASSNAME}
-        label="Total Students"
-        value={String(kpis.total_students)}
-      />
-      <KpiCard
-        className={CARD_CLASSNAME}
-        valueClassName={VALUE_CLASSNAME}
-        label="Grade Average"
-        value={kpis.grade_average_pct}
-      />
-    </div>
+    <SharedKpiStrip
+      cols={6}
+      tiles={[
+        {
+          label: 'Total Strands',
+          valueClassName: VALUE_CLASSNAME,
+          value: String(kpis.total_strands),
+        },
+        {
+          label: 'Total Standards',
+          valueClassName: VALUE_CLASSNAME,
+          value: String(kpis.total_standards),
+        },
+        {
+          label: 'Total Questions',
+          valueClassName: VALUE_CLASSNAME,
+          value: kpis.total_questions.toLocaleString(),
+        },
+        {
+          label: 'Total Assessments',
+          valueClassName: VALUE_CLASSNAME,
+          value: String(kpis.total_assessments),
+        },
+        {
+          label: 'Total Students',
+          valueClassName: VALUE_CLASSNAME,
+          value: String(kpis.total_students),
+        },
+        {
+          label: 'Grade Average',
+          valueClassName: VALUE_CLASSNAME,
+          value: kpis.grade_average_pct,
+        },
+      ]}
+    />
   );
 }

@@ -13,21 +13,14 @@ export const metadata = {
   title: { absolute: 'GAINS Reports' },
 };
 
-// One-line descriptions keyed by slug. Names + icons + routes come from the
-// report registry so the cards always match the rest of the app.
-const PROGRAM_DESCRIPTIONS: Record<ReportSlug, string> = {
+// One-line descriptions for the program reports. Names + icons + routes come
+// from the report registry so the cards always match the rest of the app.
+// Only program slugs appear here; assessment slugs are rendered elsewhere.
+const PROGRAM_DESCRIPTIONS: Partial<Record<ReportSlug, string>> = {
   'year-to-date-performance':
     'Longitudinal trend, grade distribution & most-improved students.',
   'standard-summary': 'School-wide standards rollup, grouped by strand.',
   'strand-summary': 'Strand rollup with treemap and per-standard drill-down.',
-  // Assessment slugs are unused here but the record must be total.
-  'question-response-analysis': '',
-  'standards-deep-dive': '',
-  'question-summary-paginated': '',
-  'question-response-analysis-paginated': '',
-  'question-response-analysis-by-teacher': '',
-  'question-response-analysis-by-standard-and-teacher': '',
-  'incorrect-answer-details': '',
 };
 
 const PROGRAM_REPORTS = getReportsByGroup('program').map((report) => ({

@@ -131,17 +131,3 @@ export function getAccessibleAdminModules(claims: UserClaims | null): AdminModul
     canAccessAdminModule(claims, module.key)
   );
 }
-
-/**
- * Assert that user has required permissions (for server-side gating)
- * Throws error if not authorized
- */
-export function assertPermissions(
-  claims: UserClaims | null,
-  required: PermissionString[],
-  errorMessage = 'Unauthorized'
-): void {
-  if (!claims || !hasAnyPermission(claims.permissions, required)) {
-    throw new Error(errorMessage);
-  }
-}

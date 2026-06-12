@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ACTIVE_BADGE_CLASS } from '@/components/admin/statusBadge';
 import type { School } from '@/lib/services/schools.service';
 
 interface SchoolsTableProps {
@@ -33,10 +34,7 @@ function TableLoadingSkeleton() {
 
 function ActiveBadge({ isActive }: { isActive: boolean }) {
   return isActive ? (
-    <Badge
-      variant="secondary"
-      className="w-fit bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20"
-    >
+    <Badge variant="secondary" className={ACTIVE_BADGE_CLASS}>
       <CheckCircle className="h-3 w-3 mr-1" />
       Active
     </Badge>
