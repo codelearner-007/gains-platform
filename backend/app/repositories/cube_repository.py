@@ -1857,8 +1857,15 @@ class CubeRepository:
             SELECT
                 pa.user_uid,
                 pa.user_name,
-                COALESCE(NULLIF(dsec.section_instructors, ''), 'Unassigned')
-                                                            AS section_instructors,
+                -- Per-section instructor (dim_section) is most specific; fall
+                -- back to the assessment-level list (dim_item) exactly as the
+                -- QRA meta query does (get_assessment_meta), so both reports
+                -- agree. "Unassigned" only when neither resolves.
+                COALESCE(
+                    NULLIF(dsec.section_instructors, ''),
+                    NULLIF(di.section_instructors, ''),
+                    'Unassigned'
+                )                                            AS section_instructors,
                 pa.question_id,
                 pa.points_received,
                 pa.points_possible,
@@ -1875,6 +1882,10 @@ class CubeRepository:
             LEFT JOIN dim_section dsec
               ON dsec.section_nid = pa.section_nid
              AND dsec.school_id = pa.school_id
+            -- dim_item is one row per (item, school) → no fan-out.
+            LEFT JOIN dim_item di
+              ON di.item_id = :item_id
+             AND di.school_id = pa.school_id
             ORDER BY section_instructors, pa.user_name,
                      NULLIF(regexp_replace(COALESCE(pq.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
                      pq.question_no

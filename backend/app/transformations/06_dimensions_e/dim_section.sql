@@ -41,10 +41,15 @@ FROM (
   JOIN schools sch ON sch.school_id = src.school_id
   WHERE src.user_role_id        = sch.student_role_id
     AND src.section_nid         IS NOT NULL
-    AND src.section_code        IS NOT NULL
     AND src.item_id             IS NOT NULL
     AND src.section_name        IS NOT NULL
     AND src.section_instructors IS NOT NULL
+    -- section_code is deliberately NOT required: some Schoology exports omit
+    -- it entirely (e.g. Central Florida ships every row with a NULL
+    -- Section_Code) while still carrying a valid Section_NID + instructors.
+    -- Legacy keys this dim on Section_NID, not Section_Code, so requiring a
+    -- non-null code wrongly emptied dim_section for those schools and made the
+    -- Question Summary Report show every student as "Unassigned".
 ) sub
 ORDER BY school_id, section_nid, section_code, item_id, section_name, section_instructors
 ON CONFLICT (school_id, section_nid) DO UPDATE
