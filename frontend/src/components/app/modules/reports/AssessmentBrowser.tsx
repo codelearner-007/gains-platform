@@ -197,7 +197,10 @@ function AssessmentRow({ row }: { row: AssessmentListRow }) {
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuContent
+          align="end"
+          className="w-[22rem] max-w-[calc(100vw-2rem)]"
+        >
           <DropdownMenuLabel className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Report type
           </DropdownMenuLabel>
@@ -208,10 +211,17 @@ function AssessmentRow({ row }: { row: AssessmentListRow }) {
                 <Link
                   href={buildHref(report.slug, { item_id: row.item_id })}
                   aria-label={`Open ${report.canonicalName} for ${name}`}
-                  className="cursor-pointer"
+                  className="flex cursor-pointer items-start gap-2.5 py-2"
                 >
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1 truncate">{report.canonicalName}</span>
+                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-sm font-medium leading-snug text-foreground">
+                      {report.canonicalName}
+                    </span>
+                    <span className="text-[11px] leading-tight text-muted-foreground">
+                      {report.menuHint}
+                    </span>
+                  </span>
                 </Link>
               </DropdownMenuItem>
             );

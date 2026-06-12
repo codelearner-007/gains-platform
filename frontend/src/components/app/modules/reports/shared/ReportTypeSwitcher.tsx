@@ -237,7 +237,7 @@ function MoreReportsMenu({
         )}
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-72">
+      <DropdownMenuContent align="start" className="w-[22rem] max-w-[calc(100vw-2rem)]">
         {groups.map((g, gi) => (
           <DropdownMenuGroup key={g.kind}>
             {gi > 0 && <DropdownMenuSeparator />}
@@ -277,11 +277,16 @@ function MenuRow({
         <TooltipTrigger asChild>
           <DropdownMenuItem
             disabled
-            className="cursor-default"
+            className="cursor-default items-start gap-2.5 py-2"
             aria-current={active ? 'page' : undefined}
           >
-            <Icon className="h-4 w-4 text-muted-foreground" />
-            <span className="flex-1 truncate">{report.canonicalName}</span>
+            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-sm leading-snug">{report.canonicalName}</span>
+              <span className="text-[11px] leading-tight text-muted-foreground">
+                {report.menuHint}
+              </span>
+            </span>
           </DropdownMenuItem>
         </TooltipTrigger>
         <TooltipContent side="right">Open from a question</TooltipContent>
@@ -294,14 +299,21 @@ function MenuRow({
       <Link
         href={href}
         aria-current={active ? 'page' : undefined}
-        className={`cursor-pointer ${active ? 'font-medium text-primary' : ''}`}
+        className={`flex cursor-pointer items-start gap-2.5 py-2 ${active ? 'text-primary' : ''}`}
       >
         <Icon
-          className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground'}`}
+          className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-primary' : 'text-muted-foreground'}`}
         />
-        <span className="flex-1 truncate">{report.canonicalName}</span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className={`text-sm leading-snug ${active ? 'font-medium' : ''}`}>
+            {report.canonicalName}
+          </span>
+          <span className="text-[11px] leading-tight text-muted-foreground">
+            {report.menuHint}
+          </span>
+        </span>
         {active && (
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             Current
           </span>
         )}

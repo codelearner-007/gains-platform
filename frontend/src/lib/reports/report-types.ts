@@ -56,6 +56,9 @@ export interface ReportType {
   canonicalName: string;
   /** Clear, non-cryptic label for tight inline tabs (e.g. "By Teacher"). */
   shortName: string;
+  /** One-line descriptor shown under the name in the "Open report" menu so
+   *  the similarly-named QRA variants are easy to tell apart. */
+  menuHint: string;
   icon: LucideIcon;
   group: ReportGroup;
   kind: ReportKind;
@@ -76,6 +79,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'question-response-analysis',
     canonicalName: 'Question Response Analysis Interactive',
     shortName: 'Question Response',
+    menuHint: 'Interactive — slicers, sort & cross-filter',
     icon: FileBarChart,
     group: 'assessment',
     kind: 'interactive',
@@ -85,6 +89,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'standards-deep-dive',
     canonicalName: 'Standards Deep Dive interactive',
     shortName: 'Standards Deep Dive',
+    menuHint: 'Interactive standards deep-dive',
     icon: Layers,
     group: 'assessment',
     kind: 'interactive',
@@ -94,6 +99,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'question-summary-paginated',
     canonicalName: 'Question Summary Report',
     shortName: 'Question Summary',
+    menuHint: 'Per-student score matrix',
     icon: Grid3x3,
     group: 'assessment',
     kind: 'paginated',
@@ -103,6 +109,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'question-response-analysis-paginated',
     canonicalName: 'Question Response Analysis',
     shortName: 'QRA (Print)',
+    menuHint: 'Printable per-question report',
     icon: FileText,
     group: 'assessment',
     kind: 'paginated',
@@ -112,6 +119,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'question-response-analysis-by-teacher',
     canonicalName: 'Question Response Analysis - By Teacher',
     shortName: 'By Teacher',
+    menuHint: 'Per-question results grouped by teacher',
     icon: Users,
     group: 'assessment',
     kind: 'paginated',
@@ -121,6 +129,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'question-response-analysis-by-standard-and-teacher',
     canonicalName: 'Question Response Analysis - By Standard and Teacher',
     shortName: 'By Standard and Teacher',
+    menuHint: 'Grouped by standard, then teacher',
     icon: UsersRound,
     group: 'assessment',
     kind: 'paginated',
@@ -130,6 +139,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'incorrect-answer-details',
     canonicalName: 'Incorrect Answer Details',
     shortName: 'Incorrect Answers',
+    menuHint: 'Per-question wrong-answer drill-down',
     icon: ListChecks,
     group: 'assessment',
     kind: 'drilldown',
@@ -141,6 +151,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'year-to-date-performance',
     canonicalName: 'Year To Date - Longitudinal Report',
     shortName: 'Year To Date',
+    menuHint: 'Longitudinal trend across the session',
     icon: LineChart,
     group: 'program',
     kind: 'interactive',
@@ -150,6 +161,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'standard-summary',
     canonicalName: 'Standard Summary',
     shortName: 'Standard Summary',
+    menuHint: 'School-wide standards rollup',
     icon: GraduationCap,
     group: 'program',
     kind: 'paginated',
@@ -159,6 +171,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     slug: 'strand-summary',
     canonicalName: 'Strand Summary',
     shortName: 'Strand Summary',
+    menuHint: 'Strand rollup with treemap',
     icon: Network,
     group: 'program',
     kind: 'paginated',
