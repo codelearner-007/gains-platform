@@ -18,7 +18,6 @@ import {
   SummaryByStandardsHeader,
 } from '@/components/app/modules/reports/qra/Strands_StandardsTables';
 import ActiveFilterBar from '@/components/app/modules/reports/shared/ActiveFilterBar';
-import ReportSlicer from '@/components/app/modules/reports/shared/ReportSlicer';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 import AssessmentReportShell from '@/components/app/modules/reports/shared/AssessmentReportShell';
@@ -43,37 +42,12 @@ export default function QuestionResponseAnalysisPage() {
       queryFn: () => reportsApi.qra(itemId as string, schoolId ?? undefined),
     });
 
-  const {
-    filters,
-    setStrand,
-    setStandard,
-    clearStrands,
-    reset,
-    activeChips,
-  } = useReportFilters();
+  const { filters, setStrand, setStandard, reset, activeChips } =
+    useReportFilters();
 
   const filtered = useMemo(
     () => (data ? deriveQra(data, filters) : null),
     [data, filters],
-  );
-
-  // Slicer options are the distinct strands of the FULL (unfiltered) payload
-  // so the slicer never collapses to only the strands left after a selection.
-  const strandOptions = useMemo(() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const r of data?.strands_rollup ?? []) {
-      if (r.strand && !seen.has(r.strand)) {
-        seen.add(r.strand);
-        out.push(r.strand);
-      }
-    }
-    return out.sort((a, b) => a.localeCompare(b));
-  }, [data]);
-
-  const selectedStrandsSet = useMemo(
-    () => new Set(filters.strands),
-    [filters.strands],
   );
 
   return (
@@ -120,18 +94,6 @@ export default function QuestionResponseAnalysisPage() {
             <div className="mb-2" style={{ minHeight: 100 }}>
               <KpiStrip kpis={filtered.kpis} />
             </div>
-
-            {strandOptions.length > 0 && (
-              <div className="mb-2 print:hidden">
-                <ReportSlicer
-                  label="Strand"
-                  options={strandOptions}
-                  selected={selectedStrandsSet}
-                  onToggle={setStrand}
-                  onClear={clearStrands}
-                />
-              </div>
-            )}
 
             <ActiveFilterBar
               chips={activeChips}
