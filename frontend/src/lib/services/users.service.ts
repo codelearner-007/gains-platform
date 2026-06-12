@@ -10,6 +10,7 @@
  */
 
 import { apiClient } from './api-client';
+import { ApiError } from './api-client';
 import { assignRoleToUser } from './rbac.service';
 
 export interface InviteUserRequest {
@@ -59,8 +60,17 @@ export async function inviteUser(data: InviteUserRequest): Promise<InviteUserRes
   });
 
   if (result.userId) {
+    // Role assignment is idempotent: the `handle_new_user` DB trigger already
+    // auto-assigns the default 'user' role on invite, so re-asserting the same
+    // role is a harmless no-op. A 409 (already assigned) must NOT abort the
+    // school-grant loop below, so we swallow it here and let grants proceed
+    // independently of the role-assign outcome.
     if (data.role_id) {
-      await assignRoleToUser(result.userId, data.role_id);
+      try {
+        await assignRoleToUser(result.userId, data.role_id);
+      } catch (err) {
+        if (!(err instanceof ApiError && err.status === 409)) throw err;
+      }
     }
     if (data.school_ids?.length) {
       // First granted school becomes primary.

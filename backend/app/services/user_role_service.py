@@ -5,7 +5,6 @@ from typing import List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
-    DuplicateResourceError,
     HierarchyViolationError,
     ImmutableResourceError,
     ResourceNotFoundError,
@@ -79,9 +78,11 @@ class UserRoleService:
         Returns:
             Created UserRole instance
 
+        If the user already has the role, the existing assignment is returned
+        unchanged (idempotent).
+
         Raises:
             ResourceNotFoundError: If role not found
-            DuplicateResourceError: If user already has this role
             HierarchyViolationError: If attempting to assign higher privilege role or modify higher hierarchy user
             ImmutableResourceError: If attempting to assign super_admin role
         """
@@ -127,10 +128,13 @@ class UserRoleService:
                     current_user.hierarchy_level, role.hierarchy_level
                 )
 
-        # Check if user already has this role
+        # Idempotent: if the user already has this role (e.g. the default 'user'
+        # role auto-assigned by the handle_new_user trigger), return the existing
+        # assignment instead of raising 409. This lets the invite flow re-assert
+        # the role harmlessly and proceed to grant school memberships.
         existing = await self.repository.get_by_user_and_role(user_id, role_id)
         if existing:
-            raise DuplicateResourceError("UserRole", "role_id", role_id)
+            return existing
 
         # Create user role assignment
         user_role = UserRole(user_id=user_id, role_id=role_id)

@@ -80,9 +80,23 @@ export function SelectedSchoolProvider({
     }
   }, [isLoading, schools, schoolId, setSchoolId]);
 
+  // The persisted schoolId is read synchronously from localStorage on first
+  // render and may belong to a PREVIOUS user (e.g. after a different account
+  // logs in on the same browser). Exposing it before the accessible-schools
+  // list has been fetched would let report pages issue a scoped request for a
+  // school this user can't access → 403. So the effective (exposed) schoolId is
+  // only the persisted value once it's confirmed to be in the user's accessible
+  // set; while the list is still loading, or the stored id isn't accessible, we
+  // expose null and let the backend fall back to the user's primary school.
+  const effectiveSchoolId = useMemo<string | null>(() => {
+    if (!schoolId) return null;
+    if (isLoading || schools.length === 0) return null;
+    return schools.some((s) => s.school_id === schoolId) ? schoolId : null;
+  }, [schoolId, schools, isLoading]);
+
   const value = useMemo<SelectedSchoolContextValue>(
-    () => ({ schoolId, setSchoolId, schools, isLoading }),
-    [schoolId, setSchoolId, schools, isLoading],
+    () => ({ schoolId: effectiveSchoolId, setSchoolId, schools, isLoading }),
+    [effectiveSchoolId, setSchoolId, schools, isLoading],
   );
 
   return (
