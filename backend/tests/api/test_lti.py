@@ -74,7 +74,13 @@ def jwks_server(platform_key):
 
 @pytest.fixture()
 def registration(jwks_server):
-    """Insert a mock registration + deployment bound to a synthetic school."""
+    """Insert a mock registration + deployment bound to a real active school.
+
+    The synthetic schools were retired; the launch harness now self-registers
+    a transient mock platform against the first active school. This fixture
+    mirrors that: it binds the mock deployment to Athenian (a real, active
+    tenant) so the launch resolves a genuine school_id.
+    """
     tool_key = _pem(rsa.generate_private_key(public_exponent=65537, key_size=2048))
     conn = psycopg2.connect(PG)
     conn.autocommit = True
@@ -90,9 +96,12 @@ def registration(jwks_server):
         reg_id = c.fetchone()[0]
         c.execute(
             "SELECT school_id::text, name FROM schools "
-            "WHERE schoology_building_id='synth-002'"
+            "WHERE schoology_building_id='186370968'"
         )
-        school_id, school_name = c.fetchone()
+        row = c.fetchone()
+        if row is None:
+            pytest.skip("Athenian school not seeded — cannot bind LTI deployment")
+        school_id, school_name = row
         c.execute(
             "INSERT INTO lti_deployment (registration_id, deployment_id, school_id) "
             "VALUES (%s,%s,%s)",

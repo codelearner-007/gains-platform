@@ -16,10 +16,14 @@ from httpx import AsyncClient
 from app.schemas.reports import YearToDatePerformancePayload
 
 # A real Athenian (session, grade, subject, assessment_type) longitudinal unit
-# with multiple standards and multiple assessments (verified against the DB).
+# with multiple standards and multiple assessments. Tied to the current
+# seed=42 / limit-per-school=100 sample: this scope yields 41 students across
+# 5 assessments and 16 standard columns, and the rows are Athenian-exclusive
+# (only Athenian carries per-student fact data in this sample). Re-anchored from
+# the prior Grade 8 scope, which became empty under the new sample.
 _SCOPE = {
     "session": "2025-26",
-    "grade": "Grade 8",
+    "grade": "Grade 1",
     "subject": "Mathematics",
     "category": "Lesson  Assessments",
 }
@@ -38,7 +42,7 @@ async def test_ytd_matrix_structure_and_self_consistency(
 
     # ── Structure ────────────────────────────────────────────────────────
     assert payload.subject == "Mathematics"
-    assert payload.grade == "Grade 8"
+    assert payload.grade == "Grade 1"
     assert payload.standards, "expected at least one standard column"
     assert payload.teacher_groups, "expected at least one teacher group"
 
@@ -46,10 +50,17 @@ async def test_ytd_matrix_structure_and_self_consistency(
     # AI.MA.* alongside MA.*) — one canonical label per column.
     labels = [s.standard_label for s in payload.standards]
     assert len(labels) == len(set(labels))
-    assert labels == sorted(labels)  # legacy column order
 
     gt = payload.grand_total
     eps = 1e-3
+
+    # Legacy SSRS column order: ascending by the standard's overall Score%
+    # (lowest-scoring standard first), ties broken alphabetically by label.
+    def _col_score(label: str) -> float:
+        tot = gt.standard_totals[label]
+        return round(tot.points_received / tot.points_possible, 6) if tot.points_possible else 0.0
+
+    assert labels == sorted(labels, key=lambda lab: (_col_score(lab), lab))
 
     # ── Per-student: Score% = SUM(received)/SUM(possible); cells reconcile ──
     sum_students_recv = 0.0
