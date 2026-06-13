@@ -20,16 +20,18 @@ import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 const QSR_NAME = getReportBySlug('question-summary-paginated').canonicalName;
 
-// Legacy QSR paginated variants (PAG-4 / PAG-5, Decision 5):
-//   • base     — PBIX ord 6 "Question Summary Report"
-//   • teacher  — PBIX ord 7 "- Teacher" two-row per-instructor subtotal block
-//   • redacted — PBIX ord 17, anonymized names (client-side; see matrix note)
-// The invented "Header Highlights" variant is dropped, and the broken-in-legacy
-// "Teacher Subtotal" report (ord 16) is intentionally NOT mirrored.
-type Variant = 'base' | 'teacher' | 'redacted';
+// Legacy QSR paginated variants (each is its own SSRS .rdl / PBIX page):
+//   • base             — PBIX ord 6 "Question Summary Report"
+//   • teacher          — PBIX ord 7 "- Teacher Subtotal" per-instructor subtotal block
+//   • redacted         — PBIX ord 17 "- names redacted" (client-side; see matrix note)
+//   • header-highlights — PBIX ord 16 "- header highlights" (== legacy "...- color.rdl"):
+//                         base layout + the two header bands performance-colored.
+type Variant = 'base' | 'teacher' | 'redacted' | 'header-highlights';
 
 function parseVariant(raw: string | null): Variant {
-  if (raw === 'teacher' || raw === 'redacted') return raw;
+  if (raw === 'teacher' || raw === 'redacted' || raw === 'header-highlights') {
+    return raw;
+  }
   return 'base';
 }
 
@@ -92,6 +94,7 @@ export default function QuestionSummaryPaginatedPage() {
                 options={[
                   { value: 'base', label: 'Base' },
                   { value: 'teacher', label: 'Teacher Subtotal' },
+                  { value: 'header-highlights', label: 'Header Highlights' },
                   { value: 'redacted', label: 'Names Redacted' },
                 ]}
                 active={variant}
@@ -113,6 +116,7 @@ export default function QuestionSummaryPaginatedPage() {
               payload={data}
               showTeacherSubtotal={variant === 'teacher'}
               redacted={variant === 'redacted'}
+              headerHighlights={variant === 'header-highlights'}
             />
 
             <PaginatedFooter />

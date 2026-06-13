@@ -13,7 +13,9 @@ import {
   LAYOUT_BORDER,
   PBIX_ACCENT_LIGHT_BLUE,
   PBIX_ACCENT_NAVY,
+  QSR_HEADER_HILITE_FG,
   qsrCellColor,
+  qsrHeaderBandColor,
   qsrPerformanceColor,
 } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
@@ -38,6 +40,13 @@ interface Props {
    * a documented follow-up (there is no sample redacted PDF to diff against).
    */
   redacted?: boolean;
+  /**
+   * Legacy "Header Highlights" variant (PBIX ord 16 / "...- color.rdl"). The
+   * ONLY change vs base: the two header bands (standard-code row + Question-No
+   * row) are performance-colored (3-band 0.6/0.8 pink/yellow/green, silver text)
+   * instead of solid navy/blue. Data-cell coloring is identical to base.
+   */
+  headerHighlights?: boolean;
 }
 
 function pct(v: number): string {
@@ -106,6 +115,7 @@ export default function QuestionSummaryMatrix({
   payload,
   showTeacherSubtotal = false,
   redacted = false,
+  headerHighlights = false,
 }: Props) {
   const {
     questions,
@@ -265,21 +275,39 @@ export default function QuestionSummaryMatrix({
             >
               Standards
             </th>
-            {spans.map((s, i) => (
-              <th
-                key={`${s.cpalms}-${i}`}
-                colSpan={s.span}
-                className="border-r border-b text-center font-semibold px-2 py-1"
-                style={{
-                  backgroundColor: PBIX_ACCENT_NAVY,
-                  color: '#fff',
-                  borderColor: LAYOUT_BORDER,
-                }}
-                title={s.cpalms}
-              >
-                {s.cpalms}
-              </th>
-            ))}
+            {spans.map((s, i) => {
+              // Header Highlights variant: color the standard-code band by the
+              // standard's aggregate Score% (Total_Score / Total_Possible over
+              // its questions) — legacy RDL `Standards1` 0.6/0.8 IIf.
+              let bg = PBIX_ACCENT_NAVY;
+              let fg = '#fff';
+              if (headerHighlights) {
+                const poss = s.questions.reduce(
+                  (a, q) => a + (grandTotal.per_question_possible[q.question_id] ?? 0),
+                  0,
+                );
+                const corr = s.questions.reduce(
+                  (a, q) => a + (grandTotal.per_question_correct[q.question_id] ?? 0),
+                  0,
+                );
+                const band = qsrHeaderBandColor(poss > 0 ? corr / poss : null);
+                if (band) {
+                  bg = band;
+                  fg = QSR_HEADER_HILITE_FG;
+                }
+              }
+              return (
+                <th
+                  key={`${s.cpalms}-${i}`}
+                  colSpan={s.span}
+                  className="border-r border-b text-center font-semibold px-2 py-1"
+                  style={{ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER }}
+                  title={s.cpalms}
+                >
+                  {s.cpalms}
+                </th>
+              );
+            })}
             <th
               colSpan={2}
               className="border-l border-b text-white px-2 py-1 text-center"
@@ -311,17 +339,32 @@ export default function QuestionSummaryMatrix({
             >
               <SortableHeader column="score" label="Score %" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
-            {questions.map((q) => (
-              <th
-                key={q.question_id}
-                scope="col"
-                className="border-r border-b text-center px-1 py-1 font-semibold"
-                style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
-                title={`${q.question_no}: ${sanitizeShortAnswer(q.correct_answer) || 'n/a'}`}
-              >
-                {q.question_no}
-              </th>
-            ))}
+            {questions.map((q) => {
+              // Header Highlights variant: color the Question-No header by the
+              // question's Score% — legacy RDL `Question_No` 0.6/0.8 IIf.
+              let bg = PBIX_ACCENT_LIGHT_BLUE;
+              let fg: string | undefined;
+              if (headerHighlights) {
+                const band = qsrHeaderBandColor(
+                  grandTotal.per_question_pct[q.question_id] ?? null,
+                );
+                if (band) {
+                  bg = band;
+                  fg = QSR_HEADER_HILITE_FG;
+                }
+              }
+              return (
+                <th
+                  key={q.question_id}
+                  scope="col"
+                  className="border-r border-b text-center px-1 py-1 font-semibold"
+                  style={{ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER }}
+                  title={`${q.question_no}: ${sanitizeShortAnswer(q.correct_answer) || 'n/a'}`}
+                >
+                  {q.question_no}
+                </th>
+              );
+            })}
             <th
               scope="col"
               className="border-r border-b text-right px-2 py-1"

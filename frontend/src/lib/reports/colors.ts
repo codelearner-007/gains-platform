@@ -48,16 +48,37 @@ export const GROUP_HEADER_CYAN = '#D6F1EF'; // Teacher / Standard group band
 // it is pixel-faithful to the legacy print output. Do NOT collapse the two.
 //   correct cell / Score% ≥80%   → #99FF99 (green)
 //   incorrect cell / Score% <70% → #FFCCFF (pink)
-//   Score% 70–80%                → #FFF591 (yellow)
+//   Score% 70–80%                → #fff492 (yellow)
+// Hexes verbatim from the legacy SSRS RDL `BackgroundColor` IIf branches
+// (Paginated - Question Summary Report.rdl). The legacy expressions also
+// `Round(score, 2)` before the threshold compare — mirrored in qsrPerformanceColor.
 export const QSR_GREEN = '#99FF99';
 export const QSR_PINK = '#FFCCFF';
-export const QSR_YELLOW = '#FFF591';
+export const QSR_YELLOW = '#fff492';
 
-/** Three-band Score% fill for the QSR family (exact legacy hexes). */
+/** Three-band Score% fill for the QSR family (exact legacy hexes + rounding). */
 export function qsrPerformanceColor(grade: number): string {
-  if (grade < 0.7) return QSR_PINK;
-  if (grade < 0.8) return QSR_YELLOW;
+  const g = Math.round(grade * 100) / 100; // legacy Round(x, 2) before compare
+  if (g < 0.7) return QSR_PINK;
+  if (g < 0.8) return QSR_YELLOW;
   return QSR_GREEN;
+}
+
+// QSR "Header Highlights" variant (legacy SSRS "...- color.rdl" == PBIX ord 16
+// "Question Summary Report - header highlights"). The ONLY delta vs base is that
+// the two header bands (standard-code row + Question-No row) become performance-
+// colored instead of solid navy/blue, with silver text. The header bands use a
+// 0.6/0.8 split (NOT the data cells' 0.7/0.8) and no Round() — verbatim from the
+// RDL `Standards1` / `Question_No` BackgroundColor IIf expressions.
+export const QSR_HEADER_HILITE_FG = '#C0C0C0'; // RDL Color=Silver on highlighted bands
+
+/** 3-band header-band fill for the QSR "Header Highlights" variant. `null`
+ *  (no data) returns undefined so the caller keeps the static header color. */
+export function qsrHeaderBandColor(ratio: number | null): string | undefined {
+  if (ratio === null) return undefined;
+  if (ratio < 0.6) return QSR_PINK;
+  if (ratio >= 0.8) return QSR_GREEN;
+  return QSR_YELLOW;
 }
 
 /**
