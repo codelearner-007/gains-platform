@@ -17,9 +17,9 @@ import {
  * Single source of truth for every GAINS report type.
  *
  * Every surface that names, links to, or switches between reports — the
- * AssessmentBrowser launch menu, the in-report ReportTypeSwitcher, page
- * headers, breadcrumbs, and the per-route browser <title> metadata — reads
- * from THIS registry so the names and routes can never drift apart.
+ * dashboard launch menu, the in-report ReportTypeSwitcher, page headers,
+ * breadcrumbs, and the per-route browser <title> metadata — reads from THIS
+ * registry so the names and routes can never drift apart.
  *
  * Canonical names are taken verbatim from the legacy PowerBI report pages
  * (`data/_pbix_extract/20_pages.md`); do not paraphrase them.

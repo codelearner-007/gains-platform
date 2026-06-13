@@ -10,15 +10,15 @@ interface Props {
   crumbs: BreadcrumbCrumb[];
 }
 
-const REPORTS_HREF = '/app/reports';
+// The reports landing was removed; report breadcrumbs return to the dashboard.
+const DASHBOARD_HREF = '/app';
 
 export function assessmentCrumbs(
   item: BreadcrumbCrumb,
   trailing?: BreadcrumbCrumb,
 ): BreadcrumbCrumb[] {
   const base: BreadcrumbCrumb[] = [
-    { label: 'Reports', href: REPORTS_HREF },
-    { label: 'Assessment Reports', href: REPORTS_HREF },
+    { label: 'Dashboard', href: DASHBOARD_HREF },
     item,
   ];
   return trailing ? [...base, trailing] : base;
@@ -26,8 +26,7 @@ export function assessmentCrumbs(
 
 export function programCrumbs(title: string): BreadcrumbCrumb[] {
   return [
-    { label: 'Reports', href: REPORTS_HREF },
-    { label: 'Program Reports', href: REPORTS_HREF },
+    { label: 'Dashboard', href: DASHBOARD_HREF },
     { label: title },
   ];
 }

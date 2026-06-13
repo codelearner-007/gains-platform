@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, User, Menu, X, LogOut, Key, Shield, Sparkles, BarChart3 } from 'lucide-react';
+import { Home, User, Menu, X, LogOut, Key, Shield, Sparkles } from 'lucide-react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { canSeeAdminEntry } from '@/lib/rbac/access';
@@ -50,7 +50,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navigation = [
     { name: 'Dashboard', href: '/app', icon: Home },
-    { name: 'Reports', href: '/app/reports', icon: BarChart3 },
     { name: 'Settings', href: '/app/user-settings', icon: User },
   ];
 

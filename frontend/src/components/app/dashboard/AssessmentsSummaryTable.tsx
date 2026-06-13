@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import type {
   AssessmentSummaryListRow,
   StandardSummaryRollupRow,
@@ -32,14 +32,11 @@ import GradeAverageBar from '@/components/app/modules/reports/shared/GradeAverag
 
 /**
  * Assessments Summary — the centerpiece of the legacy Assessment Analysis
- * Dashboard (PBIX "Home"). A single grid whose grouping/columns switch via a
- * View toggle:
- *   • By Assessment — one row per item (the legacy main grid, real data)
- *   • By Standard   — school-wide standards rollup (rebuilt from real data;
- *                     legacy's template binding was broken)
- *   • By Strand     — school-wide strand rollup (the legacy "Avg by Strands")
- * Every detail row carries a grade-average data bar with a dashed marker at
- * the school-wide average (same filter scope).
+ * Dashboard. A single grid whose grouping/columns switch via a View toggle
+ * (By Assessment / By Standard / By Strand). The body scrolls inside a capped
+ * region so the program reports below stay reachable; rows reveal in pages of
+ * PAGE_SIZE as the sentinel scrolls into view — purely client-side over the
+ * already-fetched rows, so scrolling issues NO extra API calls.
  */
 
 export type SummaryView = 'assessment' | 'standard' | 'strand';
@@ -50,11 +47,16 @@ const VIEWS: { value: SummaryView; label: string }[] = [
   { value: 'strand', label: 'By Strand' },
 ];
 
+const PAGE_SIZE = 25;
+
 // Launch menu = the assessment report family, minus the drill-through (IAD),
-// straight from the registry — identical to the AssessmentBrowser launcher.
+// straight from the report registry (the single source of truth for routing).
 const ROW_ACTIONS = getReportsByGroup('assessment').filter(
   (r) => r.kind !== 'drilldown',
 );
+
+const matches = (haystack: string | null | undefined, q: string) =>
+  (haystack ?? '').toLowerCase().includes(q);
 
 interface Props {
   /** School-wide grade average (0..1) for the data-bar reference marker. */
@@ -62,6 +64,8 @@ interface Props {
   assessments: AssessmentSummaryListRow[];
   standards: StandardSummaryRollupRow[];
   strands: StrandSummaryRollupRow[];
+  /** Free-text search; filters the active variant's primary text column. */
+  search: string;
   loading: boolean;
 }
 
@@ -70,6 +74,7 @@ export default function AssessmentsSummaryTable({
   assessments,
   standards,
   strands,
+  search,
   loading,
 }: Props) {
   const [view, setView] = useState<SummaryView>('assessment');
@@ -117,18 +122,24 @@ export default function AssessmentsSummaryTable({
           ))}
         </div>
       ) : view === 'assessment' ? (
-        <ByAssessment rows={assessments} schoolAverage={schoolAverage} />
+        <ByAssessment rows={assessments} search={search} schoolAverage={schoolAverage} />
       ) : view === 'standard' ? (
-        <ByStandard rows={standards} schoolAverage={schoolAverage} />
+        <ByStandard rows={standards} search={search} schoolAverage={schoolAverage} />
       ) : (
-        <ByStrand rows={strands} schoolAverage={schoolAverage} />
+        <ByStrand rows={strands} search={search} schoolAverage={schoolAverage} />
       )}
     </div>
   );
 }
 
-// ── Shared table chrome ──────────────────────────────────────────────────
-function Th({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'center' | 'right' }) {
+// ── Shared chrome ────────────────────────────────────────────────────────
+function Th({
+  children,
+  align = 'left',
+}: {
+  children: React.ReactNode;
+  align?: 'left' | 'center' | 'right';
+}) {
   return (
     <th
       className="border-b px-3 py-2 text-xs font-semibold text-foreground"
@@ -141,6 +152,96 @@ function Th({ children, align = 'left' }: { children: React.ReactNode; align?: '
 
 const TD = 'border-b px-3 py-1.5 text-sm';
 
+/**
+ * Capped scroll region + page-on-scroll windowing over an in-memory array.
+ * Resets to the first page whenever the (filtered+sorted) rows change. The
+ * IntersectionObserver is rooted to the scroll container, so it only fires
+ * while the user scrolls this table — never on unrelated re-renders, and never
+ * triggers a network request (the rows are already loaded).
+ */
+function useInfiniteWindow<T>(rows: T[]) {
+  const [count, setCount] = useState(PAGE_SIZE);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setCount(PAGE_SIZE);
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [rows]);
+
+  const hasMore = count < rows.length;
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setCount((c) => Math.min(c + PAGE_SIZE, rows.length));
+        }
+      },
+      { root: scrollRef.current ?? null, rootMargin: '160px' },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [hasMore, rows.length]);
+
+  return {
+    visibleRows: rows.slice(0, count),
+    scrollRef,
+    sentinelRef,
+    hasMore,
+    shown: Math.min(count, rows.length),
+    total: rows.length,
+  };
+}
+
+function ScrollRegion({
+  scrollRef,
+  children,
+}: {
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  children: React.ReactNode;
+}) {
+  return (
+    <div ref={scrollRef} className="max-h-[26rem] overflow-auto">
+      {children}
+    </div>
+  );
+}
+
+function LoadMore({
+  sentinelRef,
+  hasMore,
+}: {
+  sentinelRef: React.RefObject<HTMLDivElement | null>;
+  hasMore: boolean;
+}) {
+  if (!hasMore) return null;
+  return (
+    <div
+      ref={sentinelRef}
+      className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground"
+    >
+      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      Loading more…
+    </div>
+  );
+}
+
+function ShownFooter({ shown, total }: { shown: number; total: number }) {
+  if (total === 0) return null;
+  return (
+    <div
+      className="border-t px-4 py-2 text-right text-[11px] tabular-nums text-muted-foreground"
+      style={{ borderColor: LAYOUT_BORDER }}
+    >
+      Showing {shown} of {total}
+    </div>
+  );
+}
+
 function EmptyRow({ cols, label }: { cols: number; label: string }) {
   return (
     <tr>
@@ -151,69 +252,85 @@ function EmptyRow({ cols, label }: { cols: number; label: string }) {
   );
 }
 
+const STICKY_THEAD = 'sticky top-0 z-10';
+
 // ── Variant A: By Assessment ─────────────────────────────────────────────
 type AKey = 'grade' | 'date' | 'item' | 'students' | 'average';
 
+const A_ACCESSORS: Record<AKey, SortAccessor<AssessmentSummaryListRow>> = {
+  grade: (r) => (r.grade ?? '').toLowerCase(),
+  date: (r) => r.assessment_date ?? '',
+  item: (r) => (r.item_name ?? '').toLowerCase(),
+  students: (r) => r.total_students ?? -1,
+  average: (r) => r.grade_average ?? -1,
+};
+
 function ByAssessment({
   rows,
+  search,
   schoolAverage,
 }: {
   rows: AssessmentSummaryListRow[];
+  search: string;
   schoolAverage: number | null;
 }) {
-  const accessors: Record<AKey, SortAccessor<AssessmentSummaryListRow>> = {
-    grade: (r) => (r.grade ?? '').toLowerCase(),
-    date: (r) => r.assessment_date ?? '',
-    item: (r) => (r.item_name ?? '').toLowerCase(),
-    students: (r) => r.total_students ?? -1,
-    average: (r) => r.grade_average ?? -1,
-  };
+  const q = search.trim().toLowerCase();
+  const filtered = useMemo(
+    () => (q ? rows.filter((r) => matches(r.item_name, q)) : rows),
+    [rows, q],
+  );
   const { sortedRows, sortColumn, sortDirection, onHeaderClick } = useTableSort<
     AssessmentSummaryListRow,
     AKey
   >({
-    rows,
-    accessors,
+    rows: filtered,
+    accessors: A_ACCESSORS,
     defaultColumn: 'date',
     defaultDirection: 'desc',
     initialDirections: { students: 'desc', average: 'desc', date: 'desc' },
   });
+  const { visibleRows, scrollRef, sentinelRef, hasMore, shown, total } =
+    useInfiniteWindow(sortedRows);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <Th><SortableHeader column="grade" label="Grade" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th><SortableHeader column="item" label="Item Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th align="center"><SortableHeader column="students" label="Total Students" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-            <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th align="right">Report</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.length === 0 ? (
-            <EmptyRow cols={6} label="No assessments match the current filters." />
-          ) : (
-            sortedRows.map((r) => (
-              <tr key={r.item_id} className="transition-colors hover:bg-accent/30">
-                <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.grade ?? '—'}</td>
-                <td className={`${TD} tabular-nums whitespace-nowrap`} style={{ borderColor: LAYOUT_BORDER }}>{r.assessment_date ?? '—'}</td>
-                <td className={`${TD} font-medium text-foreground`} style={{ borderColor: LAYOUT_BORDER }}>{r.item_name ?? r.item_id}</td>
-                <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.total_students ?? '—'}</td>
-                <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
-                  <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
-                </td>
-                <td className={`${TD} text-right`} style={{ borderColor: LAYOUT_BORDER }}>
-                  <OpenReportMenu itemId={r.item_id} itemName={r.item_name ?? r.item_id} />
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <ScrollRegion scrollRef={scrollRef}>
+        <table className="w-full border-collapse">
+          <thead className={STICKY_THEAD}>
+            <tr>
+              <Th><SortableHeader column="grade" label="Grade" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th><SortableHeader column="item" label="Item Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th align="center"><SortableHeader column="students" label="Total Students" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th align="right">Report</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {total === 0 ? (
+              <EmptyRow cols={6} label="No assessments match the current filters." />
+            ) : (
+              visibleRows.map((r) => (
+                <tr key={r.item_id} className="transition-colors hover:bg-accent/30">
+                  <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.grade ?? '—'}</td>
+                  <td className={`${TD} tabular-nums whitespace-nowrap`} style={{ borderColor: LAYOUT_BORDER }}>{r.assessment_date ?? '—'}</td>
+                  <td className={`${TD} font-medium text-foreground`} style={{ borderColor: LAYOUT_BORDER }}>{r.item_name ?? r.item_id}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.total_students ?? '—'}</td>
+                  <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
+                    <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
+                  </td>
+                  <td className={`${TD} text-right`} style={{ borderColor: LAYOUT_BORDER }}>
+                    <OpenReportMenu itemId={r.item_id} itemName={r.item_name ?? r.item_id} />
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+        <LoadMore sentinelRef={sentinelRef} hasMore={hasMore} />
+      </ScrollRegion>
+      <ShownFooter shown={shown} total={total} />
+    </>
   );
 }
 
@@ -256,126 +373,162 @@ function OpenReportMenu({ itemId, itemName }: { itemId: string; itemName: string
 // ── Variant B: By Standard ───────────────────────────────────────────────
 type SKey = 'standard' | 'strand' | 'subject' | 'questions' | 'assessments' | 'average';
 
+const S_ACCESSORS: Record<SKey, SortAccessor<StandardSummaryRollupRow>> = {
+  standard: (r) => (r.cpalms_standard || r.schoology_standard || '').toLowerCase(),
+  strand: (r) => (r.strand ?? '').toLowerCase(),
+  subject: (r) => (r.subject ?? '').toLowerCase(),
+  questions: (r) => r.num_questions,
+  assessments: (r) => r.num_assessments,
+  average: (r) => r.grade_average,
+};
+
 function ByStandard({
   rows,
+  search,
   schoolAverage,
 }: {
   rows: StandardSummaryRollupRow[];
+  search: string;
   schoolAverage: number | null;
 }) {
-  const accessors: Record<SKey, SortAccessor<StandardSummaryRollupRow>> = {
-    standard: (r) => (r.cpalms_standard || r.schoology_standard || '').toLowerCase(),
-    strand: (r) => (r.strand ?? '').toLowerCase(),
-    subject: (r) => (r.subject ?? '').toLowerCase(),
-    questions: (r) => r.num_questions,
-    assessments: (r) => r.num_assessments,
-    average: (r) => r.grade_average,
-  };
+  const q = search.trim().toLowerCase();
+  const filtered = useMemo(
+    () =>
+      q
+        ? rows.filter(
+            (r) =>
+              matches(r.cpalms_standard, q) ||
+              matches(r.schoology_standard, q) ||
+              matches(r.strand, q),
+          )
+        : rows,
+    [rows, q],
+  );
   const { sortedRows, sortColumn, sortDirection, onHeaderClick } = useTableSort<
     StandardSummaryRollupRow,
     SKey
   >({
-    rows,
-    accessors,
+    rows: filtered,
+    accessors: S_ACCESSORS,
     defaultColumn: 'standard',
     defaultDirection: 'asc',
     initialDirections: { questions: 'desc', assessments: 'desc', average: 'desc' },
   });
+  const { visibleRows, scrollRef, sentinelRef, hasMore, shown, total } =
+    useInfiniteWindow(sortedRows);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <Th><SortableHeader column="standard" label="Standard" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th><SortableHeader column="subject" label="Subject" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th align="center"><SortableHeader column="questions" label="# Questions" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-            <Th align="center"><SortableHeader column="assessments" label="# Assessments" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-            <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.length === 0 ? (
-            <EmptyRow cols={6} label="No standards match the current filters." />
-          ) : (
-            sortedRows.map((r) => (
-              <tr key={`${r.schoology_standard}-${r.subject}`} className="transition-colors hover:bg-accent/30">
-                <td className={`${TD} font-medium text-foreground`} style={{ borderColor: LAYOUT_BORDER }} title={r.description || undefined}>{r.cpalms_standard || r.schoology_standard}</td>
-                <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.strand || '—'}</td>
-                <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.subject || '—'}</td>
-                <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_questions}</td>
-                <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_assessments}</td>
-                <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
-                  <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <ScrollRegion scrollRef={scrollRef}>
+        <table className="w-full border-collapse">
+          <thead className={STICKY_THEAD}>
+            <tr>
+              <Th><SortableHeader column="standard" label="Standard" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th><SortableHeader column="subject" label="Subject" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th align="center"><SortableHeader column="questions" label="# Questions" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th align="center"><SortableHeader column="assessments" label="# Assessments" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+            </tr>
+          </thead>
+          <tbody>
+            {total === 0 ? (
+              <EmptyRow cols={6} label="No standards match the current filters." />
+            ) : (
+              visibleRows.map((r, i) => (
+                <tr key={`${r.schoology_standard}-${r.subject}-${i}`} className="transition-colors hover:bg-accent/30">
+                  <td className={`${TD} font-medium text-foreground`} style={{ borderColor: LAYOUT_BORDER }} title={r.description || undefined}>{r.cpalms_standard || r.schoology_standard}</td>
+                  <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.strand || '—'}</td>
+                  <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.subject || '—'}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_questions}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_assessments}</td>
+                  <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
+                    <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+        <LoadMore sentinelRef={sentinelRef} hasMore={hasMore} />
+      </ScrollRegion>
+      <ShownFooter shown={shown} total={total} />
+    </>
   );
 }
 
 // ── Variant C: By Strand ─────────────────────────────────────────────────
 type StKey = 'strand' | 'standards' | 'questions' | 'assessments' | 'average';
 
+const ST_ACCESSORS: Record<StKey, SortAccessor<StrandSummaryRollupRow>> = {
+  strand: (r) => (r.strand ?? '').toLowerCase(),
+  standards: (r) => r.num_standards,
+  questions: (r) => r.num_questions,
+  assessments: (r) => r.num_assessments,
+  average: (r) => r.grade_average,
+};
+
 function ByStrand({
   rows,
+  search,
   schoolAverage,
 }: {
   rows: StrandSummaryRollupRow[];
+  search: string;
   schoolAverage: number | null;
 }) {
-  const accessors: Record<StKey, SortAccessor<StrandSummaryRollupRow>> = {
-    strand: (r) => (r.strand ?? '').toLowerCase(),
-    standards: (r) => r.num_standards,
-    questions: (r) => r.num_questions,
-    assessments: (r) => r.num_assessments,
-    average: (r) => r.grade_average,
-  };
+  const q = search.trim().toLowerCase();
+  const filtered = useMemo(
+    () => (q ? rows.filter((r) => matches(r.strand, q)) : rows),
+    [rows, q],
+  );
   const { sortedRows, sortColumn, sortDirection, onHeaderClick } = useTableSort<
     StrandSummaryRollupRow,
     StKey
   >({
-    rows,
-    accessors,
+    rows: filtered,
+    accessors: ST_ACCESSORS,
     defaultColumn: 'strand',
     defaultDirection: 'asc',
     initialDirections: { standards: 'desc', questions: 'desc', assessments: 'desc', average: 'desc' },
   });
+  const { visibleRows, scrollRef, sentinelRef, hasMore, shown, total } =
+    useInfiniteWindow(sortedRows);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-            <Th align="center"><SortableHeader column="standards" label="# Standards" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-            <Th align="center"><SortableHeader column="questions" label="# Questions" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-            <Th align="center"><SortableHeader column="assessments" label="# Assessments" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-            <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.length === 0 ? (
-            <EmptyRow cols={5} label="No strands match the current filters." />
-          ) : (
-            sortedRows.map((r) => (
-              <tr key={r.strand} className="transition-colors hover:bg-accent/30">
-                <td className={`${TD} font-medium text-foreground`} style={{ borderColor: LAYOUT_BORDER }}>{r.strand}</td>
-                <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_standards}</td>
-                <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_questions}</td>
-                <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_assessments}</td>
-                <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
-                  <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <ScrollRegion scrollRef={scrollRef}>
+        <table className="w-full border-collapse">
+          <thead className={STICKY_THEAD}>
+            <tr>
+              <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th align="center"><SortableHeader column="standards" label="# Standards" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th align="center"><SortableHeader column="questions" label="# Questions" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th align="center"><SortableHeader column="assessments" label="# Assessments" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+            </tr>
+          </thead>
+          <tbody>
+            {total === 0 ? (
+              <EmptyRow cols={5} label="No strands match the current filters." />
+            ) : (
+              visibleRows.map((r) => (
+                <tr key={r.strand} className="transition-colors hover:bg-accent/30">
+                  <td className={`${TD} font-medium text-foreground`} style={{ borderColor: LAYOUT_BORDER }}>{r.strand}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_standards}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_questions}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_assessments}</td>
+                  <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
+                    <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+        <LoadMore sentinelRef={sentinelRef} hasMore={hasMore} />
+      </ScrollRegion>
+      <ShownFooter shown={shown} total={total} />
+    </>
   );
 }

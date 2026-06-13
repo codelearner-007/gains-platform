@@ -37,7 +37,7 @@ export function useAssessmentReport<T>({
   ready,
   queryKey,
   queryFn,
-  redirectTo = '/app/reports',
+  redirectTo = '/app',
 }: UseAssessmentReportArgs<T>): UseQueryResult<T> & { ready: boolean } {
   const router = useRouter();
 

@@ -18,9 +18,20 @@ const ANY = '__any__';
 interface ReportFiltersProps {
   value: AssessmentFilters;
   onChange: (next: AssessmentFilters) => void;
+  /**
+   * `bare` drops the card chrome + the built-in Clear button so a parent can
+   * compose the slicer row inside its own container (e.g. the dashboard filter
+   * card, which owns a shared search box + Clear). Report pages use the default
+   * (card + Clear).
+   */
+  bare?: boolean;
 }
 
-export default function ReportFilters({ value, onChange }: ReportFiltersProps) {
+export default function ReportFilters({
+  value,
+  onChange,
+  bare = false,
+}: ReportFiltersProps) {
   const { schoolId } = useSelectedSchool();
   const sessionsQ = useQuery({
     queryKey: reportsKeys.sessions(schoolId ?? undefined),
@@ -72,7 +83,13 @@ export default function ReportFilters({ value, onChange }: ReportFiltersProps) {
   );
 
   return (
-    <div className="flex flex-wrap items-end gap-3 p-4 bg-card border border-border rounded-lg">
+    <div
+      className={
+        bare
+          ? 'flex flex-wrap items-end gap-3'
+          : 'flex flex-wrap items-end gap-3 p-4 bg-card border border-border rounded-lg'
+      }
+    >
       <FilterField label="Session">
         <Select
           value={value.session ?? ANY}
@@ -175,14 +192,16 @@ export default function ReportFilters({ value, onChange }: ReportFiltersProps) {
         </Select>
       </FilterField>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onChange({})}
-        disabled={Object.keys(value).length === 0}
-      >
-        Clear
-      </Button>
+      {!bare && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onChange({})}
+          disabled={Object.keys(value).length === 0}
+        >
+          Clear
+        </Button>
+      )}
     </div>
   );
 }
