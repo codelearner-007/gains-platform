@@ -91,8 +91,8 @@ export default function QuestionSummaryPaginatedPage() {
                 baseQuery={{ item_id: itemId }}
                 options={[
                   { value: 'base', label: 'Base' },
-                  { value: 'teacher', label: 'Teacher' },
-                  { value: 'redacted', label: 'Redacted' },
+                  { value: 'teacher', label: 'Teacher Subtotal' },
+                  { value: 'redacted', label: 'Names Redacted' },
                 ]}
                 active={variant}
                 defaultValue="base"
