@@ -186,6 +186,14 @@ export interface AssessmentFilters {
   school_id?: string;
 }
 
+/** Assessment list row enriched with the per-item grade average + student
+ *  count, for the dashboard "Assessments Summary — By Assessment" data bars.
+ *  Both nullable: fact-less / cube-absent items resolve to null (em-dash). */
+export interface AssessmentSummaryListRow extends AssessmentListRow {
+  grade_average: number | null;
+  total_students: number | null;
+}
+
 // ─── Multi-tenant — accessible schools (school switcher) ─────────────────
 
 export interface AccessibleSchool {

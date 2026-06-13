@@ -3,6 +3,7 @@ import type {
   AlignmentDataQualityReport,
   AssessmentFilters,
   AssessmentListRow,
+  AssessmentSummaryListRow,
   GradeRow,
   IncorrectAnswerDetailsPayload,
   QraByStandardTeacherPayload,
@@ -123,6 +124,12 @@ export const reportsApi = {
       credentials: 'include',
     }).then(handleResponse<AssessmentListRow[]>),
 
+  assessmentSummaries: (filters?: AssessmentFilters, schoolId?: string) =>
+    fetch(
+      `/api/v1/assessments/summary-list${buildQuery({ ...filters, school_id: schoolId })}`,
+      { credentials: 'include' },
+    ).then(handleResponse<AssessmentSummaryListRow[]>),
+
   sessions: (schoolId?: string) =>
     fetch(`/api/v1/dim/sessions${buildQuery({ school_id: schoolId })}`, {
       credentials: 'include',
@@ -171,6 +178,8 @@ export const reportsKeys = {
     [...reportsKeys.all, 'dq', 'standards-alignment'] as const,
   assessments: (filters?: AssessmentFilters, schoolId?: string) =>
     [...reportsKeys.all, 'assessments', filters ?? {}, schoolId ?? null] as const,
+  assessmentSummaries: (filters?: AssessmentFilters, schoolId?: string) =>
+    [...reportsKeys.all, 'assessment-summaries', filters ?? {}, schoolId ?? null] as const,
   sessions: (schoolId?: string) =>
     [...reportsKeys.all, 'dim', 'sessions', schoolId ?? null] as const,
   subjects: (schoolId?: string) =>

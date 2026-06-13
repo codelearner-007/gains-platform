@@ -1,159 +1,112 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowUpRight,
   BookOpen,
-  CalendarDays,
   GraduationCap,
-  LineChart,
   ListChecks,
-  Network,
+  Percent,
   Settings,
   Shield,
+  Users,
 } from 'lucide-react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import { canSeeAdminEntry } from '@/lib/rbac/access';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
+import { getReportsByGroup } from '@/lib/reports/report-types';
+import type { AssessmentFilters } from '@/lib/reports/types';
 import { StatCard } from '@/components/app/StatCard';
-import { Skeleton } from '@/components/ui/skeleton';
+import ReportFilters from '@/components/app/modules/reports/shared/ReportFilters';
+import DashboardHeader from '@/components/app/dashboard/DashboardHeader';
+import AssessmentsSummaryTable from '@/components/app/dashboard/AssessmentsSummaryTable';
 
-const QUICK_REPORTS = [
-  {
-    href: '/app/reports',
-    icon: ListChecks,
-    title: 'Assessment Reports',
-    description: 'Browse, filter and open any per-assessment report.',
-    primary: true,
-  },
-  {
-    href: '/app/reports/year-to-date-performance',
-    icon: LineChart,
-    title: 'Year To Date',
-    description: 'Longitudinal performance trend for the session.',
-  },
-  {
-    href: '/app/reports/standard-summary',
-    icon: GraduationCap,
-    title: 'Standard Summary',
-    description: 'School-wide standards rollup by strand.',
-  },
-  {
-    href: '/app/reports/strand-summary',
-    icon: Network,
-    title: 'Strand Summary',
-    description: 'Strand rollup with per-standard drill-down.',
-  },
-] as const;
+const PROGRAM_REPORTS = getReportsByGroup('program');
 
 export function DashboardPage() {
-  const { loading, user } = useGlobal();
-  const { schoolId, schools } = useSelectedSchool();
+  const { user } = useGlobal();
+  const { schoolId } = useSelectedSchool();
+  const [filters, setFilters] = useState<AssessmentFilters>({});
 
-  const userName = user?.email?.split('@')[0] || 'there';
   const showAdmin =
-    user &&
+    !!user &&
     canSeeAdminEntry({
       permissions: user.app_metadata?.permissions ?? [],
       hierarchy_level: user.app_metadata?.hierarchy_level,
       user_role: user.app_metadata?.user_role,
     });
 
-  const schoolName =
-    schools.find((s) => s.school_id === schoolId)?.name ?? null;
+  // school_id is carried in the filter object for the summary endpoints; the
+  // assessment-summaries endpoint takes it positionally.
+  const summaryFilters = { ...filters, school_id: schoolId ?? undefined };
 
-  const { data, isLoading: statsLoading } = useQuery({
-    queryKey: reportsKeys.assessments({}, schoolId ?? undefined),
-    queryFn: () => reportsApi.assessments({}, schoolId ?? undefined),
+  // standard-summary is the single source for the header (school name/logo/
+  // session), the KPI strip, the school-wide grade-average marker, AND the
+  // "By Standard" table variant — one call, no duplication.
+  const stdQ = useQuery({
+    queryKey: reportsKeys.standardSummary(summaryFilters),
+    queryFn: () => reportsApi.standardSummary(summaryFilters),
+  });
+  const strandQ = useQuery({
+    queryKey: reportsKeys.strandSummary(summaryFilters),
+    queryFn: () => reportsApi.strandSummary(summaryFilters),
+  });
+  const asmtQ = useQuery({
+    queryKey: reportsKeys.assessmentSummaries(filters, schoolId ?? undefined),
+    queryFn: () => reportsApi.assessmentSummaries(filters, schoolId ?? undefined),
   });
 
-  const stats = useMemo(() => {
-    const rows = data ?? [];
-    const distinct = (key: 'subject' | 'grade') =>
-      new Set(rows.map((r) => r[key]).filter(Boolean)).size;
-    const dates = rows.map((r) => r.assessment_date).filter(Boolean) as string[];
-    return {
-      assessments: rows.length,
-      subjects: distinct('subject'),
-      grades: distinct('grade'),
-      latest: dates.length ? dates.slice().sort().at(-1) ?? null : null,
-    };
-  }, [data]);
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="space-y-3">
-          <Skeleton className="h-9 w-72" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-lg" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const kpis = stdQ.data?.kpis;
+  const school = stdQ.data?.school;
+  const schoolAverage = kpis?.grade_average ?? null;
+  const assessments = asmtQ.data ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
-      {/* Header */}
-      <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Dashboard
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Welcome back, {userName}
-        </h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Assessment performance analytics
-          {schoolName ? (
-            <>
-              {' '}
-              for <span className="font-medium text-foreground">{schoolName}</span>
-            </>
-          ) : (
-            ' across your schools'
-          )}
-          .
-        </p>
-      </header>
+    <div className="mx-auto max-w-7xl space-y-4">
+      <DashboardHeader
+        schoolName={school?.name ?? null}
+        logoUrl={school?.logo_url ?? null}
+        currentSession={school?.current_session ?? null}
+        loading={stdQ.isLoading}
+      />
 
-      {/* School-scoped KPI strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Assessments" value={stats.assessments} icon={ListChecks} loading={statsLoading} />
-        <StatCard label="Subjects" value={stats.subjects} icon={BookOpen} loading={statsLoading} />
-        <StatCard label="Grades" value={stats.grades} icon={GraduationCap} loading={statsLoading} />
-        <StatCard label="Latest" value={stats.latest ?? '—'} icon={CalendarDays} loading={statsLoading} />
+      <ReportFilters value={filters} onChange={setFilters} />
+
+      {/* School-scoped KPI strip (legacy KPI cardVisuals) */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <StatCard label="Total Students" value={kpis?.total_students ?? '—'} icon={Users} loading={stdQ.isLoading} />
+        <StatCard label="Total Standards" value={kpis?.total_standards ?? '—'} icon={GraduationCap} loading={stdQ.isLoading} />
+        <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} icon={ListChecks} loading={stdQ.isLoading} />
+        <StatCard label="Assessments" value={asmtQ.isLoading ? '—' : assessments.length} icon={BookOpen} loading={asmtQ.isLoading} />
+        <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} icon={Percent} loading={stdQ.isLoading} />
       </div>
 
-      {/* Jump back in */}
-      <section className="space-y-3">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Jump back in
-        </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {QUICK_REPORTS.map((item) => (
-            <QuickLink key={item.href} {...item} />
-          ))}
-        </div>
-      </section>
+      <AssessmentsSummaryTable
+        schoolAverage={schoolAverage}
+        assessments={assessments}
+        standards={stdQ.data?.standards ?? []}
+        strands={strandQ.data?.strands_rollup ?? []}
+        loading={stdQ.isLoading || strandQ.isLoading || asmtQ.isLoading}
+      />
 
-      {/* Manage */}
-      <section className="space-y-3">
+      {/* Program reports (no per-assessment context) + management entries */}
+      <section className="space-y-3 pt-1">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Manage
+          Program reports
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {PROGRAM_REPORTS.map((r) => (
+            <QuickLink
+              key={r.slug}
+              href={`/app/reports/${r.slug}`}
+              icon={r.icon}
+              title={r.canonicalName}
+              description={r.menuHint}
+            />
+          ))}
           <QuickLink
             href="/app/user-settings"
             icon={Settings}
@@ -179,31 +132,19 @@ function QuickLink({
   icon: Icon,
   title,
   description,
-  primary,
 }: {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
-  primary?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col gap-3 rounded-xl border p-5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-        primary
-          ? 'border-primary/30 bg-primary-soft/40 hover:border-primary/50 hover:shadow-sm'
-          : 'border-border bg-card hover:border-foreground/20 hover:shadow-sm'
-      }`}
+      className="group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-center justify-between">
-        <div
-          className={`flex h-9 w-9 items-center justify-center rounded-md ${
-            primary
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-primary-soft text-primary'
-          }`}
-        >
+        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
           <Icon className="h-4 w-4" />
         </div>
         <ArrowUpRight className="h-4 w-4 text-muted-foreground/50 transition-colors group-hover:text-primary" />
