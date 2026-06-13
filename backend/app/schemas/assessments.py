@@ -26,6 +26,16 @@ class AssessmentListRow(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AssessmentSummaryListRow(AssessmentListRow):
+    """List row enriched with the per-assessment grade average + student count
+    for the dashboard "Assessments Summary — By Assessment" grade-average bars.
+    Both are nullable: fact-less items or items absent from the cube resolve to
+    ``None`` (rendered as an em-dash, never zero)."""
+
+    grade_average: Optional[float] = None
+    total_students: Optional[int] = None
+
+
 class AssessmentDetail(BaseModel):
     """A single dim_item record with metadata."""
 

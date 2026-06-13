@@ -13,6 +13,7 @@ from app.schemas.assessments import (
     AssessmentDetail,
     AssessmentListRow,
     AssessmentSummary,
+    AssessmentSummaryListRow,
 )
 from app.schemas.reports import (
     IncorrectChoice,
@@ -40,6 +41,32 @@ async def list_assessments(
     """List dim_item filtered for the user's school. Requires: reports:read"""
     service = AssessmentService(db)
     return await service.list_assessments(
+        session_filter=session,
+        category=category,
+        subject=subject,
+        grade=grade,
+        section=section,
+    )
+
+
+@router.get(
+    "/summary-list",
+    response_model=List[AssessmentSummaryListRow],
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def list_assessment_summaries(
+    session: Optional[str] = Query(default=None),
+    category: Optional[str] = Query(default=None),
+    subject: Optional[str] = Query(default=None),
+    grade: Optional[str] = Query(default=None),
+    section: Optional[str] = Query(default=None),
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> List[AssessmentSummaryListRow]:
+    """Assessment list with per-item grade average + student count for the
+    dashboard's By-Assessment grade-average bars (one batched rollup, no N+1).
+    Requires: reports:read"""
+    service = AssessmentService(db)
+    return await service.list_assessment_summaries(
         session_filter=session,
         category=category,
         subject=subject,

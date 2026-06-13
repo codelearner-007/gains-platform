@@ -13,6 +13,7 @@ from app.schemas.assessments import (
     AssessmentDetail,
     AssessmentListRow,
     AssessmentSummary,
+    AssessmentSummaryListRow,
 )
 from app.schemas.reports import (
     IncorrectChoice,
@@ -44,6 +45,50 @@ class AssessmentService:
             section=section,
         )
         return [AssessmentListRow.model_validate(r) for r in rows]
+
+    async def list_assessment_summaries(
+        self,
+        session_filter: Optional[str] = None,
+        category: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> List[AssessmentSummaryListRow]:
+        """Assessment list enriched with per-item grade_average + total_students
+        for the dashboard's By-Assessment grade-average bars. One list query +
+        one batched rollup query (no N+1)."""
+        rows = await self.dim.list_items(
+            session_filter=session_filter,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+        )
+        rollups = await self.cube.get_assessment_summary_list(
+            session_filter=session_filter,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+        )
+        by_item = {safe_str(r.get("item_id")): r for r in rollups}
+        out: List[AssessmentSummaryListRow] = []
+        for r in rows:
+            roll = by_item.get(safe_str(r.get("item_id")), {})
+            out.append(
+                AssessmentSummaryListRow.model_validate(
+                    {
+                        **r,
+                        "grade_average": to_float(roll.get("grade_average"))
+                        if roll.get("grade_average") is not None
+                        else None,
+                        "total_students": to_int(roll.get("total_students"))
+                        if roll.get("total_students") is not None
+                        else None,
+                    }
+                )
+            )
+        return out
 
     async def get_assessment(self, item_id: str) -> AssessmentDetail:
         row = await self.dim.get_item(item_id)

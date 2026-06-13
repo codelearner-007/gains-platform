@@ -252,6 +252,108 @@ class CubeRepository:
         row = result.first()
         return _row_to_dict(row) if row else None
 
+    async def get_assessment_summary_list(
+        self,
+        session_filter: Optional[str] = None,
+        category: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Per-item grade_average + total_students for every filter-scoped
+        assessment, in ONE query.
+
+        Powers the dashboard "Assessments Summary — By Assessment" grade-average
+        data bars without an N+1 over ``/assessments/{item_id}/summary``. The
+        grade average mirrors :meth:`get_canonical_kpis_for_item` exactly — the
+        per-(question, user) fact collapse (legacy DAX), grouped by item — with
+        a ``cube_question_summary`` fallback for fact-less (parquet-loaded)
+        items. Scope filters match ``DimRepository.list_items``; RLS scopes to
+        the caller's school.
+        """
+        sql = text(
+            """
+            WITH scoped AS (
+                SELECT di.item_id
+                FROM dim_item di
+                LEFT JOIN dim_subject ds
+                  ON ds.school_id = di.school_id AND ds.subject_id = di.subject_id
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR ds.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR ds.assessment_type = CAST(:category AS TEXT))
+                  AND (CAST(:subject AS TEXT)  IS NULL OR ds.subject         = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT)    IS NULL OR ds.grade           = CAST(:grade AS TEXT))
+                  AND (CAST(:section AS TEXT)  IS NULL OR di.section_name    = CAST(:section AS TEXT))
+            ),
+            fact_dedup AS (
+                SELECT DISTINCT ON (item_id, user_uid, question_id, position_number)
+                       item_id, user_uid, question_id, position_number,
+                       points_received, points_possible
+                FROM fact_student_submission
+                WHERE item_id IN (SELECT item_id FROM scoped)
+                  AND points_possible IS NOT NULL AND points_possible > 0
+                ORDER BY item_id, user_uid, question_id, position_number, identifier NULLS LAST
+            ),
+            per_user_q AS (
+                SELECT item_id, question_id, user_uid,
+                       SUM(points_received)::numeric
+                         / NULLIF(SUM(points_possible), 0) AS pct
+                FROM fact_dedup
+                GROUP BY item_id, question_id, user_uid
+            ),
+            per_q AS (
+                SELECT item_id, question_id, AVG(pct) AS qga
+                FROM per_user_q
+                GROUP BY item_id, question_id
+            ),
+            fact_ga AS (
+                SELECT item_id, AVG(qga) AS grade_average
+                FROM per_q
+                GROUP BY item_id
+            ),
+            -- Fallback for fact-less (parquet) items: average the per-question
+            -- cube grade_average (item-scoped), matching get_canonical_kpis.
+            cube_ga AS (
+                SELECT item_id, AVG(grade_average) AS grade_average
+                FROM cube_question_summary
+                WHERE item_id IN (SELECT item_id FROM scoped)
+                GROUP BY item_id
+            ),
+            -- Deterministic primary-subject pick for total_students (same as
+            -- get_canonical_kpis_for_item's `school` CTE, batched per item).
+            students AS (
+                SELECT DISTINCT ON (item_id) item_id, total_students
+                FROM (
+                    SELECT DISTINCT item_id, subject_id, total_students,
+                           total_questions, total_possible_point, total_score
+                    FROM cube_school_summary
+                    WHERE item_id IN (SELECT item_id FROM scoped)
+                ) deduped
+                ORDER BY item_id, total_students DESC NULLS LAST,
+                         total_questions DESC NULLS LAST,
+                         total_possible_point DESC NULLS LAST,
+                         total_score DESC NULLS LAST, subject_id
+            )
+            SELECT s.item_id,
+                   COALESCE(fg.grade_average, cg.grade_average) AS grade_average,
+                   st.total_students
+            FROM scoped s
+            LEFT JOIN fact_ga fg ON fg.item_id = s.item_id
+            LEFT JOIN cube_ga cg ON cg.item_id = s.item_id
+            LEFT JOIN students st ON st.item_id = s.item_id
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            {
+                "session_filter": session_filter,
+                "category": category,
+                "subject": subject,
+                "grade": grade,
+                "section": section,
+            },
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
     async def get_canonical_per_question_grades(
         self, item_id: str
     ) -> List[Dict[str, Any]]:
