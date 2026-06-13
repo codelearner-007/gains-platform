@@ -50,15 +50,9 @@ const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
 
 interface Props {
   strands: StrandSummaryRollupRow[];
-  selectedStrand?: string | null;
-  onSelectStrand?: (strand: string | null) => void;
 }
 
-export default function StrandRollupTable({
-  strands,
-  selectedStrand,
-  onSelectStrand,
-}: Props) {
+export default function StrandRollupTable({ strands }: Props) {
   // Legacy default: Strand ascending.
   const { sortedRows: sorted, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<StrandSummaryRollupRow, SortKey>({
@@ -68,8 +62,6 @@ export default function StrandRollupTable({
       defaultDirection: 'asc',
       initialDirections: INITIAL_DIRECTIONS,
     });
-
-  const clickable = !!onSelectStrand;
 
   return (
     <div
@@ -84,11 +76,6 @@ export default function StrandRollupTable({
         }}
       >
         Strand rollup ({sorted.length} strand{sorted.length === 1 ? '' : 's'})
-        {clickable && (
-          <span className="ml-2 text-[11px] font-normal text-neutral-700">
-            (click a row to filter standards below)
-          </span>
-        )}
       </div>
       <div className="overflow-auto" style={{ maxHeight: 360 }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
@@ -175,22 +162,8 @@ export default function StrandRollupTable({
                 </td>
               </tr>
             ) : (
-              sorted.map((row) => {
-                const isSelected = selectedStrand === row.strand;
-                return (
-                  <tr
-                    key={`strand-row-${row.strand}`}
-                    onClick={() => {
-                      if (!onSelectStrand) return;
-                      onSelectStrand(isSelected ? null : row.strand);
-                    }}
-                    style={{
-                      cursor: clickable ? 'pointer' : 'default',
-                      backgroundColor: isSelected
-                        ? STRAND_CHIP_BG
-                        : 'transparent',
-                    }}
-                  >
+              sorted.map((row) => (
+                  <tr key={`strand-row-${row.strand}`}>
                     <td style={{ ...cellStyle, fontWeight: 600 }}>
                       {row.strand}
                     </td>
@@ -236,8 +209,7 @@ export default function StrandRollupTable({
                       />
                     </td>
                   </tr>
-                );
-              })
+              ))
             )}
           </tbody>
         </table>

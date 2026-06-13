@@ -7,15 +7,12 @@ import {
   LAYOUT_BORDER,
   PERF_PINK,
   performanceColor,
-  STANDARD_HEADER_BG,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
 import ChartContainer from '../shared/ChartContainer';
 
 interface Props {
   rows: StrandSummaryRollupRow[];
-  selectedStrand?: string | null;
-  onSelectStrand?: (strand: string | null) => void;
 }
 
 interface TreemapDatum {
@@ -25,15 +22,10 @@ interface TreemapDatum {
   percentage: number;
   numStandards: number;
   numQuestions: number;
-  selected: boolean;
   [key: string]: string | number | boolean;
 }
 
-export default function StrandTreemap({
-  rows,
-  selectedStrand,
-  onSelectStrand,
-}: Props) {
+export default function StrandTreemap({ rows }: Props) {
   const data: TreemapDatum[] = rows
     .filter((s) => s.num_standards > 0)
     .map((s) => ({
@@ -43,7 +35,6 @@ export default function StrandTreemap({
       percentage: s.grade_average,
       numStandards: s.num_standards,
       numQuestions: s.num_questions,
-      selected: selectedStrand === s.strand,
     }));
 
   return (
@@ -58,20 +49,7 @@ export default function StrandTreemap({
           borderColor: LAYOUT_BORDER,
         }}
       >
-        <span>
-          {selectedStrand
-            ? `Selected: ${selectedStrand}`
-            : '# of Standards by Strand (click a tile to filter)'}
-        </span>
-        {selectedStrand && onSelectStrand && (
-          <button
-            type="button"
-            className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
-            onClick={() => onSelectStrand(null)}
-          >
-            Clear filter
-          </button>
-        )}
+        <span># of Standards by Strand</span>
       </div>
       <div style={{ height: 280 }} className="p-2">
         {data.length === 0 ? (
@@ -85,14 +63,7 @@ export default function StrandTreemap({
               dataKey="size"
               stroke="#fff"
               isAnimationActive={false}
-              content={
-                <TreemapNode
-                  onClick={(name) => {
-                    if (!onSelectStrand) return;
-                    onSelectStrand(selectedStrand === name ? null : name);
-                  }}
-                />
-              }
+              content={<TreemapNode />}
             >
               <Tooltip content={<TreemapTooltip />} />
             </Treemap>
@@ -111,22 +82,11 @@ interface NodeProps {
   name?: string;
   color?: string;
   percentage?: number;
-  selected?: boolean;
   numStandards?: number;
-  onClick?: (name: string) => void;
 }
 
 function TreemapNode(props: NodeProps) {
-  const {
-    x = 0,
-    y = 0,
-    width = 0,
-    height = 0,
-    name = '',
-    color,
-    selected,
-    onClick,
-  } = props;
+  const { x = 0, y = 0, width = 0, height = 0, name = '', color } = props;
   const fill = color || PERF_PINK;
   if (width <= 0 || height <= 0) return null;
   const lines = wrapLabel(name, Math.max(6, Math.floor(width / 7)), 3);
@@ -135,20 +95,13 @@ function TreemapNode(props: NodeProps) {
   const totalHeight = lines.length * lineHeight;
   const startY = y + height / 2 - totalHeight / 2 + fontSize / 2;
   return (
-    <g
-      style={{ cursor: onClick ? 'pointer' : 'default' }}
-      onClick={() => onClick?.(name)}
-    >
+    <g>
       <rect
         x={x}
         y={y}
         width={width}
         height={height}
-        style={{
-          fill,
-          stroke: selected ? STANDARD_HEADER_BG : '#fff',
-          strokeWidth: selected ? 3 : 2,
-        }}
+        style={{ fill, stroke: '#fff', strokeWidth: 2 }}
       />
       {width > 60 && height > 26 &&
         lines.map((line, i) => (
@@ -160,7 +113,7 @@ function TreemapNode(props: NodeProps) {
             dominantBaseline="middle"
             fontSize={fontSize}
             fill="#000"
-            fontWeight={selected ? 700 : 600}
+            fontWeight={600}
             stroke="#fff"
             strokeWidth={3}
             paintOrder="stroke"

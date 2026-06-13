@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import type { StrandSummaryStandardRow } from '@/lib/reports/types';
 import {
   cellColor,
@@ -52,25 +51,13 @@ const INITIAL_DIRECTIONS: Partial<Record<SortKey, 'asc' | 'desc'>> = {
 
 interface Props {
   standards: StrandSummaryStandardRow[];
-  selectedStrand?: string | null;
 }
 
-export default function StrandStandardsTable({
-  standards,
-  selectedStrand,
-}: Props) {
-  const filtered = useMemo(
-    () =>
-      selectedStrand
-        ? standards.filter((s) => s.strand === selectedStrand)
-        : standards,
-    [standards, selectedStrand],
-  );
-
+export default function StrandStandardsTable({ standards }: Props) {
   // Legacy default: Strand ascending (with standard tie-break).
   const { sortedRows: sorted, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<StrandSummaryStandardRow, SortKey>({
-      rows: filtered,
+      rows: standards,
       accessors: SORT_ACCESSORS,
       defaultColumn: 'strand',
       defaultDirection: 'asc',
@@ -89,9 +76,7 @@ export default function StrandStandardsTable({
           borderColor: LAYOUT_BORDER,
         }}
       >
-        {selectedStrand
-          ? `Standards in "${selectedStrand}" (${sorted.length})`
-          : `Standards across all strands (${sorted.length})`}
+        Standards across all strands ({sorted.length})
       </div>
       <div className="overflow-auto" style={{ maxHeight: 480 }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
