@@ -42,7 +42,7 @@ class ParsedPath:
 
 
 class PathParseError(ValueError):
-    """Raised when a path cannot be parsed into the expected 6-part shape."""
+    """Raised when a path cannot be parsed into at least the 5-part shape."""
 
 
 def _normalize(path: str | PurePath) -> tuple[str, ...]:
@@ -61,24 +61,47 @@ def _normalize(path: str | PurePath) -> tuple[str, ...]:
 def parse_relative_path(rel_path: str | PurePath) -> ParsedPath:
     """Parse a relative scraper path → ParsedPath.
 
-    The path must be RELATIVE to the school root, with exactly 6 components:
-    (session, assessment_type, subject, grade, section, file_name).
+    The canonical layout is 6 components:
+        session / assessment_type / subject / grade / section / file_name
 
-    Raises PathParseError if the structure does not match.
+    The legacy backup tree also contains two REAL structural variants that must
+    not be silently dropped (they carry genuine, otherwise-missing assessments):
+
+      * **7+ parts** — an extra subject-category folder is interposed, e.g.
+        ``2025-26/Summative/Science/3 - Science/1 - Grade 1/Sec 01 SCI - C/file``
+        (seen for some schools' Summative exports — e.g. Crestwell). The
+        canonical subject/grade/section still sit at the DEEPEST levels, so we
+        anchor subject/grade/section/file_name to the END and keep
+        session/assessment_type at the front, absorbing any extra category
+        folder(s) in between. For a canonical 6-part path this is byte-identical
+        to the historical parse — regression-safe (Athenian baseline unchanged).
+
+      * **5 parts** — a file placed directly under the grade folder with no
+        section subfolder; ``section`` is left empty.
+
+    Raises PathParseError for fewer than 5 parts.
     """
     parts = _normalize(rel_path)
-    if len(parts) != 6:
+    if len(parts) < 5:
         raise PathParseError(
-            f"expected 6 path parts (session/assessment_type/subject/grade/section/file_name), "
+            f"expected at least 5 path parts "
+            f"(session/assessment_type/subject/grade[/section]/file_name), "
             f"got {len(parts)}: {parts!r}"
         )
 
     session = parts[0]
     assessment_type = _strip_assessment_prefix(parts[1])
-    subject = parts[2].strip()
-    grade = parts[3].strip()
-    section = parts[4].strip()
-    file_name = parts[5]
+    file_name = parts[-1]
+    if len(parts) >= 6:
+        # …/subject/grade/section/file_name — end-anchored so an interposed
+        # subject-category folder (the 7-part variant) is absorbed harmlessly.
+        section = parts[-2].strip()
+        grade = parts[-3].strip()
+        subject = parts[-4].strip()
+    else:  # exactly 5 — no section subfolder
+        section = ""
+        grade = parts[-2].strip()
+        subject = parts[-3].strip()
 
     return ParsedPath(
         session=session,
