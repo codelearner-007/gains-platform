@@ -6,7 +6,7 @@ import type { QuestionOverall } from '@/lib/reports/types';
 import { cellColor, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import {
   formatAnswerHtml,
-  formatCorrectAnswer,
+  formatCorrectAnswerWithPositions,
   formatPercent,
   formatQuestionHtml,
   splitStandards,
@@ -23,6 +23,11 @@ interface QuestionDetailTableProps {
   /** Item id for drill-through to Incorrect Answer Details. When omitted,
    *  the per-row "deep dive" link is hidden. */
   itemId?: string;
+  /** Bidirectional cross-filter: clicking a standard chip in a question row
+   *  toggles that standard in the page filter (PBIX was fully bidirectional). */
+  onSelectStandard?: (schoology_standard: string) => void;
+  /** Standards currently active in the filter (for chip highlight). */
+  selectedStandards?: string[];
 }
 
 type QraSortKey =
@@ -30,7 +35,10 @@ type QraSortKey =
   | 'grade_average'
   | 'correct_answer'
   | 'standards'
-  | 'description';
+  | 'description'
+  | 'question'
+  | 'incorrect_choice_details'
+  | 'incorrect_details_name';
 
 const QRA_SORT_ACCESSORS: Record<
   QraSortKey,
@@ -44,6 +52,10 @@ const QRA_SORT_ACCESSORS: Record<
   correct_answer: (q) => (q.correct_answer || '').toLowerCase(),
   standards: (q) => (q.standards || '').toLowerCase(),
   description: (q) => (q.description || '').toLowerCase(),
+  question: (q) => (q.question || '').toLowerCase(),
+  incorrect_choice_details: (q) =>
+    (q.incorrect_choice_details || '').toLowerCase(),
+  incorrect_details_name: (q) => (q.incorrect_details_name || '').toLowerCase(),
 };
 
 const QRA_INITIAL_DIRECTIONS: Partial<Record<QraSortKey, 'asc' | 'desc'>> = {
@@ -54,13 +66,18 @@ const QRA_INITIAL_DIRECTIONS: Partial<Record<QraSortKey, 'asc' | 'desc'>> = {
 export default function QuestionDetailTable({
   questions,
   itemId,
+  onSelectStandard,
+  selectedStandards,
 }: QuestionDetailTableProps) {
-  // Legacy paginated PDF default: ascending by % Correct (worst first).
+  const selectedStandardSet = new Set(selectedStandards ?? []);
+  // Legacy PBIX default (QRA Interactive, ord 2): the question-detail tableEx
+  // binds `Sum(cube_question_summary_overall.Sorting Question_No)` as its first
+  // field, i.e. question-number ascending (Q1 → Q18).
   const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<QuestionOverall, QraSortKey>({
       rows: questions,
       accessors: QRA_SORT_ACCESSORS,
-      defaultColumn: 'grade_average',
+      defaultColumn: 'question_no',
       defaultDirection: 'asc',
       initialDirections: QRA_INITIAL_DIRECTIONS,
     });
@@ -111,7 +128,15 @@ export default function QuestionDetailTable({
                   align="center"
                 />
               </th>
-              <th style={headerStyle}>Question</th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="question"
+                  label="Question"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
               <th style={{ ...headerStyle, textAlign: 'center' }}>
                 <SortableHeader
                   column="grade_average"
@@ -131,8 +156,24 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={headerStyle}>Incorrect Choice Details</th>
-              <th style={headerStyle}>Incorrect Details Name</th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="incorrect_choice_details"
+                  label="Incorrect Choice Details"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
+              <th style={headerStyle}>
+                <SortableHeader
+                  column="incorrect_details_name"
+                  label="Incorrect Details Name"
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onClick={onHeaderClick}
+                />
+              </th>
               <th style={headerStyle}>
                 <SortableHeader
                   column="standards"
@@ -157,7 +198,10 @@ export default function QuestionDetailTable({
             {rows.map((q, idx) => {
               const ga = q.grade_average;
               const pctBg = cellColor(ga);
-              const correctHtml = formatCorrectAnswer(q.correct_answer)
+              const correctHtml = formatCorrectAnswerWithPositions(
+                q.correct_answer,
+                q.position_number,
+              )
                 .map((line) => formatAnswerHtml(line, 'correct answer'))
                 .join('<br />');
               // Split entries onto their own line. The cube emits a
@@ -265,9 +309,26 @@ export default function QuestionDetailTable({
                   <td style={cellBase}>
                     {standardsList.length > 0 ? (
                       <div className="flex flex-col gap-0.5 text-[11px] font-mono leading-tight break-all">
-                        {standardsList.map((s, i) => (
-                          <span key={`${q.question_id}-std-${i}`}>{s}</span>
-                        ))}
+                        {standardsList.map((s, i) =>
+                          onSelectStandard ? (
+                            <button
+                              key={`${q.question_id}-std-${i}`}
+                              type="button"
+                              onClick={() => onSelectStandard(s)}
+                              aria-pressed={selectedStandardSet.has(s)}
+                              title="Filter the report by this standard"
+                              className={`text-left rounded px-1 -mx-1 cursor-pointer hover:bg-blue-50 ${
+                                selectedStandardSet.has(s)
+                                  ? 'bg-blue-100 font-semibold text-blue-800'
+                                  : 'text-blue-700'
+                              }`}
+                            >
+                              {s}
+                            </button>
+                          ) : (
+                            <span key={`${q.question_id}-std-${i}`}>{s}</span>
+                          ),
+                        )}
                       </div>
                     ) : (
                       <span className="text-neutral-400">—</span>

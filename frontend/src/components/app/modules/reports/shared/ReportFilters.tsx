@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
+import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import type { AssessmentFilters } from '@/lib/reports/types';
 
 const ANY = '__any__';
@@ -17,24 +18,36 @@ const ANY = '__any__';
 interface ReportFiltersProps {
   value: AssessmentFilters;
   onChange: (next: AssessmentFilters) => void;
+  /**
+   * `bare` drops the card chrome + the built-in Clear button so a parent can
+   * compose the slicer row inside its own container (e.g. the dashboard filter
+   * card, which owns a shared search box + Clear). Report pages use the default
+   * (card + Clear).
+   */
+  bare?: boolean;
 }
 
-export default function ReportFilters({ value, onChange }: ReportFiltersProps) {
+export default function ReportFilters({
+  value,
+  onChange,
+  bare = false,
+}: ReportFiltersProps) {
+  const { schoolId } = useSelectedSchool();
   const sessionsQ = useQuery({
-    queryKey: reportsKeys.sessions(),
-    queryFn: () => reportsApi.sessions(),
+    queryKey: reportsKeys.sessions(schoolId ?? undefined),
+    queryFn: () => reportsApi.sessions(schoolId ?? undefined),
   });
   const subjectsQ = useQuery({
-    queryKey: reportsKeys.subjects(),
-    queryFn: () => reportsApi.subjects(),
+    queryKey: reportsKeys.subjects(schoolId ?? undefined),
+    queryFn: () => reportsApi.subjects(schoolId ?? undefined),
   });
   const gradesQ = useQuery({
-    queryKey: reportsKeys.grades(),
-    queryFn: () => reportsApi.grades(),
+    queryKey: reportsKeys.grades(schoolId ?? undefined),
+    queryFn: () => reportsApi.grades(schoolId ?? undefined),
   });
   const sectionsQ = useQuery({
-    queryKey: reportsKeys.sections(),
-    queryFn: () => reportsApi.sections(),
+    queryKey: reportsKeys.sections(schoolId ?? undefined),
+    queryFn: () => reportsApi.sections(schoolId ?? undefined),
   });
 
   function update(field: keyof AssessmentFilters, raw: string) {
@@ -70,7 +83,13 @@ export default function ReportFilters({ value, onChange }: ReportFiltersProps) {
   );
 
   return (
-    <div className="flex flex-wrap items-end gap-3 p-4 bg-card border border-border rounded-lg">
+    <div
+      className={
+        bare
+          ? 'flex flex-wrap items-end gap-3'
+          : 'flex flex-wrap items-end gap-3 p-4 bg-card border border-border rounded-lg'
+      }
+    >
       <FilterField label="Session">
         <Select
           value={value.session ?? ANY}
@@ -173,14 +192,16 @@ export default function ReportFilters({ value, onChange }: ReportFiltersProps) {
         </Select>
       </FilterField>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => onChange({})}
-        disabled={Object.keys(value).length === 0}
-      >
-        Clear
-      </Button>
+      {!bare && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onChange({})}
+          disabled={Object.keys(value).length === 0}
+        >
+          Clear
+        </Button>
+      )}
     </div>
   );
 }

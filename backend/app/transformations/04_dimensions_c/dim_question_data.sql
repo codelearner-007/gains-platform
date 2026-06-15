@@ -168,7 +168,10 @@ SELECT
   sub_question, session, assessment_type, subject, grade, section,
   standard, identifier
 FROM deduped
-ON CONFLICT (school_id, qkey) DO UPDATE
+-- Conflict target is the (school_id, md5(qkey)) UNIQUE index (migration
+-- 20260611000100): qkey can exceed the btree limit when correct_answer embeds a
+-- base64 image, so the dedup index is on its hash. Semantics are unchanged.
+ON CONFLICT (school_id, md5(qkey)) DO UPDATE
 SET ukey                   = EXCLUDED.ukey,
     question               = EXCLUDED.question,
     position_number        = EXCLUDED.position_number,

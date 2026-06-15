@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ResponsiveContainer, Tooltip, Treemap } from 'recharts';
+import { Tooltip, Treemap } from 'recharts';
 import type { IadDistractorRow } from '@/lib/reports/types';
 import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
-import { distractorFill, maxIncorrectShareOf } from './distractorFill';
+import { distractorFill } from './distractorFill';
+import ChartContainer from '../shared/ChartContainer';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -119,7 +120,6 @@ export default function DistractorTreemap({ rows }: Props) {
     const sorted = [...rows].sort(
       (a, b) => b.students_count - a.students_count,
     );
-    const maxIncorrectShare = maxIncorrectShareOf(sorted);
     return sorted.map((r) => {
       const clean = sanitizeShortAnswer(r.answer_submission) || '(blank)';
       return {
@@ -128,7 +128,7 @@ export default function DistractorTreemap({ rows }: Props) {
         size: r.students_count,
         share: r.share_of_attempts,
         isCorrect: r.is_correct,
-        fill: distractorFill(r, maxIncorrectShare),
+        fill: distractorFill(r),
       };
     });
   }, [rows]);
@@ -150,7 +150,7 @@ export default function DistractorTreemap({ rows }: Props) {
             No answer data.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer height="100%">
             <Treemap
               data={data}
               dataKey="size"
@@ -161,7 +161,7 @@ export default function DistractorTreemap({ rows }: Props) {
             >
               <Tooltip content={<ChartTooltip />} />
             </Treemap>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>

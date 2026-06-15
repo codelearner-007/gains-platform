@@ -6,7 +6,10 @@ pipeline. They assume Athenian's 33 ingested items are present and pick:
 * a known-aligned assessment (Chapter 9 Test, item_id 8359960427) with 12
   standards across multiple strands
 * a known-unaligned assessment (Science Quiz Week 3 FSSA Review, item_id
-  8368737293) whose Schoology CSV had zero Standards columns.
+  8368737293) whose Schoology CSV had zero Standards columns. Legacy
+  coerces its NULL standards to a single ``'Other'`` strand/standard
+  (see the unaligned test below for the parity evidence), so the rollups
+  are NOT empty — they carry one ``'Other'`` row.
 
 The tests intentionally use a per-item path param rather than a query
 filter (the route is ``/standards-deep-dive/{item_id}``) and validate
@@ -61,9 +64,26 @@ async def test_sdd_unaligned_assessment_signals_missing_alignment(
 ) -> None:
     """Sci Quiz Week 3 has no Standards columns in the Schoology CSV.
 
-    The endpoint must still 200 (so the page can render the KPI strip)
-    but ``data_quality.alignment_status`` MUST be ``"missing"`` so the
-    UI knows to render the empty-state card instead of blank charts.
+    LEGACY-PARITY UPDATE (Wave 3, 2026-06-05): the original assertions
+    here (``strands_rollup == []`` / ``standards_rollup == []`` /
+    ``total_standards == 0``) encoded a *pre-parity* expectation. Legacy
+    is NOT empty for a truly-unaligned assessment: the Schoology PySpark
+    notebook coerces NULL/blank ``Standards`` → ``'Other'`` before the
+    cubes are built (``Schoology_py.ipynb`` §8; mirrored in
+    ``cube_question_summary.sql:296``,
+    ``cube_question_summary_overall.sql:268/291``,
+    ``cube_overallperformance_summary.sql:40``, ``cube_user_summary.sql:49``;
+    documented in ``40_schoology_py_spec.md:387-388,647,679,741``). The
+    legacy PBIX therefore renders a SINGLE ``Other`` strand + ``Other``
+    standard at the assessment's overall grade average. Evidence on the
+    live seeded DB: ``cube_question_summary`` holds 10 rows for item
+    ``8368737293``, ALL tagged ``standards='Other'``.
+
+    ``report_service._synthesize_other_rollups`` (added in ``75517e2``)
+    re-injects that synthetic ``Other`` row so QRA/SDD match Schoology
+    screenshot-for-screenshot. The endpoint must still 200 and
+    ``data_quality.alignment_status`` MUST remain ``"missing"`` so the UI
+    can render the alignment-warning card alongside the ``Other`` row.
     """
     response = await admin_client.get(
         f"/api/v1/reports/standards-deep-dive/{UNALIGNED_ITEM_ID}"
@@ -74,10 +94,25 @@ async def test_sdd_unaligned_assessment_signals_missing_alignment(
 
     payload = StandardsDeepDivePayload.model_validate(response.json())
     assert payload.assessment.item_id == UNALIGNED_ITEM_ID
-    assert payload.strands_rollup == []
-    assert payload.standards_rollup == []
-    assert payload.kpis.total_standards == 0
 
+    # Legacy NULL→'Other' coercion: exactly one synthetic strand + standard.
+    assert [s.strand for s in payload.strands_rollup] == ["Other"], (
+        f"expected single legacy 'Other' strand, got "
+        f"{[s.strand for s in payload.strands_rollup]}"
+    )
+    assert [s.schoology_standard for s in payload.standards_rollup] == ["Other"], (
+        f"expected single legacy 'Other' standard, got "
+        f"{[s.schoology_standard for s in payload.standards_rollup]}"
+    )
+    # KPI tile counts the synthesized 'Other' standard exactly once.
+    assert payload.kpis.total_standards == 1
+    # The synthetic 'Other' row carries every question and the overall grade.
+    other_strand = payload.strands_rollup[0]
+    assert other_strand.num_standards == 1
+    assert other_strand.num_questions == payload.kpis.total_questions
+    assert other_strand.grade_average == payload.kpis.grade_average
+
+    # data_quality still flags the gap so the UI shows the warning card.
     assert payload.data_quality is not None
     assert payload.data_quality.alignment_status == "missing"
     assert payload.data_quality.questions_total > 0

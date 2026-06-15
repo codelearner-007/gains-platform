@@ -1,9 +1,8 @@
 import type { IadKpis } from '@/lib/reports/types';
-import KpiCard from '@/components/app/modules/reports/shared/KpiCard';
+import SharedKpiStrip from '@/components/app/modules/reports/shared/KpiStrip';
 import { formatAnswerHtml } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
 
-const IAD_CARD_CLASSNAME = 'min-h-[100px]';
 const IAD_VALUE_CLASSNAME = 'text-[24px]';
 
 interface Props {
@@ -41,67 +40,64 @@ function TopWrongValue({
 
 export default function KpiStrip({ kpis }: Props) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 w-full h-full">
-      <KpiCard
-        className={IAD_CARD_CLASSNAME}
-        valueClassName={IAD_VALUE_CLASSNAME}
-        label="Total Students"
-        value={String(kpis.total_attempts)}
-      />
-      <KpiCard
-        className={IAD_CARD_CLASSNAME}
-        valueClassName={IAD_VALUE_CLASSNAME}
-        label="Got it Right"
-        value={
-          <div className="flex flex-col items-center leading-tight">
-            <div className="text-[24px] font-bold text-black">
-              {kpis.correct_count}
+    <SharedKpiStrip
+      cols={6}
+      tiles={[
+        {
+          label: 'Total Students',
+          valueClassName: IAD_VALUE_CLASSNAME,
+          value: String(kpis.total_attempts),
+        },
+        {
+          label: 'Got it Right',
+          valueClassName: IAD_VALUE_CLASSNAME,
+          value: (
+            <div className="flex flex-col items-center leading-tight">
+              <div className="text-[24px] font-bold text-black">
+                {kpis.correct_count}
+              </div>
+              <div className="text-[12px] text-neutral-700 mt-0.5">
+                {kpis.correct_pct}
+              </div>
             </div>
-            <div className="text-[12px] text-neutral-700 mt-0.5">
-              {kpis.correct_pct}
+          ),
+        },
+        {
+          label: 'Got it Wrong',
+          valueClassName: IAD_VALUE_CLASSNAME,
+          value: (
+            <div className="flex flex-col items-center leading-tight">
+              <div className="text-[24px] font-bold text-black">
+                {kpis.incorrect_count}
+              </div>
+              <div className="text-[12px] text-neutral-700 mt-0.5">
+                {kpis.incorrect_pct}
+              </div>
             </div>
-          </div>
-        }
-      />
-      <KpiCard
-        className={IAD_CARD_CLASSNAME}
-        valueClassName={IAD_VALUE_CLASSNAME}
-        label="Got it Wrong"
-        value={
-          <div className="flex flex-col items-center leading-tight">
-            <div className="text-[24px] font-bold text-black">
-              {kpis.incorrect_count}
-            </div>
-            <div className="text-[12px] text-neutral-700 mt-0.5">
-              {kpis.incorrect_pct}
-            </div>
-          </div>
-        }
-      />
-      <KpiCard
-        className={IAD_CARD_CLASSNAME}
-        valueClassName={IAD_VALUE_CLASSNAME}
-        label="Distinct Answers"
-        value={String(kpis.distinct_answers)}
-      />
-      <KpiCard
-        className={IAD_CARD_CLASSNAME}
-        valueClassName={IAD_VALUE_CLASSNAME}
-        label="Total Incorrect Choices"
-        value={String(kpis.total_incorrect_choices)}
-      />
-      <KpiCard
-        className={IAD_CARD_CLASSNAME}
-        valueClassName="text-[14px]"
-        label="Most Common Wrong"
-        value={
-          <TopWrongValue
-            answer={kpis.top_wrong_answer}
-            count={kpis.top_wrong_count}
-            pct={kpis.top_wrong_pct}
-          />
-        }
-      />
-    </div>
+          ),
+        },
+        {
+          label: 'Distinct Answers',
+          valueClassName: IAD_VALUE_CLASSNAME,
+          value: String(kpis.distinct_answers),
+        },
+        {
+          label: 'Total Incorrect Choices',
+          valueClassName: IAD_VALUE_CLASSNAME,
+          value: String(kpis.total_incorrect_choices),
+        },
+        {
+          label: 'Most Common Wrong',
+          valueClassName: 'text-[14px]',
+          value: (
+            <TopWrongValue
+              answer={kpis.top_wrong_answer}
+              count={kpis.top_wrong_count}
+              pct={kpis.top_wrong_pct}
+            />
+          ),
+        },
+      ]}
+    />
   );
 }

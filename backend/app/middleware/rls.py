@@ -15,14 +15,18 @@ Both are done with ``SET LOCAL`` so they only apply for the current
 transaction/connection-checkout — once the request completes and the session
 goes back to the pool the next checkout starts clean.
 
-Phase-5 tenant assignment fallback
-----------------------------------
-The platform's first phase only has one school (Athenian) wired up and the
-JWT claim ``school_id`` is not yet populated. Until the Phase-7 onboarding
-flow lands, every authenticated request maps to Athenian by looking up its
-UUID by ``schoology_building_id``. Super-admins may pass ``?school_id=<uuid>``
-to scope to a specific tenant; if they don't, they also fall through to the
-Athenian fallback so the pilot page is unblocked.
+Tenant resolution (claim-driven)
+--------------------------------
+The authenticated user's school membership is injected into the JWT by
+``custom_access_token_hook`` as ``school_ids`` / ``primary_school_id`` /
+``is_super_admin``. Resolution order for the active tenant:
+
+1. ``?school_id=<uuid>`` override — super-admins may scope to ANY school;
+   members may only scope to a school they belong to (else 403).
+2. The member's ``primary_school_id`` claim.
+3. Super-admins with no membership and no override fall back to Athenian
+   (env ``DEFAULT_SCHOOL_BUILDING_ID``) so the admin/pilot surface is unblocked.
+4. Otherwise no tenant is set, and RLS returns zero rows (fail-closed).
 """
 
 from __future__ import annotations
@@ -32,7 +36,7 @@ import os
 from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,8 +45,8 @@ from app.schemas.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
 
-# Phase-5 fallback: every authenticated user maps to Athenian until proper
-# school assignment lands in Phase 7 (D6 onboarding flow).
+# Super-admin fallback: a cross-tenant operator with no membership and no
+# explicit ?school_id scopes to Athenian so the admin/pilot surface is unblocked.
 ATHENIAN_BUILDING_ID = os.getenv("DEFAULT_SCHOOL_BUILDING_ID", "186370968")
 
 # Process-lifetime cache of the Athenian fallback school_id. Populated on the
@@ -89,29 +93,44 @@ async def _resolve_school_id(
 ) -> Optional[str]:
     """Resolve the tenant UUID to inject into ``app.current_school_id``.
 
-    Resolution order:
+    Resolution order (see module docstring):
 
-    1. ``?school_id=<uuid>`` query parameter (super-admin only).
-    2. Future: ``school_id`` JWT claim (not present in current schema).
-    3. Athenian fallback (Phase-5 single-tenant MVP).
+    1. ``?school_id=<uuid>`` override — super-admin → any; member → only a
+       school they belong to (else HTTP 403).
+    2. The member's ``primary_school_id`` JWT claim.
+    3. Super-admin fallback to Athenian.
+    4. ``None`` → RLS returns no rows (fail-closed).
     """
 
-    # 1) explicit query-param override (super_admin only)
+    # 1) explicit query-param override
     qp_school_id = request.query_params.get("school_id")
     if qp_school_id and _is_valid_uuid(qp_school_id):
-        if current_user.user_role == "super_admin":
+        if current_user.can_access_school(qp_school_id):
             return qp_school_id
-        # Non-super_admins must not be allowed to spoof tenants via ?school_id=
+        # A member explicitly asked for a school they don't belong to. Fail
+        # loudly rather than silently downgrading to their own tenant.
         logger.warning(
-            "non super_admin user_id=%s attempted school_id override",
+            "user_id=%s attempted to scope to unauthorized school_id=%s",
             current_user.user_id,
+            qp_school_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to that school.",
         )
 
-    # 2) JWT claim — TODO Phase 7. The current CurrentUser schema does not
-    # carry school_id; once it does, plumb it here.
+    # 2) member's primary school from the JWT claim
+    if current_user.primary_school_id and _is_valid_uuid(
+        current_user.primary_school_id
+    ):
+        return current_user.primary_school_id
 
-    # 3) Phase-5 fallback to Athenian (cached after first lookup)
-    return await _get_fallback_school_id(session)
+    # 3) super-admin fallback to Athenian (cross-tenant operator, no membership)
+    if current_user.is_super_admin:
+        return await _get_fallback_school_id(session)
+
+    # 4) no resolvable tenant — fail closed
+    return None
 
 
 async def set_school_id_for_session(
@@ -119,19 +138,26 @@ async def set_school_id_for_session(
     session: AsyncSession,
     current_user: CurrentUser,
 ) -> Optional[str]:
-    """Set ROLE + ``app.current_school_id`` GUC on the session for RLS."""
+    """Set ROLE + ``app.current_school_id`` GUC on the session for RLS.
+
+    Fail-closed: we ALWAYS switch to the ``authenticated`` role first, even when
+    no tenant resolves. The connecting role may be a superuser (``postgres``)
+    that bypasses RLS entirely; if we returned early without switching, a user
+    with no resolvable school would see *every* tenant's rows. With the role
+    switched and no GUC set, ``current_setting('app.current_school_id', true)``
+    is NULL and every per-tenant policy matches zero rows.
+    """
     school_id = await _resolve_school_id(request, current_user, session)
-    if not school_id:
+
+    # Drop superuser bypass so RLS engages no matter what (fail-closed).
+    # SET LOCAL resets when the connection returns to the pool.
+    await session.execute(text("SET LOCAL ROLE authenticated"))
+
+    if not school_id or not _is_valid_uuid(school_id):
         return None
 
-    # Switch role so RLS is enforced. SET LOCAL ROLE is reset at end of txn
-    # but commit/rollback returns the connection to the pool fresh.
-    #
-    # NB: Postgres does NOT allow bind parameters in SET / SET LOCAL. We
-    # validate the UUID earlier so embedding it in the SQL is safe.
-    if not _is_valid_uuid(school_id):
-        return None
-    await session.execute(text("SET LOCAL ROLE authenticated"))
+    # NB: Postgres does NOT allow bind parameters in SET / SET LOCAL. The UUID
+    # is validated above, so embedding it in the statement is safe.
     await session.execute(
         text(f"SET LOCAL app.current_school_id = '{school_id}'")
     )

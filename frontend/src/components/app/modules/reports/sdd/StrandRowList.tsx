@@ -11,17 +11,27 @@ import { formatPercent } from '@/lib/reports/format';
 
 interface StrandRowListProps {
   strands: SddStrandRow[];
-  selectedStrand?: string | null;
+  // Multi-select: every active strand value. Clicking a row toggles membership.
+  selectedStrands?: string[];
   onSelectStrand?: (strand: string) => void;
 }
 
 export default function StrandRowList({
   strands,
-  selectedStrand,
+  selectedStrands,
   onSelectStrand,
 }: StrandRowListProps) {
+  const selectedSet = useMemo(
+    () => new Set(selectedStrands ?? []),
+    [selectedStrands],
+  );
+  const hasSelection = selectedSet.size > 0;
   const rows = useMemo(
-    () => [...strands].sort((a, b) => a.grade_average - b.grade_average),
+    // Unassessed strands (grade_average === null) sort first; blank label.
+    () =>
+      [...strands].sort(
+        (a, b) => (a.grade_average ?? -1) - (b.grade_average ?? -1),
+      ),
     [strands],
   );
 
@@ -37,10 +47,11 @@ export default function StrandRowList({
       ) : (
         <ul className="flex-1 overflow-y-auto max-h-[260px] p-2 flex flex-col gap-1.5">
           {rows.map((row, i) => {
-            const pct = Math.max(0, Math.min(1, row.grade_average));
+            const pct = Math.max(0, Math.min(1, row.grade_average ?? 0));
             const fill = performanceColor(pct);
-            const isSelected = selectedStrand === row.strand;
-            const dim = !!selectedStrand && !isSelected;
+            const pctLabel = row.grade_average == null ? '' : formatPercent(pct, 1);
+            const isSelected = selectedSet.has(row.strand);
+            const dim = hasSelection && !isSelected;
             return (
               <li
                 key={`${row.strand}-${i}`}
@@ -72,7 +83,7 @@ export default function StrandRowList({
                       }}
                     >
                       <span className="font-semibold text-black text-[11px] tabular-nums">
-                        {formatPercent(pct, 1)}
+                        {pctLabel}
                       </span>
                     </div>
                     <span

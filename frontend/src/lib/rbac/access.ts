@@ -47,6 +47,7 @@ export const ADMIN_ENTRY_PERMISSIONS_ANY: PermissionString[] = [
   'users:delete_all',
   'users:assign_roles',
   'audit:read',
+  'schools:read_all',
 ];
 
 /**
@@ -72,6 +73,13 @@ export const ADMIN_MODULES: AdminModule[] = [
     name: 'Audit Logs',
     description: 'View system audit trail',
     viewPermissions: ['audit:read'],
+  },
+  {
+    key: 'schools',
+    name: 'Schools',
+    description: 'Manage schools (tenants)',
+    viewPermissions: ['schools:read_all'],
+    editPermissions: ['schools:create', 'schools:update'],
   },
 ];
 
@@ -122,18 +130,4 @@ export function getAccessibleAdminModules(claims: UserClaims | null): AdminModul
   return ADMIN_MODULES.filter(module =>
     canAccessAdminModule(claims, module.key)
   );
-}
-
-/**
- * Assert that user has required permissions (for server-side gating)
- * Throws error if not authorized
- */
-export function assertPermissions(
-  claims: UserClaims | null,
-  required: PermissionString[],
-  errorMessage = 'Unauthorized'
-): void {
-  if (!claims || !hasAnyPermission(claims.permissions, required)) {
-    throw new Error(errorMessage);
-  }
 }

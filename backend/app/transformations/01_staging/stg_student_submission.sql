@@ -71,8 +71,12 @@ SELECT
   NULLIF(TRIM(rss.section), ''),
   NULLIF(TRIM(rss.file_name), '')
 FROM raw_student_submission rss
+-- Resolve the REAL school from the CSV's "User School ID" (raw.user_school_id)
+-- against schools.schoology_school_id — NOT the stamped raw.school_id. This lets
+-- a single mixed/whole backup tree ingest each row to its correct school. The
+-- stamped raw.school_id stays only as the raw idempotency key.
 JOIN schools s
-  ON s.school_id = rss.school_id
+  ON s.schoology_school_id = NULLIF(TRIM(rss.user_school_id), '')
 LEFT JOIN subject_overrides so
   ON so.school_id     = s.school_id
  AND so.grade         = rss.grade

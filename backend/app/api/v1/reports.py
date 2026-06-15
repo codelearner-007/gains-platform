@@ -10,15 +10,22 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.dependencies import require_permission
+from app.core.rate_limit import limiter
 from app.middleware.rls import get_db_with_rls
 from app.schemas.reports import (
     AlignmentDataQualityReport,
     IncorrectAnswerDetailsPayload,
+    QraByStandardTeacherPayload,
+    QraByTeacherPayload,
+    QraPaginatedPayload,
     QuestionResponseAnalysisPayload,
+    QuestionSummaryPointsPayload,
     StandardSummaryFilters,
     StandardSummaryPayload,
     StandardsDeepDivePayload,
@@ -27,9 +34,35 @@ from app.schemas.reports import (
     YearToDatePerformancePayload,
     YTDFilters,
 )
+from app.services.report_export_service import (
+    report_to_xlsx,
+    sanitize_xlsx_filename,
+    workbook_to_bytes,
+)
 from app.services.report_service import ReportService
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
+
+_XLSX_MEDIA_TYPE = (
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+
+
+def _xlsx_response(kind: str, item_name: Optional[str], payload: object) -> StreamingResponse:
+    """Serialize ``payload`` to a workbook and stream it as an attachment.
+
+    ``item_name`` is sanitized (CR/LF/quotes stripped) before going into the
+    ``Content-Disposition`` header to prevent header injection.
+    """
+    wb = report_to_xlsx(kind, payload)
+    data = workbook_to_bytes(wb)
+    filename = sanitize_xlsx_filename(kind, item_name)
+    headers = {"content-disposition": f'attachment; filename="{filename}"'}
+    return StreamingResponse(
+        iter((data,)),
+        media_type=_XLSX_MEDIA_TYPE,
+        headers=headers,
+    )
 
 
 @router.get(
@@ -93,12 +126,16 @@ async def year_to_date_performance(
     section: Optional[str] = None,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> YearToDatePerformancePayload:
-    """Cross-assessment, school-wide YTD performance dashboard.
+    """Legacy YTD Longitudinal paginated matrix (PBIX ord 8/9/10 rdlVisual).
 
-    Composes the legacy PBIX "Key Measures" KPI card plus our extended
-    Additional Insights (timeline, grade distribution, student
-    progression, strand heatmap). All filter params optional; default =
-    whole-school rollup. Requires: reports:read.
+    POINTS-based per-(Classroom Instructor → Student) matrix with one column
+    per standard assessed YTD, per-teacher subtotals, and grand totals — a
+    faithful clone of the three legacy "Longitudinal Report - Year To Date"
+    reports (the variant differences are purely client-side rendering). The
+    report is one longitudinal unit per (session, grade, subject,
+    assessment_type); ``category`` carries the assessment type. ``section`` is
+    accepted for filter-bar compatibility but not applied at this grain.
+    Requires: reports:read.
     """
     service = ReportService(db)
     return await service.build_year_to_date_performance(
@@ -175,6 +212,7 @@ async def strand_summary(
     grade: Optional[str] = None,
     section: Optional[str] = None,
     strand: Optional[str] = None,
+    strands_only: bool = False,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StrandSummaryPayload:
     """School-wide strand rollup (mirrors PBIX page #15).
@@ -182,8 +220,10 @@ async def strand_summary(
     Aggregates cube_question_summary by strand across all assessments in
     the selected scope. All filter params optional; default = whole-school
     rollup. The ``strand`` filter narrows the per-standard drill list
-    when the client cross-filters on a strand selection. Requires:
-    reports:read.
+    when the client cross-filters on a strand selection. ``strands_only=true``
+    is the dashboard's lean path — returns just ``strands_rollup`` (+ bands),
+    skipping the per-standard rollup and school-wide KPI queries it never reads.
+    Requires: reports:read.
     """
     service = ReportService(db)
     return await service.build_strand_summary(
@@ -194,5 +234,285 @@ async def strand_summary(
             grade=grade,
             section=section,
             strand=strand,
+        ),
+        strands_only=strands_only,
+    )
+
+
+# ─── Paginated reports (PBIX ord 6/7/16, 11, 12, 13) ──────────────────────
+
+
+@router.get(
+    "/question-summary-paginated/{item_id}",
+    response_model=QuestionSummaryPointsPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_summary_paginated(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QuestionSummaryPointsPayload:
+    """Per-(student × question) partial-credit matrix for the QSR paginated
+    family (PBIX ord 6, 7, 16). Each cell is ``points_received`` (may be
+    fractional); "# Correct Answers" is SUM(received) and every Score% is
+    SUM(received)/SUM(possible) — matching the legacy SSRS PDFs, the xlsx
+    export, and the grade-average KPI. Variants (base / teacher subtotal /
+    redacted) are rendered from this same payload via query-string flags on
+    the frontend. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_question_summary_matrix_points(item_id)
+
+
+@router.get(
+    "/question-response-analysis-paginated/{item_id}",
+    response_model=QraPaginatedPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_response_analysis_paginated(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QraPaginatedPayload:
+    """PBIX ord 11. Flat list of questions with per-question student-name
+    list for every incorrect answer. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_qra_paginated(item_id)
+
+
+@router.get(
+    "/question-response-analysis-by-teacher/{item_id}",
+    response_model=QraByTeacherPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_response_analysis_by_teacher(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QraByTeacherPayload:
+    """PBIX ord 12. Questions grouped by classroom instructor with per-teacher
+    average shown in the group header. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_qra_by_teacher(item_id)
+
+
+@router.get(
+    "/question-response-analysis-by-standard-and-teacher/{item_id}",
+    response_model=QraByStandardTeacherPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def question_response_analysis_by_standard_and_teacher(
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> QraByStandardTeacherPayload:
+    """PBIX ord 13. Questions grouped by CPALMS standard then by classroom
+    instructor, with both standard-wide and teacher-within-standard averages.
+    Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_qra_by_standard_teacher(item_id)
+
+
+# ─── XLSX export routes (server-side openpyxl, Phase B / B2+B3) ────────────
+#
+# Each route reuses the SAME ``ReportService.build_*`` method as its JSON
+# sibling, enforces the SAME ``reports:read`` permission + RLS school scoping,
+# is slowapi rate-limited, and returns a StreamingResponse with a sanitized
+# attachment filename.
+
+
+@router.get(
+    "/question-response-analysis/{item_id}/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def qra_export_xlsx(
+    request: Request,
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the QRA interactive report. Requires: reports:read"""
+    payload = await ReportService(db).build_question_response_analysis(item_id)
+    return _xlsx_response("qra", payload.assessment.item_name, payload)
+
+
+@router.get(
+    "/standards-deep-dive/{item_id}/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def sdd_export_xlsx(
+    request: Request,
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the Standards Deep Dive report. Requires: reports:read"""
+    payload = await ReportService(db).build_standards_deep_dive(item_id)
+    return _xlsx_response("sdd", payload.assessment.item_name, payload)
+
+
+@router.get(
+    "/incorrect-answer-details/{item_id}/{question_id}/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def iad_export_xlsx(
+    request: Request,
+    item_id: str,
+    question_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the Incorrect Answer Details report. Requires: reports:read"""
+    payload = await ReportService(db).build_incorrect_answer_details(
+        item_id, question_id
+    )
+    return _xlsx_response("iad", payload.assessment.item_name, payload)
+
+
+@router.get(
+    "/year-to-date-performance/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def ytd_export_xlsx(
+    request: Request,
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the YTD Longitudinal matrix. Requires: reports:read"""
+    payload = await ReportService(db).build_year_to_date_performance(
+        YTDFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
         )
+    )
+    label = f"{payload.subject}-{payload.grade}-{payload.assessment_type}".strip("-")
+    return _xlsx_response("ytd", label, payload)
+
+
+@router.get(
+    "/standard-summary/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def standard_summary_export_xlsx(
+    request: Request,
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the school-wide Standard Summary. Requires: reports:read"""
+    payload = await ReportService(db).build_standard_summary(
+        StandardSummaryFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+        )
+    )
+    return _xlsx_response("standard-summary", payload.school.name, payload)
+
+
+@router.get(
+    "/strand-summary/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def strand_summary_export_xlsx(
+    request: Request,
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
+    strand: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the school-wide Strand Summary. Requires: reports:read"""
+    payload = await ReportService(db).build_strand_summary(
+        StrandSummaryFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+            strand=strand,
+        )
+    )
+    return _xlsx_response("strand-summary", payload.school.name, payload)
+
+
+@router.get(
+    "/question-summary-paginated/{item_id}/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def qsr_export_xlsx(
+    request: Request,
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the QSR paginated matrix. Requires: reports:read
+
+    Uses the partial-credit point model (legacy SSRS .xlsx / PDF parity), which
+    intentionally differs from the count-of-green model served to the web.
+    """
+    payload = await ReportService(db).build_question_summary_matrix_points(item_id)
+    return _xlsx_response("qsr", payload.assessment.item_name, payload)
+
+
+@router.get(
+    "/question-response-analysis-paginated/{item_id}/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def qra_paginated_export_xlsx(
+    request: Request,
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the QRA paginated report. Requires: reports:read"""
+    payload = await ReportService(db).build_qra_paginated(item_id)
+    return _xlsx_response("qra-paginated", payload.assessment.item_name, payload)
+
+
+@router.get(
+    "/question-response-analysis-by-teacher/{item_id}/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def qra_by_teacher_export_xlsx(
+    request: Request,
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the QRA-by-Teacher report. Requires: reports:read"""
+    payload = await ReportService(db).build_qra_by_teacher(item_id)
+    return _xlsx_response("qra-by-teacher", payload.assessment.item_name, payload)
+
+
+@router.get(
+    "/question-response-analysis-by-standard-and-teacher/{item_id}/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def qra_by_standard_teacher_export_xlsx(
+    request: Request,
+    item_id: str,
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the QRA-by-Standard-and-Teacher report. Requires: reports:read"""
+    payload = await ReportService(db).build_qra_by_standard_teacher(item_id)
+    return _xlsx_response(
+        "qra-by-standard-teacher", payload.assessment.item_name, payload
     )

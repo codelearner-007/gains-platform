@@ -86,6 +86,7 @@ class AssessmentMeta(BaseModel):
     grade: str
     session: str
     assessment_type: str
+    assessment_date: Optional[str] = None
     first_access: str
     latest_attempt: str
 
@@ -121,7 +122,10 @@ class QuestionOverall(BaseModel):
     incorrect_choice_details: str
     incorrect_details_name: str
     standards: str
-    strand: str
+    # The first/primary raw standard code for the question (e.g.
+    # "MA.912.AR.3.1"). Carries a standard code, NOT a strand — renamed
+    # from the misleading ``strand`` (MASTER_PLAN §6, QRA-RENAME-1).
+    standard_raw: str
     description: str
 
 
@@ -171,23 +175,33 @@ class SddKpis(BaseModel):
 
 
 class SddStrandRow(BaseModel):
-    """One row in the Strands rollup table / treemap."""
+    """One row in the Strands rollup table / treemap.
+
+    ``grade_average`` is ``None`` (and ``grade_average_pct`` an empty
+    string) for an unassessed strand — legacy renders BLANK, not 0.0%
+    (MASTER_PLAN §6, Decision 3).
+    """
 
     strand: str
     num_standards: int
     num_questions: int
-    grade_average: float
+    grade_average: Optional[float] = None
     grade_average_pct: str
 
 
 class SddStandardRow(BaseModel):
     """One row in the Standards rollup table, keyed by the Schoology
-    canonical long-form code (e.g. ``MA.9-12.MAFS.912.N-Q.1.3``)."""
+    canonical long-form code (e.g. ``MA.9-12.MAFS.912.N-Q.1.3``).
+
+    ``grade_average`` is ``None`` (and ``grade_average_pct`` an empty
+    string) for an unassessed Schoology alias standard — legacy renders
+    BLANK, not 0.0% (MASTER_PLAN §6, Decision 3).
+    """
 
     schoology_standard: str
     strand: str
     num_questions: int
-    grade_average: float
+    grade_average: Optional[float] = None
     grade_average_pct: str
 
 
@@ -247,17 +261,6 @@ class YTDSchoolInfo(BaseModel):
     assessment_types: List[str] = []
 
 
-class YTDPeriodInfo(BaseModel):
-    date_from: str
-    date_to: str
-
-
-class YTDStudentSummary(BaseModel):
-    user_uid: str
-    user_name: str
-    delta: float
-
-
 class YTDFilters(BaseModel):
     session: Optional[str] = None
     category: Optional[str] = None
@@ -266,59 +269,89 @@ class YTDFilters(BaseModel):
     section: Optional[str] = None
 
 
-class YTDKpis(BaseModel):
-    """PBIX "Key Measures" card plus derived counters used by the
-    Additional Insights zone."""
-
-    total_questions: int
-    total_students: int
-    total_points_earned: float
-    total_points_possible: float
-    overall_avg_pct: str
-    total_assessments: int
-    students_improving: int
-    students_declining: int
-    most_improved: List[YTDStudentSummary]
-    biggest_drops: List[YTDStudentSummary]
+# ─── YTD Longitudinal paginated matrix (PBIX ord 8 / 9 / 10 rdlVisual) ────────
+#
+# The three legacy "Longitudinal Report - Year To Date" reports (1/2/3) are the
+# same POINTS-based matrix — rows grouped Classroom Instructor → Student, one
+# column per standard assessed YTD (Score = earned/possible, % = SUM/SUM), with
+# per-teacher subtotal rows and grand-total rows. The three variants differ only
+# in client rendering (see frontend types.ts):
+#   • 1 — Tests Taken column + per-standard Score AND %
+#   • 2 — no Tests Taken, per-standard % only
+#   • 3 — Tests Taken + Score AND % + assessment/unit name under each standard
+# The payload below is variant-agnostic; the page selects what to show.
 
 
-class YTDTimelinePoint(BaseModel):
-    date: str
-    overall_avg: float
-    per_subject: dict[str, float]
-    assessments_count: int
+class YtdStandardColumn(BaseModel):
+    """One per-standard column in the YTD matrix."""
+
+    standard_label: str
+    schoology_standard: str
+    # Newline/' / '-joined assessment names that touched this standard YTD;
+    # rendered under the code in variant 3 only.
+    unit_names: str = ""
 
 
-class YTDGradeDistribution(BaseModel):
-    date: str
-    band_high: int
-    band_mid: int
-    band_low: int
+class YtdCell(BaseModel):
+    points_received: float
+    points_possible: float
+    score_pct: float
 
 
-class YTDStudentScatter(BaseModel):
+class YtdStudentRow(BaseModel):
+    """One per-student row inside a Classroom-Instructor group."""
+
     user_uid: str
     user_name: str
-    first_avg: float
-    latest_avg: float
-    delta: float
-    assessments_taken: int
+    score_pct: float
+    tests_taken: int
+    points_received: float
+    points_possible: float
+    # Per-standard cells keyed by ``standard_label``. Absent key ⇒ "-" (the
+    # standard was not assessed for this student); legacy prints a dash.
+    cells: dict[str, YtdCell]
 
 
-class YTDHeatmapCell(BaseModel):
-    strand: str
-    date: str
-    grade_average: float
+class YtdStandardTotal(BaseModel):
+    """Per-standard footer values (teacher subtotal + grand total)."""
+
+    points_received: float
+    points_possible: float
+    score_pct: float
+
+
+class YtdTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_score_pct: float
+    students: List[YtdStudentRow]
+    # Per-standard subtotal: # Correct Answers (points_received) + Score %.
+    standard_subtotals: dict[str, YtdStandardTotal]
+
+
+class YtdGrandTotal(BaseModel):
+    points_received: float
+    points_possible: float
+    score_pct: float
+    # Per-standard grand totals (Possible Points / # Correct / Score %).
+    standard_totals: dict[str, YtdStandardTotal]
 
 
 class YearToDatePerformancePayload(BaseModel):
+    """Legacy YTD Longitudinal matrix (replaces the prior analytics dashboard).
+
+    Faithful clone of the three legacy paginated matrices. ``standards`` are the
+    column order; ``teacher_groups`` carry the row data + per-teacher subtotals;
+    ``grand_total`` carries the report footer rows.
+    """
+
     school: YTDSchoolInfo
-    period: YTDPeriodInfo
-    kpis: YTDKpis
-    timeline: List[YTDTimelinePoint]
-    grade_distribution: List[YTDGradeDistribution]
-    student_progression: List[YTDStudentScatter]
-    strand_heatmap: List[YTDHeatmapCell]
+    subject: str
+    grade: str
+    session: str
+    assessment_type: str
+    standards: List[YtdStandardColumn]
+    teacher_groups: List[YtdTeacherGroup]
+    grand_total: YtdGrandTotal
 
 
 # ─── Incorrect Answer Details (drill-through from QRA) ─────────────────────
@@ -351,7 +384,10 @@ class IadKpis(BaseModel):
     correct_pct: str
     incorrect_pct: str
     distinct_answers: int
-    # Legacy PBIX's `Total Incorrect Choices` (DISTINCTCOUNT of wrong answers).
+    # Legacy PBIX's `Total Incorrect Choices` =
+    # DISTINCTCOUNT(fact_student_submission[Answer_Submission]) — counts ALL
+    # distinct answer submissions for the question, including the correct
+    # answer (no Score=0 filter). Equals `distinct_answers`.
     total_incorrect_choices: int
     top_wrong_answer: str
     top_wrong_count: int
@@ -419,9 +455,16 @@ class StandardSummaryKpis(BaseModel):
 
 class StandardSummaryRollupRow(BaseModel):
     """One card per Schoology canonical standard aggregated across the
-    filter scope."""
+    filter scope.
+
+    ``cpalms_standard`` is the CPALMS code the legacy PBIX renders in the
+    card banner (multiRowCard #3, ``dim_standard.cPalms_Standard``;
+    55_standard_summary_spec.md §4); ``schoology_standard`` is the longer
+    canonical alias retained for keys/filters.
+    """
 
     schoology_standard: str
+    cpalms_standard: str
     strand: str
     cluster: str
     cognitive_complexity: str
@@ -565,3 +608,184 @@ class AlignmentDataQualityReport(BaseModel):
     items_missing_alignment: int
     items_partial_alignment: int
     items: List[AlignmentItemRow]
+
+
+# ─── Paginated reports (ord 6/7/16, 11, 12, 13) ───────────────────────────
+
+
+class PaginatedKpis(BaseModel):
+    """5-cell KPI strip shared by every paginated report."""
+
+    total_questions: int
+    total_students: int
+    score: float
+    total_possible_point: float
+    grade_average: float
+    grade_average_pct: str
+
+
+class QsmQuestionColumn(BaseModel):
+    """One leaf column header in the QSR matrix."""
+
+    question_id: str
+    question_no: str
+    sorting_question_no: int
+    standard: str
+    cpalms_standard: str
+    position_number: str
+    correct_answer: str
+
+
+# ── QSR partial-credit model (web JSON + xlsx / SSRS parity) ─────────────────
+# The legacy SSRS QSR .xlsx AND the color/teacher PDFs both render *partial
+# credit*: each (student × question) cell carries ``points_received`` (which
+# may be fractional, e.g. 0.5 / 0.25 / 0.33), "Possible Points" is
+# SUM(points_possible), "# Correct Answers" is SUM(points_received), and every
+# Score% is SUM(received)/SUM(possible). This is verified cell-for-cell against
+# both legacy artifacts for Chapter 9 Test 8359960427 (grand 318 / 486 = 65.4%,
+# matching the grade-average KPI) and Central FL Prep 8244629174 (grand 255.55
+# correct). The web/JSON QSR matrix and the xlsx export BOTH consume this single
+# partial-credit payload (``QuestionSummaryPointsPayload``) so they cannot
+# diverge. The legacy binary count-of-green model is retired.
+
+
+class QspStandardBand(BaseModel):
+    """A contiguous CPALMS column band (one or more leaf question columns)."""
+
+    cpalms_standard: str
+    question_ids: List[str]
+
+
+class QspStudentRow(BaseModel):
+    """One per-student row with fractional point cells."""
+
+    user_uid: str
+    user_name: str
+    score_pct: float
+    possible_points: float
+    correct_count: float
+    # qid → points_received (may be fractional); None = not attempted.
+    cells: dict[str, Optional[float]]
+    # cpalms_standard → band Score% (SUM received / SUM possible in the band).
+    band_pct: dict[str, Optional[float]]
+
+
+class QspTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_score_pct: float
+    students: List[QspStudentRow]
+    # Per-leaf-question teacher subtotals, used by the web "- Teacher" subtotal
+    # block (PBIX ord 7). Partial-credit: correct = SUM(points_received),
+    # possible = SUM(points_possible), pct = correct/possible.
+    per_question_correct: dict[str, float] = {}
+    per_question_possible: dict[str, float] = {}
+    per_question_pct: dict[str, float] = {}
+
+
+class QspGrandTotal(BaseModel):
+    possible_points: float
+    correct_count: float
+    score_pct: float
+    # Per-leaf-question footer rows (SSRS "Possible Points" / "# Correct
+    # Answers" / "Score %"). per_question_pct = received/possible per question.
+    per_question_possible: dict[str, float]
+    per_question_correct: dict[str, float]
+    per_question_pct: dict[str, float]
+    # Per-band footer Score% sub-columns (grey C0C0C0, not perf-banded).
+    band_possible: dict[str, float]
+    band_correct: dict[str, float]
+    band_pct: dict[str, float]
+
+
+class QuestionSummaryPointsPayload(BaseModel):
+    """Partial-credit QSR matrix — single source of truth for the web/JSON
+    matrix AND the xlsx export.
+
+    Mirrors the legacy SSRS .xlsx exactly: fractional cells, per-band Score%
+    sub-columns, summed-points totals. ``kpis`` is populated for the web/JSON
+    surface (the xlsx ignores it); the QSR page itself omits the KPI strip
+    (PAG-3) but the field keeps the payload aligned with the other paginated
+    reports and available to future consumers.
+    """
+
+    assessment: AssessmentMeta
+    kpis: Optional[PaginatedKpis] = None
+    questions: List[QsmQuestionColumn]
+    bands: List[QspStandardBand]
+    teacher_groups: List[QspTeacherGroup]
+    grand_total: QspGrandTotal
+    # False for cube-only (parquet-loaded) schools that have no
+    # fact_student_submission rows: the per-student matrix body / question
+    # columns / teacher groups are empty by design and the frontend should
+    # render an explicit empty-state. The grand_total is still cube-derived
+    # so the page is not self-contradictory (KPI strip vs all-0 matrix).
+    per_student_available: bool = True
+
+
+class PaginatedQuestionRow(BaseModel):
+    """One detail-table row in the QRA paginated reports.
+
+    ``question`` carries unsanitised HTML — the frontend runs it through
+    ``formatQuestionHtml`` + ``RichReportHtml`` exactly like the interactive
+    QRA, so embedded images and inline markup render identically across
+    interactive and paginated views.
+    """
+
+    question_id: str
+    question_no: str
+    sorting_question_no: int
+    position_number: str
+    question: str
+    correct_answer: str
+    grade_average: float
+    grade_average_pct: str
+    incorrect_choice_details: str
+    incorrect_details_name: str
+    standards: str
+    cpalms_standard: str
+
+
+class QraPaginatedPayload(BaseModel):
+    """PBIX ord 11 — Question Response Analysis paginated."""
+
+    assessment: AssessmentMeta
+    kpis: PaginatedKpis
+    questions: List[PaginatedQuestionRow]
+
+
+class QraTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_grade_average: float
+    teacher_grade_average_pct: str
+    questions: List[PaginatedQuestionRow]
+
+
+class QraByTeacherPayload(BaseModel):
+    """PBIX ord 12 — Question Response Analysis by Teacher."""
+
+    assessment: AssessmentMeta
+    kpis: PaginatedKpis
+    teacher_groups: List[QraTeacherGroup]
+
+
+class QraStandardTeacherGroup(BaseModel):
+    section_instructor: str
+    teacher_standard_average: float
+    teacher_standard_average_pct: str
+    questions: List[PaginatedQuestionRow]
+
+
+class QraStandardGroup(BaseModel):
+    cpalms_standard: str
+    standard_description: str
+    standard_average: float
+    standard_average_pct: str
+    teacher_groups: List[QraStandardTeacherGroup]
+
+
+class QraByStandardTeacherPayload(BaseModel):
+    """PBIX ord 13 — Question Response Analysis by Standard and Teacher."""
+
+    assessment: AssessmentMeta
+    kpis: PaginatedKpis
+    standard_groups: List[QraStandardGroup]

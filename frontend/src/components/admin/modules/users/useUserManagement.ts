@@ -20,6 +20,9 @@ import {
   type UserFilters,
   type RoleResponse,
 } from '@/lib/services/rbac.service';
+import { listSchools, type School } from '@/lib/services/schools.service';
+import { inviteUser, type InviteUserRequest } from '@/lib/services/users.service';
+import type { InviteFormValues } from './InviteUserDialog';
 
 function useDebounce<T>(value: T, delay: number = 300): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -41,6 +44,8 @@ export function useUserManagement() {
   // Core data state
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [roles, setRoles] = useState<RoleResponse[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
 
   // Pagination state
@@ -69,6 +74,9 @@ export function useUserManagement() {
   });
   const [deleteDialog, setDeleteDialog] = useState<UserWithRoles | null>(null);
   const [banDialog, setBanDialog] = useState<UserWithRoles | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [schoolAccessUser, setSchoolAccessUser] = useState<UserWithRoles | null>(null);
 
   // Permission checks
   const claims = useAdminClaims();
@@ -126,6 +134,28 @@ export function useUserManagement() {
 
     loadRoles();
   }, []);
+
+  // Load schools (for invite + school-access pickers). Only the persona that
+  // can manage memberships needs them.
+  useEffect(() => {
+    if (!canAssignRoles) return;
+    let cancelled = false;
+    async function loadSchools() {
+      try {
+        setLoadingSchools(true);
+        const data = await listSchools();
+        if (!cancelled) setSchools(data);
+      } catch (err) {
+        console.error('Failed to load schools:', err);
+      } finally {
+        if (!cancelled) setLoadingSchools(false);
+      }
+    }
+    loadSchools();
+    return () => {
+      cancelled = true;
+    };
+  }, [canAssignRoles]);
 
   // Load users
   useEffect(() => {
@@ -314,6 +344,33 @@ export function useUserManagement() {
     }
   }, [assignRoleDialog, reloadUsers]);
 
+  const handleInviteUser = useCallback(
+    async (values: InviteFormValues) => {
+      setInviteSubmitting(true);
+      try {
+        const payload: InviteUserRequest = {
+          email: values.email,
+          full_name: values.full_name || undefined,
+          role_id: values.role_id || undefined,
+          school_ids: values.school_ids.length ? values.school_ids : undefined,
+        };
+        await inviteUser(payload);
+        toast.success('Invitation sent', {
+          description: `An invite email was sent to ${values.email}.`,
+        });
+        setInviteOpen(false);
+        reloadUsers();
+      } catch (err) {
+        toast.error('Failed to invite user', {
+          description: err instanceof Error ? err.message : 'Please try again.',
+        });
+      } finally {
+        setInviteSubmitting(false);
+      }
+    },
+    [reloadUsers],
+  );
+
   const handleRemoveRole = useCallback(
     async (user: UserWithRoles, roleId: string) => {
       try {
@@ -336,6 +393,8 @@ export function useUserManagement() {
     // Data
     users,
     roles,
+    schools,
+    loadingSchools,
     stats,
     total,
     totalPages,
@@ -371,6 +430,11 @@ export function useUserManagement() {
     setDeleteDialog,
     banDialog,
     setBanDialog,
+    inviteOpen,
+    setInviteOpen,
+    inviteSubmitting,
+    schoolAccessUser,
+    setSchoolAccessUser,
 
     // Actions
     handleBanUser,
@@ -380,5 +444,6 @@ export function useUserManagement() {
     handleResetPassword,
     handleAssignRole,
     handleRemoveRole,
+    handleInviteUser,
   };
 }

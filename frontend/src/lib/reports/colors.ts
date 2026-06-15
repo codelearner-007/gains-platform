@@ -32,6 +32,72 @@ export const LAYOUT_BORDER = '#B3B3B3'; // standard report border
 export const INCORRECT_GREY = '#CCCCCC'; // grey fill used in incorrect-bar series
 export const GRID_LINE = '#E5E5E5'; // table grid lines / cell borders
 
+// ── Paginated reports (PBIX ord 6/7/16, 11, 12, 13) ─────────────────────────
+// Tokens used by the column-group headers, secondary header rows, and group
+// header bands in the new paginated table family. Match the Office accent
+// palette as rendered in the legacy SSRS PDFs.
+export const PBIX_ACCENT_NAVY = '#4472C4'; // Standard / outer column-group header
+export const PBIX_ACCENT_LIGHT_BLUE = '#8FAADC'; // Question-No / inner header row
+export const GROUP_HEADER_CYAN = '#D6F1EF'; // Teacher / Standard group band
+
+// Dashboard grade-average data bar (GradeAverageBar): neutral track + the
+// dashed school-average reference marker.
+export const DATA_BAR_TRACK = '#EEF1F4';
+export const DATA_BAR_MARKER = '#475569';
+
+// ── Question Summary Report (QSR) exact legacy fills ────────────────────────
+// Verbatim from the rendered legacy SSRS PDFs (e.g. "Unit 6 Test- Heat Sources
+// …-Question Summary Report - color.pdf"). The QSR uses BRIGHTER fills than the
+// softened PERF_* report tokens above — keep both: PERF_* drives the
+// interactive QRA/SDD/summary surfaces, QSR_* drives this paginated family so
+// it is pixel-faithful to the legacy print output. Do NOT collapse the two.
+//   correct cell / Score% ≥80%   → #99FF99 (green)
+//   incorrect cell / Score% <70% → #FFCCFF (pink)
+//   Score% 70–80%                → #fff492 (yellow)
+// Hexes verbatim from the legacy SSRS RDL `BackgroundColor` IIf branches
+// (Paginated - Question Summary Report.rdl). The legacy expressions also
+// `Round(score, 2)` before the threshold compare — mirrored in qsrPerformanceColor.
+export const QSR_GREEN = '#99FF99';
+export const QSR_PINK = '#FFCCFF';
+export const QSR_YELLOW = '#fff492';
+
+/** Three-band Score% fill for the QSR family (exact legacy hexes + rounding). */
+export function qsrPerformanceColor(grade: number): string {
+  const g = Math.round(grade * 100) / 100; // legacy Round(x, 2) before compare
+  if (g < 0.7) return QSR_PINK;
+  if (g < 0.8) return QSR_YELLOW;
+  return QSR_GREEN;
+}
+
+// QSR "Header Highlights" variant (legacy SSRS "...- color.rdl" == PBIX ord 16
+// "Question Summary Report - header highlights"). The ONLY delta vs base is that
+// the two header bands (standard-code row + Question-No row) become performance-
+// colored instead of solid navy/blue, with silver text. The header bands use a
+// 0.6/0.8 split (NOT the data cells' 0.7/0.8) and no Round() — verbatim from the
+// RDL `Standards1` / `Question_No` BackgroundColor IIf expressions.
+export const QSR_HEADER_HILITE_FG = '#C0C0C0'; // RDL Color=Silver on highlighted bands
+
+/** 3-band header-band fill for the QSR "Header Highlights" variant. `null`
+ *  (no data) returns undefined so the caller keeps the static header color. */
+export function qsrHeaderBandColor(ratio: number | null): string | undefined {
+  if (ratio === null) return undefined;
+  if (ratio < 0.6) return QSR_PINK;
+  if (ratio >= 0.8) return QSR_GREEN;
+  return QSR_YELLOW;
+}
+
+/**
+ * Partial-credit QSR leaf-cell fill. A cell carries `points_received` (may be
+ * fractional); the legacy SSRS / xlsx colors it green at >=0.5 received, pink
+ * below (matches `_qsr_cell_fill` in report_export_service.py). `null`
+ * (not attempted) gets no fill. Two-band ONLY — distinct from the three-band
+ * Score% fill above; do NOT collapse the two.
+ */
+export function qsrCellColor(received: number | null): string | undefined {
+  if (received === null) return undefined;
+  return received >= 0.5 ? QSR_GREEN : QSR_PINK;
+}
+
 // ── Status icon hexes (used inside cells for the Check / X marks) ───────────
 // Tailwind `green-700` and `red-700` from the project palette, hard-coded so
 // the icons stay legible on the green/pink traffic-light cell backgrounds.
@@ -45,7 +111,6 @@ export const STANDARD_HEADER_FG = '#FFFFFF';
 export const STRAND_CHIP_BG = '#E0E7FF';
 export const STRAND_CHIP_FG = '#1E1B4B';
 export const NEUTRAL_CHIP_BG = '#F3F4F6';
-export const NEUTRAL_CHIP_FG = '#111827';
 // Cognitive-complexity chips (low / mid / high contrast tones).
 export const COMPLEXITY_HIGH_BG = '#FECACA';
 export const COMPLEXITY_HIGH_FG = '#7F1D1D';
@@ -66,7 +131,3 @@ export function performanceColor(grade: number): string {
 // table, strands / standards summary tables). Mirrors PBIX semantics so the
 // pink/yellow/green traffic light is consistent across every report.
 export const cellColor = performanceColor;
-
-export function performanceTextColor(): string {
-  return '#000000';
-}

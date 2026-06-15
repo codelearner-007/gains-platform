@@ -23,9 +23,18 @@ type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 interface ResetPasswordFormProps {
   onSubmit: (data: ResetPasswordInput) => Promise<void | { success: boolean }>;
   loading?: boolean;
+  /** CTA label — defaults suit the password-reset flow; the invite-accept flow
+   *  passes "Set password" / "Setting up your account…". */
+  submitLabel?: string;
+  submittingLabel?: string;
 }
 
-export function ResetPasswordForm({ onSubmit, loading }: ResetPasswordFormProps) {
+export function ResetPasswordForm({
+  onSubmit,
+  loading,
+  submitLabel = 'Reset password',
+  submittingLabel = 'Resetting password...',
+}: ResetPasswordFormProps) {
   const [passwordStrength, setPasswordStrength] = useState(0);
 
   const form = useForm<ResetPasswordInput>({
@@ -125,7 +134,7 @@ export function ResetPasswordForm({ onSubmit, loading }: ResetPasswordFormProps)
         />
 
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Resetting password...' : 'Reset password'}
+          {loading ? submittingLabel : submitLabel}
         </Button>
       </form>
     </Form>

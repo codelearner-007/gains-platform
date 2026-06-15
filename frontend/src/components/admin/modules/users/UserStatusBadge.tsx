@@ -1,5 +1,6 @@
 import { CheckCircle, Mail, ShieldBan, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ACTIVE_BADGE_CLASS } from '@/components/admin/statusBadge';
 import type { UserWithRoles } from '@/lib/services/rbac.service';
 
 interface UserStatusBadgeProps {
@@ -18,10 +19,7 @@ export function UserStatusBadge({ user }: UserStatusBadgeProps) {
           Banned
         </Badge>
       ) : (
-        <Badge
-          variant="secondary"
-          className="w-fit bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-400/20"
-        >
+        <Badge variant="secondary" className={ACTIVE_BADGE_CLASS}>
           <CheckCircle className="h-3 w-3 mr-1" />
           Active
         </Badge>

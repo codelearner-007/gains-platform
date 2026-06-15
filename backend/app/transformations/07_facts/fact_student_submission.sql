@@ -114,7 +114,9 @@ WITH base AS (
     src.points_received,
     src.points_possible
   FROM stg_student_submission src
-  WHERE src.user_role_id = '286170'
+  -- students only (notebook 1199); per-school role via schools.student_role_id
+  JOIN schools sch ON sch.school_id = src.school_id
+  WHERE src.user_role_id = sch.student_role_id
 ),
 deduped AS (
   -- Pre-INSERT dedupe (notebook lines 1185-1192). Partition columns are the
@@ -274,7 +276,10 @@ SELECT
   std                                                     AS standard,
   ident                                                   AS identifier
 FROM final_dedupe
-ON CONFLICT (user_id_ques_id_stand) DO UPDATE
+-- Conflict target is the md5(user_id_ques_id_stand) UNIQUE index (migration
+-- 20260611000100): the raw key concatenates answer_submission and can exceed the
+-- btree limit when an answer embeds a base64 image. Semantics are unchanged.
+ON CONFLICT (md5(user_id_ques_id_stand)) DO UPDATE
 SET school_id        = EXCLUDED.school_id,
     user_uid         = EXCLUDED.user_uid,
     user_name        = EXCLUDED.user_name,

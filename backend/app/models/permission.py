@@ -1,12 +1,17 @@
 """Permission model."""
 
-from typing import List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, CreatedAtMixin
+
+if TYPE_CHECKING:
+    from app.models.role_permission import RolePermission
 
 
 class Permission(Base, CreatedAtMixin):

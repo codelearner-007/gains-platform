@@ -2,181 +2,165 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ChevronDown, MoreHorizontal, type LucideIcon } from 'lucide-react';
 import {
-  FileBarChart,
-  Layers,
-  ListChecks,
-  LineChart,
-  GraduationCap,
-  Network,
-  type LucideIcon,
-} from 'lucide-react';
+  REPORT_TYPES,
+  getReportsByGroup,
+  getReportByPathname,
+  isReportActive,
+  buildHref,
+  type ReportType,
+  type ReportGroup,
+  type ReportKind,
+  type ReportSlug,
+} from '@/lib/reports/report-types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  TAB_BASE as TAB_PILL_BASE,
+  TAB_ACTIVE,
+  TAB_INACTIVE,
+} from './tabStyles';
 
-type AssessmentReportSlug =
-  | 'question-response-analysis'
-  | 'standards-deep-dive'
-  | 'incorrect-answer-details';
+/**
+ * Adaptive report-type navigation.
+ *
+ * Every report in a family is reachable from every other member of that
+ * family. The switcher stays a single row at any report count:
+ *
+ *   • Wide viewports — the top `INLINE_COUNT` priority siblings render as
+ *     inline tabs; the remainder live in a grouped "More reports" dropdown.
+ *   • Narrow viewports — collapses to a single dropdown trigger that shows
+ *     the current report's name.
+ *
+ * Names, routes, icons, and grouping all come from the report-types
+ * registry, so this can never disagree with the launch menu or page headers.
+ */
 
-type ProgramReportSlug =
-  | 'year-to-date-performance'
-  | 'standard-summary'
-  | 'strand-summary';
+const INLINE_COUNT = 3;
 
-interface TabDef<S extends string> {
-  slug: S;
-  label: string;
-  shortLabel: string;
-  icon: LucideIcon;
-}
-
-const ASSESSMENT_TABS: TabDef<AssessmentReportSlug>[] = [
-  {
-    slug: 'question-response-analysis',
-    label: 'Question Response Analysis Interactive',
-    shortLabel: 'QRA',
-    icon: FileBarChart,
-  },
-  {
-    slug: 'standards-deep-dive',
-    label: 'Standards Deep Dive interactive',
-    shortLabel: 'SDD',
-    icon: Layers,
-  },
-];
-
-const IAD_TAB: TabDef<AssessmentReportSlug> = {
-  slug: 'incorrect-answer-details',
-  label: 'Incorrect Answer Details',
-  shortLabel: 'IAD',
-  icon: ListChecks,
+/** Order + labels for the grouped sections inside the overflow menu. */
+const KIND_LABELS: Record<ReportKind, string> = {
+  interactive: 'Interactive',
+  paginated: 'Paginated & Print',
+  drilldown: 'Drill-through',
 };
-
-const PROGRAM_TABS: TabDef<ProgramReportSlug>[] = [
-  {
-    slug: 'year-to-date-performance',
-    label: 'Year To Date - Longitudinal Report',
-    shortLabel: 'YTD',
-    icon: LineChart,
-  },
-  {
-    slug: 'standard-summary',
-    label: 'Standard Summary',
-    shortLabel: 'Standards',
-    icon: GraduationCap,
-  },
-  {
-    slug: 'strand-summary',
-    label: 'Strand Summary',
-    shortLabel: 'Strands',
-    icon: Network,
-  },
-];
+const KIND_ORDER: ReportKind[] = ['interactive', 'paginated', 'drilldown'];
 
 type Props =
   | {
       group: 'assessment';
-      /** Required for assessment tabs so the switcher preserves item context. */
+      /** Required so every link preserves the assessment context. */
       itemId: string;
-      /** Question id, only set on the IAD page. */
+      /** Question id — only set on the IAD drill-through page. */
       questionId?: string | null;
     }
   | { group: 'program' };
 
 export default function ReportTypeSwitcher(props: Props) {
   const pathname = usePathname();
+  const reports = getReportsByGroup(props.group);
+  const sorted = [...reports].sort((a, b) => a.priority - b.priority);
 
-  if (props.group === 'program') {
-    return (
-      <SwitcherShell label="Program report types">
-        {PROGRAM_TABS.map((tab) => (
-          <SwitcherChip
-            key={tab.slug}
-            href={`/app/reports/${tab.slug}`}
-            active={pathname.endsWith(`/${tab.slug}`)}
-            icon={tab.icon}
-            label={tab.label}
-            shortLabel={tab.shortLabel}
+  const itemId = props.group === 'assessment' ? props.itemId : undefined;
+  const questionId =
+    props.group === 'assessment' ? props.questionId ?? null : null;
+
+  const current =
+    getReportByPathname(pathname) ??
+    sorted.find((r) => r.group === props.group) ??
+    sorted[0];
+
+  const hrefFor = (slug: ReportSlug) =>
+    buildHref(slug, { item_id: itemId, question_id: questionId });
+
+  /**
+   * A drill-through report (IAD) is only navigable with a question context.
+   * Without one it appears in the menu but disabled, with a hint tooltip.
+   */
+  const isReachable = (r: ReportType) =>
+    r.kind !== 'drilldown' || !!questionId || isReportActive(pathname, r.slug);
+
+  const inline = sorted.slice(0, INLINE_COUNT);
+  const overflow = sorted.slice(INLINE_COUNT);
+
+  const groupLabel =
+    props.group === 'assessment'
+      ? 'Assessment report types'
+      : 'Program report types';
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      {/* Narrow viewport: a single dropdown labelled with the current report. */}
+      <div className="sm:hidden">
+        <MoreReportsMenu
+          label={groupLabel}
+          reports={sorted}
+          pathname={pathname}
+          hrefFor={hrefFor}
+          isReachable={isReachable}
+          triggerVariant="single"
+          currentName={current?.canonicalName ?? 'Reports'}
+        />
+      </div>
+
+      {/* Wide viewport: inline tabs + grouped overflow menu. */}
+      <div
+        role="tablist"
+        aria-label={groupLabel}
+        className="hidden sm:flex items-center gap-1 rounded-md bg-muted/50 p-1 w-fit max-w-full"
+      >
+        {inline.map((r) => (
+          <InlineTab
+            key={r.slug}
+            report={r}
+            active={isReportActive(pathname, r.slug)}
+            href={isReachable(r) ? hrefFor(r.slug) : undefined}
           />
         ))}
-      </SwitcherShell>
-    );
-  }
 
-  // Show IAD as a tab only when the user is currently on IAD — it is
-  // otherwise only reachable as a per-question drill-through from QRA.
-  const onIad = pathname.endsWith('/incorrect-answer-details');
-  const tabs = onIad ? [...ASSESSMENT_TABS, IAD_TAB] : ASSESSMENT_TABS;
-
-  return (
-    <SwitcherShell label="Assessment report types">
-      {tabs.map((tab) => {
-        // IAD tab is only "navigable" via the QRA question table; when
-        // visible in the switcher it represents the current page and is
-        // intentionally non-interactive on other tabs.
-        const isDrillThroughOnly = tab.slug === 'incorrect-answer-details';
-        return (
-          <SwitcherChip
-            key={tab.slug}
-            href={
-              isDrillThroughOnly
-                ? undefined
-                : buildAssessmentHref(tab.slug, props.itemId, props.questionId)
-            }
-            active={pathname.endsWith(`/${tab.slug}`)}
-            icon={tab.icon}
-            label={tab.label}
-            shortLabel={tab.shortLabel}
+        {overflow.length > 0 && (
+          <MoreReportsMenu
+            label={groupLabel}
+            reports={overflow}
+            pathname={pathname}
+            hrefFor={hrefFor}
+            isReachable={isReachable}
+            triggerVariant="more"
           />
-        );
-      })}
-    </SwitcherShell>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
 
-function SwitcherShell({
-  label,
-  children,
+// Inline tabs carry a leading icon, so they prepend the flex layout to the
+// shared pill base. Active/inactive states are the shared constants verbatim.
+const TAB_BASE = `inline-flex items-center gap-1.5 ${TAB_PILL_BASE}`;
+
+function InlineTab({
+  report,
+  active,
+  href,
 }: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      role="tablist"
-      aria-label={label}
-      className="flex flex-wrap items-center gap-1 rounded-md bg-muted/50 p-1 w-fit max-w-full"
-    >
-      {children}
-    </div>
-  );
-}
-
-function buildAssessmentHref(
-  slug: AssessmentReportSlug,
-  itemId: string,
-  questionId?: string | null,
-) {
-  const query: Record<string, string> = { item_id: itemId };
-  if (slug === 'incorrect-answer-details' && questionId) {
-    query.question_id = questionId;
-  }
-  return { pathname: `/app/reports/${slug}`, query };
-}
-
-interface ChipProps {
-  href?: string | { pathname: string; query: Record<string, string> };
+  report: ReportType;
   active: boolean;
-  icon: LucideIcon;
-  label: string;
-  shortLabel: string;
-}
-
-function SwitcherChip({ href, active, icon: Icon, label, shortLabel }: ChipProps) {
-  const base =
-    'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-  const activeCls = 'bg-card text-primary shadow-sm font-medium';
-  const inactiveCls =
-    'text-muted-foreground hover:bg-accent hover:text-foreground';
+  href?: ReturnType<typeof buildHref>;
+}) {
+  const Icon = report.icon;
 
   if (!href) {
     return (
@@ -184,11 +168,10 @@ function SwitcherChip({ href, active, icon: Icon, label, shortLabel }: ChipProps
         role="tab"
         aria-selected={active}
         aria-disabled={!active}
-        className={`${base} ${active ? activeCls : 'text-muted-foreground/60 cursor-default'}`}
+        className={`${TAB_BASE} ${active ? TAB_ACTIVE : 'text-muted-foreground/60 cursor-default'}`}
       >
         <Icon className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">{label}</span>
-        <span className="sm:hidden">{shortLabel}</span>
+        <span>{report.shortName}</span>
       </span>
     );
   }
@@ -198,11 +181,147 @@ function SwitcherChip({ href, active, icon: Icon, label, shortLabel }: ChipProps
       href={href}
       role="tab"
       aria-selected={active}
-      className={`${base} ${active ? activeCls : inactiveCls}`}
+      aria-current={active ? 'page' : undefined}
+      className={`${TAB_BASE} ${active ? TAB_ACTIVE : TAB_INACTIVE}`}
     >
       <Icon className="h-3.5 w-3.5" />
-      <span className="hidden sm:inline">{label}</span>
-      <span className="sm:hidden">{shortLabel}</span>
+      <span>{report.shortName}</span>
     </Link>
   );
 }
+
+function MoreReportsMenu({
+  label,
+  reports,
+  pathname,
+  hrefFor,
+  isReachable,
+  triggerVariant,
+  currentName,
+}: {
+  label: string;
+  reports: ReportType[];
+  pathname: string;
+  hrefFor: (slug: ReportSlug) => ReturnType<typeof buildHref>;
+  isReachable: (r: ReportType) => boolean;
+  triggerVariant: 'more' | 'single';
+  currentName?: string;
+}) {
+  // Group the menu entries by kind, preserving the canonical kind order.
+  const groups = KIND_ORDER.map((kind) => ({
+    kind,
+    items: reports.filter((r) => r.kind === kind),
+  })).filter((g) => g.items.length > 0);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={
+          triggerVariant === 'single'
+            ? 'inline-flex w-full items-center justify-between gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+            : `${TAB_BASE} ${TAB_INACTIVE}`
+        }
+        aria-label={triggerVariant === 'single' ? label : 'More reports'}
+      >
+        {triggerVariant === 'single' ? (
+          <>
+            <span className="truncate">{currentName}</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </>
+        ) : (
+          <>
+            <MoreHorizontal className="h-3.5 w-3.5" />
+            <span>More reports</span>
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          </>
+        )}
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="start" className="w-[22rem] max-w-[calc(100vw-2rem)]">
+        {groups.map((g, gi) => (
+          <DropdownMenuGroup key={g.kind}>
+            {gi > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuLabel className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              {KIND_LABELS[g.kind]}
+            </DropdownMenuLabel>
+            {g.items.map((r) => (
+              <MenuRow
+                key={r.slug}
+                report={r}
+                active={isReportActive(pathname, r.slug)}
+                href={isReachable(r) ? hrefFor(r.slug) : undefined}
+              />
+            ))}
+          </DropdownMenuGroup>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function MenuRow({
+  report,
+  active,
+  href,
+}: {
+  report: ReportType;
+  active: boolean;
+  href?: ReturnType<typeof buildHref>;
+}) {
+  const Icon: LucideIcon = report.icon;
+
+  // Drill-through without a question context: a disabled item + hint tooltip.
+  if (!href) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuItem
+            disabled
+            className="cursor-default items-start gap-2.5 py-2"
+            aria-current={active ? 'page' : undefined}
+          >
+            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-sm leading-snug">{report.canonicalName}</span>
+              <span className="text-[11px] leading-tight text-muted-foreground">
+                {report.menuHint}
+              </span>
+            </span>
+          </DropdownMenuItem>
+        </TooltipTrigger>
+        <TooltipContent side="right">Open from a question</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <DropdownMenuItem asChild>
+      <Link
+        href={href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex cursor-pointer items-start gap-2.5 py-2 ${active ? 'text-primary' : ''}`}
+      >
+        <Icon
+          className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-primary' : 'text-muted-foreground'}`}
+        />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className={`text-sm leading-snug ${active ? 'font-medium' : ''}`}>
+            {report.canonicalName}
+          </span>
+          <span className="text-[11px] leading-tight text-muted-foreground">
+            {report.menuHint}
+          </span>
+        </span>
+        {active && (
+          <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Current
+          </span>
+        )}
+      </Link>
+    </DropdownMenuItem>
+  );
+}
+
+// Re-export so callers that only need the registry don't import two modules.
+export { REPORT_TYPES };
+export type { ReportGroup };

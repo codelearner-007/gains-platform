@@ -35,6 +35,9 @@ redis==7.4.0
 # Supabase Storage (for avatar uploads)
 supabase==2.25.0
 
+# XLSX Export (server-side report workbooks; keep pandas OUT of the request path)
+openpyxl==3.1.5
+
 # Date/Time Utilities
 python-dateutil==2.9.0.post0
 

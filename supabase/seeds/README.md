@@ -1,59 +1,128 @@
-# supabase/seeds — Phase 0 seed data
+# supabase/seeds — GAINS data toolchain
 
-This folder contains seed data that is loaded **after** `supabase db reset`
-applies all migrations under `supabase/migrations/`. The migrations create the
-schema; seeds populate it.
+This folder holds the seed data and the production-reusable data toolchain.
+Seeds run **after** `supabase db reset` applies the migrations under
+`supabase/migrations/`. The migrations create the schema; seeds + the toolchain
+populate it.
 
-## Files
+The toolchain is **three tiers**: Tier 1 auto-runs on `db reset`; Tiers 2-3 are
+explicit, idempotent, and reusable in production.
 
-| File | Purpose | Loaded by |
-|------|---------|-----------|
-| `dim_standard.csv` | 7,958 rows — global standards lookup (PBIX extract). | `load_standards.py` |
-| `dim_strand.csv` | 7,071 rows — global strand lookup (PBIX extract). | `load_standards.py` |
-| `load_standards.py` | Idempotent bulk loader for the two CSVs. | Run manually after `db reset`. |
-| `rbac_seed.sql` | Roles + permissions (auto-loaded by `db reset`). | `supabase db reset` (via `seed.sql` if linked). |
-| `schools_athenian.sql` | First-tenant `schools` row + IDs. | Manual `psql -f` after `db reset`. |
-| `teacher_pair_overrides.sql` | First-tenant teacher-pair config. | Manual `psql -f` after `db reset`. |
+---
 
-## Two-step workflow
+## Tier 1 — schema + base seed (auto via `supabase db reset`)
 
-```
-cd supabase
-npx supabase db reset                       # 1) apply migrations + seed.sql
-python supabase/seeds/load_standards.py     # 2) bulk-load standards CSVs
-```
+Loaded automatically because they are listed in `supabase/config.toml`
+`[db.seed].sql_paths`:
 
-After both steps, validation gates 1–9 (see Phase 0 plan) should pass.
+| File | Purpose |
+|------|---------|
+| `rbac_seed.sql` | 13 permissions + grant of all permissions to `super_admin`. (System roles `super_admin` / `user` are created by the `rbac_system` migration so they exist on every deploy.) |
+| `schools_all.sql` | All active `schools` rows (Athenian + 4) with `schoology_building_id`, `schoology_school_id`, per-school `student_role_id`, and the regex/window/session config. Idempotent (`ON CONFLICT (schoology_building_id) DO UPDATE`). Dev/bootstrap fixture — in production, schools are onboarded via the tenancy control plane, not this file. |
+| `teacher_pair_overrides.sql` | Teacher-pair config (resolves once all school rows exist). |
 
-## Why `load_standards.py` runs separately
+`schools_athenian.sql` is the **superseded** single-tenant seed kept for
+reference; `schools_all.sql` replaced it in `config.toml`.
 
-1. **CSV size.** `dim_standard.csv` has 7,958 rows with embedded HTML
-   descriptions (multi-paragraph CPALMS markup). Inlining 7,958 `INSERT`
-   statements into a migration file is fragile (escaping, file size, slow
-   migrate cycle, hard to diff).
-2. **`\copy` is not portable.** `psql`'s `\copy` meta-command is the natural
-   fast path for bulk CSV ingest, but Supabase's migration runner does not
-   process psql meta-commands — it sends each migration to the server as plain
-   SQL. Server-side `COPY ... FROM '/path/to/file'` requires the file to be
-   present on the database server and the connecting role to have superuser
-   privileges, neither of which holds for the Supabase-managed Postgres.
-3. **Idempotency.** The Python loader checks current row counts against the
-   CSVs and skips reload when they already match (override with `--force`).
-   This is wanted for repeat `db reset` cycles in dev, and is awkward to
-   express inside a migration.
+## Tier 2 — global standards (manual, idempotent)
 
-## Idempotency contract
+| File | Purpose |
+|------|---------|
+| `dim_standard.csv` | 7,958 rows — global standards lookup. |
+| `dim_strand.csv` | 7,071 rows — global strand lookup. |
+| `load_standards.py` | Idempotent bulk loader for the two CSVs (skips if row counts match; `--force` to reload). Reads `$DATABASE_URL`. |
+| `refresh_standards.py` | Regenerator for `dim_standard` (CPALMS / CASE Network). |
 
-`load_standards.py`:
-- Skips load if `count(*)` already matches the CSV row count for both tables.
-- With `--force`, truncates and reloads both tables.
-- Reads `$DATABASE_URL` (default `postgresql://postgres:postgres@127.0.0.1:56322/postgres`).
+Standards are kept out of the auto-seed because the CSVs are large (embedded
+HTML descriptions) and `psql \copy` is not portable to the Supabase migration
+runner. The loader is invoked for you by `gains_data seed` (below); run it
+directly only when reloading standards in isolation.
 
-## After-reset checklist
+## Tier 3 — tenant data: the `gains_data` CLI
+
+One source-agnostic CLI wraps the proven ingest + transformation pipeline
+(`backend/app/jobs/ingest_schoology.py` + `backend/app/transformations/`).
+It never duplicates ingest logic.
 
 ```
-psql "$DATABASE_URL" -c "SELECT count(*) FROM dim_standard;"   -- expect 7958
-psql "$DATABASE_URL" -c "SELECT count(*) FROM dim_strand;"     -- expect 7071
-psql "$DATABASE_URL" -c "SELECT count(*) FROM schools;"        -- expect ≥1 (Athenian seed)
-psql "$DATABASE_URL" -c "SELECT count(*) FROM teacher_pair_overrides;"  -- expect >0
+cd backend
+python -m app.jobs.gains_data wipe    [--keep-standards] [--yes]
+python -m app.jobs.gains_data seed    [--superadmin-email …] [--superadmin-password …]
+python -m app.jobs.gains_data ingest  [--school SHORT|ALL] [--data-root PATH]
+                                      [--source local|azure]
+                                      [--limit-per-school N] [--seed S]
+python -m app.jobs.gains_data rebuild [--limit-per-school N] [--seed S] [--yes]
 ```
+
+- **`wipe`** — `pg_dump` backup to `/tmp/gains-backup/` FIRST, then FK-safe
+  `TRUNCATE` of every `raw_*` / `stg_*` / `dim_*` / `fact_*` / `cube_*` table
+  plus `ingested_files` / `ingestion_runs`, then deletes all non-superadmin
+  `auth.users`. `--keep-standards` (the default) preserves
+  `dim_standard` / `dim_strand`. **Refuses without `--yes`.** Keeps schema,
+  migrations, RBAC, and the superadmin.
+- **`seed`** — idempotent base bootstrap: ensures `schools_all` + standards
+  (calls `load_standards`) + RBAC grants are present and creates exactly ONE
+  superadmin (default `m.arham@insightanalytics.net` / `!Password123`),
+  GoTrue-safe (token columns `''`, `email_confirmed_at` set) with the
+  `super_admin` role assigned by name lookup.
+- **`ingest`** — source-agnostic via `make_blob_client`. `--school ALL`
+  iterates active schools; the staging join resolves each row's school from the
+  CSV `User School ID`, so a single mixed `--data-root` ingests every school
+  correctly. `--limit-per-school N` **deterministically samples N assessments
+  per school** (an assessment = a distinct `(school, Item_ID)` recovered from
+  CSV rows), seeded by `--seed`; it never splits a
+  `Question-Data` / `Submission-Summary` / `Student-Submissions` trio. Omitting
+  `--limit-per-school` = FULL ingest (the production default).
+- **`rebuild`** — the one-command path: `wipe --keep-standards` → `seed` →
+  `ingest --school ALL [--limit-per-school N]`.
+
+### Typical flows
+
+Clean dev rebuild with a 100-assessment-per-school sample:
+
+```
+cd backend
+python -m app.jobs.gains_data rebuild --limit-per-school 100 --seed 42 --yes \
+    --data-root /path/to/backup/synapse/pre_landing/Schoology
+```
+
+From-scratch local bootstrap:
+
+```
+cd supabase && npx supabase db reset          # Tier 1 (rbac + schools + overrides)
+cd ../backend
+python -m app.jobs.gains_data seed             # Tier 2 standards + ONE superadmin
+python -m app.jobs.gains_data ingest --school ALL \
+    --data-root /path/to/backup/synapse/pre_landing/Schoology   # Tier 3 FULL ingest
+```
+
+Production later swaps `--source local --data-root …` for `--source azure`
+(the Phase-7 Azure blob client) behind the same CLI — no other change.
+
+---
+
+## LTI
+
+`seed_lti.py seed` registers the Schoology 1.3 platform template (placeholder
+`client_id`, filled in by the org admin after install). `seed_lti.py launch`
+runs a transient mock LTI launch end-to-end for dev/test (registers + tears
+down its own mock platform; depends on no demo data).
+
+## `_archive/`
+
+`_archive/load_real_schools.py` is the retired Method-B parquet loader
+(cubes-only, pseudonymized, per-student-empty). Method-A (`gains_data ingest`)
+replaced it; it is kept one release as a rollback path.
+
+---
+
+## Tests
+
+```
+cd backend && ./venv/bin/python -m pytest tests/jobs/test_gains_data.py -q
+```
+
+The DB-mutating additivity test is gated behind `GAINS_TEST_DATABASE_URL`
+(point it at a throwaway DB) so it never touches the live, audit-verified DB.
+The sampling / trio-integrity / wipe-refusal / keep-standards tests run against
+the live schema read-only and are always collected.

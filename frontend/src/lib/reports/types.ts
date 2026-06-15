@@ -14,6 +14,7 @@ export interface AssessmentMeta {
   grade: string;
   session: string;
   assessment_type: string;
+  assessment_date: string | null;
   first_access: string;
   latest_attempt: string;
 }
@@ -32,7 +33,8 @@ export interface QuestionOverall {
   incorrect_choice_details: string;
   incorrect_details_name: string;
   standards: string;
-  strand: string;
+  // First/primary raw standard code (e.g. "MA.912.AR.3.1") — NOT a strand.
+  standard_raw: string;
   description: string;
 }
 
@@ -66,7 +68,8 @@ export interface SddStrandRow {
   strand: string;
   num_standards: number;
   num_questions: number;
-  grade_average: number;
+  // null + empty pct for an unassessed strand — rendered BLANK, not 0.0%.
+  grade_average: number | null;
   grade_average_pct: string;
 }
 
@@ -74,7 +77,8 @@ export interface SddStandardRow {
   schoology_standard: string;
   strand: string;
   num_questions: number;
-  grade_average: number;
+  // null + empty pct for an unassessed Schoology alias — rendered BLANK.
+  grade_average: number | null;
   grade_average_pct: string;
 }
 
@@ -179,6 +183,32 @@ export interface AssessmentFilters {
   subject?: string;
   grade?: string;
   section?: string;
+  school_id?: string;
+}
+
+/** Assessment list row enriched with the per-item grade average + student
+ *  count, for the dashboard "Assessments Summary — By Assessment" data bars.
+ *  Both nullable: fact-less / cube-absent items resolve to null (em-dash). */
+export interface AssessmentSummaryListRow extends AssessmentListRow {
+  grade_average: number | null;
+  total_students: number | null;
+}
+
+/** One server-paginated page of the dashboard By-Assessment grid. */
+export interface AssessmentSummaryPage {
+  rows: AssessmentSummaryListRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// ─── Multi-tenant — accessible schools (school switcher) ─────────────────
+
+export interface AccessibleSchool {
+  school_id: string;
+  name: string;
+  short_name: string;
+  is_active: boolean;
 }
 
 export interface SubjectRow {
@@ -216,67 +246,65 @@ export interface YTDSchoolInfo {
   assessment_types: string[];
 }
 
-export interface YTDPeriodInfo {
-  date_from: string;
-  date_to: string;
+// ─── YTD Longitudinal paginated matrix (PBIX ord 8 / 9 / 10) ─────────────────
+// The three legacy "Longitudinal Report - Year To Date" reports (1/2/3) are
+// the same POINTS-based matrix; the variants differ only in what this client
+// renders:
+//   • variant 1 — Tests Taken column + per-standard Score AND %
+//   • variant 2 — no Tests Taken, per-standard % only
+//   • variant 3 — Tests Taken + Score AND % + assessment/unit name under code
+
+export interface YtdStandardColumn {
+  standard_label: string;
+  schoology_standard: string;
+  unit_names: string;
 }
 
-export interface YTDStudentSummary {
+export interface YtdCell {
+  points_received: number;
+  points_possible: number;
+  score_pct: number;
+}
+
+export interface YtdStudentRow {
   user_uid: string;
   user_name: string;
-  delta: number;
+  score_pct: number;
+  tests_taken: number;
+  points_received: number;
+  points_possible: number;
+  cells: Record<string, YtdCell>;
 }
 
-export interface YTDKpis {
-  total_questions: number;
-  total_students: number;
-  total_points_earned: number;
-  total_points_possible: number;
-  overall_avg_pct: string;
-  total_assessments: number;
-  students_improving: number;
-  students_declining: number;
-  most_improved: YTDStudentSummary[];
-  biggest_drops: YTDStudentSummary[];
+export interface YtdStandardTotal {
+  points_received: number;
+  points_possible: number;
+  score_pct: number;
 }
 
-export interface YTDTimelinePoint {
-  date: string;
-  overall_avg: number;
-  per_subject: Record<string, number>;
-  assessments_count: number;
+export interface YtdTeacherGroup {
+  section_instructor: string;
+  teacher_score_pct: number;
+  students: YtdStudentRow[];
+  standard_subtotals: Record<string, YtdStandardTotal>;
 }
 
-export interface YTDGradeDistribution {
-  date: string;
-  band_high: number;
-  band_mid: number;
-  band_low: number;
-}
-
-export interface YTDStudentScatter {
-  user_uid: string;
-  user_name: string;
-  first_avg: number;
-  latest_avg: number;
-  delta: number;
-  assessments_taken: number;
-}
-
-export interface YTDHeatmapCell {
-  strand: string;
-  date: string;
-  grade_average: number;
+export interface YtdGrandTotal {
+  points_received: number;
+  points_possible: number;
+  score_pct: number;
+  standard_totals: Record<string, YtdStandardTotal>;
 }
 
 export interface YearToDatePerformancePayload {
   school: YTDSchoolInfo;
-  period: YTDPeriodInfo;
-  kpis: YTDKpis;
-  timeline: YTDTimelinePoint[];
-  grade_distribution: YTDGradeDistribution[];
-  student_progression: YTDStudentScatter[];
-  strand_heatmap: YTDHeatmapCell[];
+  subject: string;
+  grade: string;
+  session: string;
+  assessment_type: string;
+  standards: YtdStandardColumn[];
+  teacher_groups: YtdTeacherGroup[];
+  grand_total: YtdGrandTotal;
 }
 
 // ─── Incorrect Answer Details (drill-through from QRA) ───────────────────
@@ -347,6 +375,7 @@ export interface StandardSummaryFilters {
   grade?: string;
   category?: string;
   section?: string;
+  school_id?: string;
 }
 
 export interface StandardSummaryKpis {
@@ -361,6 +390,8 @@ export interface StandardSummaryKpis {
 
 export interface StandardSummaryRollupRow {
   schoology_standard: string;
+  // CPALMS code shown in the card banner (legacy multiRowCard #3).
+  cpalms_standard: string;
   strand: string;
   cluster: string;
   cognitive_complexity: string;
@@ -399,6 +430,7 @@ export interface StrandSummaryFilters {
   category?: string;
   section?: string;
   strand?: string;
+  school_id?: string;
 }
 
 export interface StrandSummaryKpis {
@@ -476,4 +508,144 @@ export interface AlignmentDataQualityReport {
   items_missing_alignment: number;
   items_partial_alignment: number;
   items: AlignmentItemRow[];
+}
+
+// ─── Paginated reports (PBIX ord 6/7/16, 11, 12, 13) ────────────────────
+
+export interface PaginatedKpis {
+  total_questions: number;
+  total_students: number;
+  score: number;
+  total_possible_point: number;
+  grade_average: number;
+  grade_average_pct: string;
+}
+
+export interface QsmQuestionColumn {
+  question_id: string;
+  question_no: string;
+  sorting_question_no: number;
+  standard: string;
+  cpalms_standard: string;
+  position_number: string;
+  correct_answer: string;
+}
+
+// QSR is partial-credit (legacy SSRS / xlsx / grade-average-KPI parity): each
+// (student × question) cell is `points_received` (may be fractional, e.g.
+// 0 / 0.5 / 1); "# Correct Answers" is SUM(points_received) and every Score% is
+// SUM(received)/SUM(possible). The web matrix and the xlsx export consume this
+// SAME payload so they cannot diverge.
+
+/** A contiguous CPALMS column band (one or more leaf question columns). */
+export interface QspStandardBand {
+  cpalms_standard: string;
+  question_ids: string[];
+}
+
+export interface QsmStudentRow {
+  user_uid: string;
+  user_name: string;
+  score_pct: number;
+  // SUM(points_possible) / SUM(points_received) across the student's cells.
+  possible_points: number;
+  correct_count: number;
+  // qid → points_received (may be fractional); null = not attempted.
+  cells: Record<string, number | null>;
+  // cpalms_standard → band Score% (SUM received / SUM possible in the band).
+  band_pct: Record<string, number | null>;
+}
+
+export interface QsmTeacherGroup {
+  section_instructor: string;
+  teacher_score_pct: number;
+  students: QsmStudentRow[];
+  // Per-leaf-question teacher subtotals (partial credit) for the "- Teacher"
+  // subtotal block: correct = SUM(received), possible = SUM(possible).
+  per_question_correct: Record<string, number>;
+  per_question_possible: Record<string, number>;
+  per_question_pct: Record<string, number>;
+}
+
+export interface QsmGrandTotal {
+  possible_points: number;
+  correct_count: number;
+  score_pct: number;
+  // Per-leaf-question footer rows (summed points; pct = received/possible).
+  per_question_possible: Record<string, number>;
+  per_question_correct: Record<string, number>;
+  per_question_pct: Record<string, number>;
+  // Per-band footer Score% sub-columns.
+  band_possible: Record<string, number>;
+  band_correct: Record<string, number>;
+  band_pct: Record<string, number>;
+}
+
+export interface QuestionSummaryMatrixPayload {
+  assessment: AssessmentMeta;
+  kpis?: PaginatedKpis | null;
+  questions: QsmQuestionColumn[];
+  bands: QspStandardBand[];
+  teacher_groups: QsmTeacherGroup[];
+  grand_total: QsmGrandTotal;
+  // False for cube-only (parquet-loaded) schools with no fact_student_submission
+  // rows: questions / teacher_groups are empty by design but grand_total is
+  // still cube-derived. The frontend renders an explicit empty-state with the
+  // assessment-level totals instead of an all-zero per-student matrix.
+  per_student_available?: boolean;
+}
+
+export interface PaginatedQuestionRow {
+  question_id: string;
+  question_no: string;
+  sorting_question_no: number;
+  position_number: string;
+  question: string;
+  correct_answer: string;
+  grade_average: number;
+  grade_average_pct: string;
+  incorrect_choice_details: string;
+  incorrect_details_name: string;
+  standards: string;
+  cpalms_standard: string;
+}
+
+export interface QraPaginatedPayload {
+  assessment: AssessmentMeta;
+  kpis: PaginatedKpis;
+  questions: PaginatedQuestionRow[];
+}
+
+export interface QraTeacherGroup {
+  section_instructor: string;
+  teacher_grade_average: number;
+  teacher_grade_average_pct: string;
+  questions: PaginatedQuestionRow[];
+}
+
+export interface QraByTeacherPayload {
+  assessment: AssessmentMeta;
+  kpis: PaginatedKpis;
+  teacher_groups: QraTeacherGroup[];
+}
+
+export interface QraStandardTeacherGroup {
+  section_instructor: string;
+  teacher_standard_average: number;
+  teacher_standard_average_pct: string;
+  questions: PaginatedQuestionRow[];
+}
+
+export interface QraStandardGroup {
+  cpalms_standard: string;
+  standard_description: string;
+  standard_average: number;
+  standard_average_pct: string;
+  teacher_groups: QraStandardTeacherGroup[];
+}
+
+export interface QraByStandardTeacherPayload {
+  assessment: AssessmentMeta;
+  kpis: PaginatedKpis;
+  standard_groups: QraStandardGroup[];
 }

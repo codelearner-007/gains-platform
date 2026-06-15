@@ -199,9 +199,46 @@ export function formatCorrectAnswer(raw: string): string[] {
   return tokens.length > 0 ? tokens : [raw];
 }
 
+/**
+ * Legacy DAX `__FirstFormatted_correct_` concatenated
+ * `Position_Number & ': ' & Correct_Answer`, e.g. `"1: A\n2: B\n3: C"` for a
+ * multi-part question. Mirror that here: when `positionNumber` carries a list
+ * of positions aligned 1:1 with the answer tokens, prefix each line with its
+ * position. A position string is "meaningful" when it has >1 token and is not
+ * the placeholder `"n/a"`. Falls back to the un-prefixed answer tokens when the
+ * payload only carries a single collapsed position (current QRA aggregate).
+ */
+export function formatCorrectAnswerWithPositions(
+  correctAnswer: string,
+  positionNumber: string | null | undefined,
+): string[] {
+  const answers = formatCorrectAnswer(correctAnswer);
+  if (answers.length === 0) return [];
+
+  const positions = (positionNumber ?? '')
+    .split(/[,\s]+/)
+    .map((p) => p.trim())
+    .filter((p) => p && p.toLowerCase() !== 'n/a');
+
+  // Only prefix when positions line up with answers AND describe more than one
+  // part (a lone "1" adds noise, not fidelity).
+  if (positions.length > 1 && positions.length === answers.length) {
+    return answers.map((a, i) => `${positions[i]}: ${a}`);
+  }
+  return answers;
+}
+
 export function formatPercent(value: number, digits = 1): string {
   if (!Number.isFinite(value)) return '';
   return `${(value * 100).toFixed(digits)}%`;
+}
+
+export function formatNumber(value: number): string {
+  if (!Number.isFinite(value)) return '';
+  // Drop trailing .0 when integer-valued; otherwise keep 1-2 decimals.
+  return Number.isInteger(value)
+    ? value.toLocaleString('en-US')
+    : value.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
 // ── Shared report constants / string helpers ───────────────────────────────

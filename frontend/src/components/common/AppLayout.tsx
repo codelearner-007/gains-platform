@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, User, Menu, X, LogOut, Key, Shield, Sparkles, BarChart3 } from 'lucide-react';
+import { Home, User, Menu, X, LogOut, Key, Shield, Sparkles } from 'lucide-react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { canSeeAdminEntry } from '@/lib/rbac/access';
 import { Button } from '@/components/ui/button';
+import SchoolSwitcher from '@/components/app/SchoolSwitcher';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +50,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navigation = [
     { name: 'Dashboard', href: '/app', icon: Home },
-    { name: 'Reports', href: '/app/reports', icon: BarChart3 },
     { name: 'Settings', href: '/app/user-settings', icon: User },
   ];
 
@@ -71,7 +71,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out z-30
+        className={`print:hidden fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out z-30
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         <div className="h-16 flex items-center justify-between px-5 border-b border-border flex-shrink-0">
@@ -95,6 +95,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          <div className="px-1 pb-3">
+            <SchoolSwitcher />
+          </div>
           {navigation.map((item) => {
             const isActive =
               item.href === '/app'
@@ -200,8 +203,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="lg:pl-64 min-h-screen flex flex-col">
-        <div className="sticky top-0 z-10 flex items-center h-14 px-4 lg:hidden surface-blur bg-background/80 border-b border-border">
+      <div className="lg:pl-64 print:pl-0 min-h-screen flex flex-col">
+        <div className="sticky top-0 z-10 flex items-center h-14 px-4 lg:hidden print:hidden surface-blur bg-background/80 border-b border-border">
           <Button
             onClick={toggleSidebar}
             variant="ghost"

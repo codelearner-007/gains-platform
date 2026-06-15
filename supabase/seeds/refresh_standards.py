@@ -594,6 +594,32 @@ def _read_existing_csv(path: Path) -> list[dict[str, str]]:
     return rows
 
 
+def _count_alias_rows(path: Path) -> int:
+    """Count Schoology course-prefix alias rows in the existing seed.
+
+    An "alias" row is one whose ``Schoology_Standard`` is NOT the plain
+    canonical CPALMS/IMS form — i.e. it carries a Schoology course prefix
+    (``AI.MA.912.AR.3.1``) or an embedded ``MAFS``/``LAFS`` alignment
+    (``MA.9-12.MAFS.912.N-RN.1.2``). These rows exist only because legacy
+    observed them in gradebook CSVs; a pure CPALMS pull cannot reproduce
+    them. Used by the --full-pull guard to refuse silent alias loss.
+
+    Returns 0 when the seed is absent (nothing to lose → bootstrap is safe).
+    """
+    if not path.exists():
+        return 0
+    count = 0
+    with path.open(newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            code = (row.get("Schoology_Standard") or "")
+            if "MAFS" in code or "LAFS" in code:
+                count += 1
+            elif code[:3] in ("AI.", "BA.", "AL.") and "." in code[3:]:
+                # Course-prefix alias (Algebra-I, Biology, etc.).
+                count += 1
+    return count
+
+
 def _index_cpalms_by_identifier(
     cpalms_rows: list[dict[str, str]],
 ) -> dict[str, dict[str, str]]:
@@ -748,7 +774,19 @@ def main(argv: list[str] | None = None) -> int:
             "Generate a fresh CSV from scratch (one row per CPALMS identifier; "
             "DROPS Schoology AI.MA.* alias rows). Only use this for an initial "
             "bootstrap or when you have no existing seed. Default behavior is "
-            "the safer update-in-place mode."
+            "the safer update-in-place mode. Requires "
+            "--i-understand-this-drops-aliases unless the existing seed has no "
+            "alias rows to lose."
+        ),
+    )
+    parser.add_argument(
+        "--i-understand-this-drops-aliases",
+        action="store_true",
+        help=(
+            "Required confirmation for --full-pull when the existing seed "
+            "contains Schoology course-prefix alias rows (AI.MA.*, *.MAFS.*). "
+            "Dropping them silently breaks the exact-match rollup joins — see "
+            "backend/tests/api/test_standards_alias_coverage.py."
         ),
     )
     parser.add_argument(
@@ -840,6 +878,43 @@ def main(argv: list[str] | None = None) -> int:
         # CSV with one row per CPALMS identifier. This drops Schoology
         # alias rows (AI.MA.*); only use for initial setup or when the
         # existing seed is unrecoverable.
+        #
+        # SAFETY GUARD: count the alias rows the existing seed would lose.
+        # Those rows are the ONLY thing letting the per-item rollups join
+        # Schoology's emitted alias labels (AI.MA.*, *.MAFS.*) — they were
+        # observed from gradebook CSVs, not present in the CPALMS/IMS feed
+        # (docs/audit/legacy-schoology-cpalms-mapping.md). If the operator
+        # hasn't explicitly acknowledged the loss, abort.
+        alias_rows = _count_alias_rows(args.output)
+        if alias_rows > 0 and not args.i_understand_this_drops_aliases:
+            logger.error(
+                "ABORT: --full-pull would drop %d Schoology alias row(s) "
+                "(AI.MA.* / *.MAFS.*) from %s.",
+                alias_rows,
+                args.output,
+            )
+            logger.error(
+                "These aliases are required by the exact-match rollup joins; "
+                "dropping them silently collapses aligned questions into the "
+                "'Other' bucket. Prefer the default update-in-place mode "
+                "(omit --full-pull), or — if you really must rebuild from "
+                "scratch — re-add --i-understand-this-drops-aliases AND plan "
+                "to re-augment aliases from the Question-Data CSVs afterward."
+            )
+            logger.error(
+                "Verify coverage after any refresh: "
+                "cd backend && ./venv/bin/python -m pytest "
+                "tests/api/test_standards_alias_coverage.py"
+            )
+            return 2
+        if alias_rows > 0:
+            logger.warning(
+                "--full-pull: dropping %d Schoology alias row(s) per explicit "
+                "--i-understand-this-drops-aliases. Re-augment them from the "
+                "Question-Data CSVs and re-run the alias-coverage test before "
+                "shipping.",
+                alias_rows,
+            )
         if args.dry_run:
             logger.info("--dry-run --full-pull: not writing CSV.")
             if all_rows:

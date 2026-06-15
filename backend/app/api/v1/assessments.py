@@ -11,40 +11,59 @@ from app.core.dependencies import require_permission
 from app.middleware.rls import get_db_with_rls
 from app.schemas.assessments import (
     AssessmentDetail,
-    AssessmentListRow,
     AssessmentSummary,
+    AssessmentSummaryPage,
 )
 from app.schemas.reports import (
     IncorrectChoice,
     QuestionOverall,
     StandardSummaryRow,
 )
-from app.services.assessment_service import AssessmentService
+from app.services.assessment_service import (
+    DEFAULT_SUMMARY_PAGE_SIZE,
+    AssessmentService,
+)
 
 router = APIRouter(prefix="/assessments", tags=["Assessments"])
 
 
 @router.get(
-    "",
-    response_model=List[AssessmentListRow],
+    "/summary-list",
+    response_model=AssessmentSummaryPage,
     dependencies=[Depends(require_permission("reports:read"))],
 )
-async def list_assessments(
+async def list_assessment_summaries(
     session: Optional[str] = Query(default=None),
     category: Optional[str] = Query(default=None),
     subject: Optional[str] = Query(default=None),
     grade: Optional[str] = Query(default=None),
     section: Optional[str] = Query(default=None),
+    q: Optional[str] = Query(default=None, max_length=200),
+    sort: str = Query(default="date"),
+    dir: str = Query(default="desc"),
+    limit: int = Query(default=DEFAULT_SUMMARY_PAGE_SIZE, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db_with_rls),
-) -> List[AssessmentListRow]:
-    """List dim_item filtered for the user's school. Requires: reports:read"""
+) -> AssessmentSummaryPage:
+    """One server-paginated page of the dashboard's By-Assessment grid (per-item
+    grade average + student count) plus the full filter-scoped total. Supports
+    server-side name search (``q``), sort (date/item/grade/students/average +
+    ``dir``) and ``limit``/``offset`` so a school with thousands of assessments
+    only transfers one page. ``sort``/``dir`` are validated in the service (which
+    owns the column whitelist). Requires: reports:read"""
+    q_norm = q.strip() if q and q.strip() else None
     service = AssessmentService(db)
-    return await service.list_assessments(
+    return await service.list_assessment_summaries(
         session_filter=session,
         category=category,
         subject=subject,
         grade=grade,
         section=section,
+        q=q_norm,
+        sort=sort,
+        direction=dir,
+        limit=limit,
+        offset=offset,
     )
 
 

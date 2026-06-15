@@ -1,8 +1,6 @@
-import type { Metadata } from 'next';
+import { makeReportMetadata } from '@/lib/reports/report-types';
 
-export const metadata: Metadata = {
-  title: 'Question Response Analysis Interactive | Reports',
-};
+export const metadata = makeReportMetadata('question-response-analysis');
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return children;

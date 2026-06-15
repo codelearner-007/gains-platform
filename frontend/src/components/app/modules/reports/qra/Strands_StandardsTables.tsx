@@ -16,17 +16,19 @@ import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 type StrandSortKey = 'strand' | 'num_standards' | 'num_questions' | 'grade_average';
 type StandardSortKey = 'schoology_standard' | 'num_questions' | 'grade_average';
 
+// Unassessed rows (grade_average === null) sort as -1 so they sink to the
+// bottom on ascending order, matching the "blank cell last" reading order.
 const STRAND_SORT_ACCESSORS: Record<StrandSortKey, (r: SddStrandRow) => string | number> = {
   strand: (r) => r.strand.toLowerCase(),
   num_standards: (r) => r.num_standards,
   num_questions: (r) => r.num_questions,
-  grade_average: (r) => r.grade_average,
+  grade_average: (r) => r.grade_average ?? -1,
 };
 
 const STANDARD_SORT_ACCESSORS: Record<StandardSortKey, (r: SddStandardRow) => string | number> = {
   schoology_standard: (r) => r.schoology_standard.toLowerCase(),
   num_questions: (r) => r.num_questions,
-  grade_average: (r) => r.grade_average,
+  grade_average: (r) => r.grade_average ?? -1,
 };
 
 export function SummaryByStandardsHeader() {
@@ -43,14 +45,17 @@ export function SummaryByStandardsHeader() {
 export function StrandsTable({
   kpis,
   strands,
-  selectedStrand,
+  selectedStrands,
   onSelectStrand,
 }: {
   kpis: KPIs;
   strands?: SddStrandRow[];
-  selectedStrand?: string | null;
+  // Multi-select: every active strand value. A clicked row toggles membership.
+  selectedStrands?: string[];
   onSelectStrand?: (strand: string) => void;
 }) {
+  const selectedSet = new Set(selectedStrands ?? []);
+  const hasSelection = selectedSet.size > 0;
   const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<SddStrandRow, StrandSortKey>({
       rows: strands ?? [],
@@ -141,8 +146,8 @@ export function StrandsTable({
             </tr>
           ) : (
             rows.map((row, i) => {
-              const isSelected = selectedStrand === row.strand;
-              const dim = !!selectedStrand && !isSelected;
+              const isSelected = selectedSet.has(row.strand);
+              const dim = hasSelection && !isSelected;
               return (
                 <tr
                   key={`strand-${i}-${row.strand}`}
@@ -178,7 +183,11 @@ export function StrandsTable({
                       ...cellStyle,
                       textAlign: 'center',
                       fontWeight: 600,
-                      backgroundColor: cellColor(row.grade_average),
+                      // Unassessed strand → blank cell, no traffic-light fill.
+                      backgroundColor:
+                        row.grade_average == null
+                          ? undefined
+                          : cellColor(row.grade_average),
                     }}
                   >
                     {row.grade_average_pct}
@@ -196,17 +205,24 @@ export function StrandsTable({
 export function StandardsTable({
   kpis,
   standards,
-  selectedStandard,
+  selectedStandards,
   onSelectStandard,
 }: {
   kpis: KPIs;
   standards?: SddStandardRow[];
-  selectedStandard?: string | null;
+  // Multi-select: every active standard code. A clicked row toggles membership.
+  selectedStandards?: string[];
   onSelectStandard?: (schoology_standard: string) => void;
 }) {
+  const selectedSet = new Set(selectedStandards ?? []);
+  const hasSelection = selectedSet.size > 0;
+  // PBIX dropped rows whose Grade_Average_Standard_Measure was null (the
+  // visual-level "is not blank" filter). Mirror it: hide unassessed Schoology
+  // aliases (grade_average === null) so the table shows only scored standards.
+  const assessed = (standards ?? []).filter((r) => r.grade_average != null);
   const { sortedRows: rows, sortColumn, sortDirection, onHeaderClick } =
     useTableSort<SddStandardRow, StandardSortKey>({
-      rows: standards ?? [],
+      rows: assessed,
       accessors: STANDARD_SORT_ACCESSORS,
       defaultColumn: 'schoology_standard',
       defaultDirection: 'asc',
@@ -280,8 +296,8 @@ export function StandardsTable({
             </tr>
           ) : (
             rows.map((row, i) => {
-              const isSelected = selectedStandard === row.schoology_standard;
-              const dim = !!selectedStandard && !isSelected;
+              const isSelected = selectedSet.has(row.schoology_standard);
+              const dim = hasSelection && !isSelected;
               return (
               <tr
                 key={`standard-${i}-${row.schoology_standard}-${row.strand}`}
@@ -314,7 +330,11 @@ export function StandardsTable({
                     ...cellStyle,
                     textAlign: 'center',
                     fontWeight: 600,
-                    backgroundColor: cellColor(row.grade_average),
+                    // Unassessed alias standard → blank cell, no fill.
+                    backgroundColor:
+                      row.grade_average == null
+                        ? undefined
+                        : cellColor(row.grade_average),
                   }}
                 >
                   {row.grade_average_pct}

@@ -11,8 +11,9 @@ from app.repositories.cube_repository import CubeRepository
 from app.repositories.dim_repository import DimRepository
 from app.schemas.assessments import (
     AssessmentDetail,
-    AssessmentListRow,
     AssessmentSummary,
+    AssessmentSummaryListRow,
+    AssessmentSummaryPage,
 )
 from app.schemas.reports import (
     IncorrectChoice,
@@ -21,6 +22,10 @@ from app.schemas.reports import (
 )
 from app.utils.coercion import safe_str, to_float, to_int
 
+# Default page size for the dashboard's By-Assessment grid — single source of
+# truth referenced by the route's `limit` default (the frontend sends the same).
+DEFAULT_SUMMARY_PAGE_SIZE = 25
+
 
 class AssessmentService:
     def __init__(self, session: AsyncSession) -> None:
@@ -28,22 +33,64 @@ class AssessmentService:
         self.dim = DimRepository(session)
         self.cube = CubeRepository(session)
 
-    async def list_assessments(
+    # Whitelist: sort key -> SQL expression. Interpolated (not bound), so the
+    # value MUST come from this dict, never from raw user input.
+    _SORT_SQL = {
+        "date": "assessment_date",
+        "item": "lower(item_name)",
+        "grade": "grade",
+        "students": "total_students",
+        "average": "grade_average",
+    }
+
+    async def list_assessment_summaries(
         self,
         session_filter: Optional[str] = None,
         category: Optional[str] = None,
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         section: Optional[str] = None,
-    ) -> List[AssessmentListRow]:
-        rows = await self.dim.list_items(
+        q: Optional[str] = None,
+        sort: str = "date",
+        direction: str = "desc",
+        limit: int = DEFAULT_SUMMARY_PAGE_SIZE,
+        offset: int = 0,
+    ) -> AssessmentSummaryPage:
+        """One server-paginated page of the dashboard By-Assessment grid (rows
+        with grade_average + total_students) plus the full scoped total. Server
+        sort + name search so a school with thousands of assessments only
+        transfers one page per request."""
+        sort_sql = self._SORT_SQL.get(sort, "assessment_date")
+        dir_sql = "ASC" if direction.lower() == "asc" else "DESC"
+        rows_raw, total = await self.cube.get_assessment_summary_page(
             session_filter=session_filter,
             category=category,
             subject=subject,
             grade=grade,
             section=section,
+            q=q,
+            sort_sql=sort_sql,
+            dir_sql=dir_sql,
+            limit=limit,
+            offset=offset,
         )
-        return [AssessmentListRow.model_validate(r) for r in rows]
+        rows = [
+            AssessmentSummaryListRow.model_validate(
+                {
+                    **r,
+                    "grade_average": to_float(r.get("grade_average"))
+                    if r.get("grade_average") is not None
+                    else None,
+                    "total_students": to_int(r.get("total_students"))
+                    if r.get("total_students") is not None
+                    else None,
+                }
+            )
+            for r in rows_raw
+        ]
+        return AssessmentSummaryPage(
+            rows=rows, total=total, limit=limit, offset=offset
+        )
 
     async def get_assessment(self, item_id: str) -> AssessmentDetail:
         row = await self.dim.get_item(item_id)
@@ -90,7 +137,7 @@ class AssessmentService:
                 incorrect_choice_details=safe_str(q.get("incorrect_choice_details")),
                 incorrect_details_name=safe_str(q.get("incorrect_details_name")),
                 standards=safe_str(q.get("standards")),
-                strand=safe_str(q.get("strand_raw")),
+                standard_raw=safe_str(q.get("strand_raw")),
                 description=safe_str(q.get("description")),
             )
             for q in rows

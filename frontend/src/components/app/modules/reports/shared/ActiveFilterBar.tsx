@@ -2,47 +2,63 @@
 
 import { X } from 'lucide-react';
 import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
-import type { ReportFilters } from '@/lib/reports/filters';
+import type { ActiveFilterChip } from '@/lib/reports/filters';
 
 interface ActiveFilterBarProps {
-  filters: ReportFilters;
+  chips: ActiveFilterChip[];
+  /** Remove a single value (toggle it off). */
+  onRemove: (chip: ActiveFilterChip) => void;
+  /** Remove every active value. */
   onClear: () => void;
 }
 
+const CHIP_LABEL: Record<ActiveFilterChip['key'], string> = {
+  strand: 'Strand',
+  standard: 'Standard',
+};
+
 export default function ActiveFilterBar({
-  filters,
+  chips,
+  onRemove,
   onClear,
 }: ActiveFilterBarProps) {
-  if (!filters.strand && !filters.standard) return null;
+  if (chips.length === 0) return null;
 
   return (
     <div
-      className="mb-2 flex items-center gap-3 rounded-md border px-3 py-1.5 text-[12px]"
+      className="mb-2 flex flex-wrap items-center gap-2 rounded-md border px-3 py-1.5 text-[12px]"
       style={{ backgroundColor: HEADER_BAR_BG, borderColor: LAYOUT_BORDER }}
       role="status"
       aria-live="polite"
     >
       <span className="font-semibold text-black">Filtered:</span>
-      {filters.standard ? (
-        <span className="text-black">
-          <span className="text-neutral-700">Standard =</span>{' '}
-          <span className="font-semibold">{filters.standard}</span>
+      {chips.map((chip) => (
+        <span
+          key={`${chip.key}-${chip.value}`}
+          className="inline-flex items-center gap-1 rounded-full border bg-white px-2 py-0.5 text-[11px] text-black"
+          style={{ borderColor: LAYOUT_BORDER }}
+        >
+          <span className="text-neutral-600">{CHIP_LABEL[chip.key]}:</span>
+          <span className="font-semibold">{chip.value}</span>
+          <button
+            type="button"
+            onClick={() => onRemove(chip)}
+            className="inline-flex items-center rounded-full p-0.5 text-neutral-500 hover:bg-neutral-100 hover:text-black cursor-pointer"
+            aria-label={`Remove ${CHIP_LABEL[chip.key]} ${chip.value}`}
+          >
+            <X className="h-3 w-3" aria-hidden="true" />
+          </button>
         </span>
-      ) : filters.strand ? (
-        <span className="text-black">
-          <span className="text-neutral-700">Strand =</span>{' '}
-          <span className="font-semibold">{filters.strand}</span>
-        </span>
-      ) : null}
+      ))}
       <button
         type="button"
         onClick={onClear}
         className="ml-auto inline-flex items-center gap-1 rounded border bg-white px-2 py-0.5 text-[11px] font-medium text-black hover:bg-neutral-50 cursor-pointer"
         style={{ borderColor: LAYOUT_BORDER }}
-        aria-label="Clear filter"
+        aria-label="Clear all filters"
       >
         <X className="h-3 w-3" aria-hidden="true" />
-        Clear
+        Clear all
       </button>
     </div>
   );

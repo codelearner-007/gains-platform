@@ -10,6 +10,16 @@ from app.models.base import Base
 ModelType = TypeVar("ModelType", bound=Base)
 
 
+def row_to_dict(row: Any) -> Dict[str, Any]:
+    """Coerce a SQLAlchemy ``Row`` into a plain dict via its ``_mapping``.
+
+    Shared by the raw-SQL repositories (cube/school/dim/user_school/
+    ingestion_run/session) so the ``dict(row._mapping)`` coercion lives in
+    exactly one place.
+    """
+    return dict(row._mapping)
+
+
 class BaseRepository(Generic[ModelType]):
     """Generic repository with CRUD operations."""
 

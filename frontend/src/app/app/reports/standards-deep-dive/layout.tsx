@@ -1,8 +1,6 @@
-import type { Metadata } from 'next';
+import { makeReportMetadata } from '@/lib/reports/report-types';
 
-export const metadata: Metadata = {
-  title: 'Standards Deep Dive interactive | Reports',
-};
+export const metadata = makeReportMetadata('standards-deep-dive');
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return children;

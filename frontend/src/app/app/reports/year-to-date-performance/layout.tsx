@@ -1,8 +1,6 @@
-import type { Metadata } from 'next';
+import { makeReportMetadata } from '@/lib/reports/report-types';
 
-export const metadata: Metadata = {
-  title: 'Year To Date - Longitudinal Report | Reports',
-};
+export const metadata = makeReportMetadata('year-to-date-performance');
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return children;

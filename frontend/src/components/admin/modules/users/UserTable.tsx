@@ -8,6 +8,7 @@ import {
   Key,
   CheckCircle,
   Shield,
+  Building2,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,7 @@ interface UserTableProps {
   onResetPassword: (user: UserWithRoles) => void;
   onAssignRole: (user: UserWithRoles) => void;
   onRemoveRole: (user: UserWithRoles, roleId: string) => void;
+  onManageSchools: (user: UserWithRoles) => void;
 }
 
 function formatDate(dateString: string | null | undefined): string {
@@ -111,6 +113,7 @@ export function UserTable({
   onResendVerification,
   onResetPassword,
   onAssignRole,
+  onManageSchools,
   onRemoveRole,
 }: UserTableProps) {
   function renderContent() {
@@ -211,10 +214,16 @@ export function UserTable({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {canAssignRoles && (
-                              <DropdownMenuItem onClick={() => onAssignRole(user)}>
-                                <Shield className="h-4 w-4 mr-2" />
-                                Assign Role
-                              </DropdownMenuItem>
+                              <>
+                                <DropdownMenuItem onClick={() => onAssignRole(user)}>
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  Assign Role
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onManageSchools(user)}>
+                                  <Building2 className="h-4 w-4 mr-2" />
+                                  School Access
+                                </DropdownMenuItem>
+                              </>
                             )}
                             {canUpdateAll && (
                               <>

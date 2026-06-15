@@ -1,10 +1,7 @@
-import type { Metadata } from 'next';
-import { SignupPage } from '@/components/auth/signup/SignupPage';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Register',
-};
-
+// Public self-signup is disabled — GAINS is invite-only.
+// Any attempt to reach the registration page is redirected to login.
 export default function Page() {
-  return <SignupPage />;
+  redirect('/auth/login');
 }

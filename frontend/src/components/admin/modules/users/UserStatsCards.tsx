@@ -7,14 +7,14 @@ interface UserStatsCardsProps {
   loading: boolean;
 }
 
-interface StatCardProps {
+interface AdminStatTileProps {
   icon: React.ReactNode;
   iconBgClass: string;
   value: number;
   label: string;
 }
 
-function StatCard({ icon, iconBgClass, value, label }: StatCardProps) {
+function AdminStatTile({ icon, iconBgClass, value, label }: AdminStatTileProps) {
   return (
     <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="pt-6">
@@ -41,31 +41,31 @@ function StatsLoadingSkeleton() {
 function StatsGrid({ stats }: { stats: UserStats }) {
   return (
     <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
-      <StatCard
+      <AdminStatTile
         icon={<Users className="h-5 w-5 text-primary" />}
         iconBgClass="bg-primary/10"
         value={stats.total_users}
         label="Total Users"
       />
-      <StatCard
+      <AdminStatTile
         icon={<UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
         iconBgClass="bg-emerald-500/10"
         value={stats.active_users}
         label="Active Users"
       />
-      <StatCard
+      <AdminStatTile
         icon={<ShieldCheck className="h-5 w-5 text-sky-600 dark:text-sky-400" />}
         iconBgClass="bg-sky-500/10"
         value={stats.verified_users}
         label="Verified"
       />
-      <StatCard
+      <AdminStatTile
         icon={<ShieldBan className="h-5 w-5 text-destructive" />}
         iconBgClass="bg-destructive/10"
         value={stats.banned_users}
         label="Banned"
       />
-      <StatCard
+      <AdminStatTile
         icon={<UserPlus className="h-5 w-5 text-primary" />}
         iconBgClass="bg-primary/10"
         value={stats.new_users_30d}

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -24,6 +24,26 @@ class AssessmentListRow(BaseModel):
     assessment_date: Optional[date] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AssessmentSummaryListRow(AssessmentListRow):
+    """List row enriched with the per-assessment grade average + student count
+    for the dashboard "Assessments Summary — By Assessment" grade-average bars.
+    Both are nullable: fact-less items or items absent from the cube resolve to
+    ``None`` (rendered as an em-dash, never zero)."""
+
+    grade_average: Optional[float] = None
+    total_students: Optional[int] = None
+
+
+class AssessmentSummaryPage(BaseModel):
+    """One server-paginated page of the dashboard's By-Assessment grid plus the
+    full filter-scoped total, so the table fetches a page at a time."""
+
+    rows: List[AssessmentSummaryListRow]
+    total: int
+    limit: int
+    offset: int
 
 
 class AssessmentDetail(BaseModel):

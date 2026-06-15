@@ -1,0 +1,4 @@
+<h2>You're invited to GAINS</h2>
+<p>An administrator has invited you to the GAINS platform. Follow this link to set your password and sign in:</p>
+<p><a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/auth/accept-invite">Accept invitation</a></p>
+<p>Alternatively, enter the code: {{ .Token }}</p>

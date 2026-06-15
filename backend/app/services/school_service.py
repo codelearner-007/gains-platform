@@ -17,6 +17,21 @@ from app.schemas.admin import (
     UpdateSchoolRequest,
 )
 
+# Optional columns under a UNIQUE constraint: a blank string ('') is not a
+# meaningful value and would collide with any other blank on the second insert
+# (e.g. schools_schoology_school_id_key). Coerce blank/whitespace-only input to
+# NULL so multiple "unset" rows coexist.
+_NULLABLE_UNIQUE_FIELDS = ("schoology_school_id", "edvance_tenant_id")
+
+
+def _blank_to_none(data: dict) -> dict:
+    """Coerce blank/whitespace-only optional-unique fields to None in place."""
+    for field in _NULLABLE_UNIQUE_FIELDS:
+        value = data.get(field)
+        if isinstance(value, str) and value.strip() == "":
+            data[field] = None
+    return data
+
 
 class SchoolService:
     def __init__(self, session: AsyncSession) -> None:
@@ -26,6 +41,17 @@ class SchoolService:
     async def list_schools(self) -> List[SchoolResponse]:
         rows = await self.repo.list_all()
         return [SchoolResponse.model_validate(r) for r in rows]
+
+    async def list_accessible(
+        self, *, is_super_admin: bool, school_ids: List[str]
+    ) -> List[dict]:
+        """Schools the caller may scope to (drives the switcher).
+
+        Super-admins get every active school; members get only their own.
+        """
+        return await self.repo.list_accessible(
+            all_active=is_super_admin, school_ids=school_ids
+        )
 
     async def get_school(self, school_id: str) -> SchoolResponse:
         row = await self.repo.get(school_id)
@@ -39,11 +65,8 @@ class SchoolService:
             raise DuplicateResourceError(
                 "School", "schoology_building_id", payload.schoology_building_id
             )
-        data = {
-            k: v
-            for k, v in payload.model_dump(exclude_unset=True).items()
-            if v is not None
-        }
+        data = _blank_to_none(payload.model_dump(exclude_unset=True))
+        data = {k: v for k, v in data.items() if v is not None}
         row = await self.repo.create(data)
         return SchoolResponse.model_validate(row)
 
@@ -54,10 +77,13 @@ class SchoolService:
         if not existing:
             raise ResourceNotFoundError("School", school_id)
 
+        raw = _blank_to_none(payload.model_dump(exclude_unset=True))
+        # Keep explicit NULLs for the optional-unique fields (so a user can clear
+        # a previously-set Schoology School ID); drop other unset/None values.
         data = {
             k: v
-            for k, v in payload.model_dump(exclude_unset=True).items()
-            if v is not None
+            for k, v in raw.items()
+            if v is not None or k in _NULLABLE_UNIQUE_FIELDS
         }
         # If building_id is being changed, ensure no collision
         new_building_id = data.get("schoology_building_id")

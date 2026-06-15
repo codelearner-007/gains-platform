@@ -17,11 +17,24 @@ import { formatPercent, splitStandards } from './format';
 // rule once here avoids a round-trip-per-click and lets the rest of the
 // dashboard recompute purely on the cached payload.
 
-function pickStrandFromStandard(
-  schoology: string,
+// Set-membership predicate: a row passes when
+//   (strands empty OR row.strand ∈ strands) AND
+//   (standards empty OR row.schoology_standard ∈ standards).
+// Selecting standards also implies their parent strands so the strand-grain
+// rollup narrows to the strands those standards belong to (mirrors PBIX, where
+// picking a standard highlighted its strand).
+function effectiveStrandSet(
+  filters: ReportFilters,
   standards: readonly SddStandardRow[],
-): string | undefined {
-  return standards.find((s) => s.schoology_standard === schoology)?.strand;
+): Set<string> {
+  const set = new Set(filters.strands);
+  if (filters.standards.length > 0) {
+    const wanted = new Set(filters.standards);
+    for (const s of standards) {
+      if (wanted.has(s.schoology_standard)) set.add(s.strand);
+    }
+  }
+  return set;
 }
 
 interface SddDerived {
@@ -37,7 +50,7 @@ export function deriveSdd(
   payload: StandardsDeepDivePayload,
   filters: ReportFilters,
 ): SddDerived {
-  if (!filters.strand && !filters.standard) {
+  if (filters.strands.length === 0 && filters.standards.length === 0) {
     return {
       kpis: payload.kpis,
       strands_rollup: payload.strands_rollup,
@@ -48,18 +61,19 @@ export function deriveSdd(
     };
   }
 
-  const effectiveStrand =
-    filters.strand ??
-    (filters.standard
-      ? pickStrandFromStandard(filters.standard, payload.standards_rollup) ?? null
-      : null);
+  const effectiveStrands = effectiveStrandSet(filters, payload.standards_rollup);
+  const standardSet = new Set(filters.standards);
+  const hasStrandFilter = effectiveStrands.size > 0;
+  const hasStandardFilter = standardSet.size > 0;
 
   const matches = (row: { strand: string; schoology_standard?: string }) =>
-    (!effectiveStrand || row.strand === effectiveStrand) &&
-    (!filters.standard || row.schoology_standard === filters.standard);
+    (!hasStrandFilter || effectiveStrands.has(row.strand)) &&
+    (!hasStandardFilter ||
+      (row.schoology_standard != null &&
+        standardSet.has(row.schoology_standard)));
 
   const strandsRollup = payload.strands_rollup.filter(
-    (r) => !effectiveStrand || r.strand === effectiveStrand,
+    (r) => !hasStrandFilter || effectiveStrands.has(r.strand),
   );
   const standardsRollup = payload.standards_rollup.filter(matches);
   const bandHigh = payload.band_high.filter(matches);
@@ -67,28 +81,21 @@ export function deriveSdd(
   const bandLow = payload.band_low.filter(matches);
 
   // KPIs: total_students is immune; rest re-aggregate from filtered rows.
-  // Prefer the strand-row aggregates when only a strand is selected (they
-  // were computed server-side and carry rounding that the questions-grain
-  // recompute would miss); fall back to the standard-row aggregate when
-  // a single standard is selected.
+  // Single-selection keeps the server-computed strand/standard aggregate (it
+  // carries rounding the questions-grain recompute would miss); multi-select
+  // re-aggregates across the filtered rows.
   let totalQuestions = payload.kpis.total_questions;
   let totalStandards = payload.kpis.total_standards;
   let gradeAverage = payload.kpis.grade_average;
 
-  if (filters.standard) {
-    const single = standardsRollup[0];
-    if (single) {
-      totalQuestions = single.num_questions;
-      totalStandards = 1;
-      gradeAverage = single.grade_average;
-    }
-  } else if (filters.strand) {
-    const single = strandsRollup[0];
-    if (single) {
-      totalQuestions = single.num_questions;
-      totalStandards = single.num_standards;
-      gradeAverage = single.grade_average;
-    }
+  if (standardsRollup.length > 0 && hasStandardFilter) {
+    totalQuestions = standardsRollup.reduce((s, r) => s + r.num_questions, 0);
+    totalStandards = standardsRollup.length;
+    gradeAverage = weightedGradeAverage(standardsRollup);
+  } else if (strandsRollup.length > 0 && hasStrandFilter) {
+    totalQuestions = strandsRollup.reduce((s, r) => s + r.num_questions, 0);
+    totalStandards = strandsRollup.reduce((s, r) => s + r.num_standards, 0);
+    gradeAverage = weightedGradeAverage(strandsRollup);
   }
 
   const kpis: SddKpis = {
@@ -110,6 +117,23 @@ export function deriveSdd(
   };
 }
 
+// Question-weighted mean of per-row grade averages (skips unassessed rows
+// whose grade_average is null). Falls back to a single row's value, and to 0
+// when nothing is assessed — matching the prior single-select KPI behaviour.
+function weightedGradeAverage(
+  rows: readonly { num_questions: number; grade_average: number | null }[],
+): number {
+  let weight = 0;
+  let acc = 0;
+  for (const r of rows) {
+    if (r.grade_average == null) continue;
+    const w = r.num_questions > 0 ? r.num_questions : 1;
+    weight += w;
+    acc += r.grade_average * w;
+  }
+  return weight > 0 ? acc / weight : 0;
+}
+
 // ─── QRA ─────────────────────────────────────────────────────────────────
 
 interface QraDerived {
@@ -123,7 +147,7 @@ export function deriveQra(
   payload: QuestionResponseAnalysisPayload,
   filters: ReportFilters,
 ): QraDerived {
-  if (!filters.strand && !filters.standard) {
+  if (filters.strands.length === 0 && filters.standards.length === 0) {
     return {
       kpis: payload.kpis,
       questions_overall: payload.questions_overall,
@@ -132,19 +156,18 @@ export function deriveQra(
     };
   }
 
-  const effectiveStrand =
-    filters.strand ??
-    (filters.standard
-      ? pickStrandFromStandard(filters.standard, payload.standards_rollup) ?? null
-      : null);
+  const effectiveStrands = effectiveStrandSet(filters, payload.standards_rollup);
+  const standardSet = new Set(filters.standards);
+  const hasStrandFilter = effectiveStrands.size > 0;
+  const hasStandardFilter = standardSet.size > 0;
 
   const strandsRollup = payload.strands_rollup.filter(
-    (r) => !effectiveStrand || r.strand === effectiveStrand,
+    (r) => !hasStrandFilter || effectiveStrands.has(r.strand),
   );
   const standardsRollup = payload.standards_rollup.filter(
     (r) =>
-      (!effectiveStrand || r.strand === effectiveStrand) &&
-      (!filters.standard || r.schoology_standard === filters.standard),
+      (!hasStrandFilter || effectiveStrands.has(r.strand)) &&
+      (!hasStandardFilter || standardSet.has(r.schoology_standard)),
   );
 
   // Question rows store all aligned Schoology codes (one per line) in
@@ -158,7 +181,7 @@ export function deriveQra(
     const codes = splitStandards(q.standards);
     return (
       codes.some((c) => allowedSchoologyCodes.has(c)) ||
-      allowedSchoologyCodes.has(q.strand)
+      allowedSchoologyCodes.has(q.standard_raw)
     );
   });
 
@@ -187,7 +210,9 @@ export function deriveQra(
   const kpis: KPIs = {
     ...payload.kpis,
     total_questions: questions.length,
-    total_standards: filters.standard ? 1 : standardsRollup.length,
+    total_standards: hasStandardFilter
+      ? standardSet.size
+      : standardsRollup.length,
     grade_average: gradeAverage,
     grade_average_pct: formatPercent(gradeAverage, 1),
     grade_min: gradeMin,

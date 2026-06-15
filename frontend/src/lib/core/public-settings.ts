@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().default('http://127.0.0.1:55321'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
-  NEXT_PUBLIC_PRODUCTNAME: z.string().default('Starter Template'),
+  NEXT_PUBLIC_PRODUCTNAME: z.string().default('GAINS'),
   NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:8000'),
   NEXT_PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

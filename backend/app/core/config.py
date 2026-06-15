@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
 
+    # LTI 1.3 — disabled by default. Flip to true to expose /api/v1/lti/* routes.
+    # Off by default keeps the LTI protocol surface from provisioning auth.users /
+    # user_schools while the integration is dormant. Code/tables/migrations remain
+    # intact so enabling restores full function.
+    LTI_ENABLED: bool = False
+
     # Redis
     REDIS_URL: str | None = None
     REDIS_PREFIX: str = "starter_template"
@@ -51,6 +57,9 @@ class Settings(BaseSettings):
     RATE_LIMIT_AUTH_ME: str = "30/minute"
     RATE_LIMIT_USER_ROLES_ASSIGN: str = "30/minute"
     RATE_LIMIT_USER_ROLES_REMOVE: str = "30/minute"
+    # Report XLSX export is CPU/memory heavy (large student×question matrices);
+    # cap it well below the read endpoints.
+    RATE_LIMIT_REPORTS_EXPORT: str = "20/minute"
 
     # CORS (optional, disabled by default for Vercel rewrites)
     ENABLE_CORS: bool = False

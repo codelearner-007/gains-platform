@@ -23,7 +23,8 @@ interface BandPanelProps {
   rows: SddBandStandardRow[];
   correctColor: string;
   emptyMessage: string;
-  selectedStandard?: string | null;
+  // Multi-select: every active standard code. Clicking a bar toggles membership.
+  selectedStandards?: Set<string>;
   onSelectStandard?: (schoology_standard: string) => void;
 }
 
@@ -48,9 +49,10 @@ function BandPanel({
   rows,
   correctColor,
   emptyMessage,
-  selectedStandard,
+  selectedStandards,
   onSelectStandard,
 }: BandPanelProps) {
+  const hasSelection = !!selectedStandards && selectedStandards.size > 0;
   const sorted = useMemo(
     () => [...rows].sort((a, b) => b.grade_average - a.grade_average),
     [rows],
@@ -80,10 +82,10 @@ function BandPanel({
                 key={`${r.schoology_standard}-${i}`}
                 row={r}
                 correctColor={correctColor}
-                selected={selectedStandard === r.schoology_standard}
+                selected={!!selectedStandards?.has(r.schoology_standard)}
                 dim={
-                  !!selectedStandard &&
-                  selectedStandard !== r.schoology_standard
+                  hasSelection &&
+                  !selectedStandards?.has(r.schoology_standard)
                 }
                 onSelect={onSelectStandard}
               />
@@ -155,7 +157,8 @@ interface PerformanceBandBarsProps {
   bandHigh: SddBandStandardRow[];
   bandMid: SddBandStandardRow[];
   bandLow: SddBandStandardRow[];
-  selectedStandard?: string | null;
+  // Multi-select: every active standard code. Clicking a bar toggles membership.
+  selectedStandards?: string[];
   onSelectStandard?: (schoology_standard: string) => void;
 }
 
@@ -163,10 +166,14 @@ export default function PerformanceBandBars({
   bandHigh,
   bandMid,
   bandLow,
-  selectedStandard,
+  selectedStandards,
   onSelectStandard,
 }: PerformanceBandBarsProps) {
-  const shared = { selectedStandard, onSelectStandard };
+  const selectedSet = useMemo(
+    () => new Set(selectedStandards ?? []),
+    [selectedStandards],
+  );
+  const shared = { selectedStandards: selectedSet, onSelectStandard };
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
       <BandPanel

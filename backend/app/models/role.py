@@ -1,12 +1,18 @@
 """Role model."""
 
-from typing import List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Boolean, String, Integer, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.role_permission import RolePermission
+    from app.models.user_role import UserRole
 
 
 class Role(Base, TimestampMixin):

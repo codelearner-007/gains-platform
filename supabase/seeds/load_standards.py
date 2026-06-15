@@ -178,8 +178,34 @@ def main() -> int:
     with psycopg2.connect(args.dsn) as conn:
         load_dim_standard(conn, args.force)
         load_dim_strand(conn, args.force)
+        _augment_aliases(conn)
     print("Done.")
     return 0
+
+
+def _augment_aliases(conn) -> None:
+    """Synthesize Schoology course-prefix alias rows for any newly ingested
+    assessment codes that the shipped CSV doesn't already cover.
+
+    Idempotent and dependent on ``dim_question_data`` being present; skips
+    cleanly when the warehouse hasn't been ingested yet. See
+    ``augment_standard_aliases.py`` for the resolution semantics.
+    """
+    from augment_standard_aliases import augment
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT to_regclass('public.dim_question_data') IS NOT NULL")
+        if not cur.fetchone()[0]:
+            print("[dim_standard] dim_question_data absent — skipping alias augment.")
+            return
+
+    added, unresolved = augment(conn)
+    print(f"[dim_standard] alias augment: added {added} row(s).")
+    if unresolved:
+        print(
+            f"[dim_standard] {len(unresolved)} alias(es) have no resolvable base "
+            f"standard (reported, not invented): {unresolved}"
+        )
 
 
 if __name__ == "__main__":
