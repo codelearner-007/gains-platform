@@ -1252,11 +1252,18 @@ class CubeRepository:
             ORDER BY sq.strand
             """
         )
+        # Same RLS-opaque-estimate guard as get_school_standard_rollup: force a
+        # hash join for the qso_avg join so cube_question_summary_overall isn't
+        # re-aggregated per strand row under a Nested Loop. Planner-only; output
+        # identical.
+        await self.session.execute(text("SET LOCAL enable_nestloop = off"))
         result = await self.session.execute(
             sql,
             _school_filter_params(session_filter, subject, grade, category, section),
         )
-        return [_row_to_dict(r) for r in result.all()]
+        rows = [_row_to_dict(r) for r in result.all()]
+        await self.session.execute(text("RESET enable_nestloop"))
+        return rows
 
     async def get_school_standard_rollup(
         self,
@@ -1346,6 +1353,14 @@ class CubeRepository:
             ORDER BY 3 NULLS LAST, 1
             """
         )
+        # Force a hash/merge join for the qso_avg join. Under RLS the
+        # `school_id = current_setting('app.current_school_id')` predicate is
+        # opaque to the planner, so it under-estimates the scoped set at ~1 row
+        # and picks a Nested Loop that RE-AGGREGATES cube_question_summary_overall
+        # once per std_q row (48M join-filter rows → ~30s on a real school). A
+        # hash join computes qso_avg once. Transaction-scoped + reset so sibling
+        # queries are unaffected; output is identical (planner-only change).
+        await self.session.execute(text("SET LOCAL enable_nestloop = off"))
         result = await self.session.execute(
             sql,
             {
@@ -1355,7 +1370,9 @@ class CubeRepository:
                 "strand": strand,
             },
         )
-        return [_row_to_dict(r) for r in result.all()]
+        rows = [_row_to_dict(r) for r in result.all()]
+        await self.session.execute(text("RESET enable_nestloop"))
+        return rows
 
     # ────────────────────────────────────────────────────────────────────
     # Standards-alignment data quality
