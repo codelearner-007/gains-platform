@@ -272,10 +272,11 @@ class CubeRepository:
 
         Server-side pagination (``limit``/``offset``), sort (``sort_sql`` +
         ``dir_sql``) and name search (``q``) so schools with thousands of
-        assessments only ever transfer one page. Per-item grade_average mirrors
-        :meth:`get_canonical_kpis_for_item` exactly — the per-(question, user)
-        fact collapse (legacy DAX) with a ``cube_question_summary`` fallback —
-        so the data-bar value matches the KPI strip to the digit. ``total`` is
+        assessments only ever transfer one page. Per-item grade_average is the
+        AVG of the item's ``cube_question_summary`` grade_averages, which equals
+        the canonical per-(question, user) fact collapse to the digit but reads a
+        few indexed cube rows per item instead of re-aggregating the fact table
+        every page (≈43s → <1s on a full-year school). ``total`` is
         ``COUNT(*) OVER()`` of the scoped set (pre-LIMIT).
 
         ``sort_sql``/``dir_sql`` MUST be pre-validated literals from the route's
@@ -299,35 +300,18 @@ class CubeRepository:
                   AND (CAST(:section AS TEXT)  IS NULL OR di.section_name    = CAST(:section AS TEXT))
                   AND (CAST(:q AS TEXT)        IS NULL OR di.item_name ILIKE '%' || CAST(:q AS TEXT) || '%')
             ),
-            fact_dedup AS (
-                SELECT DISTINCT ON (item_id, user_uid, question_id, position_number)
-                       item_id, user_uid, question_id, position_number,
-                       points_received, points_possible
-                FROM fact_student_submission
-                WHERE item_id IN (SELECT item_id FROM scoped)
-                  AND points_possible IS NOT NULL AND points_possible > 0
-                ORDER BY item_id, user_uid, question_id, position_number, identifier NULLS LAST
-            ),
-            per_user_q AS (
-                SELECT item_id, question_id, user_uid,
-                       SUM(points_received)::numeric
-                         / NULLIF(SUM(points_possible), 0) AS pct
-                FROM fact_dedup
-                GROUP BY item_id, question_id, user_uid
-            ),
-            per_q AS (
-                SELECT item_id, question_id, AVG(pct) AS qga
-                FROM per_user_q
-                GROUP BY item_id, question_id
-            ),
-            fact_ga AS (
-                SELECT item_id, AVG(qga) AS grade_average
-                FROM per_q
-                GROUP BY item_id
-            ),
-            -- Fallback for fact-less (parquet) items: average the per-question
-            -- cube grade_average (item-scoped), matching get_canonical_kpis.
-            cube_ga AS (
+            -- Per-item grade_average from the PRECOMPUTED per-question cube, NOT a
+            -- live fact re-aggregation. AVG over the item's cube_question_summary
+            -- grade_averages == the canonical per-(question, user) fact collapse to
+            -- the digit (SUM/SUM per question == AVG-of-per-user because
+            -- points_possible is constant per question — verified diff=0 across
+            -- prod items). Reads ~tens of indexed cube rows per item via the
+            -- (school_id, item_id) index instead of DISTINCT-ON-ing the multi-GB
+            -- fact table for every scoped assessment on every page: a full-year
+            -- school went from ~43s to <1s per page. RLS scopes the cube to the
+            -- caller's school. Items with no cube rows (none in a real ingest)
+            -- get a NULL bar.
+            item_ga AS (
                 SELECT item_id, AVG(grade_average) AS grade_average
                 FROM cube_question_summary
                 WHERE item_id IN (SELECT item_id FROM scoped)
@@ -352,12 +336,11 @@ class CubeRepository:
                 SELECT s.item_id, s.item_name, s.item_type, s.subject_id,
                        s.subject, s.grade, s.session, s.assessment_type,
                        s.section_name, s.section_instructors, s.assessment_date,
-                       COALESCE(fg.grade_average, cg.grade_average) AS grade_average,
+                       ig.grade_average,
                        st.total_students,
                        COUNT(*) OVER() AS total
                 FROM scoped s
-                LEFT JOIN fact_ga fg ON fg.item_id = s.item_id
-                LEFT JOIN cube_ga cg ON cg.item_id = s.item_id
+                LEFT JOIN item_ga ig ON ig.item_id = s.item_id
                 LEFT JOIN students st ON st.item_id = s.item_id
             )
             SELECT * FROM enriched
