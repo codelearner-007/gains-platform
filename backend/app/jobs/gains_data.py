@@ -601,6 +601,8 @@ async def cmd_ingest(
     source: str | None,
     limit_per_school: int,
     seed: int,
+    raw_only: bool = False,
+    commit_every: int = 0,
 ) -> IngestSummary:
     """Run ingest for one school or ALL active schools, optionally sampled.
 
@@ -631,6 +633,8 @@ async def cmd_ingest(
         school_filter=school_filter,
         blob_client=bc,
         whole_tree_root=whole_tree_root,
+        skip_transforms=raw_only,
+        commit_every=commit_every,
     )
     return summary
 
@@ -730,6 +734,18 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Sample N assessments/school (0 or omitted = FULL ingest).",
     )
     p_ingest.add_argument("--seed", type=int, default=42, help="RNG seed for sampling.")
+    p_ingest.add_argument(
+        "--raw-only", action="store_true",
+        help="Load raw_* only; SKIP transforms (run them staged via "
+             "`python -m app.transformations.runner --tag …`). Use for large/full "
+             "ingests to avoid the single-transaction transform blowup.",
+    )
+    p_ingest.add_argument(
+        "--commit-every", type=int, default=0,
+        help="Commit raw inserts every N files (0 = single transaction). Bounds "
+             "the open txn for large/full ingests (avoids the ~150k-subtransaction "
+             "cliff) and makes the load durable + resumable.",
+    )
 
     p_rebuild = sub.add_parser("rebuild", help="wipe → seed → ingest ALL (one command).")
     p_rebuild.add_argument("--limit-per-school", type=int, default=0)
@@ -772,6 +788,8 @@ async def main(argv: list[str] | None = None) -> int:
                 source=args.source,
                 limit_per_school=args.limit_per_school,
                 seed=args.seed,
+                raw_only=args.raw_only,
+                commit_every=args.commit_every,
             )
             return 0 if summary.error_count == 0 else 2
         if args.command == "rebuild":
