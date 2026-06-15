@@ -92,56 +92,7 @@ class DimRepository:
         result = await self.session.execute(sql)
         return [dict(r._mapping) for r in result.all()]
 
-    # ────── dim_item (assessment list) ──────
-
-    async def list_items(
-        self,
-        session_filter: Optional[str] = None,
-        category: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """List dim_items joined to dim_subject for filtering.
-
-        Filters are matched case-insensitively against the joined fields.
-        """
-        sql = text(
-            """
-            SELECT
-                di.item_id,
-                di.item_name,
-                di.item_type,
-                di.subject_id,
-                ds.subject,
-                ds.grade,
-                ds.session,
-                ds.assessment_type,
-                di.section_name,
-                di.section_instructors,
-                di.assessment_date
-            FROM dim_item di
-            LEFT JOIN dim_subject ds
-              ON ds.school_id = di.school_id AND ds.subject_id = di.subject_id
-            WHERE (CAST(:session_filter AS TEXT) IS NULL OR ds.session = CAST(:session_filter AS TEXT))
-              AND (CAST(:category AS TEXT) IS NULL OR ds.assessment_type = CAST(:category AS TEXT))
-              AND (CAST(:subject AS TEXT)  IS NULL OR ds.subject         = CAST(:subject AS TEXT))
-              AND (CAST(:grade AS TEXT)    IS NULL OR ds.grade           = CAST(:grade AS TEXT))
-              AND (CAST(:section AS TEXT)  IS NULL OR di.section_name    = CAST(:section AS TEXT))
-            ORDER BY di.assessment_date DESC NULLS LAST, di.item_name NULLS LAST
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            {
-                "session_filter": session_filter,
-                "category": category,
-                "subject": subject,
-                "grade": grade,
-                "section": section,
-            },
-        )
-        return [dict(r._mapping) for r in result.all()]
+    # ────── dim_item (assessment lookup) ──────
 
     async def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
         sql = text(

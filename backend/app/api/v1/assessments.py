@@ -11,7 +11,6 @@ from app.core.dependencies import require_permission
 from app.middleware.rls import get_db_with_rls
 from app.schemas.assessments import (
     AssessmentDetail,
-    AssessmentListRow,
     AssessmentSummary,
     AssessmentSummaryPage,
 )
@@ -26,30 +25,6 @@ from app.services.assessment_service import (
 )
 
 router = APIRouter(prefix="/assessments", tags=["Assessments"])
-
-
-@router.get(
-    "",
-    response_model=List[AssessmentListRow],
-    dependencies=[Depends(require_permission("reports:read"))],
-)
-async def list_assessments(
-    session: Optional[str] = Query(default=None),
-    category: Optional[str] = Query(default=None),
-    subject: Optional[str] = Query(default=None),
-    grade: Optional[str] = Query(default=None),
-    section: Optional[str] = Query(default=None),
-    db: AsyncSession = Depends(get_db_with_rls),
-) -> List[AssessmentListRow]:
-    """List dim_item filtered for the user's school. Requires: reports:read"""
-    service = AssessmentService(db)
-    return await service.list_assessments(
-        session_filter=session,
-        category=category,
-        subject=subject,
-        grade=grade,
-        section=section,
-    )
 
 
 @router.get(

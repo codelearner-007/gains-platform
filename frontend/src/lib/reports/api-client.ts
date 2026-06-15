@@ -87,10 +87,14 @@ export const reportsApi = {
       credentials: 'include',
     }).then(handleResponse<StandardSummaryPayload>),
 
-  strandSummary: (filters?: StrandSummaryFilters) =>
-    fetch(`/api/v1/reports/strand-summary${buildQuery(filters)}`, {
-      credentials: 'include',
-    }).then(handleResponse<StrandSummaryPayload>),
+  strandSummary: (filters?: StrandSummaryFilters, strandsOnly?: boolean) =>
+    fetch(
+      `/api/v1/reports/strand-summary${buildQuery({
+        ...filters,
+        strands_only: strandsOnly ? 'true' : undefined,
+      })}`,
+      { credentials: 'include' },
+    ).then(handleResponse<StrandSummaryPayload>),
 
   alignmentDataQuality: () =>
     fetch('/api/v1/reports/data-quality/standards-alignment', {
@@ -187,8 +191,8 @@ export const reportsKeys = {
     [...reportsKeys.all, 'qra-by-std-teacher', itemId, schoolId ?? null] as const,
   standardSummary: (filters?: StandardSummaryFilters) =>
     [...reportsKeys.all, 'standardSummary', filters ?? {}] as const,
-  strandSummary: (filters?: StrandSummaryFilters) =>
-    [...reportsKeys.all, 'strandSummary', filters ?? {}] as const,
+  strandSummary: (filters?: StrandSummaryFilters, strandsOnly?: boolean) =>
+    [...reportsKeys.all, 'strandSummary', filters ?? {}, strandsOnly ?? false] as const,
   alignmentDataQuality: () =>
     [...reportsKeys.all, 'dq', 'standards-alignment'] as const,
   assessmentSummaries: (

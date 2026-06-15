@@ -11,7 +11,6 @@ from app.repositories.cube_repository import CubeRepository
 from app.repositories.dim_repository import DimRepository
 from app.schemas.assessments import (
     AssessmentDetail,
-    AssessmentListRow,
     AssessmentSummary,
     AssessmentSummaryListRow,
     AssessmentSummaryPage,
@@ -33,23 +32,6 @@ class AssessmentService:
         self.session = session
         self.dim = DimRepository(session)
         self.cube = CubeRepository(session)
-
-    async def list_assessments(
-        self,
-        session_filter: Optional[str] = None,
-        category: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> List[AssessmentListRow]:
-        rows = await self.dim.list_items(
-            session_filter=session_filter,
-            category=category,
-            subject=subject,
-            grade=grade,
-            section=section,
-        )
-        return [AssessmentListRow.model_validate(r) for r in rows]
 
     # Whitelist: sort key -> SQL expression. Interpolated (not bound), so the
     # value MUST come from this dict, never from raw user input.

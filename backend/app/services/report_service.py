@@ -1182,25 +1182,19 @@ class ReportService:
     # Strand Summary (school-wide, per-Strand grain)
     # ────────────────────────────────────────────────────────────────────
     async def build_strand_summary(
-        self, filters: StrandSummaryFilters
+        self, filters: StrandSummaryFilters, strands_only: bool = False
     ) -> StrandSummaryPayload:
+        """Build the Strand Summary payload.
+
+        ``strands_only`` is the dashboard's lean path: it consumes ONLY
+        ``strands_rollup``, so we skip the per-standard rollup (a full, expensive
+        ``get_school_standard_rollup`` that the dashboard already pays for via
+        Standard Summary) plus the school-wide KPI / alignment / refresh queries
+        the dashboard never reads — 9 round-trips collapse to 2. The Strand
+        Summary report page calls without the flag (full payload, unchanged).
+        """
         meta = await self.cube.get_school_wide_meta() or {}
         strand_rows = await self.cube.get_school_strand_rollup(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
-        )
-        std_rows = await self.cube.get_school_standard_rollup(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
-            strand=filters.strand,
-        )
-        total_students = await self.cube.get_school_total_students(
             session_filter=filters.session,
             subject=filters.subject,
             grade=filters.grade,
@@ -1253,6 +1247,49 @@ class ReportService:
                 worst_grade = grade_avg
                 worst_strand = strand_name
 
+        total_strands = len(strands_rollup)
+        total_standards = sum(s.num_standards for s in strands_rollup)
+
+        school = YTDSchoolInfo(
+            name=safe_str(meta.get("name")),
+            logo_url=meta.get("logo_url") or None,
+            current_session=safe_str(meta.get("current_session")),
+        )
+
+        # Dashboard lean path: only strands_rollup is consumed, so skip the
+        # per-standard rollup + the school-wide KPI / alignment / refresh queries.
+        if strands_only:
+            return StrandSummaryPayload(
+                school=school,
+                filters_applied=filters,
+                kpis=StrandSummaryKpis(
+                    total_strands=total_strands,
+                    total_standards=total_standards,
+                    total_questions=0,
+                    total_assessments=0,
+                    total_students=0,
+                    grade_average=0.0,
+                    grade_average_pct=_format_pct(0.0),
+                    worst_strand=worst_strand,
+                    worst_strand_pct=_format_pct(worst_grade) if worst_strand else "—",
+                ),
+                strands_rollup=strands_rollup,
+                standards_rollup=[],
+                band_high=band_high,
+                band_mid=band_mid,
+                band_low=band_low,
+                data_quality=None,
+                data_refreshed_at="",
+            )
+
+        std_rows = await self.cube.get_school_standard_rollup(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+            strand=filters.strand,
+        )
         standards_rollup: list[StrandSummaryStandardRow] = [
             StrandSummaryStandardRow(
                 strand=_decode_html(safe_str(r.get("strand"))),
@@ -1267,8 +1304,13 @@ class ReportService:
             if safe_str(r.get("schoology_standard"))
         ]
 
-        total_strands = len(strands_rollup)
-        total_standards = sum(s.num_standards for s in strands_rollup)
+        total_students = await self.cube.get_school_total_students(
+            session_filter=filters.session,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
         # Mirrors PBIX `Total Question = DISTINCTCOUNT(cqso[Question_No])` so
         # the KPI agrees across YTD / Standard / Strand Summary.
         total_questions = await self.cube.get_school_total_questions(
@@ -1310,12 +1352,6 @@ class ReportService:
         data_refreshed_at = (
             await self.cube.get_school_data_refreshed_at()
         ) or ""
-
-        school = YTDSchoolInfo(
-            name=safe_str(meta.get("name")),
-            logo_url=meta.get("logo_url") or None,
-            current_session=safe_str(meta.get("current_session")),
-        )
 
         quality = await self.cube.get_school_alignment_quality(
             session_filter=filters.session,

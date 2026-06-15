@@ -108,9 +108,11 @@ export function DashboardPage() {
     queryFn: () => reportsApi.standardSummary(summaryFilters),
     enabled: inited,
   });
+  // Lean path: the dashboard only renders strands_rollup, so it asks the
+  // endpoint to skip the per-standard rollup + KPI queries (strands_only).
   const strandQ = useQuery({
-    queryKey: reportsKeys.strandSummary(summaryFilters),
-    queryFn: () => reportsApi.strandSummary(summaryFilters),
+    queryKey: reportsKeys.strandSummary(summaryFilters, true),
+    queryFn: () => reportsApi.strandSummary(summaryFilters, true),
     enabled: inited,
   });
 
