@@ -1,117 +1,49 @@
 'use client';
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { useMemo } from 'react';
 import type { StandardSummaryStrandCount } from '@/lib/reports/types';
-import {
-  HEADER_BAR_BG,
-  LAYOUT_BORDER,
-  performanceColor,
-} from '@/lib/reports/colors';
+import { performanceColor } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
-import ChartContainer from '../shared/ChartContainer';
+import RankedBarList, {
+  type RankedBarRow,
+} from '../shared/RankedBarList';
 
 interface Props {
   rows: StandardSummaryStrandCount[];
 }
 
-interface ChartRow extends StandardSummaryStrandCount {
-  fill: string;
-}
-
-interface TooltipPayload {
-  payload: ChartRow;
-}
-
-interface TooltipProps {
-  active?: boolean;
-  payload?: TooltipPayload[];
-}
-
-function ChartTooltip({ active, payload }: TooltipProps) {
-  if (!active || !payload || payload.length === 0) return null;
-  const datum = payload[0].payload;
-  return (
-    <div className="bg-white border border-neutral-300 rounded shadow-md px-2 py-1 text-xs">
-      <div className="font-semibold text-black">{datum.strand}</div>
-      <div className="text-neutral-700">
-        Standards: {datum.num_standards}
-      </div>
-      <div className="text-neutral-700">
-        Questions: {datum.num_questions}
-      </div>
-      <div className="text-neutral-700">
-        Avg: {formatPercent(datum.grade_average, 1)}
-      </div>
-    </div>
-  );
-}
-
+/**
+ * "# of Standards by Strand" — one bar per strand sized by its standard count,
+ * tinted by the strand's grade average. Scrollable RankedBarList so a broad
+ * multi-subject view (many strands) stays legible instead of crowding a
+ * fixed-height chart.
+ */
 export default function StandardsByStrandChart({ rows }: Props) {
-  const data: ChartRow[] = rows
-    .filter((r) => r.strand)
-    .map((r) => ({ ...r, fill: performanceColor(r.grade_average) }));
+  const barRows = useMemo<RankedBarRow[]>(() => {
+    const present = rows.filter((r) => r.strand);
+    const max = Math.max(1, ...present.map((r) => r.num_standards));
+    return present
+      .slice()
+      .sort((a, b) => b.num_standards - a.num_standards)
+      .map((r, i) => ({
+        key: `${r.strand}-${i}`,
+        label: r.strand,
+        fraction: r.num_standards / max,
+        valueLabel: String(r.num_standards),
+        color: performanceColor(r.grade_average),
+        title: `${r.strand} · ${r.num_standards} standards · ${r.num_questions} questions · Avg ${formatPercent(
+          r.grade_average,
+          1,
+        )}`,
+      }));
+  }, [rows]);
 
   return (
-    <div
-      className="flex flex-col bg-white border h-full"
-      style={{ borderColor: LAYOUT_BORDER }}
-    >
-      <div
-        className="px-3 py-1.5 text-[13px] font-bold text-black border-b"
-        style={{
-          backgroundColor: HEADER_BAR_BG,
-          borderColor: LAYOUT_BORDER,
-        }}
-      >
-        # of Standards by Strand
-      </div>
-      <div className="p-2" style={{ height: 280 }}>
-        {data.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-sm text-neutral-500">
-            No strand data available
-          </div>
-        ) : (
-          <ChartContainer height="100%">
-            <BarChart
-              data={data}
-              layout="vertical"
-              margin={{ top: 4, right: 32, left: 4, bottom: 4 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                type="number"
-                allowDecimals={false}
-                tick={{ fontSize: 11, fill: '#000' }}
-              />
-              <YAxis
-                type="category"
-                dataKey="strand"
-                width={200}
-                tick={{ fontSize: 12, fill: '#000' }}
-                interval={0}
-              />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar
-                dataKey="num_standards"
-                isAnimationActive={false}
-                name="# of Standards"
-              >
-                {data.map((row, i) => (
-                  <Cell key={`cell-${i}-${row.strand}`} fill={row.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ChartContainer>
-        )}
-      </div>
-    </div>
+    <RankedBarList
+      title="# of Standards by Strand"
+      rows={barRows}
+      emptyMessage="No strand data available"
+      maxHeight={360}
+    />
   );
 }
