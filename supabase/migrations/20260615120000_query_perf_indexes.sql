@@ -7,14 +7,17 @@
 -- On a fresh DB these tables are empty so the build is instant; on a populated
 -- DB build them with CREATE INDEX CONCURRENTLY out-of-band if writers are live.
 
--- 1) YTD longitudinal cells (section×user×standard matrix): the DISTINCT-ON
---    dedupe over fact_student_submission was doing a ~1.6-2.1s, 90-139MB sort of
---    ~673k rows. school_id+session is the equality prefix; the remaining columns
---    supply the exact DISTINCT ON ordering so Unique consumes the index, no Sort.
---    (~4.9s → fast.)
+-- 1) YTD longitudinal cells (section×user×standard matrix): COVERING index.
+--    The key columns (school_id+session equality prefix, then the DISTINCT ON
+--    ordering) let Unique consume the index with no Sort; the INCLUDE payload
+--    makes the dedup scan index-only (Heap Fetches: 0) instead of ~650MB of
+--    random heap reads. Paired with the query change that drops the unused
+--    COUNT(DISTINCT item_id) + ORDER BY so the GROUP BY hash-aggregates.
+--    (~8s → ~2s on a full-year school.)
 CREATE INDEX IF NOT EXISTS fact_student_submission_ytd_dedup_idx
   ON public.fact_student_submission
-     (school_id, session, user_uid, item_id, question_id, position_number, standard);
+     (school_id, session, user_uid, item_id, question_id, position_number, standard)
+  INCLUDE (user_name, section_nid, points_received, points_possible);
 
 -- 2) YTD "standard units" (DISTINCT item_id, item_name per school+session): push
 --    the session filter into the index + cover item_name for an index-only scan

@@ -1782,7 +1782,7 @@ class CubeRepository:
                            fss.user_uid, fss.item_id, fss.question_id, fss.position_number
                        )
                        fss.user_uid, fss.user_name, fss.section_nid, fss.school_id,
-                       fss.item_id, fss.item_name, fss.question_id,
+                       fss.item_id, fss.question_id,
                        fss.points_received, fss.points_possible
                 FROM fact_student_submission fss
                 WHERE (CAST(:session_filter AS TEXT) IS NULL OR fss.session = CAST(:session_filter AS TEXT))
@@ -1801,7 +1801,6 @@ class CubeRepository:
                     COALESCE(NULLIF(dsec.section_instructors, ''), 'Unassigned')
                                                             AS section_instructors,
                     fd.item_id,
-                    fd.item_name,
                     qf.canon_std                            AS schoology_standard,
                     COALESCE(ds.cpalms_standard, qf.canon_std, 'Other')
                                                             AS standard_label,
@@ -1823,11 +1822,15 @@ class CubeRepository:
                 standard_label,
                 MIN(schoology_standard)              AS schoology_standard,
                 SUM(points_received)::float          AS points_received,
-                SUM(points_possible)::float          AS points_possible,
-                COUNT(DISTINCT item_id)              AS items_for_standard
+                SUM(points_possible)::float          AS points_possible
+            -- No COUNT(DISTINCT item_id) (was unused) and no ORDER BY (the
+            -- service re-sorts teachers/students by Score%): both forced a
+            -- 549k-row external-merge sort. Without them the GROUP BY is a
+            -- HashAggregate. With the covering ytd_dedup index (INCLUDE
+            -- user_name/section_nid/points) the dedup is an index-only scan.
+            -- ~8s -> ~2s on a full-year school; output unchanged.
             FROM joined
             GROUP BY section_instructors, user_uid, user_name, standard_label
-            ORDER BY section_instructors, user_name, standard_label
             """
         )
         result = await self.session.execute(
