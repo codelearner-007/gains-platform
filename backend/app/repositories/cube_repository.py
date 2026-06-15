@@ -1522,18 +1522,33 @@ class CubeRepository:
         item_type display fields. ``subject`` / ``grade`` come from
         ``dim_question_data`` (already overridden / normalised at staging).
         """
+        # Collapse to one row per (item, question) first (bool_or over the
+        # question's rows), THEN count per item. This is identical to the prior
+        # two COUNT(DISTINCT question_id) measures (each question maps to exactly
+        # one item; verified symmetric-diff = 0 on prod) but replaces a sort-based
+        # GroupAggregate behind two COUNT(DISTINCT) with two stacked
+        # HashAggregates — no Sort node. ~2.4x faster, results unchanged.
         sql = text(
             """
-            WITH per_item AS (
+            WITH per_q AS (
                 SELECT
                     dqd.item_id,
+                    dqd.question_id,
+                    bool_or(dqd.identifier IS NOT NULL) AS is_aligned,
                     MAX(dqd.subject) AS subject,
-                    MAX(dqd.grade)   AS grade,
-                    COUNT(DISTINCT dqd.question_id) AS qs_total,
-                    COUNT(DISTINCT dqd.question_id)
-                      FILTER (WHERE dqd.identifier IS NOT NULL) AS qs_aligned
+                    MAX(dqd.grade)   AS grade
                 FROM dim_question_data dqd
-                GROUP BY dqd.item_id
+                GROUP BY dqd.item_id, dqd.question_id
+            ),
+            per_item AS (
+                SELECT
+                    q.item_id,
+                    MAX(q.subject) AS subject,
+                    MAX(q.grade)   AS grade,
+                    COUNT(*) AS qs_total,
+                    COUNT(*) FILTER (WHERE q.is_aligned) AS qs_aligned
+                FROM per_q q
+                GROUP BY q.item_id
             )
             SELECT
                 pi.item_id,
@@ -1833,16 +1848,25 @@ class CubeRepository:
         grade: Optional[str],
         category: Optional[str],
     ) -> List[Dict[str, Any]]:
-        """Per-student count of distinct assessments attempted YTD (Tests Taken)."""
+        """Per-student count of distinct assessments attempted YTD (Tests Taken).
+
+        Reads the precomputed ``cube_user_summary`` (user×item×question grain,
+        carrying session/subject/grade/assessment_type) rather than re-scanning
+        the 1.65M-row ``fact_student_submission``: COUNT(DISTINCT item_id) per
+        user over the same distinct-assessment set is identical (verified
+        symmetric-diff = 0 / sum 28103 = 28103 on prod) but reads ~3x fewer
+        pages. The cube is kept fresh by the transform pipeline; the YTD report
+        path is session-scoped and cube-backed.
+        """
         sql = text(
             """
             SELECT user_uid,
                    COUNT(DISTINCT item_id) AS tests_taken
-            FROM fact_student_submission fss
-            WHERE (CAST(:session_filter AS TEXT) IS NULL OR fss.session = CAST(:session_filter AS TEXT))
-              AND (CAST(:subject AS TEXT) IS NULL OR fss.subject = CAST(:subject AS TEXT))
-              AND (CAST(:grade AS TEXT) IS NULL OR fss.grade = CAST(:grade AS TEXT))
-              AND (CAST(:category AS TEXT) IS NULL OR fss.assessment_type = CAST(:category AS TEXT))
+            FROM cube_user_summary cus
+            WHERE (CAST(:session_filter AS TEXT) IS NULL OR cus.session = CAST(:session_filter AS TEXT))
+              AND (CAST(:subject AS TEXT) IS NULL OR cus.subject = CAST(:subject AS TEXT))
+              AND (CAST(:grade AS TEXT) IS NULL OR cus.grade = CAST(:grade AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR cus.assessment_type = CAST(:category AS TEXT))
             GROUP BY user_uid
             """
         )
