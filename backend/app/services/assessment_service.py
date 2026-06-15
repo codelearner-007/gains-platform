@@ -23,6 +23,10 @@ from app.schemas.reports import (
 )
 from app.utils.coercion import safe_str, to_float, to_int
 
+# Default page size for the dashboard's By-Assessment grid — single source of
+# truth referenced by the route's `limit` default (the frontend sends the same).
+DEFAULT_SUMMARY_PAGE_SIZE = 25
+
 
 class AssessmentService:
     def __init__(self, session: AsyncSession) -> None:
@@ -67,7 +71,7 @@ class AssessmentService:
         q: Optional[str] = None,
         sort: str = "date",
         direction: str = "desc",
-        limit: int = 25,
+        limit: int = DEFAULT_SUMMARY_PAGE_SIZE,
         offset: int = 0,
     ) -> AssessmentSummaryPage:
         """One server-paginated page of the dashboard By-Assessment grid (rows

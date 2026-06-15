@@ -147,6 +147,10 @@ export function DashboardPage() {
   const assessmentTotal = asmtQ.data?.pages[0]?.total ?? 0;
   const headerLoading = !inited || stdQ.isLoading;
   const asmtLoading = !inited || asmtQ.isPending;
+  const stdStrandLoading = !inited || stdQ.isLoading || strandQ.isLoading;
+  // These KPIs are computed at the per-question OVERALL grain (no section), so
+  // they stay school-wide; flag that only when a section narrows the tables.
+  const schoolWideHint = filters.section ? 'school-wide' : undefined;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
@@ -164,13 +168,18 @@ export function DashboardPage() {
         onSearchChange={setSearch}
       />
 
-      {/* School-scoped KPI strip (legacy KPI cardVisuals) */}
+      {/* KPI strip (legacy KPI cardVisuals). Total Standards + Assessments are
+          counts of the filtered sets and track every filter (incl. section).
+          Total Students / Questions / Grade Average come from the per-question
+          OVERALL cube, which — like legacy PowerBI — has no section grain, so
+          they stay school-wide; we mark them "school-wide" when a section is
+          active so the strip is never mistaken for fully section-scoped. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Total Students" value={kpis?.total_students ?? '—'} icon={Users} loading={headerLoading} />
+        <StatCard label="Total Students" value={kpis?.total_students ?? '—'} hint={schoolWideHint} icon={Users} loading={headerLoading} />
         <StatCard label="Total Standards" value={kpis?.total_standards ?? '—'} icon={GraduationCap} loading={headerLoading} />
-        <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} icon={ListChecks} loading={headerLoading} />
+        <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} hint={schoolWideHint} icon={ListChecks} loading={headerLoading} />
         <StatCard label="Assessments" value={asmtLoading ? '—' : assessmentTotal} icon={BookOpen} loading={asmtLoading} />
-        <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} icon={Percent} loading={headerLoading} />
+        <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} hint={schoolWideHint} icon={Percent} loading={headerLoading} />
       </div>
 
       <AssessmentsSummaryTable
@@ -187,7 +196,7 @@ export function DashboardPage() {
         standards={stdQ.data?.standards ?? []}
         strands={strandQ.data?.strands_rollup ?? []}
         search={search}
-        loading={!inited || stdQ.isLoading || strandQ.isLoading}
+        loading={stdStrandLoading}
       />
 
       {/* Program (school-wide) reports — always-visible launcher buttons,

@@ -119,7 +119,7 @@ export default function AssessmentsSummaryTable({
         <div
           role="tablist"
           aria-label="Assessments Summary view"
-          className="inline-flex items-center gap-1 rounded-md bg-white/60 p-0.5"
+          className="inline-flex items-center gap-1 rounded-md bg-background/60 p-0.5"
         >
           {VIEWS.map((v) => {
             const active = view === v.value;
@@ -132,7 +132,7 @@ export default function AssessmentsSummaryTable({
                 className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
                   active
                     ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground/70 hover:bg-white'
+                    : 'text-foreground/70 hover:bg-background'
                 }`}
               >
                 {v.label}

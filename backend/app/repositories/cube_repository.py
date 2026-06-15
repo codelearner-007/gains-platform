@@ -262,6 +262,8 @@ class CubeRepository:
         q: Optional[str] = None,
         sort_sql: str = "assessment_date",
         dir_sql: str = "DESC",
+        # Internal fallback only — the service always passes the route's limit
+        # (DEFAULT_SUMMARY_PAGE_SIZE). Kept defaulted to satisfy arg ordering.
         limit: int = 25,
         offset: int = 0,
     ) -> tuple[List[Dict[str, Any]], int]:

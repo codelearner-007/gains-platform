@@ -40,6 +40,11 @@ export const PBIX_ACCENT_NAVY = '#4472C4'; // Standard / outer column-group head
 export const PBIX_ACCENT_LIGHT_BLUE = '#8FAADC'; // Question-No / inner header row
 export const GROUP_HEADER_CYAN = '#D6F1EF'; // Teacher / Standard group band
 
+// Dashboard grade-average data bar (GradeAverageBar): neutral track + the
+// dashed school-average reference marker.
+export const DATA_BAR_TRACK = '#EEF1F4';
+export const DATA_BAR_MARKER = '#475569';
+
 // ── Question Summary Report (QSR) exact legacy fills ────────────────────────
 // Verbatim from the rendered legacy SSRS PDFs (e.g. "Unit 6 Test- Heat Sources
 // …-Question Summary Report - color.pdf"). The QSR uses BRIGHTER fills than the

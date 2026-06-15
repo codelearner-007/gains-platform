@@ -2,7 +2,6 @@ import type {
   AccessibleSchool,
   AlignmentDataQualityReport,
   AssessmentFilters,
-  AssessmentListRow,
   AssessmentSummaryPage,
   GradeRow,
   IncorrectAnswerDetailsPayload,
@@ -128,11 +127,6 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<QraByStandardTeacherPayload>),
 
-  assessments: (filters?: AssessmentFilters, schoolId?: string) =>
-    fetch(`/api/v1/assessments${buildQuery({ ...filters, school_id: schoolId })}`, {
-      credentials: 'include',
-    }).then(handleResponse<AssessmentListRow[]>),
-
   assessmentSummaries: (
     filters: AssessmentFilters | undefined,
     schoolId: string | undefined,
@@ -197,8 +191,6 @@ export const reportsKeys = {
     [...reportsKeys.all, 'strandSummary', filters ?? {}] as const,
   alignmentDataQuality: () =>
     [...reportsKeys.all, 'dq', 'standards-alignment'] as const,
-  assessments: (filters?: AssessmentFilters, schoolId?: string) =>
-    [...reportsKeys.all, 'assessments', filters ?? {}, schoolId ?? null] as const,
   assessmentSummaries: (
     filters?: AssessmentFilters,
     schoolId?: string,

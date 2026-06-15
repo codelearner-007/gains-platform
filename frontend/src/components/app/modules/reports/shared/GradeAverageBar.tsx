@@ -1,4 +1,9 @@
-import { LAYOUT_BORDER, performanceColor } from '@/lib/reports/colors';
+import {
+  DATA_BAR_MARKER,
+  DATA_BAR_TRACK,
+  LAYOUT_BORDER,
+  performanceColor,
+} from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
 
 interface GradeAverageBarProps {
@@ -44,7 +49,7 @@ export default function GradeAverageBar({ value, marker }: GradeAverageBarProps)
     >
       <div
         className="relative h-4 flex-1 overflow-hidden rounded-sm"
-        style={{ backgroundColor: '#EEF1F4', border: `1px solid ${LAYOUT_BORDER}` }}
+        style={{ backgroundColor: DATA_BAR_TRACK, border: `1px solid ${LAYOUT_BORDER}` }}
       >
         <div
           className="absolute inset-y-0 left-0 rounded-sm"
@@ -55,7 +60,7 @@ export default function GradeAverageBar({ value, marker }: GradeAverageBarProps)
             className="absolute inset-y-0 w-px"
             style={{
               left: `${markerPct * 100}%`,
-              borderLeft: '1px dashed #475569',
+              borderLeft: `1px dashed ${DATA_BAR_MARKER}`,
             }}
             aria-hidden
           />
