@@ -3,7 +3,7 @@ import type {
   AlignmentDataQualityReport,
   AssessmentFilters,
   AssessmentListRow,
-  AssessmentSummaryListRow,
+  AssessmentSummaryPage,
   GradeRow,
   IncorrectAnswerDetailsPayload,
   QraByStandardTeacherPayload,
@@ -21,6 +21,15 @@ import type {
   SubjectRow,
   YearToDatePerformancePayload,
 } from './types';
+
+/** Server-side paging/sort/search options for the assessment summary grid. */
+export interface AssessmentSummaryQuery {
+  q?: string;
+  sort?: string; // 'date' | 'item' | 'grade' | 'students' | 'average'
+  dir?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
+}
 
 async function handleResponse<T>(r: Response): Promise<T> {
   if (!r.ok) {
@@ -124,11 +133,23 @@ export const reportsApi = {
       credentials: 'include',
     }).then(handleResponse<AssessmentListRow[]>),
 
-  assessmentSummaries: (filters?: AssessmentFilters, schoolId?: string) =>
+  assessmentSummaries: (
+    filters: AssessmentFilters | undefined,
+    schoolId: string | undefined,
+    opts: AssessmentSummaryQuery,
+  ) =>
     fetch(
-      `/api/v1/assessments/summary-list${buildQuery({ ...filters, school_id: schoolId })}`,
+      `/api/v1/assessments/summary-list${buildQuery({
+        ...filters,
+        school_id: schoolId,
+        q: opts.q,
+        sort: opts.sort,
+        dir: opts.dir,
+        limit: opts.limit != null ? String(opts.limit) : undefined,
+        offset: opts.offset != null ? String(opts.offset) : undefined,
+      })}`,
       { credentials: 'include' },
-    ).then(handleResponse<AssessmentSummaryListRow[]>),
+    ).then(handleResponse<AssessmentSummaryPage>),
 
   sessions: (schoolId?: string) =>
     fetch(`/api/v1/dim/sessions${buildQuery({ school_id: schoolId })}`, {
@@ -178,8 +199,18 @@ export const reportsKeys = {
     [...reportsKeys.all, 'dq', 'standards-alignment'] as const,
   assessments: (filters?: AssessmentFilters, schoolId?: string) =>
     [...reportsKeys.all, 'assessments', filters ?? {}, schoolId ?? null] as const,
-  assessmentSummaries: (filters?: AssessmentFilters, schoolId?: string) =>
-    [...reportsKeys.all, 'assessment-summaries', filters ?? {}, schoolId ?? null] as const,
+  assessmentSummaries: (
+    filters?: AssessmentFilters,
+    schoolId?: string,
+    opts?: { q?: string; sort?: string; dir?: string },
+  ) =>
+    [
+      ...reportsKeys.all,
+      'assessment-summaries',
+      filters ?? {},
+      schoolId ?? null,
+      { q: opts?.q ?? '', sort: opts?.sort ?? 'date', dir: opts?.dir ?? 'desc' },
+    ] as const,
   sessions: (schoolId?: string) =>
     [...reportsKeys.all, 'dim', 'sessions', schoolId ?? null] as const,
   subjects: (schoolId?: string) =>

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   ArrowUpRight,
   BookOpen,
@@ -19,9 +19,21 @@ import { StatCard } from '@/components/app/StatCard';
 import { Button } from '@/components/ui/button';
 import DashboardHeader from '@/components/app/dashboard/DashboardHeader';
 import DashboardFilters from '@/components/app/dashboard/DashboardFilters';
-import AssessmentsSummaryTable from '@/components/app/dashboard/AssessmentsSummaryTable';
+import AssessmentsSummaryTable, {
+  type AssessmentSortKey,
+} from '@/components/app/dashboard/AssessmentsSummaryTable';
 
 const PROGRAM_REPORTS = getReportsByGroup('program');
+const PAGE_SIZE = 25;
+
+/** First-click direction per assessment sort column (mirrors useTableSort). */
+const INITIAL_DIR: Record<AssessmentSortKey, 'asc' | 'desc'> = {
+  date: 'desc',
+  item: 'asc',
+  grade: 'asc',
+  students: 'desc',
+  average: 'desc',
+};
 
 /** Latest academic year = highest session string (e.g. "2025-26" > "2024-25"). */
 function latestSession(sessions: { session: string | null }[]): string | undefined {
@@ -35,8 +47,31 @@ export function DashboardPage() {
   const { schoolId } = useSelectedSchool();
   const [filters, setFilters] = useState<AssessmentFilters>({});
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sort, setSort] = useState<AssessmentSortKey>('date');
+  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [inited, setInited] = useState(false);
   const initedSchool = useRef<string | null>(null);
+
+  // Debounce the search before it hits the server query key, so each keystroke
+  // doesn't fire a request. The live `search` still drives the client-side
+  // By-Standard / By-Strand filters instantly.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const onSort = useCallback(
+    (col: AssessmentSortKey) => {
+      if (col === sort) {
+        setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSort(col);
+        setDir(INITIAL_DIR[col]);
+      }
+    },
+    [sort],
+  );
 
   // Sessions feed the default-year pick. Same query key as ReportFilters', so
   // react-query serves one shared request (no duplicate call).
@@ -46,7 +81,8 @@ export function DashboardPage() {
   });
 
   // Default the scope to the latest academic year, once per school. Resets
-  // filters + search on a school switch so each school opens on its newest year.
+  // filters/search/sort on a school switch so each school opens on its newest
+  // year, newest-first, at page 0.
   useEffect(() => {
     const list = sessionsQ.data;
     if (!list) return;
@@ -56,6 +92,9 @@ export function DashboardPage() {
     const latest = latestSession(list);
     setFilters(latest ? { session: latest } : {});
     setSearch('');
+    setDebouncedSearch('');
+    setSort('date');
+    setDir('desc');
     setInited(true);
   }, [sessionsQ.data, schoolId, inited]);
 
@@ -63,8 +102,7 @@ export function DashboardPage() {
 
   // standard-summary is the single source for the header (school name/logo/
   // session), the KPI strip, the school-wide grade-average marker AND the
-  // "By Standard" table variant. Gated on `inited` so the first fetch already
-  // carries the default-year filter (no throwaway unfiltered request).
+  // "By Standard" table variant (bounded — fetched whole).
   const stdQ = useQuery({
     queryKey: reportsKeys.standardSummary(summaryFilters),
     queryFn: () => reportsApi.standardSummary(summaryFilters),
@@ -75,17 +113,40 @@ export function DashboardPage() {
     queryFn: () => reportsApi.strandSummary(summaryFilters),
     enabled: inited,
   });
-  const asmtQ = useQuery({
-    queryKey: reportsKeys.assessmentSummaries(filters, schoolId ?? undefined),
-    queryFn: () => reportsApi.assessmentSummaries(filters, schoolId ?? undefined),
+
+  // Assessments are unbounded → true server-side pagination. The query lives
+  // here (not inside the table) so the "Assessments" KPI total survives variant
+  // switches and the table just renders the accumulated pages.
+  const asmtQ = useInfiniteQuery({
+    queryKey: reportsKeys.assessmentSummaries(filters, schoolId ?? undefined, {
+      q: debouncedSearch,
+      sort,
+      dir,
+    }),
+    queryFn: ({ pageParam }) =>
+      reportsApi.assessmentSummaries(filters, schoolId ?? undefined, {
+        q: debouncedSearch || undefined,
+        sort,
+        dir,
+        limit: PAGE_SIZE,
+        offset: pageParam,
+      }),
     enabled: inited,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages, lastPageParam) => {
+      const loaded = allPages.reduce((n, p) => n + p.rows.length, 0);
+      return loaded >= lastPage.total ? undefined : lastPageParam + PAGE_SIZE;
+    },
+    placeholderData: (prev) => prev,
   });
 
   const kpis = stdQ.data?.kpis;
   const school = stdQ.data?.school;
   const schoolAverage = kpis?.grade_average ?? null;
-  const assessments = asmtQ.data ?? [];
+  const assessmentRows = asmtQ.data?.pages.flatMap((p) => p.rows) ?? [];
+  const assessmentTotal = asmtQ.data?.pages[0]?.total ?? 0;
   const headerLoading = !inited || stdQ.isLoading;
+  const asmtLoading = !inited || asmtQ.isPending;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4">
@@ -108,17 +169,25 @@ export function DashboardPage() {
         <StatCard label="Total Students" value={kpis?.total_students ?? '—'} icon={Users} loading={headerLoading} />
         <StatCard label="Total Standards" value={kpis?.total_standards ?? '—'} icon={GraduationCap} loading={headerLoading} />
         <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} icon={ListChecks} loading={headerLoading} />
-        <StatCard label="Assessments" value={!inited || asmtQ.isLoading ? '—' : assessments.length} icon={BookOpen} loading={!inited || asmtQ.isLoading} />
+        <StatCard label="Assessments" value={asmtLoading ? '—' : assessmentTotal} icon={BookOpen} loading={asmtLoading} />
         <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} icon={Percent} loading={headerLoading} />
       </div>
 
       <AssessmentsSummaryTable
         schoolAverage={schoolAverage}
-        assessments={assessments}
+        assessments={assessmentRows}
+        assessmentTotal={assessmentTotal}
+        assessmentHasMore={asmtQ.hasNextPage}
+        assessmentFetchingMore={asmtQ.isFetchingNextPage}
+        onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
+        assessmentSort={sort}
+        assessmentDir={dir}
+        onAssessmentSort={onSort}
+        assessmentLoading={asmtLoading}
         standards={stdQ.data?.standards ?? []}
         strands={strandQ.data?.strands_rollup ?? []}
         search={search}
-        loading={!inited || stdQ.isLoading || strandQ.isLoading || asmtQ.isLoading}
+        loading={!inited || stdQ.isLoading || strandQ.isLoading}
       />
 
       {/* Program (school-wide) reports — always-visible launcher buttons,

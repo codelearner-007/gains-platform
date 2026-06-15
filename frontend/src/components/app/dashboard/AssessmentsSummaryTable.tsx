@@ -27,19 +27,25 @@ import {
   SortableHeader,
   useTableSort,
   type SortAccessor,
+  type SortDirection,
 } from '@/lib/reports/useTableSort';
 import GradeAverageBar from '@/components/app/modules/reports/shared/GradeAverageBar';
 
 /**
  * Assessments Summary — the centerpiece of the legacy Assessment Analysis
- * Dashboard. A single grid whose grouping/columns switch via a View toggle
- * (By Assessment / By Standard / By Strand). The body scrolls inside a capped
- * region so the program reports below stay reachable; rows reveal in pages of
- * PAGE_SIZE as the sentinel scrolls into view — purely client-side over the
- * already-fetched rows, so scrolling issues NO extra API calls.
+ * Dashboard. A single grid whose grouping/columns switch via a View toggle:
+ *
+ *   • By Assessment — SERVER-PAGINATED: one page per request, server sort +
+ *     server name-search, more pages fetched on scroll (the assessments set is
+ *     unbounded). Owned by DashboardPage; this component just renders it.
+ *   • By Standard / By Strand — client-side over the bounded standard-/strand-
+ *     summary rollups (fully fetched): client search, sort and window-on-scroll.
  */
 
 export type SummaryView = 'assessment' | 'standard' | 'strand';
+
+/** Server sort keys for the By-Assessment grid (match the backend whitelist). */
+export type AssessmentSortKey = 'grade' | 'date' | 'item' | 'students' | 'average';
 
 const VIEWS: { value: SummaryView; label: string }[] = [
   { value: 'assessment', label: 'By Assessment' },
@@ -47,7 +53,7 @@ const VIEWS: { value: SummaryView; label: string }[] = [
   { value: 'strand', label: 'By Strand' },
 ];
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 25; // client window step for the bounded std/strand variants
 
 // Launch menu = the assessment report family, minus the drill-through (IAD),
 // straight from the report registry (the single source of truth for routing).
@@ -61,23 +67,44 @@ const matches = (haystack: string | null | undefined, q: string) =>
 interface Props {
   /** School-wide grade average (0..1) for the data-bar reference marker. */
   schoolAverage: number | null;
-  assessments: AssessmentSummaryListRow[];
+
+  // ── By Assessment (server-paginated, owned by DashboardPage) ──
+  assessments: AssessmentSummaryListRow[]; // accumulated page rows, server order
+  assessmentTotal: number;
+  assessmentHasMore: boolean;
+  assessmentFetchingMore: boolean;
+  onAssessmentFetchMore: () => void;
+  assessmentSort: AssessmentSortKey;
+  assessmentDir: SortDirection;
+  onAssessmentSort: (col: AssessmentSortKey) => void;
+  assessmentLoading: boolean;
+
+  // ── By Standard / By Strand (client-side, bounded) ──
   standards: StandardSummaryRollupRow[];
   strands: StrandSummaryRollupRow[];
-  /** Free-text search; filters the active variant's primary text column. */
+  /** Free-text search; server `q` for assessments, client filter for std/strand. */
   search: string;
-  loading: boolean;
+  loading: boolean; // std/strand initial load
 }
 
 export default function AssessmentsSummaryTable({
   schoolAverage,
   assessments,
+  assessmentTotal,
+  assessmentHasMore,
+  assessmentFetchingMore,
+  onAssessmentFetchMore,
+  assessmentSort,
+  assessmentDir,
+  onAssessmentSort,
+  assessmentLoading,
   standards,
   strands,
   search,
   loading,
 }: Props) {
   const [view, setView] = useState<SummaryView>('assessment');
+  const variantLoading = view === 'assessment' ? assessmentLoading : loading;
 
   return (
     <div
@@ -115,14 +142,24 @@ export default function AssessmentsSummaryTable({
         </div>
       </div>
 
-      {loading ? (
+      {variantLoading ? (
         <div className="space-y-2 p-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-9 w-full" />
           ))}
         </div>
       ) : view === 'assessment' ? (
-        <ByAssessment rows={assessments} search={search} schoolAverage={schoolAverage} />
+        <ByAssessment
+          rows={assessments}
+          total={assessmentTotal}
+          hasMore={assessmentHasMore}
+          isFetchingMore={assessmentFetchingMore}
+          onFetchMore={onAssessmentFetchMore}
+          sort={assessmentSort}
+          dir={assessmentDir}
+          onSort={onAssessmentSort}
+          schoolAverage={schoolAverage}
+        />
       ) : view === 'standard' ? (
         <ByStandard rows={standards} search={search} schoolAverage={schoolAverage} />
       ) : (
@@ -151,13 +188,70 @@ function Th({
 }
 
 const TD = 'border-b px-3 py-1.5 text-sm';
+const STICKY_THEAD = 'sticky top-0 z-10';
+
+function ScrollRegion({
+  scrollRef,
+  children,
+}: {
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  children: React.ReactNode;
+}) {
+  return (
+    <div ref={scrollRef} className="max-h-[26rem] overflow-auto">
+      {children}
+    </div>
+  );
+}
+
+/** Sentinel row shown at the foot of the scroll region while more can load. */
+function LoadMore({
+  sentinelRef,
+  hasMore,
+  spinning = true,
+}: {
+  sentinelRef: React.RefObject<HTMLDivElement | null>;
+  hasMore: boolean;
+  spinning?: boolean;
+}) {
+  if (!hasMore) return null;
+  return (
+    <div
+      ref={sentinelRef}
+      className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground"
+    >
+      {spinning && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+      {spinning ? 'Loading more…' : ' '}
+    </div>
+  );
+}
+
+function ShownFooter({ shown, total }: { shown: number; total: number }) {
+  if (total === 0) return null;
+  return (
+    <div
+      className="border-t px-4 py-2 text-right text-[11px] tabular-nums text-muted-foreground"
+      style={{ borderColor: LAYOUT_BORDER }}
+    >
+      Showing {shown} of {total}
+    </div>
+  );
+}
+
+function EmptyRow({ cols, label }: { cols: number; label: string }) {
+  return (
+    <tr>
+      <td colSpan={cols} className="px-3 py-10 text-center text-sm text-muted-foreground">
+        {label}
+      </td>
+    </tr>
+  );
+}
 
 /**
- * Capped scroll region + page-on-scroll windowing over an in-memory array.
- * Resets to the first page whenever the (filtered+sorted) rows change. The
- * IntersectionObserver is rooted to the scroll container, so it only fires
- * while the user scrolls this table — never on unrelated re-renders, and never
- * triggers a network request (the rows are already loaded).
+ * Client-side window for the BOUNDED std/strand rollups: reveal PAGE_SIZE more
+ * rows when the sentinel scrolls in. Resets when the (filtered+sorted) rows
+ * change. Never hits the network.
  */
 function useInfiniteWindow<T>(rows: T[]) {
   const [count, setCount] = useState(PAGE_SIZE);
@@ -197,100 +291,65 @@ function useInfiniteWindow<T>(rows: T[]) {
   };
 }
 
-function ScrollRegion({
-  scrollRef,
-  children,
-}: {
-  scrollRef: React.RefObject<HTMLDivElement | null>;
-  children: React.ReactNode;
-}) {
-  return (
-    <div ref={scrollRef} className="max-h-[26rem] overflow-auto">
-      {children}
-    </div>
-  );
+/**
+ * Fetch-more-on-scroll for the SERVER-paginated assessment grid: when the
+ * sentinel enters the scroll container, ask the parent to fetch the next page
+ * (guarded so it never fires while a fetch is already in flight).
+ */
+function useFetchMoreSentinel(
+  hasMore: boolean,
+  isFetching: boolean,
+  onFetchMore: () => void,
+) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const cb = useRef(onFetchMore);
+  cb.current = onFetchMore;
+
+  useEffect(() => {
+    if (!hasMore || isFetching) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) cb.current();
+      },
+      { root: scrollRef.current ?? null, rootMargin: '160px' },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [hasMore, isFetching]);
+
+  return { scrollRef, sentinelRef };
 }
 
-function LoadMore({
-  sentinelRef,
-  hasMore,
-}: {
-  sentinelRef: React.RefObject<HTMLDivElement | null>;
-  hasMore: boolean;
-}) {
-  if (!hasMore) return null;
-  return (
-    <div
-      ref={sentinelRef}
-      className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground"
-    >
-      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      Loading more…
-    </div>
-  );
-}
-
-function ShownFooter({ shown, total }: { shown: number; total: number }) {
-  if (total === 0) return null;
-  return (
-    <div
-      className="border-t px-4 py-2 text-right text-[11px] tabular-nums text-muted-foreground"
-      style={{ borderColor: LAYOUT_BORDER }}
-    >
-      Showing {shown} of {total}
-    </div>
-  );
-}
-
-function EmptyRow({ cols, label }: { cols: number; label: string }) {
-  return (
-    <tr>
-      <td colSpan={cols} className="px-3 py-10 text-center text-sm text-muted-foreground">
-        {label}
-      </td>
-    </tr>
-  );
-}
-
-const STICKY_THEAD = 'sticky top-0 z-10';
-
-// ── Variant A: By Assessment ─────────────────────────────────────────────
-type AKey = 'grade' | 'date' | 'item' | 'students' | 'average';
-
-const A_ACCESSORS: Record<AKey, SortAccessor<AssessmentSummaryListRow>> = {
-  grade: (r) => (r.grade ?? '').toLowerCase(),
-  date: (r) => r.assessment_date ?? '',
-  item: (r) => (r.item_name ?? '').toLowerCase(),
-  students: (r) => r.total_students ?? -1,
-  average: (r) => r.grade_average ?? -1,
-};
-
+// ── Variant A: By Assessment (server-paginated) ──────────────────────────
 function ByAssessment({
   rows,
-  search,
+  total,
+  hasMore,
+  isFetchingMore,
+  onFetchMore,
+  sort,
+  dir,
+  onSort,
   schoolAverage,
 }: {
   rows: AssessmentSummaryListRow[];
-  search: string;
+  total: number;
+  hasMore: boolean;
+  isFetchingMore: boolean;
+  onFetchMore: () => void;
+  sort: AssessmentSortKey;
+  dir: SortDirection;
+  onSort: (col: AssessmentSortKey) => void;
   schoolAverage: number | null;
 }) {
-  const q = search.trim().toLowerCase();
-  const filtered = useMemo(
-    () => (q ? rows.filter((r) => matches(r.item_name, q)) : rows),
-    [rows, q],
+  const { scrollRef, sentinelRef } = useFetchMoreSentinel(
+    hasMore,
+    isFetchingMore,
+    onFetchMore,
   );
-  const { sortedRows, sortColumn, sortDirection, onHeaderClick } = useTableSort<
-    AssessmentSummaryListRow,
-    AKey
-  >({
-    rows: filtered,
-    accessors: A_ACCESSORS,
-    defaultColumn: 'date',
-    defaultDirection: 'desc',
-    initialDirections: { students: 'desc', average: 'desc', date: 'desc' },
-  });
-  const { visibleRows, scrollRef, sentinelRef, hasMore, shown, total } =
-    useInfiniteWindow(sortedRows);
 
   return (
     <>
@@ -298,11 +357,11 @@ function ByAssessment({
         <table className="w-full border-collapse">
           <thead className={STICKY_THEAD}>
             <tr>
-              <Th><SortableHeader column="grade" label="Grade" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-              <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-              <Th><SortableHeader column="item" label="Item Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-              <Th align="center"><SortableHeader column="students" label="Total Students" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th><SortableHeader column="grade" label="Grade" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th><SortableHeader column="item" label="Item Name" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th align="center"><SortableHeader column="students" label="Total Students" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
               <Th align="right">Report</Th>
             </tr>
           </thead>
@@ -310,7 +369,7 @@ function ByAssessment({
             {total === 0 ? (
               <EmptyRow cols={6} label="No assessments match the current filters." />
             ) : (
-              visibleRows.map((r) => (
+              rows.map((r) => (
                 <tr key={r.item_id} className="transition-colors hover:bg-accent/30">
                   <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.grade ?? '—'}</td>
                   <td className={`${TD} tabular-nums whitespace-nowrap`} style={{ borderColor: LAYOUT_BORDER }}>{r.assessment_date ?? '—'}</td>
@@ -327,9 +386,9 @@ function ByAssessment({
             )}
           </tbody>
         </table>
-        <LoadMore sentinelRef={sentinelRef} hasMore={hasMore} />
+        <LoadMore sentinelRef={sentinelRef} hasMore={hasMore} spinning={isFetchingMore} />
       </ScrollRegion>
-      <ShownFooter shown={shown} total={total} />
+      <ShownFooter shown={rows.length} total={total} />
     </>
   );
 }
@@ -370,7 +429,7 @@ function OpenReportMenu({ itemId, itemName }: { itemId: string; itemName: string
   );
 }
 
-// ── Variant B: By Standard ───────────────────────────────────────────────
+// ── Variant B: By Standard (client-side, bounded) ────────────────────────
 type SKey = 'standard' | 'strand' | 'subject' | 'questions' | 'assessments' | 'average';
 
 const S_ACCESSORS: Record<SKey, SortAccessor<StandardSummaryRollupRow>> = {
@@ -457,7 +516,7 @@ function ByStandard({
   );
 }
 
-// ── Variant C: By Strand ─────────────────────────────────────────────────
+// ── Variant C: By Strand (client-side, bounded) ──────────────────────────
 type StKey = 'strand' | 'standards' | 'questions' | 'assessments' | 'average';
 
 const ST_ACCESSORS: Record<StKey, SortAccessor<StrandSummaryRollupRow>> = {

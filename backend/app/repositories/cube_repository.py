@@ -252,29 +252,41 @@ class CubeRepository:
         row = result.first()
         return _row_to_dict(row) if row else None
 
-    async def get_assessment_summary_list(
+    async def get_assessment_summary_page(
         self,
         session_filter: Optional[str] = None,
         category: Optional[str] = None,
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         section: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """Per-item grade_average + total_students for every filter-scoped
-        assessment, in ONE query.
+        q: Optional[str] = None,
+        sort_sql: str = "assessment_date",
+        dir_sql: str = "DESC",
+        limit: int = 25,
+        offset: int = 0,
+    ) -> tuple[List[Dict[str, Any]], int]:
+        """ONE page of the dashboard "Assessments Summary — By Assessment" grid,
+        plus the full filter-scoped total.
 
-        Powers the dashboard "Assessments Summary — By Assessment" grade-average
-        data bars without an N+1 over ``/assessments/{item_id}/summary``. The
-        grade average mirrors :meth:`get_canonical_kpis_for_item` exactly — the
-        per-(question, user) fact collapse (legacy DAX), grouped by item — with
-        a ``cube_question_summary`` fallback for fact-less (parquet-loaded)
-        items. Scope filters match ``DimRepository.list_items``; RLS scopes to
-        the caller's school.
+        Server-side pagination (``limit``/``offset``), sort (``sort_sql`` +
+        ``dir_sql``) and name search (``q``) so schools with thousands of
+        assessments only ever transfer one page. Per-item grade_average mirrors
+        :meth:`get_canonical_kpis_for_item` exactly — the per-(question, user)
+        fact collapse (legacy DAX) with a ``cube_question_summary`` fallback —
+        so the data-bar value matches the KPI strip to the digit. ``total`` is
+        ``COUNT(*) OVER()`` of the scoped set (pre-LIMIT).
+
+        ``sort_sql``/``dir_sql`` MUST be pre-validated literals from the route's
+        whitelist (never raw user input) — they are interpolated, not bound.
+        RLS scopes every base table to the caller's school.
         """
+        order_by = f"{sort_sql} {dir_sql} NULLS LAST, item_id ASC"
         sql = text(
-            """
+            f"""
             WITH scoped AS (
-                SELECT di.item_id
+                SELECT di.item_id, di.item_name, di.item_type, di.subject_id,
+                       ds.subject, ds.grade, ds.session, ds.assessment_type,
+                       di.section_name, di.section_instructors, di.assessment_date
                 FROM dim_item di
                 LEFT JOIN dim_subject ds
                   ON ds.school_id = di.school_id AND ds.subject_id = di.subject_id
@@ -283,6 +295,7 @@ class CubeRepository:
                   AND (CAST(:subject AS TEXT)  IS NULL OR ds.subject         = CAST(:subject AS TEXT))
                   AND (CAST(:grade AS TEXT)    IS NULL OR ds.grade           = CAST(:grade AS TEXT))
                   AND (CAST(:section AS TEXT)  IS NULL OR di.section_name    = CAST(:section AS TEXT))
+                  AND (CAST(:q AS TEXT)        IS NULL OR di.item_name ILIKE '%' || CAST(:q AS TEXT) || '%')
             ),
             fact_dedup AS (
                 SELECT DISTINCT ON (item_id, user_uid, question_id, position_number)
@@ -332,14 +345,22 @@ class CubeRepository:
                          total_questions DESC NULLS LAST,
                          total_possible_point DESC NULLS LAST,
                          total_score DESC NULLS LAST, subject_id
+            ),
+            enriched AS (
+                SELECT s.item_id, s.item_name, s.item_type, s.subject_id,
+                       s.subject, s.grade, s.session, s.assessment_type,
+                       s.section_name, s.section_instructors, s.assessment_date,
+                       COALESCE(fg.grade_average, cg.grade_average) AS grade_average,
+                       st.total_students,
+                       COUNT(*) OVER() AS total
+                FROM scoped s
+                LEFT JOIN fact_ga fg ON fg.item_id = s.item_id
+                LEFT JOIN cube_ga cg ON cg.item_id = s.item_id
+                LEFT JOIN students st ON st.item_id = s.item_id
             )
-            SELECT s.item_id,
-                   COALESCE(fg.grade_average, cg.grade_average) AS grade_average,
-                   st.total_students
-            FROM scoped s
-            LEFT JOIN fact_ga fg ON fg.item_id = s.item_id
-            LEFT JOIN cube_ga cg ON cg.item_id = s.item_id
-            LEFT JOIN students st ON st.item_id = s.item_id
+            SELECT * FROM enriched
+            ORDER BY {order_by}
+            LIMIT :limit OFFSET :offset
             """
         )
         result = await self.session.execute(
@@ -350,9 +371,16 @@ class CubeRepository:
                 "subject": subject,
                 "grade": grade,
                 "section": section,
+                "q": q,
+                "limit": limit,
+                "offset": offset,
             },
         )
-        return [_row_to_dict(r) for r in result.all()]
+        rows = [_row_to_dict(r) for r in result.all()]
+        total = int(rows[0]["total"]) if rows else 0
+        for r in rows:
+            r.pop("total", None)
+        return rows, total
 
     async def get_canonical_per_question_grades(
         self, item_id: str

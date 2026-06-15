@@ -13,7 +13,7 @@ from app.schemas.assessments import (
     AssessmentDetail,
     AssessmentListRow,
     AssessmentSummary,
-    AssessmentSummaryListRow,
+    AssessmentSummaryPage,
 )
 from app.schemas.reports import (
     IncorrectChoice,
@@ -49,9 +49,13 @@ async def list_assessments(
     )
 
 
+# Sort keys accepted by /summary-list (validated against the service whitelist).
+_SUMMARY_SORTS = {"date", "item", "grade", "students", "average"}
+
+
 @router.get(
     "/summary-list",
-    response_model=List[AssessmentSummaryListRow],
+    response_model=AssessmentSummaryPage,
     dependencies=[Depends(require_permission("reports:read"))],
 )
 async def list_assessment_summaries(
@@ -60,11 +64,21 @@ async def list_assessment_summaries(
     subject: Optional[str] = Query(default=None),
     grade: Optional[str] = Query(default=None),
     section: Optional[str] = Query(default=None),
+    q: Optional[str] = Query(default=None, max_length=200),
+    sort: str = Query(default="date"),
+    dir: str = Query(default="desc"),
+    limit: int = Query(default=25, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db_with_rls),
-) -> List[AssessmentSummaryListRow]:
-    """Assessment list with per-item grade average + student count for the
-    dashboard's By-Assessment grade-average bars (one batched rollup, no N+1).
-    Requires: reports:read"""
+) -> AssessmentSummaryPage:
+    """One server-paginated page of the dashboard's By-Assessment grid (per-item
+    grade average + student count) plus the full filter-scoped total. Supports
+    server-side name search (``q``), sort (``sort`` in date/item/grade/students/
+    average + ``dir``) and ``limit``/``offset`` so a school with thousands of
+    assessments only transfers one page. Requires: reports:read"""
+    sort_key = sort if sort in _SUMMARY_SORTS else "date"
+    direction = "asc" if dir.lower() == "asc" else "desc"
+    q_norm = q.strip() if q and q.strip() else None
     service = AssessmentService(db)
     return await service.list_assessment_summaries(
         session_filter=session,
@@ -72,6 +86,11 @@ async def list_assessment_summaries(
         subject=subject,
         grade=grade,
         section=section,
+        q=q_norm,
+        sort=sort_key,
+        direction=direction,
+        limit=limit,
+        offset=offset,
     )
 
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -34,6 +34,16 @@ class AssessmentSummaryListRow(AssessmentListRow):
 
     grade_average: Optional[float] = None
     total_students: Optional[int] = None
+
+
+class AssessmentSummaryPage(BaseModel):
+    """One server-paginated page of the dashboard's By-Assessment grid plus the
+    full filter-scoped total, so the table fetches a page at a time."""
+
+    rows: List[AssessmentSummaryListRow]
+    total: int
+    limit: int
+    offset: int
 
 
 class AssessmentDetail(BaseModel):

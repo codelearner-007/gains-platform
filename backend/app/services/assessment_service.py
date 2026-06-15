@@ -14,6 +14,7 @@ from app.schemas.assessments import (
     AssessmentListRow,
     AssessmentSummary,
     AssessmentSummaryListRow,
+    AssessmentSummaryPage,
 )
 from app.schemas.reports import (
     IncorrectChoice,
@@ -46,6 +47,16 @@ class AssessmentService:
         )
         return [AssessmentListRow.model_validate(r) for r in rows]
 
+    # Whitelist: sort key -> SQL expression. Interpolated (not bound), so the
+    # value MUST come from this dict, never from raw user input.
+    _SORT_SQL = {
+        "date": "assessment_date",
+        "item": "lower(item_name)",
+        "grade": "grade",
+        "students": "total_students",
+        "average": "grade_average",
+    }
+
     async def list_assessment_summaries(
         self,
         session_filter: Optional[str] = None,
@@ -53,42 +64,47 @@ class AssessmentService:
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         section: Optional[str] = None,
-    ) -> List[AssessmentSummaryListRow]:
-        """Assessment list enriched with per-item grade_average + total_students
-        for the dashboard's By-Assessment grade-average bars. One list query +
-        one batched rollup query (no N+1)."""
-        rows = await self.dim.list_items(
+        q: Optional[str] = None,
+        sort: str = "date",
+        direction: str = "desc",
+        limit: int = 25,
+        offset: int = 0,
+    ) -> AssessmentSummaryPage:
+        """One server-paginated page of the dashboard By-Assessment grid (rows
+        with grade_average + total_students) plus the full scoped total. Server
+        sort + name search so a school with thousands of assessments only
+        transfers one page per request."""
+        sort_sql = self._SORT_SQL.get(sort, "assessment_date")
+        dir_sql = "ASC" if direction.lower() == "asc" else "DESC"
+        rows_raw, total = await self.cube.get_assessment_summary_page(
             session_filter=session_filter,
             category=category,
             subject=subject,
             grade=grade,
             section=section,
+            q=q,
+            sort_sql=sort_sql,
+            dir_sql=dir_sql,
+            limit=limit,
+            offset=offset,
         )
-        rollups = await self.cube.get_assessment_summary_list(
-            session_filter=session_filter,
-            category=category,
-            subject=subject,
-            grade=grade,
-            section=section,
-        )
-        by_item = {safe_str(r.get("item_id")): r for r in rollups}
-        out: List[AssessmentSummaryListRow] = []
-        for r in rows:
-            roll = by_item.get(safe_str(r.get("item_id")), {})
-            out.append(
-                AssessmentSummaryListRow.model_validate(
-                    {
-                        **r,
-                        "grade_average": to_float(roll.get("grade_average"))
-                        if roll.get("grade_average") is not None
-                        else None,
-                        "total_students": to_int(roll.get("total_students"))
-                        if roll.get("total_students") is not None
-                        else None,
-                    }
-                )
+        rows = [
+            AssessmentSummaryListRow.model_validate(
+                {
+                    **r,
+                    "grade_average": to_float(r.get("grade_average"))
+                    if r.get("grade_average") is not None
+                    else None,
+                    "total_students": to_int(r.get("total_students"))
+                    if r.get("total_students") is not None
+                    else None,
+                }
             )
-        return out
+            for r in rows_raw
+        ]
+        return AssessmentSummaryPage(
+            rows=rows, total=total, limit=limit, offset=offset
+        )
 
     async def get_assessment(self, item_id: str) -> AssessmentDetail:
         row = await self.dim.get_item(item_id)

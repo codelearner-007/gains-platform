@@ -194,6 +194,14 @@ export interface AssessmentSummaryListRow extends AssessmentListRow {
   total_students: number | null;
 }
 
+/** One server-paginated page of the dashboard By-Assessment grid. */
+export interface AssessmentSummaryPage {
+  rows: AssessmentSummaryListRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 // ─── Multi-tenant — accessible schools (school switcher) ─────────────────
 
 export interface AccessibleSchool {
