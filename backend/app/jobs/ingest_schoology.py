@@ -516,6 +516,8 @@ async def run_ingestion(
     school_filter: str | None = None,
     blob_client: BlobClient | None = None,
     whole_tree_root: str | None = None,
+    skip_transforms: bool = False,
+    commit_every: int = 0,
 ) -> IngestSummary:
     """Run a single ingestion pass.
 
@@ -598,6 +600,7 @@ async def run_ingestion(
                     "[%s] discovered %d blob(s) under %s",
                     school.short_name, len(blobs), school_root,
                 )
+                processed_since_commit = 0
                 for blob in blobs:
                     # SAVEPOINT per blob: a parse failure rolls back only this
                     # file's INSERTs; prior files within this run keep their work.
@@ -621,6 +624,28 @@ async def run_ingestion(
                         # continue with next blob — single-file failure must not
                         # abort the entire run.
 
+                    # Periodic commit for large/full ingests: bounds the open
+                    # transaction so a multi-GB load does not accumulate ~150k
+                    # subtransactions in ONE txn (the pg_subtrans cliff), and so
+                    # progress is durable + resumable — a re-run skips
+                    # already-recorded files via ingested_files + ON CONFLICT.
+                    # Releases the per-school advisory lock between batches, which
+                    # is acceptable for a single controlled bulk load. Opt-in
+                    # (commit_every>0); the default single-transaction path is
+                    # unchanged.
+                    if commit_every and commit_every > 0:
+                        processed_since_commit += 1
+                        if processed_since_commit >= commit_every:
+                            await session.commit()
+                            processed_since_commit = 0
+                            logger.info(
+                                "[%s] committed batch — seen=%d processed=%d "
+                                "skipped=%d rows=%d errors=%d",
+                                school.short_name, summary.files_seen,
+                                summary.files_processed, summary.files_skipped,
+                                summary.rows_inserted, summary.error_count,
+                            )
+
             # Phase 2 (continued): run staging + dimension transformations
             # against the raw rows we just landed. We share the same session
             # so raw INSERTs + transformation upserts commit atomically: if
@@ -628,12 +653,27 @@ async def run_ingestion(
             # step 4). Phase 3 of the project will append fact/cube/hash
             # transformations to TRANSFORMATIONS_ORDER; this call picks them
             # up automatically.
-            xform_results = await run_transformations(session)
-            logger.info(
-                "transformations complete: %d models, %d total rows touched",
-                len(xform_results),
-                sum(xform_results.values()),
-            )
+            #
+            # skip_transforms decouples the (huge, single-transaction) raw load
+            # from the transform pipeline so a large/full ingest can commit raw
+            # first, then run transforms STAGED per-tag with ANALYZE between
+            # layers via `python -m app.transformations.runner --tag …`. The
+            # inline all-in-one-transaction path is fine for small samples but
+            # blows up on a full multi-GB build (stale planner stats →
+            # catastrophic cube plan; managed Postgres cannot raise
+            # max_locks_per_transaction).
+            if skip_transforms:
+                logger.info(
+                    "transformations SKIPPED (raw-only ingest); run them staged "
+                    "via `python -m app.transformations.runner --tag …`."
+                )
+            else:
+                xform_results = await run_transformations(session)
+                logger.info(
+                    "transformations complete: %d models, %d total rows touched",
+                    len(xform_results),
+                    sum(xform_results.values()),
+                )
     except Exception as e:
         # Outer phase-2 rollback. Phase 2 transaction is rolled back — none of
         # the per-file work survived. Counters describe what we attempted, not

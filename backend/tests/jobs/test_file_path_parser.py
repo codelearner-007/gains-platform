@@ -75,14 +75,37 @@ class TestParseRelativePath:
         assert p.section == "Sec 1"
 
     def test_too_few_parts_raises(self) -> None:
+        # 4 parts (or fewer) cannot be unambiguously mapped — subject/grade
+        # would collide with session/assessment_type.
         with pytest.raises(PathParseError):
             parse_relative_path("2025-26/Math/Grade 5/X.csv")
 
-    def test_too_many_parts_raises(self) -> None:
-        with pytest.raises(PathParseError):
-            parse_relative_path(
-                "2025-26/A/B/C/D/E/F/Question-Data-X.csv"
-            )
+    def test_extra_subject_category_absorbed_7_part(self) -> None:
+        """7-part backup variant: an interposed subject-category folder is
+        absorbed; subject/grade/section anchor to the deepest canonical levels
+        (e.g. Crestwell's Summative/Science exports)."""
+        p = parse_relative_path(
+            "2025-26/Summative/Science/3 - Science/1 - Grade 1/Sec 01 SCI - C/"
+            "Student-Submissions-Unit-4-Benchmark.csv"
+        )
+        assert p.session == "2025-26"
+        assert p.assessment_type == "Summative"
+        assert p.subject == "3 - Science"  # deepest subject, not the "Science" category
+        assert p.grade == "1 - Grade 1"
+        assert p.section == "Sec 01 SCI - C"
+        assert p.file_name == "Student-Submissions-Unit-4-Benchmark.csv"
+
+    def test_sectionless_5_part(self) -> None:
+        """5-part backup variant: file directly under the grade folder with no
+        section subfolder — section is left empty (not skipped)."""
+        p = parse_relative_path(
+            "2024-25/1 - Lesson  Assessments/4 - ELA/3 - Grade 3/"
+            "Student-Submissions-Module-Assessment.csv"
+        )
+        assert p.assessment_type == "Lesson  Assessments"
+        assert p.subject == "4 - ELA"
+        assert p.grade == "3 - Grade 3"
+        assert p.section == ""
 
     def test_file_type_routing(self) -> None:
         p = parse_relative_path(

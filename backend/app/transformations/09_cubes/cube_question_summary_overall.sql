@@ -233,27 +233,31 @@ section_per_item AS (
   GROUP BY school_id, item_id
 ),
 final_rows AS (
-  SELECT DISTINCT
-    t.school_id,
-    t.subject_id,
-    t.ukey,
-    t.question_no,
-    t.question,
-    t.position_number,
-    t.correct_answer,
-    t.standard,
-    -- Track an item_id per output grain so we can fetch section_instructors
-    -- + teacher_name_hash. The notebook joins via dim_item by Subject_ID,
-    -- which would explode rows; pick a single item via MAX over the cohort.
-    (SELECT MAX(l.item_id) FROM latest_with_hash l
-       WHERE l.school_id = t.school_id AND l.subject_id = t.subject_id
-         AND l.ukey IS NOT DISTINCT FROM t.ukey
-         AND l.question_no IS NOT DISTINCT FROM t.question_no
-         AND l.question    IS NOT DISTINCT FROM t.question
-         AND l.position_number IS NOT DISTINCT FROM t.position_number
-         AND l.correct_answer  IS NOT DISTINCT FROM t.correct_answer
-         AND l.standard        IS NOT DISTINCT FROM t.standard) AS rep_item_id
-  FROM totals t
+  -- Track an item_id per output grain so we can fetch section_instructors +
+  -- teacher_name_hash. The notebook joins via dim_item by Subject_ID, which
+  -- would explode rows; pick a single representative item via MAX over the
+  -- cohort.
+  --
+  -- This is a single-pass GROUP BY aggregate (NOT a per-grain correlated
+  -- subquery over latest_with_hash). GROUP BY groups NULLs together, which is
+  -- exactly the NULL-safe `IS NOT DISTINCT FROM` semantics the downstream join
+  -- uses, so the chosen rep_item_id per grain is identical — but it runs in
+  -- O(rows) instead of O(grains × rows). The old correlated form was tolerable
+  -- on the small sample but is catastrophic at full scale (~78k grains ×
+  -- 1.65M latest rows).
+  SELECT
+    school_id,
+    subject_id,
+    ukey,
+    question_no,
+    question,
+    position_number,
+    correct_answer,
+    standard,
+    MAX(item_id) AS rep_item_id
+  FROM latest_with_hash
+  GROUP BY school_id, subject_id, ukey, question_no, question,
+           position_number, correct_answer, standard
 )
 SELECT
   encode(digest(
