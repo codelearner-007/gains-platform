@@ -89,9 +89,14 @@ export default function StrandRowList({
                     <span
                       className="absolute inset-y-0 right-0 flex items-center px-1.5 truncate font-semibold text-black"
                       style={{
-                        maxWidth: `${100 - pct * 100}%`,
-                        // when bar fills past ~80%, label sits inside the bar's text
-                        opacity: pct > 0.85 ? 0 : 1,
+                        // Right-aligned label. Cap width so it never collides with
+                        // the left percentage. When the bar fills past ~85% it sits
+                        // over the colored fill rather than the grey track, so a
+                        // white halo (mirrors the treemap's stroke) keeps it legible
+                        // instead of hiding it — the old `opacity:0` made high-
+                        // performing strands (e.g. Foundational Skills 88%) blank.
+                        maxWidth: '75%',
+                        textShadow: '0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff',
                       }}
                       title={row.strand}
                     >

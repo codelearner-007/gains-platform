@@ -287,6 +287,31 @@
   cursor: zoom-in;
 }
 
+/* Audio/video read-aloud embeds (Schoology /media/ifr players). The source is
+   a player page, not an inline-able asset, so we link to it. Render as a
+   distinct indigo "chip" with a ▶ icon so it reads as playable media and is
+   not confused with the pink/yellow/green performance cells or plain text. */
+.report-media-embed {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  margin: 1px 2px;
+  border-radius: 9999px;
+  background: #e0e7ff; /* indigo-100 */
+  color: #3730a3; /* indigo-800 */
+  border: 1px solid #c7d2fe; /* indigo-200 */
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.report-media-embed:hover {
+  background: #c7d2fe; /* indigo-200 */
+  text-decoration: underline;
+}
+
 /* ─── Lightbox (yet-another-react-lightbox-lite) ──────────────────────────
    Overrides the library's default fullscreen + black layout so we get a
    centered modal with breathing room and a light "plate" behind the image.

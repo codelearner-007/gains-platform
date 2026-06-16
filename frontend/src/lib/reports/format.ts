@@ -142,8 +142,25 @@ export function normalizeSchoologyAssetUrl(raw: string): string {
   return result.replace(/^http:\/\//i, 'https://');
 }
 
+/**
+ * Schoology "media iframe" embeds (`…/media/ifr/<id>`) are audio/video player
+ * pages, not image files — e.g. Grade-1 questions carry TTS read-aloud `.mp3`
+ * clips. Rendering one in an `<img>` always fails (the URL returns an HTML
+ * `<video>`/`<audio>` player), surfacing a broken-image icon. The media IS
+ * playable (the player page 200s and isn't frame-blocked), so we link to it
+ * instead of inlining a broken image.
+ */
+function isSchoologyMediaEmbed(url: string): boolean {
+  return /\/media\/ifr\//i.test(url);
+}
+
 function renderImageTag(url: string, alt: string): string {
   const normalizedUrl = normalizeSchoologyAssetUrl(url);
+  if (isSchoologyMediaEmbed(normalizedUrl)) {
+    return `<a class="report-media-embed" href="${escapeHtml(
+      normalizedUrl,
+    )}" target="_blank" rel="noopener noreferrer">▶ Audio/Video</a>`;
+  }
   const className = normalizedUrl.startsWith('data:image/svg+xml')
     ? 'report-rich-image report-latex-image'
     : 'report-rich-image';
@@ -162,8 +179,8 @@ function renderUrlTokens(raw: string, alt: string): string {
   );
 }
 
-const QUESTION_TAGS = ['img', 'br', 'p', 'strong', 'em', 'b', 'i', 'span'];
-const ANSWER_TAGS = ['img', 'br', 'span'];
+const QUESTION_TAGS = ['img', 'a', 'br', 'p', 'strong', 'em', 'b', 'i', 'span'];
+const ANSWER_TAGS = ['img', 'a', 'br', 'span'];
 const ALLOWED_ATTR_LIST = [
   'src',
   'alt',
@@ -172,6 +189,9 @@ const ALLOWED_ATTR_LIST = [
   'class',
   'decoding',
   'referrerpolicy',
+  'href',
+  'target',
+  'rel',
 ];
 
 function sanitizeFor(tags: string[], html: string): string {
@@ -179,7 +199,7 @@ function sanitizeFor(tags: string[], html: string): string {
     allowedTags: tags,
     allowedAttributes: { '*': ALLOWED_ATTR_LIST },
     allowedSchemes: ['http', 'https', 'data'],
-    allowedSchemesByTag: { img: ['http', 'https', 'data'] },
+    allowedSchemesByTag: { img: ['http', 'https', 'data'], a: ['http', 'https'] },
   });
 }
 
@@ -249,9 +269,6 @@ export function formatNumber(value: number): string {
 }
 
 // ── Shared report constants / string helpers ───────────────────────────────
-
-/** Local fallback logo used when an assessment / school has no `logo_url`. */
-export const FALLBACK_LOGO = '/pilot/athenian-logo.png';
 
 /**
  * Strip the leading "<digits> - " prefix and collapse whitespace from an

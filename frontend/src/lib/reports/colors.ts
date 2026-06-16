@@ -60,6 +60,15 @@ export const DATA_BAR_MARKER = '#475569';
 export const QSR_GREEN = '#99FF99';
 export const QSR_PINK = '#FFCCFF';
 export const QSR_YELLOW = '#fff492';
+// Neutral grey the legacy SSRS QSR uses on the non-percentage numeric cells:
+// the per-student "Possible Points" / "# Correct Answers" columns and the
+// report-wide footer total rows. Verbatim from the rendered legacy PDFs
+// (`Question Summary Report (1).pdf` → these cells are `#d3d3d3`, NOT white).
+export const QSR_POINTS_GREY = '#D3D3D3';
+// Light blue the legacy SSRS QSR uses for the "- Teacher" variant: the
+// per-teacher subtotal rows AND the Classroom Instructor group cell in that
+// variant. Verbatim from `Question Summary Report - Teacher.pdf` (#d9ecff).
+export const QSR_TEACHER_BAND = '#D9ECFF';
 
 /** Three-band Score% fill for the QSR family (exact legacy hexes + rounding). */
 export function qsrPerformanceColor(grade: number): string {

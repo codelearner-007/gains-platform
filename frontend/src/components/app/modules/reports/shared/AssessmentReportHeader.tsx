@@ -24,6 +24,7 @@ export default function AssessmentReportHeader({ assessment, title }: Props) {
   return (
     <ReportPageHeader
       logoUrl={assessment.school_logo_url}
+      schoolName={assessment.school_name || undefined}
       title={title}
       subtitle={subtitle}
       meta={meta}

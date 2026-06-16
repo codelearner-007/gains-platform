@@ -14,6 +14,8 @@ import {
   PBIX_ACCENT_LIGHT_BLUE,
   PBIX_ACCENT_NAVY,
   QSR_HEADER_HILITE_FG,
+  QSR_POINTS_GREY,
+  QSR_TEACHER_BAND,
   qsrCellColor,
   qsrHeaderBandColor,
   qsrPerformanceColor,
@@ -384,6 +386,15 @@ export default function QuestionSummaryMatrix({
         <tbody>
           {orderedGroups.map((group: QsmTeacherGroup) => {
             const students = orderStudents(group.students);
+            // Classroom Instructor group cell fill, per legacy SSRS variant:
+            //  - "- Teacher" (subtotal) variant → light blue #d9ecff
+            //  - "- color" (header-highlights) variant → 3-band by teacher score
+            //  - base → white
+            const instructorBg = showTeacherSubtotal
+              ? QSR_TEACHER_BAND
+              : headerHighlights
+                ? qsrPerformanceColor(group.teacher_score_pct)
+                : '#ffffff';
             return (
             <Fragment key={group.section_instructor}>
               {students.map((student, idx) => (
@@ -400,7 +411,7 @@ export default function QuestionSummaryMatrix({
                       className="border-r px-2 py-1 align-top font-semibold"
                       style={{
                         borderColor: LAYOUT_BORDER,
-                        backgroundColor: HEADER_BAR_BG,
+                        backgroundColor: instructorBg,
                       }}
                     >
                       <div>
@@ -416,7 +427,13 @@ export default function QuestionSummaryMatrix({
                   <th
                     scope="row"
                     className="border-r px-2 py-1 truncate max-w-[180px] text-left font-normal"
-                    style={{ borderColor: LAYOUT_BORDER }}
+                    style={{
+                      borderColor: LAYOUT_BORDER,
+                      // Legacy SSRS bands the Student Name cell by the student's
+                      // Score % (pink/yellow/green), same as the Score % column —
+                      // not white. Verbatim from the legacy QSR PDFs.
+                      backgroundColor: qsrPerformanceColor(student.score_pct),
+                    }}
                   >
                     {redacted
                       ? redactName(student.user_uid, 'Student')
@@ -457,13 +474,19 @@ export default function QuestionSummaryMatrix({
                   })}
                   <td
                     className="border-r px-2 py-1 text-right tabular-nums"
-                    style={{ borderColor: LAYOUT_BORDER }}
+                    style={{
+                      borderColor: LAYOUT_BORDER,
+                      backgroundColor: QSR_POINTS_GREY,
+                    }}
                   >
                     {pts(student.possible_points)}
                   </td>
                   <td
                     className="px-2 py-1 text-right tabular-nums"
-                    style={{ borderColor: LAYOUT_BORDER }}
+                    style={{
+                      borderColor: LAYOUT_BORDER,
+                      backgroundColor: QSR_POINTS_GREY,
+                    }}
                   >
                     {pts(student.correct_count)}
                   </td>
@@ -498,7 +521,7 @@ export default function QuestionSummaryMatrix({
                         className="border-b font-semibold"
                         style={{
                           borderColor: LAYOUT_BORDER,
-                          backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
+                          backgroundColor: QSR_TEACHER_BAND,
                         }}
                       >
                         <td
@@ -532,7 +555,7 @@ export default function QuestionSummaryMatrix({
                         className="border-b font-semibold"
                         style={{
                           borderColor: LAYOUT_BORDER,
-                          backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
+                          backgroundColor: QSR_TEACHER_BAND,
                         }}
                       >
                         <td
@@ -585,7 +608,7 @@ export default function QuestionSummaryMatrix({
             className="border-t-2 font-semibold"
             style={{
               borderColor: LAYOUT_BORDER,
-              backgroundColor: HEADER_BAR_BG,
+              backgroundColor: QSR_POINTS_GREY,
             }}
           >
             <td
@@ -627,7 +650,7 @@ export default function QuestionSummaryMatrix({
             className="border-b font-semibold"
             style={{
               borderColor: LAYOUT_BORDER,
-              backgroundColor: HEADER_BAR_BG,
+              backgroundColor: QSR_POINTS_GREY,
             }}
           >
             <td
@@ -657,7 +680,7 @@ export default function QuestionSummaryMatrix({
           </tr>
           <tr
             className="font-semibold"
-            style={{ backgroundColor: HEADER_BAR_BG }}
+            style={{ backgroundColor: QSR_POINTS_GREY }}
           >
             <td
               className="border-r px-2 py-1"

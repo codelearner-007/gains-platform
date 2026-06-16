@@ -90,9 +90,9 @@ export default function StrandSummaryPage() {
       <div className="mb-2">
         <ReportPageHeader
           logoUrl={data.school.logo_url}
+          schoolName={data.school.name || undefined}
           title={REPORT_NAME}
           subtitle={subtitle}
-          meta={data.school.name || undefined}
         />
       </div>
 

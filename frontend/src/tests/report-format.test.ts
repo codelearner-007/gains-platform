@@ -85,6 +85,31 @@ describe('Schoology image URL rendering', () => {
     expect(html).not.toContain('%252Fsystem/files');
   });
 
+  it('renders Schoology media-iframe embeds as a player link, not a broken image', () => {
+    // Q4 of the Crestwell "Genre Study: Literary Texts" assessment stores two
+    // `/media/ifr/` audio embeds (TTS read-alouds, not image files). Rendered as
+    // <img> they 404 to a broken-image icon; the media is playable, so render a
+    // link that opens the Schoology player.
+    const html = formatQuestionHtml(
+      '<https://app.schoology.com/system/files/https%3A/%252Fapp.schoology.com/media/ifr/6426829573> What is the moral of the story?',
+    );
+    expect(html).toContain('class="report-media-embed"');
+    expect(html).toContain('href="https://app.schoology.com/media/ifr/6426829573"');
+    expect(html).toContain('target="_blank"');
+    expect(html).toContain('Audio/Video');
+    expect(html).not.toContain('<img');
+    expect(html).toContain('What is the moral of the story?');
+  });
+
+  it('still renders genuine image URLs as <img> (media-link does not over-match)', () => {
+    const html = formatQuestionHtml(
+      '<https://app.schoology.com/system/files/attachments/page_embeds/m/2022-07/614040.gif>',
+    );
+    expect(html).toContain('<img');
+    expect(html).toContain('class="report-rich-image"');
+    expect(html).not.toContain('[audio/video]');
+  });
+
   it('converts inaccessible Schoology latex image URLs to local SVG data URIs', () => {
     const normalized = normalizeSchoologyAssetUrl(
       'https://app.schoology.com/system/files/https%3A/%252Faaota.schoology.com/svc/latex/latex-to-svg%3Flatex%3D%255Csmall%252027%253D-5x%255Cleft%280.2x-2%255Cright%29%252B3',
