@@ -654,11 +654,19 @@ class CubeRepository:
                 WHERE item_id = :item_id
             ),
             attempts AS (
+                -- cube_questionincorrectchoice_summary is built with GROUPING
+                -- SETS, so it also carries ukey-rollup and question-rollup rows
+                -- with NULL answer_submission. Summing those into the
+                -- denominator double/triple-counts attempts (e.g. 57 instead of
+                -- 19 students → 18/57=32% instead of 18/19=95%). Restrict to the
+                -- per-choice DETAIL rows only — same filter get_distractor_breakdown uses.
                 SELECT
                     question_id,
                     SUM(total_student) AS total_attempts
                 FROM cube_questionincorrectchoice_summary
                 WHERE question_id IN (SELECT question_id FROM item_qids)
+                  AND answer_submission IS NOT NULL
+                  AND answer_submission <> ''
                 GROUP BY question_id
             )
             SELECT
@@ -680,6 +688,10 @@ class CubeRepository:
             FROM cube_questionincorrectchoice_summary qic
             JOIN item_qids iq ON iq.question_id = qic.question_id
             LEFT JOIN attempts a ON a.question_id = qic.question_id
+            -- Exclude the GROUPING SETS rollup rows (NULL answer_submission) —
+            -- only real per-choice rows belong in the distractor breakdown.
+            WHERE qic.answer_submission IS NOT NULL
+              AND qic.answer_submission <> ''
             ORDER BY qic.question_id, qic.total_student DESC NULLS LAST
             """
         )
