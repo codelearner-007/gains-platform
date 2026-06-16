@@ -19,20 +19,10 @@
 -- assessment (subject_id → one item) is byte-identical to cqso (no baseline
 -- move); a multi-section assessment is correctly split per section.
 
-CREATE TABLE IF NOT EXISTS cube_question_summary_overall_by_item (
-  school_id              uuid,
-  subject_id             text,
-  item_id                text,
-  ukey                   text,
-  question_no            text,
-  position_number        text,
-  correct_answer         text,
-  standards              text,
-  total_possible_point   numeric,
-  total_score            numeric,
-  grade_average          numeric
-);
-
+-- Table + indexes are created by
+-- supabase/migrations/20260616000000_cube_question_summary_overall_by_item.sql
+-- (so it exists at deploy time, before this transform runs). This file only
+-- (re)populates it — TRUNCATE + INSERT, like every other 09_cubes transform.
 TRUNCATE TABLE cube_question_summary_overall_by_item;
 
 INSERT INTO cube_question_summary_overall_by_item (
@@ -111,6 +101,3 @@ FROM (
 WHERE school_id IS NOT NULL
 GROUP BY school_id, subject_id, item_id, ukey, question_no, question,
          position_number, correct_answer, standard;
-
-CREATE INDEX IF NOT EXISTS ix_cqso_by_item_item
-  ON cube_question_summary_overall_by_item (school_id, item_id);
