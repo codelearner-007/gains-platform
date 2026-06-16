@@ -603,8 +603,20 @@ class CubeRepository:
                 COALESCE(qsn.total_score, qson.total_score)                     AS total_score,
                 COALESCE(qsn.grade_average, qson.grade_average)                 AS grade_average,
                 COALESCE(qsn.percentage_incorrect, qson.percentage_incorrect)   AS percentage_incorrect,
-                COALESCE(qso.incorrect_choice_details, qsn.incorrect_choice_details, '') AS incorrect_choice_details,
-                COALESCE(qso.incorrect_details_name, qsn.incorrect_details_name, '')     AS incorrect_details_name,
+                -- Per-choice distractor % and the named-students list MUST be
+                -- item-scoped. The per-item cube (qsn / cube_question_summary)
+                -- lists only THIS item's (one section's) students; the overall
+                -- cube (qso / cube_question_summary_overall) is keyed by
+                -- (school_id, ukey) and aggregates EVERY section that answered
+                -- the same question (identical question content → same ukey).
+                -- An assessment given to multiple sections shares the ukey, so
+                -- qso merges all teachers' students into one list — leaking
+                -- students from other sections into a single teacher's report
+                -- (e.g. Daisy Johnson, in Elena Lenhart's section, surfacing in
+                -- Gabriela Agostino's report). Prefer qsn; fall back to qso only
+                -- when the per-item cube genuinely has no row.
+                COALESCE(qsn.incorrect_choice_details, qso.incorrect_choice_details, '') AS incorrect_choice_details,
+                COALESCE(qsn.incorrect_details_name, qso.incorrect_details_name, '')     AS incorrect_details_name,
                 -- Prefer the full newline-joined Schoology standard list from
                 -- dim_question_data. When a question is genuinely unaligned
                 -- (no source standards), dim_question_data carries none, so
@@ -1815,8 +1827,11 @@ class CubeRepository:
                 SELECT
                     fd.user_uid,
                     fd.user_name,
-                    COALESCE(NULLIF(dsec.section_instructors, ''), 'Unassigned')
-                                                            AS section_instructors,
+                    COALESCE(
+                        NULLIF(dsec.section_instructors, ''),
+                        NULLIF(di_t.section_instructors, ''),
+                        'Unassigned'
+                    )                                       AS section_instructors,
                     fd.item_id,
                     qf.canon_std                            AS schoology_standard,
                     COALESCE(ds.cpalms_standard, qf.canon_std, 'Other')
@@ -1828,9 +1843,20 @@ class CubeRepository:
                   ON qf.item_id = fd.item_id AND qf.question_id = fd.question_id
                 LEFT JOIN dim_standard ds
                   ON ds.schoology_standard = qf.canon_std
+                -- Resolve the instructor the SAME way get_assessment_meta and the
+                -- QSR matrix do: join dim_section by item_id (NOT section_nid),
+                -- falling back to dim_item. A section_nid is reused across
+                -- assessments/dates and dim_section keeps only ONE row per
+                -- section_nid, so a section_nid join surfaced a DIFFERENT item's
+                -- (possibly different teacher's) instructor list in the YTD
+                -- longitudinal rows. item_id + dim_item fallback keeps every
+                -- assessment attributed to its own teacher.
                 LEFT JOIN dim_section dsec
-                  ON dsec.section_nid = fd.section_nid
-                 AND dsec.school_id   = fd.school_id
+                  ON dsec.item_id    = fd.item_id
+                 AND dsec.school_id  = fd.school_id
+                LEFT JOIN dim_item di_t
+                  ON di_t.item_id    = fd.item_id
+                 AND di_t.school_id  = fd.school_id
             )
             SELECT
                 section_instructors,
