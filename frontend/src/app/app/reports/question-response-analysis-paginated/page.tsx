@@ -73,7 +73,6 @@ export default function QraPaginatedPage() {
               <PaginatedReportHeader
                 assessment={data.assessment}
                 title={REPORT_NAME}
-                showInstructorLine
               />
             </div>
 

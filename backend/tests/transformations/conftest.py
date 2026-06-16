@@ -114,6 +114,7 @@ async def reset_dim_tables() -> None:
                     cube_question_summary,
                     cube_questionincorrectchoice_summary,
                     cube_question_summary_overall,
+                    cube_question_summary_overall_by_item,
                     cube_overallperformance_summary,
                     cube_user_summary
                 CASCADE

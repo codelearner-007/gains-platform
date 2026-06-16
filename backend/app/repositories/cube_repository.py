@@ -603,8 +603,20 @@ class CubeRepository:
                 COALESCE(qsn.total_score, qson.total_score)                     AS total_score,
                 COALESCE(qsn.grade_average, qson.grade_average)                 AS grade_average,
                 COALESCE(qsn.percentage_incorrect, qson.percentage_incorrect)   AS percentage_incorrect,
-                COALESCE(qso.incorrect_choice_details, qsn.incorrect_choice_details, '') AS incorrect_choice_details,
-                COALESCE(qso.incorrect_details_name, qsn.incorrect_details_name, '')     AS incorrect_details_name,
+                -- Per-choice distractor % and the named-students list MUST be
+                -- item-scoped. The per-item cube (qsn / cube_question_summary)
+                -- lists only THIS item's (one section's) students; the overall
+                -- cube (qso / cube_question_summary_overall) is keyed by
+                -- (school_id, ukey) and aggregates EVERY section that answered
+                -- the same question (identical question content → same ukey).
+                -- An assessment given to multiple sections shares the ukey, so
+                -- qso merges all teachers' students into one list — leaking
+                -- students from other sections into a single teacher's report
+                -- (e.g. Daisy Johnson, in Elena Lenhart's section, surfacing in
+                -- Gabriela Agostino's report). Prefer qsn; fall back to qso only
+                -- when the per-item cube genuinely has no row.
+                COALESCE(qsn.incorrect_choice_details, qso.incorrect_choice_details, '') AS incorrect_choice_details,
+                COALESCE(qsn.incorrect_details_name, qso.incorrect_details_name, '')     AS incorrect_details_name,
                 -- Prefer the full newline-joined Schoology standard list from
                 -- dim_question_data. When a question is genuinely unaligned
                 -- (no source standards), dim_question_data carries none, so
@@ -642,11 +654,19 @@ class CubeRepository:
                 WHERE item_id = :item_id
             ),
             attempts AS (
+                -- cube_questionincorrectchoice_summary is built with GROUPING
+                -- SETS, so it also carries ukey-rollup and question-rollup rows
+                -- with NULL answer_submission. Summing those into the
+                -- denominator double/triple-counts attempts (e.g. 57 instead of
+                -- 19 students → 18/57=32% instead of 18/19=95%). Restrict to the
+                -- per-choice DETAIL rows only — same filter get_distractor_breakdown uses.
                 SELECT
                     question_id,
                     SUM(total_student) AS total_attempts
                 FROM cube_questionincorrectchoice_summary
                 WHERE question_id IN (SELECT question_id FROM item_qids)
+                  AND answer_submission IS NOT NULL
+                  AND answer_submission <> ''
                 GROUP BY question_id
             )
             SELECT
@@ -668,6 +688,10 @@ class CubeRepository:
             FROM cube_questionincorrectchoice_summary qic
             JOIN item_qids iq ON iq.question_id = qic.question_id
             LEFT JOIN attempts a ON a.question_id = qic.question_id
+            -- Exclude the GROUPING SETS rollup rows (NULL answer_submission) —
+            -- only real per-choice rows belong in the distractor breakdown.
+            WHERE qic.answer_submission IS NOT NULL
+              AND qic.answer_submission <> ''
             ORDER BY qic.question_id, qic.total_student DESC NULLS LAST
             """
         )
@@ -791,17 +815,23 @@ class CubeRepository:
                 GROUP BY ds.strand
             ),
             strand_grade AS (
-                -- Legacy Grade_Average_Strand_Measure: AVERAGE(cqso.grade_average)
-                -- over the cqso rows whose Schoology standard rolls up to the
-                -- strand. cqso.standards == dim_standard.schoology_standard.
+                -- Per-item strand grade: AVG(grade_average) over the per-item
+                -- twin of cube_question_summary_overall (cqso grained by item_id)
+                -- for THIS item only. Base cqso is grained by subject_id (which
+                -- encodes item_name), so it POOLS every section of a multi-
+                -- section assessment — surfacing other sections' students in a
+                -- single teacher's report. The _by_item twin is byte-identical
+                -- to cqso for a single-section assessment (proven: re-pooling it
+                -- by subject reproduces cqso row-for-row; all divergences are in
+                -- multi-item subjects only) but section-scoped for multi-section.
                 SELECT
                     ds.strand               AS strand,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall cqso
-                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                FROM cube_question_summary_overall_by_item cqso
                 JOIN dim_standard ds
                   ON ds.schoology_standard = cqso.standards
-                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                WHERE cqso.item_id = :item_id
+                  AND ds.strand IS NOT NULL AND ds.strand <> ''
                 GROUP BY ds.strand
             )
             SELECT
@@ -898,21 +928,24 @@ class CubeRepository:
                 GROUP BY cqs.identifier
             ),
             cqso_by_code AS (
+                -- Per-item (section-scoped) grade by Schoology code, from the
+                -- item-grained twin of cqso. See get_strand_rollup_for_item for
+                -- the rationale (base cqso pools sections via subject_id).
                 SELECT
                     cqso.standards          AS schoology_standard,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall cqso
-                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                FROM cube_question_summary_overall_by_item cqso
+                WHERE cqso.item_id = :item_id
                 GROUP BY cqso.standards
             ),
             cqso_by_id AS (
                 SELECT
                     ds.identifier           AS identifier,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall cqso
-                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                FROM cube_question_summary_overall_by_item cqso
                 JOIN dim_standard ds
                   ON ds.schoology_standard = cqso.standards
+                WHERE cqso.item_id = :item_id
                 GROUP BY ds.identifier
             )
             SELECT
@@ -1815,8 +1848,11 @@ class CubeRepository:
                 SELECT
                     fd.user_uid,
                     fd.user_name,
-                    COALESCE(NULLIF(dsec.section_instructors, ''), 'Unassigned')
-                                                            AS section_instructors,
+                    COALESCE(
+                        NULLIF(dsec.section_instructors, ''),
+                        NULLIF(di_t.section_instructors, ''),
+                        'Unassigned'
+                    )                                       AS section_instructors,
                     fd.item_id,
                     qf.canon_std                            AS schoology_standard,
                     COALESCE(ds.cpalms_standard, qf.canon_std, 'Other')
@@ -1828,9 +1864,20 @@ class CubeRepository:
                   ON qf.item_id = fd.item_id AND qf.question_id = fd.question_id
                 LEFT JOIN dim_standard ds
                   ON ds.schoology_standard = qf.canon_std
+                -- Resolve the instructor the SAME way get_assessment_meta and the
+                -- QSR matrix do: join dim_section by item_id (NOT section_nid),
+                -- falling back to dim_item. A section_nid is reused across
+                -- assessments/dates and dim_section keeps only ONE row per
+                -- section_nid, so a section_nid join surfaced a DIFFERENT item's
+                -- (possibly different teacher's) instructor list in the YTD
+                -- longitudinal rows. item_id + dim_item fallback keeps every
+                -- assessment attributed to its own teacher.
                 LEFT JOIN dim_section dsec
-                  ON dsec.section_nid = fd.section_nid
-                 AND dsec.school_id   = fd.school_id
+                  ON dsec.item_id    = fd.item_id
+                 AND dsec.school_id  = fd.school_id
+                LEFT JOIN dim_item di_t
+                  ON di_t.item_id    = fd.item_id
+                 AND di_t.school_id  = fd.school_id
             )
             SELECT
                 section_instructors,
