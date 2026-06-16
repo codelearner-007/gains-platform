@@ -815,17 +815,23 @@ class CubeRepository:
                 GROUP BY ds.strand
             ),
             strand_grade AS (
-                -- Legacy Grade_Average_Strand_Measure: AVERAGE(cqso.grade_average)
-                -- over the cqso rows whose Schoology standard rolls up to the
-                -- strand. cqso.standards == dim_standard.schoology_standard.
+                -- Per-item strand grade: AVG(grade_average) over the per-item
+                -- twin of cube_question_summary_overall (cqso grained by item_id)
+                -- for THIS item only. Base cqso is grained by subject_id (which
+                -- encodes item_name), so it POOLS every section of a multi-
+                -- section assessment — surfacing other sections' students in a
+                -- single teacher's report. The _by_item twin is byte-identical
+                -- to cqso for a single-section assessment (proven: re-pooling it
+                -- by subject reproduces cqso row-for-row; all divergences are in
+                -- multi-item subjects only) but section-scoped for multi-section.
                 SELECT
                     ds.strand               AS strand,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall cqso
-                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                FROM cube_question_summary_overall_by_item cqso
                 JOIN dim_standard ds
                   ON ds.schoology_standard = cqso.standards
-                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                WHERE cqso.item_id = :item_id
+                  AND ds.strand IS NOT NULL AND ds.strand <> ''
                 GROUP BY ds.strand
             )
             SELECT
@@ -922,21 +928,24 @@ class CubeRepository:
                 GROUP BY cqs.identifier
             ),
             cqso_by_code AS (
+                -- Per-item (section-scoped) grade by Schoology code, from the
+                -- item-grained twin of cqso. See get_strand_rollup_for_item for
+                -- the rationale (base cqso pools sections via subject_id).
                 SELECT
                     cqso.standards          AS schoology_standard,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall cqso
-                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                FROM cube_question_summary_overall_by_item cqso
+                WHERE cqso.item_id = :item_id
                 GROUP BY cqso.standards
             ),
             cqso_by_id AS (
                 SELECT
                     ds.identifier           AS identifier,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall cqso
-                JOIN subj_ids s ON s.subject_id = cqso.subject_id
+                FROM cube_question_summary_overall_by_item cqso
                 JOIN dim_standard ds
                   ON ds.schoology_standard = cqso.standards
+                WHERE cqso.item_id = :item_id
                 GROUP BY ds.identifier
             )
             SELECT

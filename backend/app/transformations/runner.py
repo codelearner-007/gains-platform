@@ -108,6 +108,10 @@ TRANSFORMATIONS_ORDER: list[tuple[str, str]] = [
     ("09_cubes/cube_question_summary.sql",               "cubes"),
     ("09_cubes/cube_questionincorrectchoice_summary.sql","cubes"),
     ("09_cubes/cube_question_summary_overall.sql",       "cubes"),
+    # Per-item twin of cube_question_summary_overall (adds item_id to the grain)
+    # so per-assessment Strand/Standard rollups read a section-scoped grade
+    # instead of the subject_id-pooled (cross-section) cqso value.
+    ("09_cubes/cube_question_summary_overall_by_item.sql", "cubes"),
     ("09_cubes/cube_overallperformance_summary.sql",     "cubes"),
     ("09_cubes/cube_user_summary.sql",                   "cubes"),
 ]
