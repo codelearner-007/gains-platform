@@ -2038,8 +2038,18 @@ class CubeRepository:
                 pq.cpalms_standard
             FROM per_attempt pa
             JOIN per_question pq ON pq.question_id = pa.question_id
+            -- Resolve the instructor the SAME way the QRA header does
+            -- (get_assessment_meta joins dim_section by item_id, NOT
+            -- section_nid). A section_nid is reused across assessments/dates
+            -- with different instructor lists, and dim_section holds one row
+            -- per section_nid keyed to whichever item built it — so joining on
+            -- section_nid here surfaced a DIFFERENT (older) item's instructors
+            -- in the QSR matrix than the header showed (e.g. "Kimberly Mathes,
+            -- Sitara Qalander" vs. the header's "Kimberly Mathes, MaryBeth
+            -- Taylor"). Joining by item_id finds this item's section row (or
+            -- none → the dim_item fallback below), so matrix and header agree.
             LEFT JOIN dim_section dsec
-              ON dsec.section_nid = pa.section_nid
+              ON dsec.item_id = :item_id
              AND dsec.school_id = pa.school_id
             -- dim_item is one row per (item, school) → no fan-out.
             LEFT JOIN dim_item di
