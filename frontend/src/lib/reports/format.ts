@@ -114,25 +114,32 @@ export function normalizeSchoologyAssetUrl(raw: string): string {
 
   const decoded = decodeRepeatedly(trimmed);
 
+  let result = trimmed;
   const nestedUrl = decoded.match(
     /^https?:\/\/[^/]+\/system\/files\/(https?:\/\/[^\s]+)$/,
   );
   if (nestedUrl) {
     try {
-      return new URL(nestedUrl[1]).toString();
+      result = new URL(nestedUrl[1]).toString();
     } catch {
-      return nestedUrl[1];
+      result = nestedUrl[1];
+    }
+  } else {
+    const doubleSystemFiles = decoded.match(
+      /^(https?:\/\/[^/]+)\/system\/files\/+system\/files\/(.+)$/,
+    );
+    if (doubleSystemFiles) {
+      result = `${doubleSystemFiles[1]}/system/files/${doubleSystemFiles[2]}`;
     }
   }
 
-  const doubleSystemFiles = decoded.match(
-    /^(https?:\/\/[^/]+)\/system\/files\/+system\/files\/(.+)$/,
-  );
-  if (doubleSystemFiles) {
-    return `${doubleSystemFiles[1]}/system/files/${doubleSystemFiles[2]}`;
-  }
-
-  return trimmed;
+  // Force https. ~13k stored asset URLs are http:// (pre-2023 Schoology
+  // exports). On the http://localhost dev site those load fine (same scheme),
+  // but on the https:// production site an http:// <img> is mixed content —
+  // browser-dependent (Chrome auto-upgrades, others block) and noisy. The asset
+  // is always served over https (Schoology 302-redirects to its signed CDN —
+  // verified), so upgrade the scheme so every browser loads it without warnings.
+  return result.replace(/^http:\/\//i, 'https://');
 }
 
 function renderImageTag(url: string, alt: string): string {

@@ -28,6 +28,28 @@ describe('Schoology image URL rendering', () => {
     );
   });
 
+  it('upgrades http:// asset URLs to https:// (mixed-content fix)', () => {
+    // ~13k stored URLs are pre-2023 http:// exports; on the https prod site
+    // they are mixed content. The asset is always served over https.
+    expect(
+      normalizeSchoologyAssetUrl(
+        'http://app.schoology.com/system/files/http%3A/%252Fapp.schoology.com/system/files/attachments/page_embeds/m/2022-07/614040.gif',
+      ),
+    ).toBe(
+      'https://app.schoology.com/system/files/attachments/page_embeds/m/2022-07/614040.gif',
+    );
+  });
+
+  it('upgrades a plain http:// asset URL with no wrapper', () => {
+    expect(
+      normalizeSchoologyAssetUrl(
+        'http://app.schoology.com/system/files/attachments/page_embeds/m/2022-07/x.png',
+      ),
+    ).toBe(
+      'https://app.schoology.com/system/files/attachments/page_embeds/m/2022-07/x.png',
+    );
+  });
+
   it('renders question stems as image tags with normalized URLs', () => {
     const html = formatQuestionHtml(
       '<https://app.schoology.com/system/files/%252Fsystem/files/attachments/page_embeds/m/2023-03/Screenshot.png>',
