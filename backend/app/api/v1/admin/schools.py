@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db, require_permission
@@ -95,5 +95,31 @@ async def update_school(
         module="schools",
         resource_id=school.school_id,
         details=payload.model_dump(exclude_unset=True),
+    )
+    return school
+
+
+@router.post(
+    "/{school_id}/logo",
+    response_model=SchoolResponse,
+    dependencies=[Depends(require_permission("schools:update"))],
+)
+async def upload_school_logo(
+    school_id: str,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+) -> SchoolResponse:
+    """Upload a school logo to storage and persist its URL. Requires: schools:update"""
+    service = SchoolService(db)
+    school = await service.upload_logo(school_id, file)
+
+    audit = AuditService(db)
+    await audit.log_action(
+        user_id=current_user.user_id,
+        action="school_logo_updated",
+        module="schools",
+        resource_id=school.school_id,
+        details={"logo_url": school.logo_url},
     )
     return school

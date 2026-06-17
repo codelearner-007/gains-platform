@@ -20,6 +20,7 @@ import {
 } from '@/lib/schemas/schools.schema';
 import { updateSchool, type School } from '@/lib/services/schools.service';
 import SchoolFormFields from './SchoolFormFields';
+import { SchoolLogoUpload } from './SchoolLogoUpload';
 
 interface SchoolEditDialogProps {
   school: School | null;
@@ -88,6 +89,24 @@ export function SchoolEditDialog({
             <DialogTitle>Edit School</DialogTitle>
             <DialogDescription>Update school details.</DialogDescription>
           </DialogHeader>
+
+          {school && (
+            <div className="space-y-2 py-2">
+              <label className="text-sm font-medium text-foreground">
+                School Logo
+              </label>
+              <SchoolLogoUpload
+                schoolId={school.school_id}
+                currentLogoUrl={school.logo_url}
+                onUploaded={() => {
+                  toast('Logo updated', {
+                    description: 'The school logo has been uploaded.',
+                  });
+                  onSuccess();
+                }}
+              />
+            </div>
+          )}
 
           <SchoolFormFields
             register={register}
