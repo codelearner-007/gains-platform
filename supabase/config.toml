@@ -51,6 +51,7 @@ sql_paths = [
   './seeds/rbac_seed.sql',
   './seeds/schools_all.sql',
   './seeds/teacher_pair_overrides.sql',
+  './seeds/subject_grade_overrides.sql',
 ]
 
 [realtime]

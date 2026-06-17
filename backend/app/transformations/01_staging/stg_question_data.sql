@@ -84,4 +84,8 @@ LEFT JOIN LATERAL (
     AND rqd.grade = ANY(x.grade_match)
   ORDER BY x.override_id
   LIMIT 1
-) go ON TRUE;
+) go ON TRUE
+-- Drop the 2025-26 placeholder pair (folder name literally "remove grade level"
+-- / "No grade level"); mirrors the same filter in stg_student_submission.sql.
+WHERE NULLIF(TRIM(rqd.grade), '')   IS DISTINCT FROM 'remove grade level'
+  AND NULLIF(TRIM(rqd.subject), '') IS DISTINCT FROM 'No grade level';

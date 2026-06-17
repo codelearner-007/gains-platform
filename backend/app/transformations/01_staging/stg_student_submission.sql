@@ -101,4 +101,9 @@ LEFT JOIN LATERAL (
 ) go ON TRUE
 LEFT JOIN teacher_pair_overrides tp
   ON tp.school_id    = s.school_id
- AND tp.pair_pattern = rss.section_instructors;
+ AND tp.pair_pattern = rss.section_instructors
+-- Drop the 2025-26 placeholder pair. The Schoology folder name literally reads
+-- "remove grade level" / "No grade level" — an explicit instruction to discard
+-- these non-instructional rows (no override maps them to a real subject/grade).
+WHERE NULLIF(TRIM(rss.grade), '')   IS DISTINCT FROM 'remove grade level'
+  AND NULLIF(TRIM(rss.subject), '') IS DISTINCT FROM 'No grade level';
