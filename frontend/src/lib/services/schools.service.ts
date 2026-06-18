@@ -15,6 +15,7 @@ export interface School {
   schoology_school_id: string | null;
   name: string;
   short_name: string;
+  logo_url: string | null;
   current_session: string | null;
   timezone: string;
   is_active: boolean;
@@ -62,4 +63,38 @@ export async function updateSchool(
   data: UpdateSchool,
 ): Promise<School> {
   return apiClient.put<School>(`/v1/admin/schools/${schoolId}`, data);
+}
+
+/**
+ * Upload (or replace) a school's logo.
+ *
+ * Sends the image as multipart form data to the FastAPI backend, which writes
+ * it to Supabase Storage and persists the resulting public URL on the school.
+ * Mirrors profileService.uploadAvatar — uses a raw fetch (not apiClient, which
+ * is JSON-only) so the browser sets the multipart boundary itself.
+ * Returns the updated school (including the new logo_url).
+ */
+export async function uploadSchoolLogo(
+  schoolId: string,
+  file: File,
+): Promise<School> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`/api/v1/admin/schools/${schoolId}/logo`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: 'Upload failed' }));
+    throw new Error(
+      error.detail || error.error || error.message || 'Logo upload failed',
+    );
+  }
+
+  return response.json();
 }
