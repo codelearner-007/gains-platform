@@ -23,17 +23,7 @@ import {
 import { listSchools, type School } from '@/lib/services/schools.service';
 import { inviteUser, type InviteUserRequest } from '@/lib/services/users.service';
 import type { InviteFormValues } from './InviteUserDialog';
-
-function useDebounce<T>(value: T, delay: number = 300): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
-}
+import { useDebounce } from '@/hooks/useDebounce';
 
 export interface AssignRoleDialogState {
   user: UserWithRoles | null;

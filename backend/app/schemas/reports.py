@@ -7,6 +7,7 @@ the TypeScript interfaces exactly.
 
 from __future__ import annotations
 
+from datetime import date
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -573,6 +574,49 @@ class StrandSummaryPayload(BaseModel):
     band_low: List[StrandSummaryBandRow]
     data_quality: Optional[AlignmentDataQuality] = None
     data_refreshed_at: str = ""
+
+
+# ─── Dashboard overview + Performance-by-Strand grid ───────────────────────
+
+
+class DashboardSubjectCard(BaseModel):
+    """One subject KPI card on the dashboard (subject grade-average %)."""
+
+    subject: str
+    grade_average: Optional[float] = None
+    grade_average_pct: str = "—"
+
+
+class DashboardOverviewPayload(BaseModel):
+    """Subject cards + dataset-refresh timestamp for the dashboard front filters."""
+
+    subjects: List[DashboardSubjectCard]
+    refreshed_at: Optional[str] = None
+
+
+class DashboardStrandRow(BaseModel):
+    """One per-(assessment × strand) row of the legacy Performance-by-Strand grid."""
+
+    item_id: str
+    grade: Optional[str] = None
+    strand: str
+    total_standards: int = 0
+    total_questions: int = 0
+    grade_average: Optional[float] = None
+    grade_average_pct: str = "—"
+    assessment_date: Optional[date] = None
+    assessment: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DashboardStrandRowsPage(BaseModel):
+    """Server-paginated page of the Performance-by-Strand grid."""
+
+    rows: List[DashboardStrandRow]
+    total: int
+    limit: int
+    offset: int
 
 
 # ─── Standards-alignment Data Quality (admin) ──────────────────────────────

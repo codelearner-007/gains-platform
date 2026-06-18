@@ -3,8 +3,12 @@ import type {
   AlignmentDataQualityReport,
   AssessmentFilters,
   AssessmentSummaryPage,
+  AssessmentTypeRow,
+  DashboardOverviewPayload,
+  DashboardStrandRowsPage,
   GradeRow,
   IncorrectAnswerDetailsPayload,
+  InstructorRow,
   QraByStandardTeacherPayload,
   QraByTeacherPayload,
   QraPaginatedPayload,
@@ -149,10 +153,48 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<AssessmentSummaryPage>),
 
+  /** Subject KPI cards (per-subject grade-average) + dataset-refresh timestamp.
+   *  School-wide (no section/instructor grain), scoped by year/type/grade. */
+  dashboardOverview: (
+    filters: Pick<AssessmentFilters, 'session' | 'category' | 'grade' | 'school_id'> | undefined,
+  ) =>
+    fetch(`/api/v1/reports/dashboard-overview${buildQuery(filters)}`, {
+      credentials: 'include',
+    }).then(handleResponse<DashboardOverviewPayload>),
+
+  /** One server-paginated page of the legacy Performance-by-Strand grid. */
+  strandRows: (
+    filters: AssessmentFilters | undefined,
+    schoolId: string | undefined,
+    opts: AssessmentSummaryQuery,
+  ) =>
+    fetch(
+      `/api/v1/reports/strand-rows${buildQuery({
+        ...filters,
+        school_id: schoolId,
+        q: opts.q,
+        sort: opts.sort,
+        dir: opts.dir,
+        limit: opts.limit != null ? String(opts.limit) : undefined,
+        offset: opts.offset != null ? String(opts.offset) : undefined,
+      })}`,
+      { credentials: 'include' },
+    ).then(handleResponse<DashboardStrandRowsPage>),
+
   sessions: (schoolId?: string) =>
     fetch(`/api/v1/dim/sessions${buildQuery({ school_id: schoolId })}`, {
       credentials: 'include',
     }).then(handleResponse<SessionRow[]>),
+
+  assessmentTypes: (schoolId?: string) =>
+    fetch(`/api/v1/dim/assessment-types${buildQuery({ school_id: schoolId })}`, {
+      credentials: 'include',
+    }).then(handleResponse<AssessmentTypeRow[]>),
+
+  instructors: (schoolId?: string) =>
+    fetch(`/api/v1/dim/instructors${buildQuery({ school_id: schoolId })}`, {
+      credentials: 'include',
+    }).then(handleResponse<InstructorRow[]>),
 
   subjects: (schoolId?: string) =>
     fetch(`/api/v1/dim/subjects${buildQuery({ school_id: schoolId })}`, {
@@ -193,6 +235,21 @@ export const reportsKeys = {
     [...reportsKeys.all, 'standardSummary', filters ?? {}] as const,
   strandSummary: (filters?: StrandSummaryFilters, strandsOnly?: boolean) =>
     [...reportsKeys.all, 'strandSummary', filters ?? {}, strandsOnly ?? false] as const,
+  dashboardOverview: (
+    filters?: Pick<AssessmentFilters, 'session' | 'category' | 'grade' | 'school_id'>,
+  ) => [...reportsKeys.all, 'dashboard-overview', filters ?? {}] as const,
+  strandRows: (
+    filters?: AssessmentFilters,
+    schoolId?: string,
+    opts?: { q?: string; sort?: string; dir?: string },
+  ) =>
+    [
+      ...reportsKeys.all,
+      'strand-rows',
+      filters ?? {},
+      schoolId ?? null,
+      { q: opts?.q ?? '', sort: opts?.sort ?? 'date', dir: opts?.dir ?? 'desc' },
+    ] as const,
   alignmentDataQuality: () =>
     [...reportsKeys.all, 'dq', 'standards-alignment'] as const,
   assessmentSummaries: (
@@ -209,6 +266,10 @@ export const reportsKeys = {
     ] as const,
   sessions: (schoolId?: string) =>
     [...reportsKeys.all, 'dim', 'sessions', schoolId ?? null] as const,
+  assessmentTypes: (schoolId?: string) =>
+    [...reportsKeys.all, 'dim', 'assessment-types', schoolId ?? null] as const,
+  instructors: (schoolId?: string) =>
+    [...reportsKeys.all, 'dim', 'instructors', schoolId ?? null] as const,
   subjects: (schoolId?: string) =>
     [...reportsKeys.all, 'dim', 'subjects', schoolId ?? null] as const,
   grades: (schoolId?: string) =>

@@ -92,6 +92,16 @@ _CQSO_YTD_FILTER_SQL = """\
               AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
               AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))"""
 
+# Instructor filter — exact match against ONE comma-split element of the
+# (comma-joined) ``dim_item.section_instructors`` list (alias ``di``). Mirrors
+# the split in ``dim_repository.list_instructors`` so a selected full name
+# matches exactly (no substring over-match). Shared by the By-Assessment and
+# By-Strand dashboard grids.
+_DI_INSTRUCTOR_FILTER_SQL = """(CAST(:instructor AS TEXT) IS NULL OR EXISTS (
+                  SELECT 1 FROM unnest(string_to_array(di.section_instructors, ',')) AS _ins(name)
+                  WHERE btrim(_ins.name) = btrim(CAST(:instructor AS TEXT))
+              ))"""
+
 
 class CubeRepository:
     """Reads from the cube_* and supporting fact tables."""
@@ -259,6 +269,7 @@ class CubeRepository:
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         section: Optional[str] = None,
+        instructor: Optional[str] = None,
         q: Optional[str] = None,
         sort_sql: str = "assessment_date",
         dir_sql: str = "DESC",
@@ -298,6 +309,7 @@ class CubeRepository:
                   AND (CAST(:subject AS TEXT)  IS NULL OR ds.subject         = CAST(:subject AS TEXT))
                   AND (CAST(:grade AS TEXT)    IS NULL OR ds.grade           = CAST(:grade AS TEXT))
                   AND (CAST(:section AS TEXT)  IS NULL OR di.section_name    = CAST(:section AS TEXT))
+                  AND {_DI_INSTRUCTOR_FILTER_SQL}
                   AND (CAST(:q AS TEXT)        IS NULL OR di.item_name ILIKE '%' || CAST(:q AS TEXT) || '%')
             ),
             -- Per-item grade_average from the PRECOMPUTED per-question cube, NOT a
@@ -356,6 +368,7 @@ class CubeRepository:
                 "subject": subject,
                 "grade": grade,
                 "section": section,
+                "instructor": instructor,
                 "q": q,
                 "limit": limit,
                 "offset": offset,
@@ -851,6 +864,134 @@ class CubeRepository:
         result = await self.session.execute(sql, {"item_id": item_id})
         return [_row_to_dict(r) for r in result.all()]
 
+    async def get_strand_rows_page(
+        self,
+        session_filter: Optional[str] = None,
+        category: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        instructor: Optional[str] = None,
+        q: Optional[str] = None,
+        sort_sql: str = "assessment_date",
+        dir_sql: str = "DESC",
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[List[Dict[str, Any]], int]:
+        """One page of the dashboard "Performance by Strand" grid at the legacy
+        per-(assessment × strand) grain, plus the full filter-scoped total.
+
+        Generalizes :meth:`get_strand_rollup_for_item` across every assessment in
+        the filter scope — identical column semantics so the dashboard cannot
+        disagree with the SDD/QRA strand tables or legacy PowerBI:
+
+        * ``total_standards`` = COUNT(DISTINCT schoology_standard) per strand,
+          from ``dim_standard`` matched to the item's aligned ``dim_question_data``
+          codes.
+        * ``total_questions`` = COUNT(DISTINCT question_no) per strand, from
+          ``cube_question_summary``.
+        * ``grade_average`` = AVG(grade_average) over
+          ``cube_question_summary_overall_by_item`` per strand — the section-aware
+          per-item twin (legacy DAX ``Grade_Average_Strand_Measure``). NULL (BLANK)
+          when the strand carries no cqso rows, exactly like legacy.
+
+        Server-paginated (``limit``/``offset``) + sorted. ``sort_sql``/``dir_sql``
+        MUST be pre-validated literals from the service whitelist (interpolated,
+        not bound). RLS scopes every base table to the caller's school.
+        """
+        order_by = f"{sort_sql} {dir_sql} NULLS LAST, item_id ASC, strand ASC"
+        sql = text(
+            f"""
+            WITH scoped_items AS (
+                SELECT di.item_id, ds.grade, di.item_name, di.assessment_date
+                FROM dim_item di
+                LEFT JOIN dim_subject ds
+                  ON ds.school_id = di.school_id AND ds.subject_id = di.subject_id
+                WHERE (CAST(:session_filter AS TEXT) IS NULL OR ds.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:category AS TEXT)  IS NULL OR ds.assessment_type = CAST(:category AS TEXT))
+                  AND (CAST(:subject AS TEXT)   IS NULL OR ds.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT)     IS NULL OR ds.grade = CAST(:grade AS TEXT))
+                  AND {_DI_INSTRUCTOR_FILTER_SQL}
+                  AND (CAST(:q AS TEXT)         IS NULL OR di.item_name ILIKE '%' || CAST(:q AS TEXT) || '%')
+            ),
+            item_codes AS (
+                SELECT DISTINCT dqd.item_id, dqd.standard AS code
+                FROM dim_question_data dqd
+                JOIN scoped_items si ON si.item_id = dqd.item_id
+                WHERE dqd.standard IS NOT NULL AND dqd.standard NOT IN ('', 'null')
+            ),
+            labeled AS (
+                SELECT DISTINCT ic.item_id, ds.identifier, ds.schoology_standard, ds.strand
+                FROM dim_standard ds
+                JOIN item_codes ic ON ds.schoology_standard = ic.code
+                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND ds.schoology_standard IS NOT NULL AND ds.schoology_standard <> ''
+            ),
+            strand_standards AS (
+                SELECT item_id, strand, COUNT(DISTINCT schoology_standard) AS num_standards
+                FROM labeled
+                GROUP BY item_id, strand
+            ),
+            strand_questions AS (
+                SELECT cqs.item_id AS item_id, ds.strand AS strand,
+                       COUNT(DISTINCT cqs.question_no) AS num_questions
+                FROM cube_question_summary cqs
+                JOIN labeled l ON l.identifier = cqs.identifier AND l.item_id = cqs.item_id
+                JOIN dim_standard ds ON ds.identifier = cqs.identifier
+                WHERE cqs.item_id IN (SELECT item_id FROM scoped_items)
+                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                GROUP BY cqs.item_id, ds.strand
+            ),
+            strand_grade AS (
+                SELECT cqso.item_id AS item_id, ds.strand AS strand,
+                       AVG(cqso.grade_average) AS grade_average
+                FROM cube_question_summary_overall_by_item cqso
+                JOIN scoped_items si ON si.item_id = cqso.item_id
+                JOIN dim_standard ds ON ds.schoology_standard = cqso.standards
+                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                GROUP BY cqso.item_id, ds.strand
+            ),
+            rows AS (
+                SELECT
+                    si.grade           AS grade,
+                    sq.strand          AS strand,
+                    ss.num_standards   AS total_standards,
+                    sq.num_questions   AS total_questions,
+                    sg.grade_average   AS grade_average,
+                    si.assessment_date AS assessment_date,
+                    si.item_name       AS assessment,
+                    sq.item_id         AS item_id,
+                    COUNT(*) OVER()    AS total
+                FROM strand_questions sq
+                JOIN scoped_items si ON si.item_id = sq.item_id
+                JOIN strand_standards ss
+                  ON ss.item_id = sq.item_id AND ss.strand = sq.strand
+                LEFT JOIN strand_grade sg
+                  ON sg.item_id = sq.item_id AND sg.strand = sq.strand
+            )
+            SELECT * FROM rows
+            ORDER BY {order_by}
+            LIMIT :limit OFFSET :offset
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            {
+                "session_filter": session_filter,
+                "category": category,
+                "subject": subject,
+                "grade": grade,
+                "instructor": instructor,
+                "q": q,
+                "limit": limit,
+                "offset": offset,
+            },
+        )
+        rows = [_row_to_dict(r) for r in result.all()]
+        total = int(rows[0]["total"]) if rows else 0
+        for r in rows:
+            r.pop("total", None)
+        return rows, total
+
     async def get_standard_rollup_for_item(
         self, item_id: str
     ) -> List[Dict[str, Any]]:
@@ -1110,6 +1251,42 @@ class CubeRepository:
         )
         row = result.first()
         return float(row._mapping["overall_avg"]) if row else 0.0
+
+    async def get_subject_overview(
+        self,
+        session_filter: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Per-subject ``AVG(cqso.grade_average)`` for the dashboard subject cards.
+
+        Same canonical grade-average source as the KPI strip
+        (``cube_question_summary_overall``, legacy DAX
+        ``AVERAGE(cqso[Grade_Average])``) — just grouped by subject. Scoped by
+        session/grade/category but NOT by subject (every subject is returned so
+        the cards stay visible) and NOT by section/instructor: the per-question
+        OVERALL cube has no section grain, so the subject cards stay school-wide,
+        exactly like the KPI strip and legacy PowerBI.
+        """
+        sql = text(
+            f"""
+            SELECT dsubj.subject                  AS subject,
+                   AVG(cqso.grade_average)::float AS grade_average
+            FROM cube_question_summary_overall cqso
+            JOIN dim_subject dsubj
+              ON dsubj.school_id = cqso.school_id
+             AND dsubj.subject_id = cqso.subject_id
+            WHERE {_CQSO_YTD_FILTER_SQL}
+              AND dsubj.subject IS NOT NULL AND dsubj.subject <> ''
+            GROUP BY dsubj.subject
+            ORDER BY dsubj.subject
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(session_filter, None, grade, category, None),
+        )
+        return [_row_to_dict(r) for r in result.all()]
 
     async def get_school_total_questions(
         self,

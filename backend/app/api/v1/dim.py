@@ -11,7 +11,9 @@ from app.core.dependencies import get_current_user, get_db, require_permission
 from app.middleware.rls import get_db_with_rls
 from app.schemas.auth import CurrentUser
 from app.schemas.dim import (
+    AssessmentTypeRow,
     GradeRow,
+    InstructorRow,
     SectionRow,
     SessionRow,
     StandardRow,
@@ -105,3 +107,29 @@ async def list_sessions(
     """Per-school ``dim_session`` lookup (RLS applied)."""
     service = DimService(db)
     return await service.list_sessions()
+
+
+@router.get(
+    "/assessment-types",
+    response_model=List[AssessmentTypeRow],
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def list_assessment_types(
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> List[AssessmentTypeRow]:
+    """Distinct per-school ``assessment_type`` values (RLS applied)."""
+    service = DimService(db)
+    return await service.list_assessment_types()
+
+
+@router.get(
+    "/instructors",
+    response_model=List[InstructorRow],
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def list_instructors(
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> List[InstructorRow]:
+    """Distinct classroom instructors parsed from ``section_instructors`` (RLS applied)."""
+    service = DimService(db)
+    return await service.list_instructors()

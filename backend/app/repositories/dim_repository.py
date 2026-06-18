@@ -92,6 +92,43 @@ class DimRepository:
         result = await self.session.execute(sql)
         return [dict(r._mapping) for r in result.all()]
 
+    async def list_assessment_types(self) -> List[Dict[str, Any]]:
+        sql = text(
+            """
+            SELECT DISTINCT assessment_type
+            FROM dim_subject
+            WHERE assessment_type IS NOT NULL AND assessment_type <> ''
+            ORDER BY assessment_type
+            """
+        )
+        result = await self.session.execute(sql)
+        return [dict(r._mapping) for r in result.all()]
+
+    async def list_instructors(self) -> List[Dict[str, Any]]:
+        """DISTINCT classroom instructors, parsed from the comma-joined
+        ``section_instructors`` strings on dim_item + dim_section. Comma is the
+        canonical delimiter (full ``First Last`` names, no intra-name commas) —
+        the same split the frontend filter helper applies.
+        """
+        sql = text(
+            """
+            SELECT DISTINCT btrim(part) AS instructor
+            FROM (
+                SELECT unnest(string_to_array(section_instructors, ',')) AS part
+                FROM dim_item
+                WHERE section_instructors IS NOT NULL AND section_instructors <> ''
+                UNION ALL
+                SELECT unnest(string_to_array(section_instructors, ',')) AS part
+                FROM dim_section
+                WHERE section_instructors IS NOT NULL AND section_instructors <> ''
+            ) parts
+            WHERE btrim(part) <> ''
+            ORDER BY instructor
+            """
+        )
+        result = await self.session.execute(sql)
+        return [dict(r._mapping) for r in result.all()]
+
     # ────── dim_item (assessment lookup) ──────
 
     async def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
