@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.dim_repository import DimRepository
 from app.schemas.dim import (
+    AssessmentTypeRow,
     GradeRow,
+    InstructorRow,
     SectionRow,
     SessionRow,
     StandardRow,
@@ -45,3 +47,11 @@ class DimService:
     async def list_sessions(self) -> List[SessionRow]:
         rows = await self.repo.list_sessions()
         return [SessionRow.model_validate(r) for r in rows]
+
+    async def list_assessment_types(self) -> List[AssessmentTypeRow]:
+        rows = await self.repo.list_assessment_types()
+        return [AssessmentTypeRow.model_validate(r) for r in rows]
+
+    async def list_instructors(self) -> List[InstructorRow]:
+        rows = await self.repo.list_instructors()
+        return [InstructorRow.model_validate(r) for r in rows]

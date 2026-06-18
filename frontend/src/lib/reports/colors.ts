@@ -136,6 +136,26 @@ export function performanceColor(grade: number): string {
   return PERF_GREEN;
 }
 
+// Soft performance-band fills for the dashboard subject KPI cards: a light tint
+// background, the PERF traffic-light hue as the card border/accent, and a
+// WCAG-AA dark text tone (≥4.5:1 on the tint). Three-band semantics match
+// performanceColor() so the cards read the same traffic light as the data bars.
+export const PERF_BAND_HIGH = { bg: '#E7F8EC', accent: PERF_GREEN, fg: '#166534' }; // ≥80%
+export const PERF_BAND_MID = { bg: '#FFF8E0', accent: PERF_YELLOW, fg: '#854D0E' }; // 70–80%
+export const PERF_BAND_LOW = { bg: '#FDEAF1', accent: PERF_PINK, fg: '#9F1239' }; // <70%
+
+export interface PerfBand {
+  bg: string;
+  accent: string;
+  fg: string;
+}
+
+export function performanceBand(grade: number): PerfBand {
+  if (grade < 0.7) return PERF_BAND_LOW;
+  if (grade < 0.8) return PERF_BAND_MID;
+  return PERF_BAND_HIGH;
+}
+
 // Cell-background colour for grade-coloured percentage cells (QRA per-question
 // table, strands / standards summary tables). Mirrors PBIX semantics so the
 // pink/yellow/green traffic light is consistent across every report.

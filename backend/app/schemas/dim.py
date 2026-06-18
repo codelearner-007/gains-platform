@@ -65,3 +65,19 @@ class SessionRow(BaseModel):
     session: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AssessmentTypeRow(BaseModel):
+    """Distinct ``dim_subject.assessment_type`` (per-school)."""
+
+    assessment_type: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InstructorRow(BaseModel):
+    """Distinct classroom instructor parsed from ``section_instructors``."""
+
+    instructor: str
+
+    model_config = ConfigDict(from_attributes=True)

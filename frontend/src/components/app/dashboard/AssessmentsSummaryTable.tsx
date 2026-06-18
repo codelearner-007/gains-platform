@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import type {
   AssessmentSummaryListRow,
+  DashboardStrandRow,
   StandardSummaryRollupRow,
-  StrandSummaryRollupRow,
 } from '@/lib/reports/types';
 import { getReportsByGroup, buildHref } from '@/lib/reports/report-types';
 import {
@@ -47,6 +47,15 @@ export type SummaryView = 'assessment' | 'standard' | 'strand';
 /** Server sort keys for the By-Assessment grid (match the backend whitelist). */
 export type AssessmentSortKey = 'grade' | 'date' | 'item' | 'students' | 'average';
 
+/** Server sort keys for the By-Strand grid (match the backend whitelist). */
+export type StrandRowSortKey =
+  | 'grade'
+  | 'strand'
+  | 'standards'
+  | 'questions'
+  | 'average'
+  | 'date';
+
 const VIEWS: { value: SummaryView; label: string }[] = [
   { value: 'assessment', label: 'By Assessment' },
   { value: 'standard', label: 'By Standard' },
@@ -79,12 +88,22 @@ interface Props {
   onAssessmentSort: (col: AssessmentSortKey) => void;
   assessmentLoading: boolean;
 
-  // ── By Standard / By Strand (client-side, bounded) ──
+  // ── By Strand (server-paginated — legacy per-assessment × strand grain) ──
+  strandRows: DashboardStrandRow[];
+  strandTotal: number;
+  strandHasMore: boolean;
+  strandFetchingMore: boolean;
+  onStrandFetchMore: () => void;
+  strandSort: StrandRowSortKey;
+  strandDir: SortDirection;
+  onStrandSort: (col: StrandRowSortKey) => void;
+  strandLoading: boolean;
+
+  // ── By Standard (client-side, bounded) ──
   standards: StandardSummaryRollupRow[];
-  strands: StrandSummaryRollupRow[];
-  /** Free-text search; server `q` for assessments, client filter for std/strand. */
+  /** Client filter for the By-Standard rollup (assessment + strand use server q). */
   search: string;
-  loading: boolean; // std/strand initial load
+  loading: boolean; // By-Standard initial load
 }
 
 export default function AssessmentsSummaryTable({
@@ -98,13 +117,26 @@ export default function AssessmentsSummaryTable({
   assessmentDir,
   onAssessmentSort,
   assessmentLoading,
+  strandRows,
+  strandTotal,
+  strandHasMore,
+  strandFetchingMore,
+  onStrandFetchMore,
+  strandSort,
+  strandDir,
+  onStrandSort,
+  strandLoading,
   standards,
-  strands,
   search,
   loading,
 }: Props) {
   const [view, setView] = useState<SummaryView>('assessment');
-  const variantLoading = view === 'assessment' ? assessmentLoading : loading;
+  const variantLoading =
+    view === 'assessment'
+      ? assessmentLoading
+      : view === 'strand'
+        ? strandLoading
+        : loading;
 
   return (
     <div
@@ -163,7 +195,17 @@ export default function AssessmentsSummaryTable({
       ) : view === 'standard' ? (
         <ByStandard rows={standards} search={search} schoolAverage={schoolAverage} />
       ) : (
-        <ByStrand rows={strands} search={search} schoolAverage={schoolAverage} />
+        <ByStrandRows
+          rows={strandRows}
+          total={strandTotal}
+          hasMore={strandHasMore}
+          isFetchingMore={strandFetchingMore}
+          onFetchMore={onStrandFetchMore}
+          sort={strandSort}
+          dir={strandDir}
+          onSort={onStrandSort}
+          schoolAverage={schoolAverage}
+        />
       )}
     </div>
   );
@@ -359,8 +401,8 @@ function ByAssessment({
             <tr>
               <Th><SortableHeader column="grade" label="Grade" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
               <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
-              <Th><SortableHeader column="item" label="Item Name" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
-              <Th align="center"><SortableHeader column="students" label="Total Students" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
+              <Th><SortableHeader column="item" label="Assessment" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th align="center"><SortableHeader column="students" label="Student Count" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
               <Th><SortableHeader column="average" label="Grade Average" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
               <Th align="right">Report</Th>
             </tr>
@@ -516,43 +558,33 @@ function ByStandard({
   );
 }
 
-// ── Variant C: By Strand (client-side, bounded) ──────────────────────────
-type StKey = 'strand' | 'standards' | 'questions' | 'assessments' | 'average';
-
-const ST_ACCESSORS: Record<StKey, SortAccessor<StrandSummaryRollupRow>> = {
-  strand: (r) => (r.strand ?? '').toLowerCase(),
-  standards: (r) => r.num_standards,
-  questions: (r) => r.num_questions,
-  assessments: (r) => r.num_assessments,
-  average: (r) => r.grade_average,
-};
-
-function ByStrand({
+// ── Variant C: By Strand (server-paginated, legacy per-assessment × strand) ──
+function ByStrandRows({
   rows,
-  search,
+  total,
+  hasMore,
+  isFetchingMore,
+  onFetchMore,
+  sort,
+  dir,
+  onSort,
   schoolAverage,
 }: {
-  rows: StrandSummaryRollupRow[];
-  search: string;
+  rows: DashboardStrandRow[];
+  total: number;
+  hasMore: boolean;
+  isFetchingMore: boolean;
+  onFetchMore: () => void;
+  sort: StrandRowSortKey;
+  dir: SortDirection;
+  onSort: (col: StrandRowSortKey) => void;
   schoolAverage: number | null;
 }) {
-  const q = search.trim().toLowerCase();
-  const filtered = useMemo(
-    () => (q ? rows.filter((r) => matches(r.strand, q)) : rows),
-    [rows, q],
+  const { scrollRef, sentinelRef } = useFetchMoreSentinel(
+    hasMore,
+    isFetchingMore,
+    onFetchMore,
   );
-  const { sortedRows, sortColumn, sortDirection, onHeaderClick } = useTableSort<
-    StrandSummaryRollupRow,
-    StKey
-  >({
-    rows: filtered,
-    accessors: ST_ACCESSORS,
-    defaultColumn: 'strand',
-    defaultDirection: 'asc',
-    initialDirections: { standards: 'desc', questions: 'desc', assessments: 'desc', average: 'desc' },
-  });
-  const { visibleRows, scrollRef, sentinelRef, hasMore, shown, total } =
-    useInfiniteWindow(sortedRows);
 
   return (
     <>
@@ -560,34 +592,41 @@ function ByStrand({
         <table className="w-full border-collapse">
           <thead className={STICKY_THEAD}>
             <tr>
-              <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-              <Th align="center"><SortableHeader column="standards" label="# Standards" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th align="center"><SortableHeader column="questions" label="# Questions" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th align="center"><SortableHeader column="assessments" label="# Assessments" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th><SortableHeader column="grade" label="Grade" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th><SortableHeader column="strand" label="Strand" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th align="center"><SortableHeader column="standards" label="Total Standards" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
+              <Th align="center"><SortableHeader column="questions" label="Total Questions" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th>Assessment</Th>
             </tr>
           </thead>
           <tbody>
             {total === 0 ? (
-              <EmptyRow cols={5} label="No strands match the current filters." />
+              <EmptyRow cols={7} label="No strands match the current filters." />
             ) : (
-              visibleRows.map((r) => (
-                <tr key={r.strand} className="transition-colors hover:bg-accent/30">
+              rows.map((r, i) => (
+                <tr
+                  key={`${r.item_id}-${r.strand}-${i}`}
+                  className="transition-colors hover:bg-accent/30"
+                >
+                  <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.grade ?? '—'}</td>
                   <td className={`${TD} font-medium text-foreground`} style={{ borderColor: LAYOUT_BORDER }}>{r.strand}</td>
-                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_standards}</td>
-                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_questions}</td>
-                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_assessments}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.total_standards}</td>
+                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.total_questions}</td>
                   <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
                     <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
                   </td>
+                  <td className={`${TD} tabular-nums whitespace-nowrap`} style={{ borderColor: LAYOUT_BORDER }}>{r.assessment_date ?? '—'}</td>
+                  <td className={`${TD} text-foreground`} style={{ borderColor: LAYOUT_BORDER }}>{r.assessment ?? '—'}</td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-        <LoadMore sentinelRef={sentinelRef} hasMore={hasMore} />
+        <LoadMore sentinelRef={sentinelRef} hasMore={hasMore} spinning={isFetchingMore} />
       </ScrollRegion>
-      <ShownFooter shown={shown} total={total} />
+      <ShownFooter shown={rows.length} total={total} />
     </>
   );
 }

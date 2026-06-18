@@ -1,9 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import {
+  AlertCircle,
   ArrowUpRight,
   BookOpen,
   GraduationCap,
@@ -15,23 +20,48 @@ import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import { getReportsByGroup } from '@/lib/reports/report-types';
 import type { AssessmentFilters } from '@/lib/reports/types';
+import { useDebounce } from '@/hooks/useDebounce';
 import { StatCard } from '@/components/app/StatCard';
 import { Button } from '@/components/ui/button';
 import DashboardHeader from '@/components/app/dashboard/DashboardHeader';
 import DashboardFilters from '@/components/app/dashboard/DashboardFilters';
+import SubjectKpiCards from '@/components/app/dashboard/SubjectKpiCards';
+import GradeChips from '@/components/app/dashboard/GradeChips';
 import AssessmentsSummaryTable, {
   type AssessmentSortKey,
+  type StrandRowSortKey,
 } from '@/components/app/dashboard/AssessmentsSummaryTable';
 
 const PROGRAM_REPORTS = getReportsByGroup('program');
 const PAGE_SIZE = 25;
 
-/** First-click direction per assessment sort column (mirrors useTableSort). */
-const INITIAL_DIR: Record<AssessmentSortKey, 'asc' | 'desc'> = {
+/** Shared getNextPageParam for the server-paginated grids: stop once every
+ *  filter-scoped row is loaded, else advance by one page. */
+function nextPageParam(
+  lastPage: { rows: unknown[]; total: number },
+  allPages: { rows: unknown[] }[],
+  lastPageParam: number,
+): number | undefined {
+  const loaded = allPages.reduce((n, p) => n + p.rows.length, 0);
+  return loaded >= lastPage.total ? undefined : lastPageParam + PAGE_SIZE;
+}
+
+/** First-click direction per By-Assessment sort column (mirrors useTableSort). */
+const ASMT_INITIAL_DIR: Record<AssessmentSortKey, 'asc' | 'desc'> = {
   date: 'desc',
   item: 'asc',
   grade: 'asc',
   students: 'desc',
+  average: 'desc',
+};
+
+/** First-click direction per By-Strand sort column. */
+const STRAND_INITIAL_DIR: Record<StrandRowSortKey, 'asc' | 'desc'> = {
+  date: 'desc',
+  strand: 'asc',
+  grade: 'asc',
+  standards: 'desc',
+  questions: 'desc',
   average: 'desc',
 };
 
@@ -44,81 +74,108 @@ function latestSession(sessions: { session: string | null }[]): string | undefin
 }
 
 export function DashboardPage() {
-  const { schoolId } = useSelectedSchool();
+  const { schoolId, isLoading: schoolLoading } = useSelectedSchool();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<AssessmentFilters>({});
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(search.trim(), 300);
   const [sort, setSort] = useState<AssessmentSortKey>('date');
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
+  const [strandSort, setStrandSort] = useState<StrandRowSortKey>('date');
+  const [strandDir, setStrandDir] = useState<'asc' | 'desc'>('desc');
   const [inited, setInited] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const initedSchool = useRef<string | null>(null);
-
-  // Debounce the search before it hits the server query key, so each keystroke
-  // doesn't fire a request. The live `search` still drives the client-side
-  // By-Standard / By-Strand filters instantly.
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
-    return () => clearTimeout(t);
-  }, [search]);
+  // Default-select runs once per school: first available grade, then the first
+  // subject for that grade. Refs (not state) so it never re-applies after the
+  // user deselects.
+  const autoDefault = useRef({ grade: false, subject: false });
 
   const onSort = useCallback(
     (col: AssessmentSortKey) => {
-      if (col === sort) {
-        setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-      } else {
+      if (col === sort) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      else {
         setSort(col);
-        setDir(INITIAL_DIR[col]);
+        setDir(ASMT_INITIAL_DIR[col]);
       }
     },
     [sort],
   );
 
-  // Sessions feed the default-year pick. Same query key as ReportFilters', so
-  // react-query serves one shared request (no duplicate call).
+  const onStrandSort = useCallback(
+    (col: StrandRowSortKey) => {
+      if (col === strandSort) setStrandDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      else {
+        setStrandSort(col);
+        setStrandDir(STRAND_INITIAL_DIR[col]);
+      }
+    },
+    [strandSort],
+  );
+
+  // Sessions feed the default-year pick. Shared query key with ReportFilters /
+  // FilterPopover, so react-query serves one request.
   const sessionsQ = useQuery({
     queryKey: reportsKeys.sessions(schoolId ?? undefined),
     queryFn: () => reportsApi.sessions(schoolId ?? undefined),
   });
 
-  // Default the scope to the latest academic year, once per school. Resets
-  // filters/search/sort on a school switch so each school opens on its newest
-  // year, newest-first, at page 0.
+  // Grades feed the front grade chips.
+  const gradesQ = useQuery({
+    queryKey: reportsKeys.grades(schoolId ?? undefined),
+    queryFn: () => reportsApi.grades(schoolId ?? undefined),
+  });
+
+  // Default the scope to the latest academic year, once per school; reset all
+  // filter/search/sort state on a school switch.
   useEffect(() => {
+    // Wait for the selected school to settle. effectiveSchoolId is null while
+    // the accessible-schools list loads, then resolves to the real id with no
+    // user action — running before that would init on the null id and then
+    // re-reset (clobbering early user state + double-fetching) once it lands.
+    if (schoolLoading) return;
     const list = sessionsQ.data;
     if (!list) return;
     const sid = schoolId ?? null;
     if (initedSchool.current === sid && inited) return;
     initedSchool.current = sid;
+    autoDefault.current = { grade: false, subject: false };
     const latest = latestSession(list);
     setFilters(latest ? { session: latest } : {});
     setSearch('');
-    setDebouncedSearch('');
     setSort('date');
     setDir('desc');
+    setStrandSort('date');
+    setStrandDir('desc');
     setInited(true);
-  }, [sessionsQ.data, schoolId, inited]);
+  }, [sessionsQ.data, schoolId, inited, schoolLoading]);
 
   const summaryFilters = { ...filters, school_id: schoolId ?? undefined };
+  // Subject cards + their %s scope by year/type/grade, NOT by the selected
+  // subject (so every card stays visible to switch between).
+  const overviewFilters = {
+    session: filters.session,
+    category: filters.category,
+    grade: filters.grade,
+    school_id: schoolId ?? undefined,
+  };
 
-  // standard-summary is the single source for the header (school name/logo/
-  // session), the KPI strip, the school-wide grade-average marker AND the
-  // "By Standard" table variant (bounded — fetched whole).
+  // Subject cards + dataset-refresh timestamp.
+  const overviewQ = useQuery({
+    queryKey: reportsKeys.dashboardOverview(overviewFilters),
+    queryFn: () => reportsApi.dashboardOverview(overviewFilters),
+    enabled: inited,
+  });
+
+  // standard-summary: header (name/logo/session) + KPI strip + school-wide
+  // grade-average marker + the bounded "By Standard" table variant.
   const stdQ = useQuery({
     queryKey: reportsKeys.standardSummary(summaryFilters),
     queryFn: () => reportsApi.standardSummary(summaryFilters),
     enabled: inited,
   });
-  // Lean path: the dashboard only renders strands_rollup, so it asks the
-  // endpoint to skip the per-standard rollup + KPI queries (strands_only).
-  const strandQ = useQuery({
-    queryKey: reportsKeys.strandSummary(summaryFilters, true),
-    queryFn: () => reportsApi.strandSummary(summaryFilters, true),
-    enabled: inited,
-  });
 
-  // Assessments are unbounded → true server-side pagination. The query lives
-  // here (not inside the table) so the "Assessments" KPI total survives variant
-  // switches and the table just renders the accumulated pages.
+  // By Assessment — server-paginated (unbounded set).
   const asmtQ = useInfiniteQuery({
     queryKey: reportsKeys.assessmentSummaries(filters, schoolId ?? undefined, {
       q: debouncedSearch,
@@ -135,23 +192,126 @@ export function DashboardPage() {
       }),
     enabled: inited,
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages, lastPageParam) => {
-      const loaded = allPages.reduce((n, p) => n + p.rows.length, 0);
-      return loaded >= lastPage.total ? undefined : lastPageParam + PAGE_SIZE;
-    },
+    getNextPageParam: nextPageParam,
     placeholderData: (prev) => prev,
   });
+
+  // By Strand — server-paginated legacy per-(assessment × strand) grid.
+  const strandRowsQ = useInfiniteQuery({
+    queryKey: reportsKeys.strandRows(filters, schoolId ?? undefined, {
+      q: debouncedSearch,
+      sort: strandSort,
+      dir: strandDir,
+    }),
+    queryFn: ({ pageParam }) =>
+      reportsApi.strandRows(filters, schoolId ?? undefined, {
+        q: debouncedSearch || undefined,
+        sort: strandSort,
+        dir: strandDir,
+        limit: PAGE_SIZE,
+        offset: pageParam,
+      }),
+    enabled: inited,
+    initialPageParam: 0,
+    getNextPageParam: nextPageParam,
+    placeholderData: (prev) => prev,
+  });
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: reportsKeys.all });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient]);
 
   const kpis = stdQ.data?.kpis;
   const school = stdQ.data?.school;
   const schoolAverage = kpis?.grade_average ?? null;
-  const assessmentRows = asmtQ.data?.pages.flatMap((p) => p.rows) ?? [];
+  const subjects = useMemo(() => overviewQ.data?.subjects ?? [], [overviewQ.data]);
+  const refreshedAt = overviewQ.data?.refreshed_at ?? null;
+  const grades = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (gradesQ.data ?? [])
+            .map((g) => g.grade)
+            .filter((g): g is string => !!g),
+        ),
+      ),
+    [gradesQ.data],
+  );
+
+  // Default selection (once per school): pick the first available grade, then —
+  // after the grade-scoped subject cards load — the first subject for that
+  // grade. Staged because the cards (overviewQ) are grade-scoped, so the chosen
+  // subject must come from the grade-scoped list to actually highlight a card.
+  // Skips cleanly when a school has no grades/subjects, and is ref-gated so it
+  // never fights a user deselect.
+  useEffect(() => {
+    if (!inited) return;
+    if (!autoDefault.current.grade && gradesQ.data) {
+      autoDefault.current.grade = true;
+      if (grades.length > 0) {
+        setFilters((f) => (f.grade ? f : { ...f, grade: grades[0] }));
+        return; // let the grade-scoped overview load before picking a subject
+      }
+    }
+    if (
+      autoDefault.current.grade &&
+      !autoDefault.current.subject &&
+      overviewQ.data &&
+      !overviewQ.isFetching
+    ) {
+      autoDefault.current.subject = true;
+      const subs = overviewQ.data.subjects;
+      if (subs.length > 0) {
+        setFilters((f) => (f.subject ? f : { ...f, subject: subs[0].subject }));
+      }
+    }
+  }, [inited, gradesQ.data, grades, overviewQ.data, overviewQ.isFetching]);
+
+  const assessmentRows = useMemo(
+    () => asmtQ.data?.pages.flatMap((p) => p.rows) ?? [],
+    [asmtQ.data],
+  );
   const assessmentTotal = asmtQ.data?.pages[0]?.total ?? 0;
+  const strandRows = useMemo(
+    () => strandRowsQ.data?.pages.flatMap((p) => p.rows) ?? [],
+    [strandRowsQ.data],
+  );
+  const strandTotal = strandRowsQ.data?.pages[0]?.total ?? 0;
+
   const headerLoading = !inited || stdQ.isLoading;
+  // In-flight (refetch) state — NOT a scroll fetch-more — for the two grids.
+  const asmtFetching = asmtQ.isFetching && !asmtQ.isFetchingNextPage;
+  const strandFetching = strandRowsQ.isFetching && !strandRowsQ.isFetchingNextPage;
   const asmtLoading = !inited || asmtQ.isPending;
-  const stdStrandLoading = !inited || stdQ.isLoading || strandQ.isLoading;
-  // These KPIs are computed at the per-question OVERALL grain (no section), so
-  // they stay school-wide; flag that only when a section narrows the tables.
+  const asmtBusy = asmtLoading || asmtFetching;
+  const strandLoading = !inited || strandRowsQ.isPending;
+  const stdLoading = !inited || stdQ.isLoading;
+  const subjectsLoading = !inited || overviewQ.isLoading;
+  // Search spinner: while the debounce is settling OR the server query for the
+  // (debounced) term is in flight — but ONLY when a search term is active, so
+  // subject/grade/year filtering doesn't trip it (which would swap the search
+  // field's clear-X for a spinner mid-use).
+  const searchLoading =
+    search.trim() !== debouncedSearch ||
+    (debouncedSearch.length > 0 && (asmtFetching || strandFetching));
+
+  const anyError =
+    overviewQ.isError || stdQ.isError || asmtQ.isError || strandRowsQ.isError;
+
+  // Lock the click-filters (subject cards, grade chips, popover) while ANY
+  // filter-dependent query is refetching, so rapid clicks can't interleave
+  // requests or mix filters. Scroll fetch-more and the debounced search are
+  // intentionally excluded (the search box stays typeable).
+  const filtersBusy =
+    overviewQ.isFetching || stdQ.isFetching || asmtFetching || strandFetching;
+
+  // KPIs are computed at the per-question OVERALL grain (no section), so they
+  // stay school-wide; flag that only when a section narrows the tables.
   const schoolWideHint = filters.section ? 'school-wide' : undefined;
 
   return (
@@ -168,19 +328,61 @@ export function DashboardPage() {
         onFiltersChange={setFilters}
         search={search}
         onSearchChange={setSearch}
+        searchLoading={searchLoading}
+        resultCount={assessmentTotal}
+        refreshedAt={refreshedAt}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        filtersDisabled={filtersBusy}
+      />
+
+      {anyError && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm">
+          <span className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            Some dashboard data failed to load.
+          </span>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {/* Subject KPI cards — hero stat + primary subject filter (legacy slicer). */}
+      <SubjectKpiCards
+        subjects={subjects}
+        selected={filters.subject}
+        onSelect={(subject) => setFilters((f) => ({ ...f, subject }))}
+        loading={subjectsLoading}
+        disabled={filtersBusy}
+      />
+
+      {/* Grade chips — primary grade filter (legacy slicer). */}
+      <GradeChips
+        grades={grades}
+        selected={filters.grade}
+        onSelect={(grade) =>
+          // Changing the grade invalidates the grade-scoped selections, so clear
+          // the subject + section-instructor (a stale subject would point at a
+          // card that no longer exists; a stale grade×instructor combo goes
+          // empty). Academic year + assessment type are grade-independent and
+          // are intentionally preserved.
+          setFilters((f) => ({ ...f, grade, subject: undefined, instructor: undefined }))
+        }
+        loading={!inited || gradesQ.isLoading}
+        disabled={filtersBusy}
       />
 
       {/* KPI strip (legacy KPI cardVisuals). Total Standards + Assessments are
           counts of the filtered sets and track every filter (incl. section).
           Total Students / Questions / Grade Average come from the per-question
           OVERALL cube, which — like legacy PowerBI — has no section grain, so
-          they stay school-wide; we mark them "school-wide" when a section is
-          active so the strip is never mistaken for fully section-scoped. */}
+          they stay school-wide; marked "school-wide" when a section is active. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="Total Students" value={kpis?.total_students ?? '—'} hint={schoolWideHint} icon={Users} loading={headerLoading} />
         <StatCard label="Total Standards" value={kpis?.total_standards ?? '—'} icon={GraduationCap} loading={headerLoading} />
         <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} hint={schoolWideHint} icon={ListChecks} loading={headerLoading} />
-        <StatCard label="Assessments" value={asmtLoading ? '—' : assessmentTotal} icon={BookOpen} loading={asmtLoading} />
+        <StatCard label="Assessments" value={asmtBusy ? '—' : assessmentTotal} icon={BookOpen} loading={asmtBusy} />
         <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} hint={schoolWideHint} icon={Percent} loading={headerLoading} />
       </div>
 
@@ -195,14 +397,21 @@ export function DashboardPage() {
         assessmentDir={dir}
         onAssessmentSort={onSort}
         assessmentLoading={asmtLoading}
+        strandRows={strandRows}
+        strandTotal={strandTotal}
+        strandHasMore={strandRowsQ.hasNextPage}
+        strandFetchingMore={strandRowsQ.isFetchingNextPage}
+        onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
+        strandSort={strandSort}
+        strandDir={strandDir}
+        onStrandSort={onStrandSort}
+        strandLoading={strandLoading}
         standards={stdQ.data?.standards ?? []}
-        strands={strandQ.data?.strands_rollup ?? []}
         search={search}
-        loading={stdStrandLoading}
+        loading={stdLoading}
       />
 
-      {/* Program (school-wide) reports — always-visible launcher buttons,
-          the modern homage to the legacy rounded-pill report navigator. */}
+      {/* Program (school-wide) reports — always-visible launcher buttons. */}
       <section className="space-y-2 pt-1">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Program reports

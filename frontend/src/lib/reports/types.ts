@@ -183,6 +183,7 @@ export interface AssessmentFilters {
   subject?: string;
   grade?: string;
   section?: string;
+  instructor?: string;
   school_id?: string;
 }
 
@@ -234,6 +235,48 @@ export interface SectionRow {
 export interface SessionRow {
   session_id: string;
   session: string | null;
+}
+
+export interface AssessmentTypeRow {
+  assessment_type: string;
+}
+
+export interface InstructorRow {
+  instructor: string;
+}
+
+// ─── Dashboard front-filter aggregates ───────────────────────────────────
+
+/** One subject KPI card on the dashboard (subject grade-average %). */
+export interface DashboardSubjectCard {
+  subject: string;
+  grade_average: number | null;
+  grade_average_pct: string;
+}
+
+export interface DashboardOverviewPayload {
+  subjects: DashboardSubjectCard[];
+  refreshed_at: string | null;
+}
+
+/** One per-(assessment × strand) row of the legacy Performance-by-Strand grid. */
+export interface DashboardStrandRow {
+  item_id: string;
+  grade: string | null;
+  strand: string;
+  total_standards: number;
+  total_questions: number;
+  grade_average: number | null;
+  grade_average_pct: string;
+  assessment_date: string | null;
+  assessment: string | null;
+}
+
+export interface DashboardStrandRowsPage {
+  rows: DashboardStrandRow[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 // ─── Year To Date - Longitudinal Report ─────────────────────────────────
