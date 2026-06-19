@@ -143,94 +143,130 @@ class CubeRepository:
     # ~27.8%) and the single-strand control ``7892351049``.
     # ────────────────────────────────────────────────────────────────────
     async def get_canonical_kpis_for_item(
-        self, item_id: str
+        self, subject_id: str
     ) -> Optional[Dict[str, Any]]:
+        """MERGED canonical KPIs for one assessment (all section copies pooled).
+
+        The merge key is ``subject_id`` (section-agnostic). Fact/per-question
+        reads widen to the full section set
+        (``item_id IN (SELECT item_id FROM dim_item WHERE subject_id = ...)``)
+        so every section's students pool into one assessment; the merged totals
+        come from the ``(school_id, subject_id)`` GROUPING-SETS rollup row
+        (``item_id IS NULL``) of ``cube_school_summary``. ``Total Students``
+        mirrors the legacy DAX ``SUMX(SUMMARIZE(cube_school_summary, Item_ID,
+        MAX(Total_Students)))`` — the per-section student counts summed. A
+        single-section assessment (one item_id == one subject_id) is
+        byte-identical to the pre-merge per-item read.
+        """
         sql = text(
             """
-            WITH fact_dedup AS (
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+            ),
+            -- Map each per-section fact question_id to its section-agnostic
+            -- question_no (the merged question identity). question_no is the
+            -- legacy DISTINCTCOUNT(Question_No) grain and equals the old
+            -- single-section question_id count, so a single-section assessment
+            -- is unchanged.
+            qid_qno AS (
+                SELECT DISTINCT question_id, question_no
+                FROM cube_question_summary
+                WHERE item_id IN (SELECT item_id FROM items)
+            ),
+            fact_dedup AS (
                 SELECT DISTINCT ON (user_uid, question_id, position_number)
                        user_uid, question_id, position_number,
                        points_received, points_possible
                 FROM fact_student_submission
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
                   AND points_possible IS NOT NULL
                   AND points_possible > 0
                 ORDER BY user_uid, question_id, position_number, identifier NULLS LAST
             ),
             per_user_q AS (
-                SELECT question_id, user_uid,
-                       SUM(points_received)::numeric
-                         / NULLIF(SUM(points_possible), 0) AS pct
-                FROM fact_dedup
-                GROUP BY question_id, user_uid
+                SELECT qq.question_no, fd.user_uid,
+                       SUM(fd.points_received)::numeric
+                         / NULLIF(SUM(fd.points_possible), 0) AS pct
+                FROM fact_dedup fd
+                JOIN qid_qno qq ON qq.question_id = fd.question_id
+                GROUP BY qq.question_no, fd.user_uid
             ),
             per_q AS (
-                SELECT question_id, AVG(pct) AS qga
+                SELECT question_no, AVG(pct) AS qga
                 FROM per_user_q
-                GROUP BY question_id
+                GROUP BY question_no
             ),
-            -- DETERMINISTIC primary-subject pick. cube_school_summary can
-            -- carry several rows for one item (multiple subjects + exact
-            -- duplicate rows — e.g. Brightview 7566518630 has 291/192/21
-            -- twice and 91/74/7 once). A bare LIMIT 1 with no ORDER BY is
-            -- non-deterministic and total_students is especially fragile.
-            -- De-dup identical rows first, then pick the PRIMARY subject:
-            -- most students, then most questions, then highest possible /
-            -- score, with subject_id as a final stable tiebreak. A
-            -- single-row item (Athenian) is unchanged; Brightview
-            -- 7566518630 stably returns 291/192/21.
+            -- MERGED school totals. total_possible_point / total_score come
+            -- from the (school_id, subject_id) GROUPING-SETS rollup row
+            -- (item_id IS NULL) — already SUM(points) across every section.
+            -- total_students mirrors legacy SUMX(SUMMARIZE(Item_ID,
+            -- MAX(Total_Students))): sum the per-section student counts (MAX
+            -- de-dups the multi-subject duplicate rows a single item can carry
+            -- — e.g. Brightview 7566518630). A single-section assessment
+            -- collapses to the lone per-item value.
             school AS (
-                SELECT total_students, total_possible_point, total_score
+                SELECT
+                    (
+                        SELECT COALESCE(SUM(ts), 0)
+                        FROM (
+                            SELECT item_id, MAX(total_students) AS ts
+                            FROM cube_school_summary
+                            WHERE subject_id = :subject_id
+                              AND item_id IS NOT NULL
+                            GROUP BY item_id
+                        ) per_item
+                    )                                AS total_students,
+                    rollup.total_possible_point,
+                    rollup.total_score
                 FROM (
-                    SELECT DISTINCT
-                           subject_id, total_students, total_questions,
-                           total_possible_point, total_score
+                    SELECT total_possible_point, total_score
                     FROM cube_school_summary
-                    WHERE item_id = :item_id
-                ) deduped
-                ORDER BY total_students DESC NULLS LAST,
-                         total_questions DESC NULLS LAST,
-                         total_possible_point DESC NULLS LAST,
-                         total_score DESC NULLS LAST,
-                         subject_id
-                LIMIT 1
+                    WHERE subject_id = :subject_id AND item_id IS NULL
+                    LIMIT 1
+                ) rollup
             ),
             std AS (
                 SELECT COUNT(DISTINCT standard) AS total_standards
                 FROM dim_question_data
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
             ),
             -- Cube fallback for fact-less (parquet-loaded) schools. The fact
             -- table is empty for items loaded directly from stage3 cube
             -- parquet, so the per-(question,user) collapse above yields no
-            -- rows and Total Questions / Grade Average would render as 0.
-            -- For those items only, derive Total Questions from the
-            -- per-question cube (DISTINCTCOUNT(Question_No)) and the overall
-            -- grade average from cube_question_summary_overall (legacy DAX
-            -- AVERAGE(cqso.Grade_Average)). Gated on fact-absence below so
-            -- raw-ingested schools (Athenian) are byte-identical — when
-            -- per_q has rows the fact path always wins.
+            -- rows. For those assessments derive Total Questions from the
+            -- per-question cube (DISTINCTCOUNT(Question_No) across sections)
+            -- and the merged grade average from the cube_school_summary
+            -- subject rollup; min/max from the per-question merged averages.
             cube_q AS (
                 SELECT COUNT(DISTINCT question_no) AS total_questions
                 FROM cube_question_summary
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
             ),
-            -- ITEM-SCOPED grade average for fact-less schools.
-            -- cube_question_summary_overall has no item_id, so the previous
-            -- subject-only filter over-aggregated when two items share a
-            -- subject (e.g. 7571884771's subject is shared by a second
-            -- item, pulling 0.659664 instead of the item's true 0.664021).
-            -- cube_question_summary IS item-scoped, so average its
-            -- per-question grade_average directly — deterministic and
-            -- correct per item.
-            cube_ga AS (
-                SELECT AVG(grade_average) AS grade_average,
-                       MAX(grade_average) AS grade_max,
-                       MIN(grade_average) AS grade_min
+            -- MERGED per-question average (points-weighted across sections):
+            -- pool every section's points for a given question_no, then
+            -- SUM(score)/SUM(possible). Drives the fact-less min/max.
+            cube_perq AS (
+                SELECT question_no,
+                       SUM(total_score)::numeric
+                         / NULLIF(SUM(total_possible_point), 0) AS qga
                 FROM cube_question_summary
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
+                GROUP BY question_no
+            ),
+            cube_ga AS (
+                SELECT
+                    (
+                        SELECT total_score::numeric
+                                 / NULLIF(total_possible_point, 0)
+                        FROM cube_school_summary
+                        WHERE subject_id = :subject_id AND item_id IS NULL
+                        LIMIT 1
+                    )                  AS grade_average,
+                    MAX(qga)           AS grade_max,
+                    MIN(qga)           AS grade_min
+                FROM cube_perq
             ),
             fact_present AS (
                 SELECT EXISTS (SELECT 1 FROM per_q) AS has_fact
@@ -258,7 +294,7 @@ class CubeRepository:
                 (SELECT total_score FROM school)           AS total_score
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         row = result.first()
         return _row_to_dict(row) if row else None
 
@@ -294,10 +330,15 @@ class CubeRepository:
         whitelist (never raw user input) — they are interpolated, not bound.
         RLS scopes every base table to the caller's school.
         """
-        order_by = f"{sort_sql} {dir_sql} NULLS LAST, item_id ASC"
+        order_by = f"{sort_sql} {dir_sql} NULLS LAST, subject_id ASC"
         sql = text(
             f"""
-            WITH scoped AS (
+            -- One row per section copy that passes the filters. The section /
+            -- instructor slicers narrow this set (PowerBI cross-filter
+            -- semantics): with no slicer every section is included and the
+            -- merged numbers span the whole assessment; with a slicer the
+            -- merged numbers recompute over the matching sections only.
+            WITH scoped_items AS (
                 SELECT di.item_id, di.item_name, di.item_type, di.subject_id,
                        ds.subject, ds.grade, ds.session, ds.assessment_type,
                        di.section_name, di.section_instructors, di.assessment_date
@@ -312,48 +353,77 @@ class CubeRepository:
                   AND {_DI_INSTRUCTOR_FILTER_SQL}
                   AND (CAST(:q AS TEXT)        IS NULL OR di.item_name ILIKE '%' || CAST(:q AS TEXT) || '%')
             ),
-            -- Per-item grade_average from the PRECOMPUTED per-question cube, NOT a
-            -- live fact re-aggregation. AVG over the item's cube_question_summary
-            -- grade_averages == the canonical per-(question, user) fact collapse to
-            -- the digit (SUM/SUM per question == AVG-of-per-user because
-            -- points_possible is constant per question — verified diff=0 across
-            -- prod items). Reads ~tens of indexed cube rows per item via the
-            -- (school_id, item_id) index instead of DISTINCT-ON-ing the multi-GB
-            -- fact table for every scoped assessment on every page: a full-year
-            -- school went from ~43s to <1s per page. RLS scopes the cube to the
-            -- caller's school. Items with no cube rows (none in a real ingest)
-            -- get a NULL bar.
-            item_ga AS (
-                SELECT item_id, AVG(grade_average) AS grade_average
-                FROM cube_question_summary
-                WHERE item_id IN (SELECT item_id FROM scoped)
-                GROUP BY item_id
+            -- MERGE: collapse all section copies of an assessment to ONE row,
+            -- keyed on subject_id (= uuid_6 of school/subject/type/grade/
+            -- session/item_name, section-agnostic; 1:1 with item_name within a
+            -- subject). item_name is identical across the copies; sections and
+            -- instructors are unioned for display; assessment_date is the
+            -- earliest (legacy OrderBy Min(assessment_date)).
+            scoped AS (
+                SELECT
+                    subject_id,
+                    MIN(item_name)        AS item_name,
+                    MIN(item_type)        AS item_type,
+                    MIN(subject)          AS subject,
+                    MIN(grade)            AS grade,
+                    MIN(session)          AS session,
+                    MIN(assessment_type)  AS assessment_type,
+                    string_agg(DISTINCT section_name, ', '
+                               ORDER BY section_name)        AS section_name,
+                    string_agg(DISTINCT section_instructors, ', '
+                               ORDER BY section_instructors) AS section_instructors,
+                    MIN(assessment_date)  AS assessment_date
+                FROM scoped_items
+                GROUP BY subject_id
             ),
-            -- Deterministic primary-subject pick for total_students (same as
-            -- get_canonical_kpis_for_item's `school` CTE, batched per item).
-            students AS (
-                SELECT DISTINCT ON (item_id) item_id, total_students
+            -- Merged grade_average per assessment: pool every section's points
+            -- per question_no (SUM(score)/SUM(possible)), then AVG over
+            -- questions. Equals the canonical per-(question, user) fact collapse
+            -- to the digit (points_possible is constant per question across
+            -- sections), so the dashboard bar agrees with the report KPI strip.
+            item_ga AS (
+                SELECT subject_id, AVG(qga) AS grade_average
                 FROM (
-                    SELECT DISTINCT item_id, subject_id, total_students,
-                           total_questions, total_possible_point, total_score
+                    SELECT subject_id, question_no,
+                           SUM(total_score)::numeric
+                             / NULLIF(SUM(total_possible_point), 0) AS qga
+                    FROM cube_question_summary
+                    WHERE item_id IN (SELECT item_id FROM scoped_items)
+                    GROUP BY subject_id, question_no
+                ) per_q
+                GROUP BY subject_id
+            ),
+            -- Merged Total Students = legacy SUMX(SUMMARIZE(Item_ID,
+            -- MAX(Total_Students))): per-section student maxes summed across the
+            -- assessment's sections. MAX de-dups the multi-subject duplicate
+            -- rows one item can carry.
+            students AS (
+                SELECT subject_id, SUM(ts) AS total_students
+                FROM (
+                    SELECT subject_id, item_id, MAX(total_students) AS ts
                     FROM cube_school_summary
-                    WHERE item_id IN (SELECT item_id FROM scoped)
-                ) deduped
-                ORDER BY item_id, total_students DESC NULLS LAST,
-                         total_questions DESC NULLS LAST,
-                         total_possible_point DESC NULLS LAST,
-                         total_score DESC NULLS LAST, subject_id
+                    WHERE item_id IN (SELECT item_id FROM scoped_items)
+                    GROUP BY subject_id, item_id
+                ) per_item
+                GROUP BY subject_id
             ),
             enriched AS (
-                SELECT s.item_id, s.item_name, s.item_type, s.subject_id,
+                -- The merged report identity is subject_id; it is surfaced in the
+                -- ``item_id`` field so the existing frontend/report plumbing
+                -- (links, report endpoints, exports — all keyed on ``item_id``)
+                -- carries the section-agnostic key unchanged. One grid row per
+                -- assessment (no per-section duplicates).
+                SELECT s.subject_id AS item_id,
+                       s.subject_id,
+                       s.item_name, s.item_type,
                        s.subject, s.grade, s.session, s.assessment_type,
                        s.section_name, s.section_instructors, s.assessment_date,
                        ig.grade_average,
                        st.total_students,
                        COUNT(*) OVER() AS total
                 FROM scoped s
-                LEFT JOIN item_ga ig ON ig.item_id = s.item_id
-                LEFT JOIN students st ON st.item_id = s.item_id
+                LEFT JOIN item_ga ig ON ig.subject_id = s.subject_id
+                LEFT JOIN students st ON st.subject_id = s.subject_id
             )
             SELECT * FROM enriched
             ORDER BY {order_by}
@@ -381,9 +451,10 @@ class CubeRepository:
         return rows, total
 
     async def get_canonical_per_question_grades(
-        self, item_id: str
+        self, subject_id: str
     ) -> List[Dict[str, Any]]:
-        """Per-question grade_average using the canonical per-user collapse.
+        """Per-question grade_average using the canonical per-user collapse,
+        MERGED across all section copies of the assessment.
 
         Used to override the per-question grade on the QRA question table
         for multi-select / multi-position questions whose
@@ -391,74 +462,102 @@ class CubeRepository:
         SUM/SUM (e.g. Q12 = 35/146 = 23.97%) rather than per-student
         average (27.78%). This matches the KPI strip's per-question grain
         so the per-question table cannot disagree with the Lowest/Highest
-        KPI for the same item.
+        KPI for the same assessment. Widening the fact filter to the section
+        set pools every section's students per question.
         """
         sql = text(
             """
-            WITH fact_dedup AS (
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+            ),
+            -- Map each per-section fact question_id to its section-agnostic
+            -- question_no (the merged QRA question identity), so the override
+            -- returned here joins the question_no-keyed question rows.
+            qid_qno AS (
+                SELECT DISTINCT question_id, question_no
+                FROM cube_question_summary
+                WHERE item_id IN (SELECT item_id FROM items)
+            ),
+            fact_dedup AS (
                 SELECT DISTINCT ON (user_uid, question_id, position_number)
                        user_uid, question_id, position_number,
                        points_received, points_possible
                 FROM fact_student_submission
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
                   AND points_possible IS NOT NULL
                   AND points_possible > 0
                 ORDER BY user_uid, question_id, position_number, identifier NULLS LAST
             ),
             per_user_q AS (
-                SELECT question_id, user_uid,
-                       SUM(points_received)::numeric
-                         / NULLIF(SUM(points_possible), 0) AS pct
-                FROM fact_dedup
-                GROUP BY question_id, user_uid
+                SELECT qq.question_no, fd.user_uid,
+                       SUM(fd.points_received)::numeric
+                         / NULLIF(SUM(fd.points_possible), 0) AS pct
+                FROM fact_dedup fd
+                JOIN qid_qno qq ON qq.question_id = fd.question_id
+                GROUP BY qq.question_no, fd.user_uid
             )
-            SELECT question_id, AVG(pct) AS grade_average
+            SELECT question_no AS question_id, AVG(pct) AS grade_average
             FROM per_user_q
-            GROUP BY question_id
+            GROUP BY question_no
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
     # School-level summary for one assessment (cube_school_summary)
     # ────────────────────────────────────────────────────────────────────
-    async def get_school_summary_for_item(self, item_id: str) -> Optional[Dict[str, Any]]:
+    async def get_school_summary_for_item(self, subject_id: str) -> Optional[Dict[str, Any]]:
+        """MERGED school summary: the (school_id, subject_id) GROUPING-SETS
+        rollup row (item_id IS NULL) pools points + distinct standards/questions
+        across all sections. Total Students mirrors legacy SUMX(SUMMARIZE(
+        Item_ID, MAX(Total_Students))) so it agrees with the KPI strip."""
         sql = text(
             """
             SELECT
-                item_id,
-                total_questions,
-                total_standards,
-                total_students,
-                total_possible_point,
-                total_score,
-                grade_average,
-                percentage_incorrect_answers
-            FROM cube_school_summary
-            WHERE item_id = :item_id
+                :subject_id                  AS subject_id,
+                rollup.total_questions,
+                rollup.total_standards,
+                (
+                    SELECT COALESCE(SUM(ts), 0)
+                    FROM (
+                        SELECT item_id, MAX(total_students) AS ts
+                        FROM cube_school_summary
+                        WHERE subject_id = :subject_id AND item_id IS NOT NULL
+                        GROUP BY item_id
+                    ) per_item
+                )                            AS total_students,
+                rollup.total_possible_point,
+                rollup.total_score,
+                rollup.grade_average,
+                rollup.percentage_incorrect_answers
+            FROM cube_school_summary rollup
+            WHERE rollup.subject_id = :subject_id AND rollup.item_id IS NULL
             LIMIT 1
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         row = result.first()
         return _row_to_dict(row) if row else None
 
-    async def get_grade_summary_for_item(self, item_id: str) -> Optional[Dict[str, Any]]:
+    async def get_grade_summary_for_item(self, subject_id: str) -> Optional[Dict[str, Any]]:
+        """MERGED grade summary: the (school_id, subject_id) rollup row of
+        cube_grade_summary (item_id IS NULL) — grade min/max/avg across every
+        section's students."""
         sql = text(
             """
             SELECT
-                item_id,
+                :subject_id AS subject_id,
                 grade_average,
                 percentage_incorrect_answers,
                 grade_min,
                 grade_max
             FROM cube_grade_summary
-            WHERE item_id = :item_id
+            WHERE subject_id = :subject_id AND item_id IS NULL
             LIMIT 1
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         row = result.first()
         return _row_to_dict(row) if row else None
 
@@ -466,285 +565,271 @@ class CubeRepository:
     # Question-level summaries (cube_question_summary +
     # cube_question_summary_overall)
     # ────────────────────────────────────────────────────────────────────
-    async def get_questions_overall_for_item(self, item_id: str) -> List[Dict[str, Any]]:
-        """One row per (item_id, question_id) for an assessment.
+    async def get_questions_overall_for_item(self, subject_id: str) -> List[Dict[str, Any]]:
+        """One row per question for a MERGED assessment (all section copies pooled).
 
-        ``cube_question_summary`` carries one row per (question × sub-question)
-        and ``cube_question_summary_overall`` carries one row per (school × ukey
-        × section/replication) — a naive LEFT JOIN multiplies the result set
-        (Q1 → 4 rows, Q13 → 16, etc.). We pre-aggregate both sides:
+        Keyed on ``subject_id``. ``cube_question_summary`` (per-item) reads widen
+        to the section set (``item_id IN (SELECT … FROM dim_item WHERE
+        subject_id)``) and group by ``question_id`` so a question's metadata +
+        numerics pool across sections. ``cube_question_summary_overall`` (cqso)
+        is already section-agnostic (keyed by ``(school_id, ukey)``; one ukey per
+        (assessment, question) regardless of section) and is scoped here by
+        ``subject_id``.
 
-        * ``qs_agg`` picks the first sub-question row per question_id (text
-          fields) and ``qs_num`` AVGs/SUMs the numerics across sub-questions.
-        * ``qso_agg`` picks one row per (school_id, ukey) and ``qso_num``
-          AVGs/SUMs the per-section numerics. This mirrors the
-          ``AVG(grade_average)`` aggregation the strand/standard rollup
-          queries already use against the same table.
+        MERGE / R3 reconciliation: under a subject-keyed report the cqso pooled
+        distractor % and named-student list across every section IS the legacy
+        merged content (not a leak), so it is now PREFERRED over the per-section
+        ``cube_question_summary`` list. For a single-section assessment cqso
+        pools exactly that one section, so the list is identical to the
+        pre-merge per-item read (parity preserved).
         """
         sql = text(
             """
-            WITH qs_agg AS (
-                SELECT DISTINCT ON (item_id, question_id)
-                    school_id, item_id, question_id, ukey, question_no,
-                    position_number, question, question_type, correct_answer,
-                    standard, standards AS cube_standards
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+            ),
+            -- Per-question_no metadata + text from the per-section cube. The
+            -- merged grain is question_no (section-agnostic; equals the legacy
+            -- DISTINCTCOUNT(Question_No) and the old single-section question_id
+            -- grain). Pick one representative row per question_no.
+            qs_meta AS (
+                SELECT DISTINCT ON (question_no)
+                    question_no, question, question_type, position_number,
+                    correct_answer, standard, standards AS cube_standards
                 FROM cube_question_summary
-                WHERE item_id = :item_id
-                ORDER BY item_id, question_id,
+                WHERE item_id IN (SELECT item_id FROM items)
+                ORDER BY question_no,
                          NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
                          position_number
             ),
+            -- Merged per-question_no numerics: pool every section's points
+            -- (SUM), grade = SUM(score)/SUM(possible). Overridden downstream by
+            -- the canonical per-question grade; kept for total points + fallback.
             qs_num AS (
-                SELECT item_id, question_id,
-                       AVG(grade_average)                AS grade_average,
-                       AVG(percentage_incorrect_answers) AS percentage_incorrect,
-                       SUM(total_possible_point)         AS total_possible_point,
-                       SUM(total_score)                  AS total_score,
-                       MAX(NULLIF(incorrect_choice_details, '')) AS incorrect_choice_details,
-                       MAX(NULLIF(incorrect_details_name, ''))   AS incorrect_details_name
+                SELECT question_no,
+                       SUM(total_possible_point) AS total_possible_point,
+                       SUM(total_score)          AS total_score,
+                       SUM(total_score)::numeric / NULLIF(SUM(total_possible_point), 0) AS grade_average,
+                       1 - SUM(total_score)::numeric / NULLIF(SUM(total_possible_point), 0) AS percentage_incorrect
                 FROM cube_question_summary
-                WHERE item_id = :item_id
-                GROUP BY item_id, question_id
+                WHERE item_id IN (SELECT item_id FROM items)
+                GROUP BY question_no
             ),
-            -- Aggregate ALL Schoology standards per question. cube_question_summary
-            -- carries only one alias per question (collapsed via LATERAL LIMIT 1
-            -- against dim_question_data in 09_cubes/cube_question_summary.sql).
-            -- dim_question_data retains every alias the parser emitted, so we
-            -- read directly from it to recover the full list. Newline-joined so
-            -- the frontend can render one standard per line.
+            -- Pooled distractor % + named-student list per question_no from the
+            -- section-agnostic base cqso (already pooled across sections). This
+            -- IS the legacy merged content; a question_no with several cqso ukey
+            -- rows (multi-answer) is concatenated. Reverses the R3 per-section
+            -- read; a single-section assessment yields that one section's list.
+            cqso_agg AS (
+                SELECT question_no,
+                       STRING_AGG(NULLIF(incorrect_choice_details, ''), E'\n') AS incorrect_choice_details,
+                       STRING_AGG(NULLIF(incorrect_details_name, ''), E'\n')   AS incorrect_details_name,
+                       MAX(description)                                        AS description
+                FROM cube_question_summary_overall
+                WHERE subject_id = :subject_id
+                GROUP BY question_no
+            ),
+            -- question_no -> every per-section question_id, for dim_question_data
+            -- (keyed on the per-section question_id) aggregation.
+            uk_qids AS (
+                SELECT DISTINCT question_no, question_id
+                FROM cube_question_summary
+                WHERE item_id IN (SELECT item_id FROM items)
+            ),
             qd_standards AS (
-                SELECT
-                    item_id,
-                    question_id,
-                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
-                FROM dim_question_data
-                WHERE item_id = :item_id
-                  AND standard IS NOT NULL AND standard <> ''
-                GROUP BY item_id, question_id
+                SELECT uq.question_no,
+                       STRING_AGG(DISTINCT dqd.standard, E'\n' ORDER BY dqd.standard) AS standards
+                FROM uk_qids uq
+                JOIN dim_question_data dqd ON dqd.question_id = uq.question_id
+                WHERE dqd.standard IS NOT NULL AND dqd.standard <> ''
+                GROUP BY uq.question_no
             ),
-            -- Legacy paginated QRA renders the SHORT cPalms code(s) in the
-            -- Standard column (e.g. "AR.1.7"), not the verbose Schoology codes.
-            -- Map each question's Schoology standard(s) to
-            -- ``dim_standard.cpalms_standard`` (same join the standard/strand
-            -- rollups use), deduped + newline-joined so the frontend renders
-            -- one clean code per line.
-            --
-            -- We skip the ``AI.MA.912.*`` rows: those are Schoology's
-            -- course-prefix ALIASES of the canonical ``MA.912.*`` B.E.S.T.
-            -- codes (same dim_standard.identifier — see
-            -- docs/audit/legacy-schoology-cpalms-mapping.md). They map to a
-            -- noisy ``912.*`` cpalms duplicate of the clean code (e.g.
-            -- ``912.AR.3.1`` alongside ``AR.3.1``). Dropping the alias yields
-            -- the single clean short code legacy renders, while genuinely
-            -- distinct alignments (e.g. older ``MAFS.912.*`` codes) are kept.
             qd_cpalms AS (
-                SELECT
-                    qd.item_id,
-                    qd.question_id,
-                    STRING_AGG(DISTINCT ds.cpalms_standard, E'\n'
-                               ORDER BY ds.cpalms_standard) AS cpalms_standard
-                FROM dim_question_data qd
-                JOIN dim_standard ds
-                  ON ds.schoology_standard = qd.standard
-                WHERE qd.item_id = :item_id
-                  AND qd.standard IS NOT NULL AND qd.standard <> ''
-                  AND qd.standard NOT LIKE 'AI.%'
+                SELECT uq.question_no,
+                       STRING_AGG(DISTINCT ds.cpalms_standard, E'\n'
+                                  ORDER BY ds.cpalms_standard) AS cpalms_standard
+                FROM uk_qids uq
+                JOIN dim_question_data dqd ON dqd.question_id = uq.question_id
+                JOIN dim_standard ds ON ds.schoology_standard = dqd.standard
+                WHERE dqd.standard IS NOT NULL AND dqd.standard <> ''
+                  AND dqd.standard NOT LIKE 'AI.%'
                   AND ds.cpalms_standard IS NOT NULL AND ds.cpalms_standard <> ''
-                GROUP BY qd.item_id, qd.question_id
+                GROUP BY uq.question_no
             ),
-            -- Mirrors legacy DAX `CombineDescriptionsColumn`
-            -- (04_dax_measures.dax:1200-1254). Legacy concatenates all
-            -- distinct standards, takes the alphabetical-first non-"Other"
-            -- one, and looks up that single standard's description. We
-            -- replicate that here in SQL because cube_question_summary
-            -- collapses to a single (lex-min identifier) standard per
-            -- question — losing the alphabetical-first standard's
-            -- description that legacy renders. Source the text from
-            -- dim_standard directly, keyed by the chosen Schoology code.
             qd_first_standard AS (
-                SELECT
-                    item_id,
-                    question_id,
-                    MIN(standard) FILTER (
-                        WHERE standard IS NOT NULL
-                          AND standard <> ''
-                          AND LOWER(standard) <> 'other'
-                    ) AS first_standard
-                FROM dim_question_data
-                WHERE item_id = :item_id
-                GROUP BY item_id, question_id
+                SELECT uq.question_no,
+                       MIN(dqd.standard) FILTER (
+                           WHERE dqd.standard IS NOT NULL
+                             AND dqd.standard <> ''
+                             AND LOWER(dqd.standard) <> 'other'
+                       ) AS first_standard
+                FROM uk_qids uq
+                JOIN dim_question_data dqd ON dqd.question_id = uq.question_id
+                GROUP BY uq.question_no
             ),
             qd_description AS (
-                SELECT
-                    qfs.item_id,
-                    qfs.question_id,
-                    -- MAX() guards against the rare case where the seed
-                    -- has two dim_standard rows for the same
-                    -- schoology_standard (duplicate alias on a single
-                    -- identifier); descriptions are expected identical.
-                    MAX(ds.description) AS description
+                SELECT qfs.question_no, MAX(ds.description) AS description
                 FROM qd_first_standard qfs
                 LEFT JOIN dim_standard ds
                   ON ds.schoology_standard = qfs.first_standard
-                GROUP BY qfs.item_id, qfs.question_id
-            ),
-            qso_agg AS (
-                SELECT DISTINCT ON (school_id, ukey)
-                    school_id, ukey, question_no, question, correct_answer,
-                    incorrect_choice_details, incorrect_details_name,
-                    description
-                FROM cube_question_summary_overall
-                ORDER BY school_id, ukey
-            ),
-            qso_num AS (
-                SELECT school_id, ukey,
-                       AVG(grade_average)                AS grade_average,
-                       AVG(percentage_incorrect_answers) AS percentage_incorrect,
-                       SUM(total_possible_point)         AS total_possible_point,
-                       SUM(total_score)                  AS total_score
-                FROM cube_question_summary_overall
-                GROUP BY school_id, ukey
+                GROUP BY qfs.question_no
             )
             SELECT
-                qs.question_id,
-                COALESCE(qso.question_no, qs.question_no)                       AS question_no,
-                qs.position_number,
-                COALESCE(qso.question, qs.question)                             AS question,
-                qs.question_type,
-                COALESCE(qso.correct_answer, qs.correct_answer)                 AS correct_answer,
-                COALESCE(qsn.total_possible_point, qson.total_possible_point)   AS total_possible_point,
-                COALESCE(qsn.total_score, qson.total_score)                     AS total_score,
-                COALESCE(qsn.grade_average, qson.grade_average)                 AS grade_average,
-                COALESCE(qsn.percentage_incorrect, qson.percentage_incorrect)   AS percentage_incorrect,
-                -- Per-choice distractor % and the named-students list MUST be
-                -- item-scoped. The per-item cube (qsn / cube_question_summary)
-                -- lists only THIS item's (one section's) students; the overall
-                -- cube (qso / cube_question_summary_overall) is keyed by
-                -- (school_id, ukey) and aggregates EVERY section that answered
-                -- the same question (identical question content → same ukey).
-                -- An assessment given to multiple sections shares the ukey, so
-                -- qso merges all teachers' students into one list — leaking
-                -- students from other sections into a single teacher's report
-                -- (e.g. Daisy Johnson, in Elena Lenhart's section, surfacing in
-                -- Gabriela Agostino's report). Prefer qsn; fall back to qso only
-                -- when the per-item cube genuinely has no row.
-                COALESCE(qsn.incorrect_choice_details, qso.incorrect_choice_details, '') AS incorrect_choice_details,
-                COALESCE(qsn.incorrect_details_name, qso.incorrect_details_name, '')     AS incorrect_details_name,
-                -- Prefer the full newline-joined Schoology standard list from
-                -- dim_question_data. When a question is genuinely unaligned
-                -- (no source standards), dim_question_data carries none, so
-                -- fall back to the cube's own ``standards`` label — which
-                -- legacy coerces to "Other" for unaligned questions. This keeps
-                -- the paginated Standard cell showing "Other" (never blank) for
-                -- unaligned items, matching the legacy SSRS render.
-                COALESCE(NULLIF(qdst.standards, ''), NULLIF(qs.cube_standards, ''), '') AS standards,
-                COALESCE(qdc.cpalms_standard, '')                               AS cpalms_standard,
-                qs.standard                                                     AS strand_raw,
-                COALESCE(qdd.description, qso.description, '')                  AS description
-            FROM qs_agg qs
-            LEFT JOIN qs_num         qsn  ON qsn.item_id    = qs.item_id  AND qsn.question_id = qs.question_id
-            LEFT JOIN qd_standards   qdst ON qdst.item_id   = qs.item_id  AND qdst.question_id = qs.question_id
-            LEFT JOIN qd_cpalms      qdc  ON qdc.item_id    = qs.item_id  AND qdc.question_id = qs.question_id
-            LEFT JOIN qd_description qdd  ON qdd.item_id    = qs.item_id  AND qdd.question_id  = qs.question_id
-            LEFT JOIN qso_agg        qso  ON qso.school_id  = qs.school_id AND qso.ukey       = qs.ukey
-            LEFT JOIN qso_num        qson ON qson.school_id = qs.school_id AND qson.ukey      = qs.ukey
-            ORDER BY NULLIF(regexp_replace(qs.question_no, '[^0-9]', '', 'g'), '')::int NULLS LAST,
-                     qs.question_no
+                qm.question_no                                                  AS question_id,
+                qm.question_no                                                  AS question_no,
+                qm.position_number                                             AS position_number,
+                qm.question                                                     AS question,
+                qm.question_type                                                AS question_type,
+                qm.correct_answer                                               AS correct_answer,
+                qn.total_possible_point                                         AS total_possible_point,
+                qn.total_score                                                  AS total_score,
+                qn.grade_average                                                AS grade_average,
+                qn.percentage_incorrect                                         AS percentage_incorrect,
+                COALESCE(ca.incorrect_choice_details, '')                       AS incorrect_choice_details,
+                COALESCE(ca.incorrect_details_name, '')                         AS incorrect_details_name,
+                COALESCE(NULLIF(qdst.standards, ''), NULLIF(qm.cube_standards, ''), '') AS standards,
+                COALESCE(qdc.cpalms_standard, '')                              AS cpalms_standard,
+                qm.standard                                                     AS strand_raw,
+                COALESCE(qdd.description, ca.description, '')                   AS description
+            FROM qs_meta qm
+            LEFT JOIN qs_num         qn   ON qn.question_no   = qm.question_no
+            LEFT JOIN cqso_agg       ca   ON ca.question_no   = qm.question_no
+            LEFT JOIN qd_standards   qdst ON qdst.question_no = qm.question_no
+            LEFT JOIN qd_cpalms      qdc  ON qdc.question_no  = qm.question_no
+            LEFT JOIN qd_description qdd  ON qdd.question_no  = qm.question_no
+            ORDER BY NULLIF(regexp_replace(qm.question_no, '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                     qm.question_no
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
     # Incorrect-choice detail (cube_questionincorrectchoice_summary)
     # ────────────────────────────────────────────────────────────────────
-    async def get_incorrect_choices_for_item(self, item_id: str) -> List[Dict[str, Any]]:
+    async def get_incorrect_choices_for_item(self, subject_id: str) -> List[Dict[str, Any]]:
+        """MERGED per-(question, answer-choice) rollup for an assessment.
+
+        Keyed on ``question_no`` — the section-agnostic merged question identity
+        (the per-section ``question_id`` differs across section copies). The
+        choice rows are pooled across every section that answered the question
+        and returned under ``question_id = question_no`` so the merged QRA
+        question identity is consistent everywhere.
+        """
         sql = text(
             """
-            WITH item_qids AS (
-                SELECT DISTINCT question_id
+            WITH qid_qno AS (
+                SELECT DISTINCT question_id, question_no
                 FROM cube_question_summary
-                WHERE item_id = :item_id
+                WHERE item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
+            ),
+            choices AS (
+                -- Pool the per-section detail rows by (question_no, answer).
+                -- Exclude the GROUPING SETS rollup rows (NULL answer_submission).
+                SELECT
+                    qq.question_no,
+                    qic.answer_submission,
+                    SUM(qic.total_student)        AS students_count,
+                    SUM(qic.total_score)          AS total_score,
+                    SUM(qic.total_possible_point) AS total_possible_point
+                FROM cube_questionincorrectchoice_summary qic
+                JOIN qid_qno qq ON qq.question_id = qic.question_id
+                WHERE qic.answer_submission IS NOT NULL
+                  AND qic.answer_submission <> ''
+                GROUP BY qq.question_no, qic.answer_submission
             ),
             attempts AS (
-                -- cube_questionincorrectchoice_summary is built with GROUPING
-                -- SETS, so it also carries ukey-rollup and question-rollup rows
-                -- with NULL answer_submission. Summing those into the
-                -- denominator double/triple-counts attempts (e.g. 57 instead of
-                -- 19 students → 18/57=32% instead of 18/19=95%). Restrict to the
-                -- per-choice DETAIL rows only — same filter get_distractor_breakdown uses.
-                SELECT
-                    question_id,
-                    SUM(total_student) AS total_attempts
-                FROM cube_questionincorrectchoice_summary
-                WHERE question_id IN (SELECT question_id FROM item_qids)
-                  AND answer_submission IS NOT NULL
-                  AND answer_submission <> ''
-                GROUP BY question_id
+                SELECT question_no, SUM(students_count) AS total_attempts
+                FROM choices GROUP BY question_no
             )
             SELECT
-                qic.question_id,
-                qic.answer_submission,
-                qic.total_student                                AS students_count,
-                qic.total_student                                AS attempt_count_for_choice,
+                c.question_no                                    AS question_id,
+                c.answer_submission,
+                c.students_count                                 AS students_count,
+                c.students_count                                 AS attempt_count_for_choice,
                 COALESCE(a.total_attempts, 0)                    AS total_attempts_for_question,
                 CASE WHEN COALESCE(a.total_attempts,0) > 0
-                     THEN qic.total_student::numeric / a.total_attempts::numeric
+                     THEN c.students_count::numeric / a.total_attempts::numeric
                      ELSE 0 END                                  AS share_of_attempts,
-                qic.total_score,
-                qic.total_possible_point,
-                qic.grade_average,
-                qic.percentage_incorrect_answers                 AS percentage_incorrect_answers,
-                CASE WHEN qic.total_possible_point > 0
-                     AND qic.total_score >= qic.total_possible_point
+                c.total_score,
+                c.total_possible_point,
+                CASE WHEN c.total_possible_point > 0
+                     THEN c.total_score::numeric / NULLIF(c.total_possible_point, 0)
+                     ELSE 0 END                                  AS grade_average,
+                CASE WHEN c.total_possible_point > 0
+                     THEN 1 - c.total_score::numeric / NULLIF(c.total_possible_point, 0)
+                     ELSE 0 END                                  AS percentage_incorrect_answers,
+                CASE WHEN c.total_possible_point > 0
+                     AND c.total_score >= c.total_possible_point
                      THEN TRUE ELSE FALSE END                    AS is_correct
-            FROM cube_questionincorrectchoice_summary qic
-            JOIN item_qids iq ON iq.question_id = qic.question_id
-            LEFT JOIN attempts a ON a.question_id = qic.question_id
-            -- Exclude the GROUPING SETS rollup rows (NULL answer_submission) —
-            -- only real per-choice rows belong in the distractor breakdown.
-            WHERE qic.answer_submission IS NOT NULL
-              AND qic.answer_submission <> ''
-            ORDER BY qic.question_id, qic.total_student DESC NULLS LAST
+            FROM choices c
+            LEFT JOIN attempts a ON a.question_no = c.question_no
+            ORDER BY c.question_no, c.students_count DESC NULLS LAST
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
     # Standards (cube_standard_summary joined with dim_standard)
     # ────────────────────────────────────────────────────────────────────
-    async def get_standards_for_item(self, item_id: str) -> List[Dict[str, Any]]:
+    async def get_standards_for_item(self, subject_id: str) -> List[Dict[str, Any]]:
+        """MERGED per-(strand, identifier) rollup for an assessment.
+
+        ``cube_standard_summary`` is per-(item, strand, identifier) and carries
+        no subject_id, so re-aggregate over the assessment's section set: SUM
+        the points (grade_average = SUM(score)/SUM(possible)), and take the
+        per-question/standard counts via MAX (identical content across
+        sections, so MAX avoids double-counting)."""
         sql = text(
             """
+            WITH agg AS (
+                SELECT
+                    cs.strand_id,
+                    cs.identifier,
+                    MAX(cs.total_questions)        AS total_questions,
+                    MAX(cs.total_standards)        AS total_standards,
+                    SUM(cs.total_possible_point)   AS total_possible_point,
+                    SUM(cs.total_score)            AS total_score,
+                    SUM(cs.total_score)::numeric
+                      / NULLIF(SUM(cs.total_possible_point), 0)  AS grade_average,
+                    1 - SUM(cs.total_score)::numeric
+                      / NULLIF(SUM(cs.total_possible_point), 0)  AS percentage_incorrect_answers
+                FROM cube_standard_summary cs
+                WHERE cs.item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
+                GROUP BY cs.strand_id, cs.identifier
+            )
             SELECT
-                cs.item_id,
-                cs.strand_id,
-                cs.identifier,
-                cs.total_questions,
-                cs.total_standards,
-                cs.total_possible_point,
-                cs.total_score,
-                cs.grade_average,
-                cs.percentage_incorrect_answers,
+                :subject_id                     AS item_id,
+                a.strand_id,
+                a.identifier,
+                a.total_questions,
+                a.total_standards,
+                a.total_possible_point,
+                a.total_score,
+                a.grade_average,
+                a.percentage_incorrect_answers,
                 ds_strand.strand                AS strand,
                 ds_std.schoology_standard       AS schoology_standard,
                 ds_std.description              AS description
-            FROM cube_standard_summary cs
+            FROM agg a
             LEFT JOIN dim_strand ds_strand
-              ON ds_strand.strand_id = cs.strand_id
-             AND ds_strand.identifier = cs.identifier
+              ON ds_strand.strand_id = a.strand_id
+             AND ds_strand.identifier = a.identifier
             LEFT JOIN LATERAL (
                 SELECT description, schoology_standard
                 FROM dim_standard
-                WHERE identifier = cs.identifier
+                WHERE identifier = a.identifier
                 LIMIT 1
             ) ds_std ON TRUE
-            WHERE cs.item_id = :item_id
-            ORDER BY ds_strand.strand NULLS LAST, cs.identifier
+            ORDER BY ds_strand.strand NULLS LAST, a.identifier
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
@@ -752,9 +837,9 @@ class CubeRepository:
     # AND the QRA Strands/Standards summary tables).
     # ────────────────────────────────────────────────────────────────────
     async def get_strand_rollup_for_item(
-        self, item_id: str
+        self, subject_id: str
     ) -> List[Dict[str, Any]]:
-        """One row per Strand for a given assessment.
+        """One row per Strand for a given MERGED assessment.
 
         ``num_standards`` is counted at the **schoology_standard grain** —
         the Schoology canonical long form rendered by
@@ -782,18 +867,15 @@ class CubeRepository:
         """
         sql = text(
             """
-            WITH item_codes AS (
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+            ),
+            item_codes AS (
                 SELECT DISTINCT standard AS code
                 FROM dim_question_data
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
-            ),
-            subj_ids AS (
-                SELECT DISTINCT subject_id
-                FROM cube_question_summary
-                WHERE item_id = :item_id
-                  AND subject_id IS NOT NULL
             ),
             labeled AS (
                 SELECT DISTINCT
@@ -822,28 +904,25 @@ class CubeRepository:
                   ON ds.identifier = cqs.identifier
                 JOIN labeled l
                   ON l.identifier = cqs.identifier
-                WHERE cqs.item_id = :item_id
+                WHERE cqs.item_id IN (SELECT item_id FROM items)
                   AND ds.strand IS NOT NULL
                   AND ds.strand <> ''
                 GROUP BY ds.strand
             ),
             strand_grade AS (
-                -- Per-item strand grade: AVG(grade_average) over the per-item
-                -- twin of cube_question_summary_overall (cqso grained by item_id)
-                -- for THIS item only. Base cqso is grained by subject_id (which
-                -- encodes item_name), so it POOLS every section of a multi-
-                -- section assessment — surfacing other sections' students in a
-                -- single teacher's report. The _by_item twin is byte-identical
-                -- to cqso for a single-section assessment (proven: re-pooling it
-                -- by subject reproduces cqso row-for-row; all divergences are in
-                -- multi-item subjects only) but section-scoped for multi-section.
+                -- MERGED strand grade: AVG(grade_average) over the section-agnostic
+                -- base cube_question_summary_overall (one row per ukey, already
+                -- pooled across every section of the assessment) scoped by
+                -- subject_id. This reverses the R3 per-item twin read: under a
+                -- subject-keyed report the pooled cqso IS the desired merged
+                -- content, and for a single-section assessment it equals the twin.
                 SELECT
                     ds.strand               AS strand,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall_by_item cqso
+                FROM cube_question_summary_overall cqso
                 JOIN dim_standard ds
                   ON ds.schoology_standard = cqso.standards
-                WHERE cqso.item_id = :item_id
+                WHERE cqso.subject_id = :subject_id
                   AND ds.strand IS NOT NULL AND ds.strand <> ''
                 GROUP BY ds.strand
             )
@@ -861,7 +940,7 @@ class CubeRepository:
             ORDER BY sq.strand
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     async def get_strand_rows_page(
@@ -901,8 +980,11 @@ class CubeRepository:
         order_by = f"{sort_sql} {dir_sql} NULLS LAST, item_id ASC, strand ASC"
         sql = text(
             f"""
+            -- MERGED "Performance by Strand" grid: one row per
+            -- (assessment, strand) keyed on subject_id, pooling all section
+            -- copies (no per-section duplicate rows on the dashboard).
             WITH scoped_items AS (
-                SELECT di.item_id, ds.grade, di.item_name, di.assessment_date
+                SELECT di.item_id, di.subject_id, ds.grade, di.item_name, di.assessment_date
                 FROM dim_item di
                 LEFT JOIN dim_subject ds
                   ON ds.school_id = di.school_id AND ds.subject_id = di.subject_id
@@ -913,60 +995,71 @@ class CubeRepository:
                   AND {_DI_INSTRUCTOR_FILTER_SQL}
                   AND (CAST(:q AS TEXT)         IS NULL OR di.item_name ILIKE '%' || CAST(:q AS TEXT) || '%')
             ),
+            subjects AS (
+                SELECT subject_id,
+                       MIN(grade)           AS grade,
+                       MIN(item_name)       AS item_name,
+                       MIN(assessment_date) AS assessment_date
+                FROM scoped_items
+                GROUP BY subject_id
+            ),
             item_codes AS (
-                SELECT DISTINCT dqd.item_id, dqd.standard AS code
+                SELECT DISTINCT si.subject_id, dqd.standard AS code
                 FROM dim_question_data dqd
                 JOIN scoped_items si ON si.item_id = dqd.item_id
                 WHERE dqd.standard IS NOT NULL AND dqd.standard NOT IN ('', 'null')
             ),
             labeled AS (
-                SELECT DISTINCT ic.item_id, ds.identifier, ds.schoology_standard, ds.strand
+                SELECT DISTINCT ic.subject_id, ds.identifier, ds.schoology_standard, ds.strand
                 FROM dim_standard ds
                 JOIN item_codes ic ON ds.schoology_standard = ic.code
                 WHERE ds.strand IS NOT NULL AND ds.strand <> ''
                   AND ds.schoology_standard IS NOT NULL AND ds.schoology_standard <> ''
             ),
             strand_standards AS (
-                SELECT item_id, strand, COUNT(DISTINCT schoology_standard) AS num_standards
+                SELECT subject_id, strand, COUNT(DISTINCT schoology_standard) AS num_standards
                 FROM labeled
-                GROUP BY item_id, strand
+                GROUP BY subject_id, strand
             ),
             strand_questions AS (
-                SELECT cqs.item_id AS item_id, ds.strand AS strand,
+                SELECT si.subject_id AS subject_id, ds.strand AS strand,
                        COUNT(DISTINCT cqs.question_no) AS num_questions
                 FROM cube_question_summary cqs
-                JOIN labeled l ON l.identifier = cqs.identifier AND l.item_id = cqs.item_id
+                JOIN scoped_items si ON si.item_id = cqs.item_id
+                JOIN labeled l ON l.identifier = cqs.identifier AND l.subject_id = si.subject_id
                 JOIN dim_standard ds ON ds.identifier = cqs.identifier
-                WHERE cqs.item_id IN (SELECT item_id FROM scoped_items)
-                  AND ds.strand IS NOT NULL AND ds.strand <> ''
-                GROUP BY cqs.item_id, ds.strand
+                WHERE ds.strand IS NOT NULL AND ds.strand <> ''
+                GROUP BY si.subject_id, ds.strand
             ),
             strand_grade AS (
-                SELECT cqso.item_id AS item_id, ds.strand AS strand,
+                -- Merged strand grade from the section-agnostic base cqso
+                -- (one row per ukey, already pooled), scoped to the subjects
+                -- in view.
+                SELECT cqso.subject_id AS subject_id, ds.strand AS strand,
                        AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall_by_item cqso
-                JOIN scoped_items si ON si.item_id = cqso.item_id
+                FROM cube_question_summary_overall cqso
+                JOIN subjects su ON su.subject_id = cqso.subject_id
                 JOIN dim_standard ds ON ds.schoology_standard = cqso.standards
                 WHERE ds.strand IS NOT NULL AND ds.strand <> ''
-                GROUP BY cqso.item_id, ds.strand
+                GROUP BY cqso.subject_id, ds.strand
             ),
             rows AS (
                 SELECT
-                    si.grade           AS grade,
+                    su.grade           AS grade,
                     sq.strand          AS strand,
                     ss.num_standards   AS total_standards,
                     sq.num_questions   AS total_questions,
                     sg.grade_average   AS grade_average,
-                    si.assessment_date AS assessment_date,
-                    si.item_name       AS assessment,
-                    sq.item_id         AS item_id,
+                    su.assessment_date AS assessment_date,
+                    su.item_name       AS assessment,
+                    sq.subject_id      AS item_id,
                     COUNT(*) OVER()    AS total
                 FROM strand_questions sq
-                JOIN scoped_items si ON si.item_id = sq.item_id
+                JOIN subjects su ON su.subject_id = sq.subject_id
                 JOIN strand_standards ss
-                  ON ss.item_id = sq.item_id AND ss.strand = sq.strand
+                  ON ss.subject_id = sq.subject_id AND ss.strand = sq.strand
                 LEFT JOIN strand_grade sg
-                  ON sg.item_id = sq.item_id AND sg.strand = sq.strand
+                  ON sg.subject_id = sq.subject_id AND sg.strand = sq.strand
             )
             SELECT * FROM rows
             ORDER BY {order_by}
@@ -993,9 +1086,9 @@ class CubeRepository:
         return rows, total
 
     async def get_standard_rollup_for_item(
-        self, item_id: str
+        self, subject_id: str
     ) -> List[Dict[str, Any]]:
-        """One row per Schoology canonical standard for a given assessment.
+        """One row per Schoology canonical standard for a given MERGED assessment.
 
         Each ``schoology_standard`` code that the assessment's
         ``standards_val`` set resolves to renders as its own row
@@ -1036,18 +1129,15 @@ class CubeRepository:
         """
         sql = text(
             """
-            WITH item_codes AS (
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+            ),
+            item_codes AS (
                 SELECT DISTINCT standard AS code
                 FROM dim_question_data
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
-            ),
-            subj_ids AS (
-                SELECT DISTINCT subject_id
-                FROM cube_question_summary
-                WHERE item_id = :item_id
-                  AND subject_id IS NOT NULL
             ),
             labeled AS (
                 SELECT DISTINCT
@@ -1065,28 +1155,28 @@ class CubeRepository:
                     cqs.identifier,
                     COUNT(DISTINCT cqs.question_no) AS num_questions
                 FROM cube_question_summary cqs
-                WHERE cqs.item_id = :item_id
+                WHERE cqs.item_id IN (SELECT item_id FROM items)
                 GROUP BY cqs.identifier
             ),
             cqso_by_code AS (
-                -- Per-item (section-scoped) grade by Schoology code, from the
-                -- item-grained twin of cqso. See get_strand_rollup_for_item for
-                -- the rationale (base cqso pools sections via subject_id).
+                -- MERGED grade by Schoology code from the section-agnostic base
+                -- cqso (pooled across sections), scoped by subject_id. Reverses
+                -- the R3 per-item twin read; equals the twin for a single section.
                 SELECT
                     cqso.standards          AS schoology_standard,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall_by_item cqso
-                WHERE cqso.item_id = :item_id
+                FROM cube_question_summary_overall cqso
+                WHERE cqso.subject_id = :subject_id
                 GROUP BY cqso.standards
             ),
             cqso_by_id AS (
                 SELECT
                     ds.identifier           AS identifier,
                     AVG(cqso.grade_average) AS grade_average
-                FROM cube_question_summary_overall_by_item cqso
+                FROM cube_question_summary_overall cqso
                 JOIN dim_standard ds
                   ON ds.schoology_standard = cqso.standards
-                WHERE cqso.item_id = :item_id
+                WHERE cqso.subject_id = :subject_id
                 GROUP BY ds.identifier
             )
             SELECT
@@ -1106,11 +1196,11 @@ class CubeRepository:
             ORDER BY l.strand, l.schoology_standard
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     async def get_standard_bands_for_item(
-        self, item_id: str
+        self, subject_id: str
     ) -> List[Dict[str, Any]]:
         """One row per schoology_standard for the SDD 100%-stacked band charts.
 
@@ -1126,10 +1216,13 @@ class CubeRepository:
         """
         sql = text(
             """
-            WITH item_codes AS (
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+            ),
+            item_codes AS (
                 SELECT DISTINCT standard AS code
                 FROM dim_question_data
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
                   AND standard IS NOT NULL
                   AND standard NOT IN ('', 'null')
             ),
@@ -1144,14 +1237,23 @@ class CubeRepository:
                   AND ds.schoology_standard IS NOT NULL
                   AND ds.schoology_standard <> ''
             ),
+            -- Merged per-identifier grade across the section set: pool every
+            -- section's points per question (SUM/SUM), then AVG over questions —
+            -- the points-weighted per-identifier average, pooled across sections.
             per_identifier AS (
                 SELECT
-                    cqs.identifier,
-                    COUNT(DISTINCT cqs.question_no) AS num_questions,
-                    AVG(cqs.grade_average)          AS grade_average
-                FROM cube_question_summary cqs
-                WHERE cqs.item_id = :item_id
-                GROUP BY cqs.identifier
+                    identifier,
+                    COUNT(DISTINCT question_no) AS num_questions,
+                    AVG(qga)                    AS grade_average
+                FROM (
+                    SELECT identifier, question_no,
+                           SUM(total_score)::numeric
+                             / NULLIF(SUM(total_possible_point), 0) AS qga
+                    FROM cube_question_summary
+                    WHERE item_id IN (SELECT item_id FROM items)
+                    GROUP BY identifier, question_no
+                ) per_q
+                GROUP BY identifier
             )
             SELECT
                 l.schoology_standard                                         AS schoology_standard,
@@ -1164,7 +1266,7 @@ class CubeRepository:
             ORDER BY l.schoology_standard
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
@@ -1598,7 +1700,7 @@ class CubeRepository:
     # answer-option multiplicity.
 
     async def get_alignment_quality_for_item(
-        self, item_id: str
+        self, subject_id: str
     ) -> Dict[str, int]:
         """Count distinct questions vs. distinct aligned-questions for one item.
 
@@ -1639,10 +1741,12 @@ class CubeRepository:
                   )
                   AS distinct_unmatched_label_count
             FROM dim_question_data
-            WHERE item_id = :item_id
+            WHERE item_id IN (
+                      SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  )
             """
         )
-        row = (await self.session.execute(sql, {"item_id": item_id})).first()
+        row = (await self.session.execute(sql, {"subject_id": subject_id})).first()
         if row is None:
             return {
                 "questions_total": 0,
@@ -1661,7 +1765,7 @@ class CubeRepository:
         }
 
     async def get_unmatched_alignment_labels_for_item(
-        self, item_id: str, limit: int = 5
+        self, subject_id: str, limit: int = 5
     ) -> List[str]:
         """Return distinct raw standard labels that failed to map to a CPALMS code.
 
@@ -1676,7 +1780,9 @@ class CubeRepository:
             """
             SELECT DISTINCT standard
             FROM dim_question_data
-            WHERE item_id = :item_id
+            WHERE item_id IN (
+                      SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  )
               AND standard IS NOT NULL
               AND standard <> ''
               AND identifier IS NULL
@@ -1685,7 +1791,7 @@ class CubeRepository:
             """
         )
         result = await self.session.execute(
-            sql, {"item_id": item_id, "limit": int(limit)}
+            sql, {"subject_id": subject_id, "limit": int(limit)}
         )
         return [str(r[0]) for r in result.all() if r[0] is not None]
 
@@ -1796,31 +1902,74 @@ class CubeRepository:
     # ────────────────────────────────────────────────────────────────────
     # Helpers used by the composed report endpoint
     # ────────────────────────────────────────────────────────────────────
-    async def get_assessment_meta(self, item_id: str) -> Optional[Dict[str, Any]]:
-        """Compose AssessmentMeta from dim_item, dim_section, dim_subject and
-        the schools table.
+    async def get_assessment_meta(self, subject_id: str) -> Optional[Dict[str, Any]]:
+        """Compose the MERGED AssessmentMeta for one assessment (subject_id).
 
-        first_access / latest_attempt come from fact_student_submission. The
-        course join goes through fact_student_submission.course_nid because
-        dim_course doesn't carry an item_id link.
+        The same-named assessment given to N sections is one report: the header
+        lists the UNION of all section instructors + section names (legacy DAX
+        ``CONCATENATEX(DISTINCT(dim_Item[Section_Instructors]))``), keyed on the
+        section-agnostic subject_id. Representative item-level fields (name,
+        type, school) come from the earliest section copy; assessment_date is
+        the earliest across sections. first_access / latest_attempt span the
+        whole section set.
         """
         sql = text(
             """
-            WITH item_course AS (
+            WITH items AS (
+                SELECT item_id, school_id, item_name, item_type, subject_id,
+                       section_name, section_instructors, assessment_date
+                FROM dim_item
+                WHERE subject_id = :subject_id
+            ),
+            rep AS (
+                SELECT * FROM items
+                ORDER BY assessment_date ASC NULLS LAST, item_id
+                LIMIT 1
+            ),
+            -- Per-section instructor + name resolution (dim_section preferred,
+            -- dim_item fallback), unnested so the union is de-duplicated cleanly.
+            sec_src AS (
+                SELECT
+                    COALESCE(NULLIF(ds.section_instructors, ''),
+                             NULLIF(it.section_instructors, '')) AS instructors,
+                    COALESCE(NULLIF(ds.section_name, ''),
+                             NULLIF(it.section_name, ''))        AS section_name,
+                    ds.section_code,
+                    ds.section_nid
+                FROM items it
+                LEFT JOIN dim_section ds
+                  ON ds.school_id = it.school_id AND ds.item_id = it.item_id
+            ),
+            sec AS (
+                SELECT
+                    (SELECT string_agg(DISTINCT btrim(name), ', ' ORDER BY btrim(name))
+                     FROM sec_src s,
+                          unnest(string_to_array(s.instructors, ',')) AS name
+                     WHERE btrim(name) <> '')                         AS section_instructors,
+                    (SELECT string_agg(DISTINCT btrim(nm), ', ' ORDER BY btrim(nm))
+                     FROM sec_src s,
+                          unnest(string_to_array(s.section_name, ',')) AS nm
+                     WHERE btrim(nm) <> '')                           AS section_name,
+                    (SELECT string_agg(DISTINCT section_code, ', ' ORDER BY section_code)
+                     FROM sec_src WHERE NULLIF(section_code, '') IS NOT NULL) AS section_code,
+                    (SELECT string_agg(DISTINCT section_nid, ', ' ORDER BY section_nid)
+                     FROM sec_src WHERE NULLIF(section_nid, '') IS NOT NULL)  AS section_nid
+            ),
+            item_course AS (
                 SELECT DISTINCT course_nid
                 FROM fact_student_submission
-                WHERE item_id = :item_id
+                WHERE item_id IN (SELECT item_id FROM items)
                 LIMIT 1
             )
             SELECT
-                di.item_id,
-                COALESCE(di.item_name, '')             AS item_name,
-                COALESCE(di.item_type, '')             AS item_type,
-                di.subject_id,
-                COALESCE(ds.section_nid, '')           AS section_nid,
-                COALESCE(ds.section_code, '')          AS section_code,
-                COALESCE(ds.section_name, di.section_name, '') AS section_name,
-                COALESCE(ds.section_instructors, di.section_instructors, '') AS section_instructors,
+                :subject_id                            AS item_id,
+                COALESCE(rep.item_name, '')            AS item_name,
+                COALESCE(rep.item_type, '')            AS item_type,
+                rep.subject_id,
+                COALESCE(sec.section_nid, '')          AS section_nid,
+                COALESCE(sec.section_code, '')         AS section_code,
+                COALESCE(sec.section_name, rep.section_name, '') AS section_name,
+                COALESCE(sec.section_instructors, rep.section_instructors, '') AS section_instructors,
                 COALESCE(dc.course_nid, '')            AS course_nid,
                 COALESCE(dc.course_name, '')           AS course_name,
                 COALESCE(dc.course_code, '')           AS course_code,
@@ -1828,41 +1977,41 @@ class CubeRepository:
                 COALESCE(dsubj.grade, '')              AS grade,
                 COALESCE(dsubj.session, '')            AS session,
                 COALESCE(dsubj.assessment_type, '')    AS assessment_type,
-                di.assessment_date,
-                di.school_id,
+                rep.assessment_date,
+                rep.school_id,
                 COALESCE(s.name, '')                   AS school_name,
                 s.logo_url                             AS school_logo_url
-            FROM dim_item di
-            LEFT JOIN dim_section ds
-              ON ds.school_id = di.school_id AND ds.item_id = di.item_id
+            FROM rep
+            LEFT JOIN sec ON TRUE
             LEFT JOIN item_course ic ON TRUE
             LEFT JOIN dim_course dc
-              ON dc.school_id = di.school_id AND dc.course_nid = ic.course_nid
+              ON dc.school_id = rep.school_id AND dc.course_nid = ic.course_nid
             LEFT JOIN dim_subject dsubj
-              ON dsubj.school_id = di.school_id AND dsubj.subject_id = di.subject_id
+              ON dsubj.school_id = rep.school_id AND dsubj.subject_id = rep.subject_id
             LEFT JOIN public.schools s
-              ON s.school_id = di.school_id
-            WHERE di.item_id = :item_id
+              ON s.school_id = rep.school_id
             LIMIT 1
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         row = result.first()
         if not row:
             return None
         meta = _row_to_dict(row)
 
-        # First/latest access from the fact table, scoped to this item.
+        # First/latest access from the fact table, across the section set.
         access_sql = text(
             """
             SELECT
                 MIN(first_access)   AS first_access,
                 MAX(latest_attempt) AS latest_attempt
             FROM fact_student_submission
-            WHERE item_id = :item_id
+            WHERE item_id IN (
+                      SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  )
             """
         )
-        access_row = (await self.session.execute(access_sql, {"item_id": item_id})).first()
+        access_row = (await self.session.execute(access_sql, {"subject_id": subject_id})).first()
         if access_row:
             meta["first_access"] = access_row._mapping["first_access"]
             meta["latest_attempt"] = access_row._mapping["latest_attempt"]
@@ -2183,22 +2332,27 @@ class CubeRepository:
     # Paginated reports (PBIX ord 6/7/16, 11, 12, 13)
     # ────────────────────────────────────────────────────────────────────
     async def get_question_summary_matrix_rows(
-        self, item_id: str
+        self, subject_id: str
     ) -> List[Dict[str, Any]]:
-        """One row per (student, question) for the QSR matrix.
+        """One row per (student, question) for the MERGED QSR matrix.
 
-        Joins ``fact_student_submission`` to ``cube_question_summary`` for
-        canonical question metadata and to ``dim_standard`` for the CPALMS
-        long-form alias used as the column-group header. All dim joins
-        include the ``school_id`` predicate as defense-in-depth even though
-        RLS is enabled on every tenant-scoped table.
+        Widens to the assessment's section set so every section's students pool
+        into one report; the per-section instructor is resolved off each
+        student's OWN section copy (``pa.item_id``), so the matrix groups by
+        instructor across all sections (legacy QSR "by teacher" bands within one
+        report). Columns are keyed on question_no (section-invariant), so a
+        student appears once per question regardless of how many section copies
+        the assessment has.
         """
         sql = text(
             """
-            WITH per_question AS (
-                -- Exactly one row per question. The dim_standard alias table
-                -- can map a single schoology_standard to many rows (Schoology
-                -- course-prefix aliases — see
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+            ),
+            per_question AS (
+                -- One row per (section copy) question. The dim_standard alias
+                -- table can map a single schoology_standard to many rows
+                -- (Schoology course-prefix aliases — see
                 -- docs/audit/legacy-schoology-cpalms-mapping.md); collapse to
                 -- one cpalms_standard here so the (user, question) attempt rows
                 -- below do NOT fan out and inflate the cell counts (PAG-6).
@@ -2215,16 +2369,19 @@ class CubeRepository:
                 -- dim_standard is global (no school_id) — RLS not applicable.
                 LEFT JOIN dim_standard ds
                   ON ds.schoology_standard = qs.standard
-                WHERE qs.item_id = :item_id
+                WHERE qs.item_id IN (SELECT item_id FROM items)
                 ORDER BY qs.question_id,
                          NULLIF(regexp_replace(COALESCE(qs.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
                          ds.cpalms_standard NULLS LAST
             ),
             -- Per-(user, question) latest attempt, so re-takes don't double-count.
-            -- fss.submission is UUID v7 (time-ordered) per CLAUDE.md.
+            -- fss.submission is UUID v7 (time-ordered) per CLAUDE.md. question_id
+            -- is per-section, so DISTINCT ON (user, question_id) keeps each
+            -- student's own section attempt.
             per_attempt AS (
                 SELECT DISTINCT ON (fss.user_uid, fss.question_id)
                     fss.school_id,
+                    fss.item_id,
                     fss.user_uid,
                     fss.user_name,
                     fss.section_nid,
@@ -2232,7 +2389,7 @@ class CubeRepository:
                     fss.points_received,
                     fss.points_possible
                 FROM fact_student_submission fss
-                WHERE fss.item_id = :item_id
+                WHERE fss.item_id IN (SELECT item_id FROM items)
                 ORDER BY fss.user_uid, fss.question_id,
                          fss.submission DESC NULLS LAST,
                          fss.latest_attempt DESC NULLS LAST
@@ -2240,16 +2397,20 @@ class CubeRepository:
             SELECT
                 pa.user_uid,
                 pa.user_name,
-                -- Per-section instructor (dim_section) is most specific; fall
-                -- back to the assessment-level list (dim_item) exactly as the
-                -- QRA meta query does (get_assessment_meta), so both reports
-                -- agree. "Unassigned" only when neither resolves.
+                -- Per-section instructor (dim_section on the student's OWN
+                -- section copy) is most specific; fall back to the
+                -- assessment-level list (dim_item). "Unassigned" only when
+                -- neither resolves.
                 COALESCE(
                     NULLIF(dsec.section_instructors, ''),
                     NULLIF(di.section_instructors, ''),
                     'Unassigned'
                 )                                            AS section_instructors,
-                pa.question_id,
+                -- The merged matrix column key is question_no (section-agnostic);
+                -- the per-section question_id would split each question into one
+                -- column per section. A student answers each question_no once, so
+                -- cells collapse correctly.
+                pq.question_no                               AS question_id,
                 pa.points_received,
                 pa.points_possible,
                 pq.question_no,
@@ -2262,40 +2423,32 @@ class CubeRepository:
                 pq.cpalms_standard
             FROM per_attempt pa
             JOIN per_question pq ON pq.question_id = pa.question_id
-            -- Resolve the instructor the SAME way the QRA header does
-            -- (get_assessment_meta joins dim_section by item_id, NOT
-            -- section_nid). A section_nid is reused across assessments/dates
-            -- with different instructor lists, and dim_section holds one row
-            -- per section_nid keyed to whichever item built it — so joining on
-            -- section_nid here surfaced a DIFFERENT (older) item's instructors
-            -- in the QSR matrix than the header showed (e.g. "Kimberly Mathes,
-            -- Sitara Qalander" vs. the header's "Kimberly Mathes, MaryBeth
-            -- Taylor"). Joining by item_id finds this item's section row (or
-            -- none → the dim_item fallback below), so matrix and header agree.
+            -- Resolve the instructor off the student's OWN section copy so each
+            -- student bands under the right teacher across the merged sections.
             LEFT JOIN dim_section dsec
-              ON dsec.item_id = :item_id
+              ON dsec.item_id = pa.item_id
              AND dsec.school_id = pa.school_id
-            -- dim_item is one row per (item, school) → no fan-out.
             LEFT JOIN dim_item di
-              ON di.item_id = :item_id
+              ON di.item_id = pa.item_id
              AND di.school_id = pa.school_id
             ORDER BY section_instructors, pa.user_name,
                      NULLIF(regexp_replace(COALESCE(pq.question_no, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
                      pq.question_no
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     async def get_cube_grand_total_for_item(
-        self, item_id: str
+        self, subject_id: str
     ) -> Optional[Dict[str, Any]]:
-        """Cube-derived grand total for fact-less (parquet-loaded) schools.
+        """Cube-derived MERGED grand total for fact-less (parquet-loaded) schools.
 
         When ``get_question_summary_matrix_rows`` returns no rows (no
         ``fact_student_submission`` data), the QSR matrix has no per-student
-        body. Sum the per-question cube so the footer still shows the real
-        aggregate (== the cube-derived KPI strip) instead of 0/0/0%.
+        body. Sum the per-question cube across the assessment's section set so
+        the footer still shows the real merged aggregate (== the cube-derived
+        KPI strip) instead of 0/0/0%.
         """
         sql = text(
             """
@@ -2303,15 +2456,17 @@ class CubeRepository:
                 SUM(total_possible_point) AS total_possible_point,
                 SUM(total_score)          AS total_score
             FROM cube_question_summary
-            WHERE item_id = :item_id
+            WHERE item_id IN (
+                      SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  )
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         row = result.first()
         return _row_to_dict(row) if row else None
 
     async def get_qra_by_teacher_rows(
-        self, item_id: str
+        self, subject_id: str
     ) -> List[Dict[str, Any]]:
         """Per-(section_instructor × question) grain for ord 12.
 
@@ -2334,7 +2489,9 @@ class CubeRepository:
                     NULLIF(incorrect_choice_details, '') AS incorrect_choice_details,
                     NULLIF(incorrect_details_name, '')   AS incorrect_details_name
                 FROM cube_question_summary
-                WHERE item_id = :item_id
+                WHERE item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
                 ORDER BY item_id, section_instructors, question_id,
                          NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
                          position_number
@@ -2346,7 +2503,9 @@ class CubeRepository:
                     question_id,
                     STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
                 FROM dim_question_data
-                WHERE item_id = :item_id
+                WHERE item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
                   AND standard IS NOT NULL AND standard <> ''
                 GROUP BY school_id, item_id, question_id
             )
@@ -2373,11 +2532,11 @@ class CubeRepository:
                      qs.sorting_question_no NULLS LAST, qs.question_no
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
     async def get_qra_by_standard_teacher_rows(
-        self, item_id: str
+        self, subject_id: str
     ) -> List[Dict[str, Any]]:
         """Per-(cpalms_standard × section_instructor × question) grain for ord 13.
 
@@ -2401,7 +2560,9 @@ class CubeRepository:
                     NULLIF(incorrect_choice_details, '') AS incorrect_choice_details,
                     NULLIF(incorrect_details_name, '')   AS incorrect_details_name
                 FROM cube_question_summary
-                WHERE item_id = :item_id
+                WHERE item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
                 ORDER BY item_id, section_instructors, question_id,
                          NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
                          position_number
@@ -2413,7 +2574,9 @@ class CubeRepository:
                     question_id,
                     STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
                 FROM dim_question_data
-                WHERE item_id = :item_id
+                WHERE item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
                   AND standard IS NOT NULL AND standard <> ''
                 GROUP BY school_id, item_id, question_id
             )
@@ -2457,12 +2620,12 @@ class CubeRepository:
                      b.sorting_question_no NULLS LAST, b.question_no
             """
         )
-        result = await self.session.execute(sql, {"item_id": item_id})
+        result = await self.session.execute(sql, {"subject_id": subject_id})
         return [_row_to_dict(r) for r in result.all()]
 
 
     async def get_question_overall(
-        self, item_id: str, question_id: str
+        self, subject_id: str, question_no: str
     ) -> Optional[Dict[str, Any]]:
         """One question's overall metadata (joined to qso for description).
 
@@ -2477,133 +2640,111 @@ class CubeRepository:
         """
         sql = text(
             """
-            WITH qs_pick AS (
-                SELECT school_id, item_id, question_id, ukey, position_number,
-                       question_type, standard
-                FROM cube_question_summary
-                WHERE item_id = :item_id AND question_id = :question_id
-                ORDER BY NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
-                         position_number
-                LIMIT 1
+            WITH items AS (
+                SELECT item_id FROM dim_item WHERE subject_id = :subject_id
             ),
-            qs_agg AS (
-                SELECT item_id, question_id,
-                       MAX(question)                                  AS question,
-                       MAX(correct_answer)                            AS correct_answer,
-                       AVG(grade_average)                             AS grade_average,
-                       SUM(total_possible_point)                      AS total_possible_point,
-                       SUM(total_score)                               AS total_score,
-                       MIN(NULLIF(question_no, ''))                   AS question_no
+            -- question_no is the section-agnostic merged question identity.
+            qs_meta AS (
+                SELECT DISTINCT ON (question_no)
+                       question_no, position_number, question_type, standard
                 FROM cube_question_summary
-                WHERE item_id = :item_id AND question_id = :question_id
-                GROUP BY item_id, question_id
+                WHERE item_id IN (SELECT item_id FROM items) AND question_no = :question_no
+                ORDER BY question_no,
+                         NULLIF(regexp_replace(COALESCE(position_number, ''), '[^0-9]', '', 'g'), '')::int NULLS LAST,
+                         position_number
+            ),
+            uk_qids AS (
+                SELECT DISTINCT question_id
+                FROM cube_question_summary
+                WHERE item_id IN (SELECT item_id FROM items) AND question_no = :question_no
             ),
             qd_standards AS (
-                SELECT
-                    item_id,
-                    question_id,
-                    STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
+                SELECT STRING_AGG(DISTINCT standard, E'\n' ORDER BY standard) AS standards
                 FROM dim_question_data
-                WHERE item_id = :item_id
-                  AND question_id = :question_id
+                WHERE question_id IN (SELECT question_id FROM uk_qids)
                   AND standard IS NOT NULL AND standard <> ''
-                GROUP BY item_id, question_id
             ),
             qd_first_standard AS (
-                SELECT
-                    item_id,
-                    question_id,
-                    MIN(standard) FILTER (
-                        WHERE standard IS NOT NULL
-                          AND standard <> ''
-                          AND LOWER(standard) <> 'other'
-                    ) AS first_standard
+                SELECT MIN(standard) FILTER (
+                           WHERE standard IS NOT NULL
+                             AND standard <> ''
+                             AND LOWER(standard) <> 'other'
+                       ) AS first_standard
                 FROM dim_question_data
-                WHERE item_id = :item_id
-                  AND question_id = :question_id
-                GROUP BY item_id, question_id
+                WHERE question_id IN (SELECT question_id FROM uk_qids)
             ),
             qd_description AS (
-                SELECT
-                    qfs.item_id,
-                    qfs.question_id,
-                    MAX(ds.description) AS description
+                SELECT MAX(ds.description) AS description
                 FROM qd_first_standard qfs
                 LEFT JOIN dim_standard ds
                   ON ds.schoology_standard = qfs.first_standard
-                GROUP BY qfs.item_id, qfs.question_id
             ),
-            qso_pick AS (
-                SELECT DISTINCT ON (school_id, ukey)
-                       school_id, ukey, question_no, question, correct_answer
+            -- base cqso pooled to question_no (already merged across sections;
+            -- a multi-answer question_no concatenates its ukey rows).
+            cqso AS (
+                SELECT question_no,
+                       MAX(question)                  AS question,
+                       STRING_AGG(DISTINCT correct_answer, ', ') AS correct_answer,
+                       SUM(total_possible_point)      AS total_possible_point,
+                       SUM(total_score)               AS total_score,
+                       SUM(total_score)::numeric / NULLIF(SUM(total_possible_point), 0) AS grade_average,
+                       MAX(description)               AS description
                 FROM cube_question_summary_overall
-                ORDER BY school_id, ukey
-            ),
-            qso_num AS (
-                SELECT school_id, ukey,
-                       AVG(grade_average)        AS grade_average,
-                       SUM(total_possible_point) AS total_possible_point,
-                       SUM(total_score)          AS total_score
-                FROM cube_question_summary_overall
-                GROUP BY school_id, ukey
+                WHERE subject_id = :subject_id AND question_no = :question_no
+                GROUP BY question_no
             )
             SELECT
-                qsp.question_id,
-                COALESCE(qso.question_no, qsa.question_no)                  AS question_no,
-                COALESCE(qsp.position_number, '')                           AS position_number,
-                COALESCE(qso.question, qsa.question)                        AS question,
-                COALESCE(qsp.question_type, '')                             AS question_type,
-                COALESCE(qso.correct_answer, qsa.correct_answer)            AS correct_answer,
-                COALESCE(qsa.total_possible_point, qson.total_possible_point) AS total_possible_point,
-                COALESCE(qsa.total_score, qson.total_score)                 AS total_score,
-                COALESCE(qsa.grade_average, qson.grade_average)             AS grade_average,
-                COALESCE(qdst.standards, '')                                AS standards,
-                COALESCE(qsp.standard, '')                                  AS strand_raw,
-                COALESCE(qdd.description, '')                               AS description
-            FROM qs_pick qsp
-            JOIN qs_agg qsa
-              ON qsa.item_id = qsp.item_id AND qsa.question_id = qsp.question_id
-            LEFT JOIN qd_standards qdst
-              ON qdst.item_id = qsp.item_id AND qdst.question_id = qsp.question_id
-            LEFT JOIN qd_description qdd
-              ON qdd.item_id  = qsp.item_id AND qdd.question_id  = qsp.question_id
-            LEFT JOIN qso_pick qso
-              ON qso.school_id = qsp.school_id AND qso.ukey = qsp.ukey
-            LEFT JOIN qso_num qson
-              ON qson.school_id = qsp.school_id AND qson.ukey = qsp.ukey
+                c.question_no                                   AS question_id,
+                c.question_no                                   AS question_no,
+                COALESCE(qm.position_number, '')                AS position_number,
+                c.question                                      AS question,
+                COALESCE(qm.question_type, '')                  AS question_type,
+                c.correct_answer                                AS correct_answer,
+                c.total_possible_point                          AS total_possible_point,
+                c.total_score                                   AS total_score,
+                c.grade_average                                 AS grade_average,
+                COALESCE(qds.standards, '')                     AS standards,
+                COALESCE(qm.standard, '')                       AS strand_raw,
+                COALESCE(qdd.description, c.description, '')     AS description
+            FROM cqso c
+            LEFT JOIN qs_meta qm ON TRUE
+            LEFT JOIN qd_standards qds ON TRUE
+            LEFT JOIN qd_description qdd ON TRUE
             LIMIT 1
             """
         )
         result = await self.session.execute(
-            sql, {"item_id": item_id, "question_id": question_id}
+            sql, {"subject_id": subject_id, "question_no": question_no}
         )
         row = result.first()
         return _row_to_dict(row) if row else None
 
 
     async def get_distractor_breakdown(
-        self, item_id: str, question_id: str
+        self, subject_id: str, question_no: str
     ) -> List[Dict[str, Any]]:
-        """Per-answer-choice rollup for one question (cube_questionincorrectchoice_summary).
+        """MERGED per-answer-choice rollup for one question (by ``question_no``).
+
+        Resolves the per-section ``question_id`` set for this ``question_no``
+        (across the assessment's section copies) and pools every section's
+        ``cube_questionincorrectchoice_summary`` detail rows.
 
         Empty/null answer_submission rows are dropped (matches PBIX M filter).
-
-        ``answer_submission`` arrives prefixed with a randomised option
-        letter ("a. ", "b. ", …) — Schoology shuffles option positions per
-        student, so the same logical answer can appear under 4 different
-        letters. The cube preserves the raw string for legacy parity (per
-        notebook lines 1772-1798), so we strip the prefix and re-aggregate
-        here at the read layer — same precedent as
-        ``get_canonical_kpis_for_item`` which collapses the
-        (user, question, position_number) alias fan-out before averaging.
+        ``answer_submission`` arrives prefixed with a randomised option letter
+        ("a. ", "b. ", …) — Schoology shuffles option positions per student, so
+        the same logical answer can appear under 4 different letters. The cube
+        preserves the raw string for legacy parity (notebook lines 1772-1798),
+        so we strip the prefix and re-aggregate here at the read layer.
         """
         sql = text(
             r"""
-            WITH item_qids AS (
+            WITH qids AS (
                 SELECT DISTINCT question_id
                 FROM cube_question_summary
-                WHERE item_id = :item_id
-                  AND question_id = :question_id
+                WHERE item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
+                  AND question_no = :question_no
             ),
             choices AS (
                 SELECT
@@ -2613,7 +2754,7 @@ class CubeRepository:
                     SUM(qic.total_score)                  AS total_score,
                     SUM(qic.total_possible_point)         AS total_possible_point
                 FROM cube_questionincorrectchoice_summary qic
-                JOIN item_qids iq ON iq.question_id = qic.question_id
+                JOIN qids ON qids.question_id = qic.question_id
                 WHERE qic.answer_submission IS NOT NULL
                   AND qic.answer_submission <> ''
                 GROUP BY regexp_replace(qic.answer_submission, '^\s*[a-zA-Z]\.\s+', '')
@@ -2640,15 +2781,20 @@ class CubeRepository:
             """
         )
         result = await self.session.execute(
-            sql, {"item_id": item_id, "question_id": question_id}
+            sql, {"subject_id": subject_id, "question_no": question_no}
         )
         return [_row_to_dict(r) for r in result.all()]
 
 
     async def get_per_student_attempts(
-        self, item_id: str, question_id: str
+        self, subject_id: str, question_no: str
     ) -> List[Dict[str, Any]]:
-        """Every student × this question row for the IAD per-student table.
+        """Every student × this question row for the MERGED IAD per-student table.
+
+        ``question_no`` is the section-agnostic merged question identity; the
+        fact table is keyed on the per-section ``question_id``, so resolve the
+        section question_ids for this question_no (via ``cube_question_summary``
+        over the assessment's section set) and pool every section's attempts.
 
         `fact_student_submission` is keyed at `(user, question, standard)`
         grain, so every question with N Schoology standards produces N rows
@@ -2665,6 +2811,14 @@ class CubeRepository:
         """
         sql = text(
             r"""
+            WITH uk_qids AS (
+                SELECT DISTINCT question_id
+                FROM cube_question_summary
+                WHERE item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
+                  AND question_no = :question_no
+            )
             SELECT
                 user_uid,
                 user_name,
@@ -2702,8 +2856,10 @@ class CubeRepository:
                     END                                              AS is_correct,
                     fss.latest_attempt
                 FROM fact_student_submission fss
-                WHERE fss.item_id = :item_id
-                  AND fss.question_id = :question_id
+                WHERE fss.item_id IN (
+                          SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                      )
+                  AND fss.question_id IN (SELECT question_id FROM uk_qids)
                   AND fss.user_uid IS NOT NULL
                 ORDER BY fss.user_uid, fss.submission
             ) deduped
@@ -2711,7 +2867,7 @@ class CubeRepository:
             """
         )
         result = await self.session.execute(
-            sql, {"item_id": item_id, "question_id": question_id}
+            sql, {"subject_id": subject_id, "question_no": question_no}
         )
         return [_row_to_dict(r) for r in result.all()]
 

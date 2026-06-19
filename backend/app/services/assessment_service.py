@@ -95,7 +95,10 @@ class AssessmentService:
         )
 
     async def get_assessment(self, item_id: str) -> AssessmentDetail:
-        row = await self.dim.get_item(item_id)
+        # ``item_id`` carries the section-agnostic subject_id (the merged report
+        # identity). Resolve via the merged assessment meta so the detail spans
+        # all section copies instead of a single dim_item PK row.
+        row = await self.cube.get_assessment_meta(item_id)
         if not row:
             raise ResourceNotFoundError("Assessment", item_id)
         return AssessmentDetail.model_validate(row)
