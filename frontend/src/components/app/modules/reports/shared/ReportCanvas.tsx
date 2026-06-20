@@ -15,9 +15,13 @@ interface ReportCanvasProps {
  */
 export default function ReportCanvas({ children }: ReportCanvasProps) {
   return (
-    <div className="w-full flex justify-center">
+    <div className="w-full flex justify-center print:block">
+      {/* `print:!w-full` overrides the inline 1280px cap so the report fills the
+          printable page width (A4 landscape ≈ 1030px) instead of overflowing and
+          clipping the right-hand columns; chrome (tint/padding/shadow) is dropped
+          for a clean white PDF. */}
       <div
-        className="bg-[#CACEDA] p-3 shadow-md"
+        className="bg-[#CACEDA] p-3 shadow-md print:!w-full print:!bg-white print:!p-0 print:!shadow-none"
         style={{ width: 'min(100%, 1280px)' }}
       >
         {children}
