@@ -109,8 +109,8 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
   } as const;
 
   return (
-    <div className="overflow-x-auto bg-white">
-      <table className="border-collapse text-[11px] text-black">
+    <div className="overflow-x-auto bg-white print:overflow-visible">
+      <table className="report-wide-matrix border-collapse text-[11px] text-black">
         <thead>
           {/* Row 1: standard codes (span sub-cols) + leading/trailing labels */}
           <tr>

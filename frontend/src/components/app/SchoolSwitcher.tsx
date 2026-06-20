@@ -9,10 +9,6 @@ import {
 } from '@/components/ui/select';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
-// Select cannot hold an empty-string value, so a sentinel stands in for the
-// "use my primary school" (backend fallback) option.
-const ANY = '__any__';
-
 export default function SchoolSwitcher() {
   const { schoolId, setSchoolId, schools } = useSelectedSchool();
 
@@ -25,14 +21,13 @@ export default function SchoolSwitcher() {
         School
       </span>
       <Select
-        value={schoolId ?? ANY}
-        onValueChange={(v) => setSchoolId(v === ANY ? null : v)}
+        value={schoolId ?? undefined}
+        onValueChange={(v) => setSchoolId(v)}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="All schools" />
+          <SelectValue placeholder="Select school" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ANY}>All schools</SelectItem>
           {schools.map((s) => (
             <SelectItem key={s.school_id} value={s.school_id}>
               {s.short_name || s.name}

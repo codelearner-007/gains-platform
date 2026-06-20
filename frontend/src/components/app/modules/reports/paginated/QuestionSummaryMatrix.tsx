@@ -55,6 +55,14 @@ function pct(v: number): string {
   return `${(v * 100).toFixed(0)}%`;
 }
 
+// The per-teacher group header shows ONE decimal (e.g. 77.8%) to match the
+// legacy SSRS "Question Summary Report - Teacher" PDF, where the instructor
+// subtotal beside the name is precise while the per-cell Score% row stays
+// whole-number.
+function pct1(v: number): string {
+  return `${(v * 100).toFixed(1)}%`;
+}
+
 /**
  * Format a partial-credit points value (cell, total, subtotal). Integers
  * render bare (1, 0, 318); fractionals keep up to two decimals (0.5, 0.33).
@@ -266,7 +274,7 @@ export default function QuestionSummaryMatrix({
       className="w-full overflow-x-auto bg-white border print:overflow-visible"
       style={{ borderColor: LAYOUT_BORDER }}
     >
-      <table className="min-w-full text-[11px] border-collapse">
+      <table className="report-wide-matrix min-w-full text-[11px] border-collapse">
         <thead>
           {/* Standard code row */}
           <tr>
@@ -420,7 +428,7 @@ export default function QuestionSummaryMatrix({
                           : group.section_instructor}
                       </div>
                       <div className="text-[10px] text-neutral-700">
-                        {pct(group.teacher_score_pct)}
+                        {pct1(group.teacher_score_pct)}
                       </div>
                     </td>
                   ) : null}

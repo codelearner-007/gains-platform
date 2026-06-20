@@ -438,4 +438,28 @@
   tr {
     break-inside: avoid;
   }
+
+  /* Wide student×question / student×standard matrices (QSR, YTD) have ~25-35
+     columns and overflow even A4 landscape at the on-screen 11px. Shrink the
+     type + padding and force the table to the page width so every column —
+     including the trailing Totals — fits instead of clipping off the right
+     edge. Single-digit / percentage cells stay legible at this size (matches
+     the density of the legacy SSRS paginated PDFs). */
+  .report-wide-matrix {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 7px !important;
+  }
+  .report-wide-matrix th,
+  .report-wide-matrix td {
+    padding: 1px 2px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Let the student-name column wrap so long names aren't truncated. */
+  .report-wide-matrix tbody th {
+    white-space: normal;
+    word-break: break-word;
+  }
 }
