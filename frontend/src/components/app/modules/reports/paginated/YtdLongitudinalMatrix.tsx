@@ -13,6 +13,7 @@ import {
   PBIX_ACCENT_NAVY,
   PBIX_ACCENT_LIGHT_BLUE,
   GROUP_HEADER_CYAN,
+  REPORT_TEXT_DARK,
 } from '@/lib/reports/colors';
 import {
   SortableHeader,
@@ -104,7 +105,9 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
   } as const;
   const subHeadStyle = {
     backgroundColor: PBIX_ACCENT_LIGHT_BLUE,
-    color: '#fff',
+    // Dark text on the light-blue sub-header band (white was 2.35:1, fails AA;
+    // slate-800 ≈ 6.3:1, passes AA). The navy headStyle above keeps white (4.72:1).
+    color: REPORT_TEXT_DARK,
     border,
   } as const;
 

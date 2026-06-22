@@ -108,7 +108,7 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
                 {sg.cpalms_standard}
               </div>
               {sg.standard_description && (
-                <div className="text-[11px] text-white/85 leading-snug">
+                <div className="text-[11px] text-white leading-snug">
                   {sg.standard_description}
                 </div>
               )}
