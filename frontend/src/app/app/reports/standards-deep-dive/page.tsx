@@ -8,8 +8,6 @@ import ReportBreadcrumb, {
   assessmentCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
-import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
-import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import KpiStrip from '@/components/app/modules/reports/sdd/KpiStrip';
 import StrandTreemap from '@/components/app/modules/reports/sdd/StrandTreemap';
 import StrandRowList from '@/components/app/modules/reports/sdd/StrandRowList';
@@ -71,22 +69,11 @@ export default function StandardsDeepDivePage() {
         return (
           <ReportCanvas>
             <div className="mb-3 flex flex-col gap-2 print:hidden">
-              <div className="flex items-start justify-between gap-2">
-                <ReportBreadcrumb
-                  crumbs={assessmentCrumbs({
-                    label: data.assessment.item_name || data.assessment.item_id,
-                  })}
-                />
-                <ExportMenu
-                  kind="sdd"
-                  payload={data}
-                  name={data.assessment.item_name}
-                  xlsxUrl={buildXlsxUrl('sdd', {
-                    itemId,
-                    schoolId: schoolId ?? undefined,
-                  })}
-                />
-              </div>
+              <ReportBreadcrumb
+                crumbs={assessmentCrumbs({
+                  label: data.assessment.item_name || data.assessment.item_id,
+                })}
+              />
               <ReportTypeSwitcher group="assessment" itemId={itemId} />
             </div>
 

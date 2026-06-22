@@ -42,13 +42,23 @@ export type ReportSlug =
 export type ReportGroup = 'assessment' | 'program';
 
 /**
- * How a report behaves, used to group entries inside the "More reports"
- * overflow menu:
+ * How a report behaves — on-screen interactive vs print/PDF-shaped vs
+ * per-question drill-through:
  *   • interactive — on-screen, filterable PowerBI-style pages
  *   • paginated   — print/PDF-shaped SSRS-style pages
  *   • drilldown   — per-question drill-through (only reachable with a question)
  */
 export type ReportKind = 'interactive' | 'paginated' | 'drilldown';
+
+/**
+ * Assessment "family" — the top-level report-type tab. Multiple report routes
+ * can belong to one family and are reached via a contextual sub-tab row:
+ *   • qra — Question Response Analysis (Interactive + 3 printable renderings)
+ *   • sdd — Standards Deep Dive (single interactive page)
+ *   • qsr — Question Summary (one route, ?variant sub-tabs)
+ * Reports with no family (the IAD drill-through) are not shown as a top tab.
+ */
+export type ReportFamily = 'qra' | 'sdd' | 'qsr';
 
 export interface ReportType {
   slug: ReportSlug;
@@ -62,16 +72,23 @@ export interface ReportType {
   icon: LucideIcon;
   group: ReportGroup;
   kind: ReportKind;
+  /** Assessment family this report belongs to (drives the family tab + sub-tabs).
+   *  Omitted for the IAD drill-through, which has no top-nav tab. */
+  family?: ReportFamily;
+  /** Label for this rendering in the family sub-tab row (e.g. "Base"). Reads
+   *  inside the family context, so it names the rendering, not the report;
+   *  falls back to `shortName`. Only set for families with a sub-tab row (QRA). */
+  subTabLabel?: string;
   /**
-   * Lower number = more prominent. The switcher shows the top-priority
-   * siblings inline and tucks the rest behind a "More reports" menu.
+   * Lower number = more prominent. Retained for the program-group inline order.
    */
   priority: number;
 }
 
 /**
- * Ordered registry. Order here drives menu order; `priority` drives the
- * inline-vs-overflow split within the switcher.
+ * Ordered registry. Order here drives menu/sub-tab order; `priority` now only
+ * orders the program-group inline tabs (the old inline-vs-overflow split was
+ * removed when the "More reports" menu gave way to family tabs + sub-tabs).
  */
 export const REPORT_TYPES: readonly ReportType[] = [
   // ── Assessment family ───────────────────────────────────────────────
@@ -83,6 +100,8 @@ export const REPORT_TYPES: readonly ReportType[] = [
     icon: FileBarChart,
     group: 'assessment',
     kind: 'interactive',
+    family: 'qra',
+    subTabLabel: 'Interactive',
     priority: 1,
   },
   {
@@ -93,6 +112,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     icon: Layers,
     group: 'assessment',
     kind: 'interactive',
+    family: 'sdd',
     priority: 2,
   },
   {
@@ -103,6 +123,7 @@ export const REPORT_TYPES: readonly ReportType[] = [
     icon: Grid3x3,
     group: 'assessment',
     kind: 'paginated',
+    family: 'qsr',
     priority: 3,
   },
   {
@@ -113,6 +134,8 @@ export const REPORT_TYPES: readonly ReportType[] = [
     icon: FileText,
     group: 'assessment',
     kind: 'paginated',
+    family: 'qra',
+    subTabLabel: 'Base',
     priority: 4,
   },
   {
@@ -123,6 +146,8 @@ export const REPORT_TYPES: readonly ReportType[] = [
     icon: Users,
     group: 'assessment',
     kind: 'paginated',
+    family: 'qra',
+    subTabLabel: 'By Teacher',
     priority: 5,
   },
   {
@@ -133,6 +158,8 @@ export const REPORT_TYPES: readonly ReportType[] = [
     icon: UsersRound,
     group: 'assessment',
     kind: 'paginated',
+    family: 'qra',
+    subTabLabel: 'By Standard + Teacher',
     priority: 6,
   },
   {
@@ -212,6 +239,48 @@ export function isReportActive(pathname: string, slug: ReportSlug): boolean {
 /** Resolve which report (if any) a pathname currently points at. */
 export function getReportByPathname(pathname: string): ReportType | undefined {
   return REPORT_TYPES.find((r) => isReportActive(pathname, r.slug));
+}
+
+// ── Assessment families (two-level tab navigation) ──────────────────────────
+
+export interface AssessmentFamilyTab {
+  family: ReportFamily;
+  /** Tight tab label (e.g. "Question Response"). */
+  label: string;
+  /** Full canonical name for aria-label / title. */
+  fullName: string;
+  icon: LucideIcon;
+  /** The route the family tab links to (its landing report). */
+  defaultSlug: ReportSlug;
+}
+
+const FAMILY_ORDER: ReportFamily[] = ['qra', 'sdd', 'qsr'];
+
+/** The assessment family tabs (Question Response / Standards Deep Dive /
+ *  Question Summary), in display order, each pointing at its landing report. */
+export function getAssessmentFamilyTabs(): AssessmentFamilyTab[] {
+  return FAMILY_ORDER.map((fam) => {
+    // The family's landing report is the first one listed for that family.
+    const def = REPORT_TYPES.find((r) => r.family === fam)!;
+    return {
+      family: fam,
+      label: def.shortName,
+      fullName: def.canonicalName,
+      icon: def.icon,
+      defaultSlug: def.slug,
+    };
+  });
+}
+
+/** All reports in a family, in registry order. */
+export function getReportsByFamily(family: ReportFamily): ReportType[] {
+  return REPORT_TYPES.filter((r) => r.family === family);
+}
+
+/** The family owning the active route (undefined for the IAD drill-through or
+ *  any program report — those show no active assessment family tab). */
+export function getFamilyByPathname(pathname: string): ReportFamily | undefined {
+  return getReportByPathname(pathname)?.family;
 }
 
 export interface ReportHrefContext {

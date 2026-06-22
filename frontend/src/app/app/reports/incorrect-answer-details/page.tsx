@@ -86,11 +86,7 @@ export default function IncorrectAnswerDetailsPage() {
                   })}
                 />
               </div>
-              <ReportTypeSwitcher
-                group="assessment"
-                itemId={itemId}
-                questionId={questionId}
-              />
+              <ReportTypeSwitcher group="assessment" itemId={itemId} />
             </div>
 
             <div className="mb-2">

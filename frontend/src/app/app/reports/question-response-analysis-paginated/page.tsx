@@ -10,6 +10,7 @@ import PaginatedReportHeader from '@/components/app/modules/reports/paginated/Pa
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraPaginatedTable from '@/components/app/modules/reports/paginated/QraPaginatedTable';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
+import ReportSubTabs from '@/components/app/modules/reports/shared/ReportSubTabs';
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import AssessmentReportShell from '@/components/app/modules/reports/shared/AssessmentReportShell';
@@ -67,6 +68,7 @@ export default function QraPaginatedPage() {
                 />
               </div>
               <ReportTypeSwitcher group="assessment" itemId={itemId} />
+              <ReportSubTabs family="qra" itemId={itemId} />
             </div>
 
             <div className="mb-2">

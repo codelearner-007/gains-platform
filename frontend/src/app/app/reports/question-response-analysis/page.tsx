@@ -9,8 +9,7 @@ import ReportBreadcrumb, {
   assessmentCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
-import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
-import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
+import ReportSubTabs from '@/components/app/modules/reports/shared/ReportSubTabs';
 import QuestionDetailTable from '@/components/app/modules/reports/qra/QuestionDetailTable';
 import {
   StrandsTable,
@@ -65,23 +64,13 @@ export default function QuestionResponseAnalysisPage() {
         return (
           <ReportCanvas>
             <div className="mb-3 flex flex-col gap-2 print:hidden">
-              <div className="flex items-start justify-between gap-2">
-                <ReportBreadcrumb
-                  crumbs={assessmentCrumbs({
-                    label: data.assessment.item_name || data.assessment.item_id,
-                  })}
-                />
-                <ExportMenu
-                  kind="qra"
-                  payload={data}
-                  name={data.assessment.item_name}
-                  xlsxUrl={buildXlsxUrl('qra', {
-                    itemId,
-                    schoolId: schoolId ?? undefined,
-                  })}
-                />
-              </div>
+              <ReportBreadcrumb
+                crumbs={assessmentCrumbs({
+                  label: data.assessment.item_name || data.assessment.item_id,
+                })}
+              />
               <ReportTypeSwitcher group="assessment" itemId={itemId} />
+              <ReportSubTabs family="qra" itemId={itemId} />
             </div>
 
             <div className="mb-2">
