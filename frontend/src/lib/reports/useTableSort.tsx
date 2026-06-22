@@ -143,7 +143,7 @@ export function SortIndicator({
     return (
       <span
         aria-hidden
-        className="inline-block ml-1 text-[10px] text-neutral-400 leading-none select-none"
+        className="inline-block ml-1 text-[10px] text-neutral-400 leading-none select-none print:hidden"
       >
         ↕
       </span>
@@ -152,7 +152,7 @@ export function SortIndicator({
   return (
     <span
       aria-hidden
-      className="inline-block ml-1 text-[10px] text-black leading-none select-none"
+      className="inline-block ml-1 text-[10px] text-black leading-none select-none print:hidden"
     >
       {direction === 'asc' ? '▲' : '▼'}
     </span>

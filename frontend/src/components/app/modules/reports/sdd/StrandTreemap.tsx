@@ -158,6 +158,11 @@ function TreemapNode(props: NodeProps) {
         y={y}
         width={width}
         height={height}
+        // `treemap-tile` lets the print stylesheet neutralise the cross-filter
+        // selection ring + dimming so an exported SDD reads as a static document
+        // (the SVG <g> has no role="button", so the generic print neutraliser
+        // in globals.css can't reach these inline styles).
+        className="treemap-tile"
         style={{
           fill,
           stroke: isSelected ? '#1f2937' : '#fff',

@@ -26,7 +26,7 @@ export default function ActiveFilterBar({
 
   return (
     <div
-      className="mb-2 flex flex-wrap items-center gap-2 rounded-md border px-3 py-1.5 text-[12px]"
+      className="mb-2 flex flex-wrap items-center gap-2 rounded-md border px-3 py-1.5 text-[12px] print:hidden"
       style={{ backgroundColor: HEADER_BAR_BG, borderColor: LAYOUT_BORDER }}
       role="status"
       aria-live="polite"

@@ -134,7 +134,7 @@ export default function StudentAttemptTable({
           Per-Student Attempts
         </span>
         <div
-          className="flex rounded-sm overflow-hidden border text-[11px] font-semibold"
+          className="flex rounded-sm overflow-hidden border text-[11px] font-semibold print:hidden"
           style={{ borderColor: LAYOUT_BORDER }}
           role="tablist"
           aria-label="Filter student attempts"
