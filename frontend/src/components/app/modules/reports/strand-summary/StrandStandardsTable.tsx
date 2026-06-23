@@ -104,6 +104,8 @@ export default function StrandStandardsTable({ standards }: Props) {
                 <SortableHeader
                   column="cluster"
                   label="Cluster"
+                  title="Cluster"
+                  description="The standard cluster or sub-grouping this standard belongs to."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -113,6 +115,8 @@ export default function StrandStandardsTable({ standards }: Props) {
                 <SortableHeader
                   column="num_questions"
                   label="# Questions"
+                  title="Number of Questions"
+                  description="Count of assessment questions aligned to this standard."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -123,6 +127,8 @@ export default function StrandStandardsTable({ standards }: Props) {
                 <SortableHeader
                   column="num_assessments"
                   label="# Assessments"
+                  title="Number of Assessments"
+                  description="Count of distinct assessments that included this standard."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -133,6 +139,8 @@ export default function StrandStandardsTable({ standards }: Props) {
                 <SortableHeader
                   column="grade_average"
                   label="Grade Avg"
+                  title="Grade Average"
+                  description="Average percent-correct across all questions for this standard."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}

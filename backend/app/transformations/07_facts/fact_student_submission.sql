@@ -45,6 +45,14 @@
 -- DISTINCT ON in the deduped CTE guarantees the dedupe is deterministic on
 -- the 8-part key irrespective of dim_question_data.standard rowcount.
 
+-- TRUNCATE + INSERT (full rebuild). The runner always rebuilds from the full
+-- stg set, and the `latest_export` CTE PRUNES stale re-export rows (so the row
+-- set SHRINKS vs a prior build). A pure upsert would leave the pruned rows
+-- behind as orphans, defeating the latest-export collapse — so we truncate
+-- first, exactly like the staging and cube builds. The ON CONFLICT clause
+-- remains as an in-run safety net for the synthetic PK.
+TRUNCATE TABLE fact_student_submission;
+
 INSERT INTO fact_student_submission (
   user_id_ques_id_stand,
   school_id,
@@ -112,11 +120,58 @@ WITH base AS (
     src.answer_submission,
     src.correct_answer,
     src.points_received,
-    src.points_possible
+    src.points_possible,
+    src.file_name
   FROM stg_student_submission src
   -- students only (notebook 1199); per-school role via schools.student_role_id
   JOIN schools sch ON sch.school_id = src.school_id
   WHERE src.user_role_id = sch.student_role_id
+),
+latest_export AS (
+  -- LATEST-EXPORT-WINS (legacy parity, Schoology_py.ipynb build_fact_tables
+  -- rundate-DESC window). The Schoology backup ACCUMULATES every re-export of
+  -- an assessment: raw_student_submission is append-only and each re-export is
+  -- a distinct dated CSV, so a single (student, question, attempt) cell can
+  -- carry rows from many export files. When a teacher regrades, a LATER export
+  -- supersedes an earlier one — e.g. the same submission shows
+  --   2025-09-19 export: 'a. People started now.'        -> 0 pts
+  --   2025-10-07 export: 'b. People started in the past' -> 1 pt
+  -- Legacy ran incrementally so only the newest export's row reached the fact
+  -- (verified: legacy Cube_Question_Summary shows exactly ONE row per student
+  -- for this question = the latest 'b'/1pt). A full rebuild over the whole
+  -- export history does NOT self-collapse (the 8-part PK keeps answer_submission
+  -- + points, so the 'a' and 'b' rows fall in different partitions and both
+  -- survive, making per-student scores non-deterministic). So we explicitly
+  -- keep only the rows from the NEWEST export per response slot.
+  --
+  -- Grain EXCLUDES answer_submission/points (the things a regrade changes) but
+  -- KEEPS submission/position_number/sub_question, so legitimate multi-select
+  -- (many option rows within ONE export), multi-attempt, and multi-part rows
+  -- are all preserved — they share the winning export's timestamp.
+  -- export_ts is parsed from the dated export filename
+  -- (...-YYYY-MM-DD-HHMMSS.csv). Rows with no parseable date (e.g. parquet
+  -- direct-loads with no file_name) have a NULL max for the slot and are kept
+  -- in full (no export ordering available).
+  SELECT *
+  FROM (
+    SELECT
+      b.*,
+      MAX(b.export_ts) OVER (
+        PARTITION BY b.school_id, b.user_uid, b.item_id, b.question_id,
+                     b.position_number, b.sub_question, b.submission
+      ) AS max_export_ts
+    FROM (
+      SELECT
+        base.*,
+        to_timestamp(
+          substring(base.file_name FROM '(\d{4}-\d{2}-\d{2}-\d{6})'),
+          'YYYY-MM-DD-HH24MISS'
+        ) AS export_ts
+      FROM base
+    ) b
+  ) w
+  WHERE w.max_export_ts IS NULL
+     OR w.export_ts = w.max_export_ts
 ),
 deduped AS (
   -- Pre-INSERT dedupe (notebook lines 1185-1192). Partition columns are the
@@ -131,7 +186,7 @@ deduped AS (
                points_received DESC NULLS LAST,
                points_possible DESC NULLS LAST
     ) AS rn
-  FROM base
+  FROM latest_export
 ),
 qd_standard AS (
   -- DISTINCT (question_id, standard) — notebook line 1255-1257.

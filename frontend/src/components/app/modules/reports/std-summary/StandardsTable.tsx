@@ -105,6 +105,8 @@ export default function StandardsTable({ standards }: Props) {
                 <SortableHeader
                   column="num_questions"
                   label="# of Questions"
+                  title="Number of Questions"
+                  description="Count of assessment questions aligned to this standard."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -115,6 +117,8 @@ export default function StandardsTable({ standards }: Props) {
                 <SortableHeader
                   column="grade_average"
                   label="Grade Avg"
+                  title="Grade Average"
+                  description="Average percent-correct across all students and questions for this standard."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}

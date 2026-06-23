@@ -375,8 +375,6 @@ export interface IadKpis {
   correct_pct: string;
   incorrect_pct: string;
   distinct_answers: number;
-  /** Legacy PBIX's `Total Incorrect Choices` — DISTINCTCOUNT of wrong answers. */
-  total_incorrect_choices: number;
   top_wrong_answer: string;
   top_wrong_count: number;
   top_wrong_pct: string;

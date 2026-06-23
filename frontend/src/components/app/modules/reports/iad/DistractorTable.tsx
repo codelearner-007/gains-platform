@@ -18,6 +18,7 @@ import {
 import { formatAnswerHtml } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
 import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
+import HeaderTooltip from '@/components/app/modules/reports/shared/HeaderTooltip';
 
 interface Props {
   rows: IadDistractorRow[];
@@ -101,6 +102,8 @@ export default function DistractorTable({ rows }: Props) {
                 <SortableHeader
                   column="is_correct"
                   label="Status"
+                  title="Answer Status"
+                  description="Whether this answer choice is the correct answer or a wrong/distractor choice."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -120,6 +123,8 @@ export default function DistractorTable({ rows }: Props) {
                 <SortableHeader
                   column="students_count"
                   label="# Students"
+                  title="# Students"
+                  description="Number of students who chose this answer."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -130,13 +135,22 @@ export default function DistractorTable({ rows }: Props) {
                 <SortableHeader
                   column="share_of_attempts"
                   label="%"
+                  title="Share of Attempts"
+                  description="Share of all attempts on this question that chose this answer."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
                   align="right"
                 />
               </th>
-              <th style={headerStyle}>Distribution</th>
+              <th style={headerStyle}>
+                <HeaderTooltip
+                  title="Answer Distribution"
+                  description="Bar showing each choice's share of attempts relative to the most-picked choice."
+                >
+                  Distribution
+                </HeaderTooltip>
+              </th>
             </tr>
           </thead>
           <tbody>

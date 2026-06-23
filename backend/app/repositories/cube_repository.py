@@ -17,16 +17,22 @@ from app.repositories.base_repository import row_to_dict as _row_to_dict
 
 
 # Shared filter fragment for school-wide rollup queries that scope by
-# session / subject / grade / assessment_type / section against
-# cube_question_summary (alias ``qs``). Inlined into the WITH-clause WHERE
-# of get_school_strand_rollup + get_school_standard_rollup so both queries
-# stay byte-identical and only need bind-dict params from
-# ``_school_filter_params``.
+# session / subject / grade / assessment_type / section. The slicer values
+# come from dim_subject (which carries the full subject_course_overrides /
+# subject_overrides labels, e.g. "HS Physics"), but cube_question_summary's
+# denormalised subject/grade columns are sourced from dim_question_data,
+# which can only apply subject_overrides (no course_name) — so its subject
+# stays the un-overridden base ("Science"). Filtering qs.subject directly
+# therefore returned 0 rows for any course-overridden subject. We instead
+# scope subject/grade/session/assessment_type through dim_subject (alias
+# ``dsub``, joined on subject_id) so the filter agrees with the slicer;
+# section still scopes on qs. Both get_school_strand_rollup and
+# get_school_standard_rollup JOIN dim_subject dsub in their scoped_qs CTE.
 _QS_SCHOOL_FILTER_SQL = """\
-(CAST(:session_filter AS TEXT) IS NULL OR qs.session = CAST(:session_filter AS TEXT))
-                  AND (CAST(:subject AS TEXT) IS NULL OR qs.subject = CAST(:subject AS TEXT))
-                  AND (CAST(:grade AS TEXT) IS NULL OR qs.grade = CAST(:grade AS TEXT))
-                  AND (CAST(:category AS TEXT) IS NULL OR qs.assessment_type = CAST(:category AS TEXT))
+(CAST(:session_filter AS TEXT) IS NULL OR dsub.session = CAST(:session_filter AS TEXT))
+                  AND (CAST(:subject AS TEXT) IS NULL OR dsub.subject = CAST(:subject AS TEXT))
+                  AND (CAST(:grade AS TEXT) IS NULL OR dsub.grade = CAST(:grade AS TEXT))
+                  AND (CAST(:category AS TEXT) IS NULL OR dsub.assessment_type = CAST(:category AS TEXT))
                   AND (
                         CAST(:section AS TEXT) IS NULL
                      OR qs.section = CAST(:section AS TEXT)
@@ -1150,13 +1156,25 @@ class CubeRepository:
                   AND ds.schoology_standard IS NOT NULL
                   AND ds.schoology_standard <> ''
             ),
-            per_identifier AS (
+            per_code AS (
+                -- num_questions at the Schoology-CODE grain (NOT identifier).
+                -- A benchmark and its sub-standards (e.g. ELA.1.F.1.3.c and
+                -- ELA.1.F.1.3.f) share ONE dim_standard.identifier, so counting
+                -- DISTINCT question_no per identifier double-attributes every
+                -- sibling's questions to each code (GAI-8: .c and .f both showed
+                -- 9 = 6+3, inflating the "# of Questions" column past the real
+                -- assessment total). dim_question_data.standard carries the exact
+                -- per-code tag; Schoology aliases that share an identifier ARE
+                -- tagged on the same questions, so they still resolve to equal
+                -- counts (no alias regression — verified on AI.MA.912.* items).
                 SELECT
-                    cqs.identifier,
-                    COUNT(DISTINCT cqs.question_no) AS num_questions
-                FROM cube_question_summary cqs
-                WHERE cqs.item_id IN (SELECT item_id FROM items)
-                GROUP BY cqs.identifier
+                    standard AS schoology_standard,
+                    COUNT(DISTINCT question_no) AS num_questions
+                FROM dim_question_data
+                WHERE item_id IN (SELECT item_id FROM items)
+                  AND standard IS NOT NULL
+                  AND standard NOT IN ('', 'null')
+                GROUP BY standard
             ),
             cqso_by_code AS (
                 -- MERGED grade by Schoology code from the section-agnostic base
@@ -1189,7 +1207,7 @@ class CubeRepository:
                 -- Decision 3). The serializer preserves None → blank pct.
                 MAX(COALESCE(bc.grade_average, bi.grade_average))            AS grade_average
             FROM labeled l
-            LEFT JOIN per_identifier p ON p.identifier = l.identifier
+            LEFT JOIN per_code p ON p.schoology_standard = l.schoology_standard
             LEFT JOIN cqso_by_code bc ON bc.schoology_standard = l.schoology_standard
             LEFT JOIN cqso_by_id   bi ON bi.identifier = l.identifier
             GROUP BY l.schoology_standard, l.strand
@@ -1510,9 +1528,10 @@ class CubeRepository:
         """One row per Strand aggregated across the filter scope.
 
         Mirrors the per-item ``get_strand_rollup_for_item`` but operates
-        across all assessments matching the filter context. Filters are
-        applied directly on cube_question_summary which carries denormalised
-        session / subject / grade / assessment_type / section columns.
+        across all assessments matching the filter context. Subject / grade /
+        session / assessment_type are scoped through dim_subject (the slicer's
+        label source) via the subject_id join in ``_QS_SCHOOL_FILTER_SQL``;
+        section still scopes on cube_question_summary.
         """
         sql = text(
             f"""
@@ -1522,8 +1541,11 @@ class CubeRepository:
                     qs.ukey,
                     qs.identifier,
                     qs.item_id,
-                    qs.subject
+                    dsub.subject
                 FROM cube_question_summary qs
+                JOIN dim_subject dsub
+                  ON dsub.subject_id = qs.subject_id
+                 AND dsub.school_id = qs.school_id
                 WHERE {_QS_SCHOOL_FILTER_SQL}
             ),
             strand_q AS (
@@ -1601,8 +1623,11 @@ class CubeRepository:
                     qs.ukey,
                     qs.identifier,
                     qs.item_id,
-                    qs.grade
+                    dsub.grade
                 FROM cube_question_summary qs
+                JOIN dim_subject dsub
+                  ON dsub.subject_id = qs.subject_id
+                 AND dsub.school_id = qs.school_id
                 WHERE {_QS_SCHOOL_FILTER_SQL}
             ),
             std_q AS (

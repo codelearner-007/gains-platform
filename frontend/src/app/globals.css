@@ -462,4 +462,28 @@
     white-space: normal;
     word-break: break-word;
   }
+
+  /* Neutralise interactive slicer affordances inside the report body so an
+     exported report reads like a static document: clickable rows/cells
+     (role=button) drop their selection ring, their dimmed non-selected state,
+     and the pointer cursor. Pairs with the per-component print:hidden on sort
+     glyphs, filter chips, drill chevrons and scope toggles. */
+  main [role='button'] {
+    opacity: 1 !important;
+    cursor: default !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+  }
+
+  /* The Standards Deep Dive strand treemap is a clickable SVG <g>/<rect> with
+     no role="button", so the rule above can't reach its inline selection ring
+     (stroke) + dimming (opacity). Neutralise the cross-filter affordance here
+     so a printed/exported treemap shows every tile as static data: drop the
+     dim and the dark selection border, keeping the normal white gridlines. */
+  main .treemap-tile {
+    opacity: 1 !important;
+    stroke: #fff !important;
+    stroke-width: 2px !important;
+  }
 }

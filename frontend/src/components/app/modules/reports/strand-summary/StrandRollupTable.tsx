@@ -94,6 +94,8 @@ export default function StrandRollupTable({ strands }: Props) {
                 <SortableHeader
                   column="num_standards"
                   label="# Standards"
+                  title="Number of Standards"
+                  description="Count of distinct standards belonging to this strand."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -104,6 +106,8 @@ export default function StrandRollupTable({ strands }: Props) {
                 <SortableHeader
                   column="num_questions"
                   label="# Questions"
+                  title="Number of Questions"
+                  description="Count of assessment questions across all standards in this strand."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -114,6 +118,8 @@ export default function StrandRollupTable({ strands }: Props) {
                 <SortableHeader
                   column="num_assessments"
                   label="# Assessments"
+                  title="Number of Assessments"
+                  description="Count of distinct assessments that touched this strand."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -133,6 +139,8 @@ export default function StrandRollupTable({ strands }: Props) {
                 <SortableHeader
                   column="grade_average"
                   label="Grade Avg"
+                  title="Grade Average"
+                  description="Average percent-correct across all questions in this strand."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}

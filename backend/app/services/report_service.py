@@ -805,14 +805,6 @@ class ReportService:
             top_wrong_count = 0
             top_wrong_pct = _format_pct(0.0)
 
-        # `Total Incorrect Choices` =
-        #   CALCULATE(DISTINCTCOUNT('fact_student_submission'[Answer_Submission]))
-        # — legacy DAX at 04_dax_measures.csv:405. The DISTINCTCOUNT spans
-        # ALL distinct answer submissions for the question, INCLUDING the
-        # correct answer (the measure has no [Score]=0 filter), so it equals
-        # the count of distinct distractor rows, not just the wrong ones.
-        total_incorrect_choices = len(distractors)
-
         kpis = IadKpis(
             total_attempts=total_attempts,
             correct_count=correct_count,
@@ -820,7 +812,6 @@ class ReportService:
             correct_pct=_format_pct(correct_pct),
             incorrect_pct=_format_pct(incorrect_pct),
             distinct_answers=len(distractors),
-            total_incorrect_choices=total_incorrect_choices,
             top_wrong_answer=top_wrong_answer,
             top_wrong_count=top_wrong_count,
             top_wrong_pct=top_wrong_pct,

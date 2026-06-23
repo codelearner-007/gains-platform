@@ -78,13 +78,21 @@ export function qsrPerformanceColor(grade: number): string {
   return QSR_GREEN;
 }
 
+/** slate-800 — the report-wide "readable dark text" for light/pastel header
+ *  bands where white or silver fails WCAG AA (QSR highlight bands, the YTD
+ *  longitudinal sub-header band). Centralized so the AA decision lives once. */
+export const REPORT_TEXT_DARK = '#1f2937';
+
 // QSR "Header Highlights" variant (legacy SSRS "...- color.rdl" == PBIX ord 16
 // "Question Summary Report - header highlights"). The ONLY delta vs base is that
 // the two header bands (standard-code row + Question-No row) become performance-
 // colored instead of solid navy/blue, with silver text. The header bands use a
 // 0.6/0.8 split (NOT the data cells' 0.7/0.8) and no Round() — verbatim from the
 // RDL `Standards1` / `Question_No` BackgroundColor IIf expressions.
-export const QSR_HEADER_HILITE_FG = '#C0C0C0'; // RDL Color=Silver on highlighted bands
+// Intentional deviation from legacy SSRS silver: silver fails WCAG AA on the
+// platform's softened pastel QSR bands (pink/yellow/green ≈ 1.3–1.6:1, unreadable).
+// slate-800 reads ~10.7–13.0:1 on those fills (AA pass) while staying neutral.
+export const QSR_HEADER_HILITE_FG = REPORT_TEXT_DARK; // slate-800 on highlighted bands
 
 /** 3-band header-band fill for the QSR "Header Highlights" variant. `null`
  *  (no data) returns undefined so the caller keeps the static header color. */

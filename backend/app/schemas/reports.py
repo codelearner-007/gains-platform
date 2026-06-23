@@ -385,11 +385,6 @@ class IadKpis(BaseModel):
     correct_pct: str
     incorrect_pct: str
     distinct_answers: int
-    # Legacy PBIX's `Total Incorrect Choices` =
-    # DISTINCTCOUNT(fact_student_submission[Answer_Submission]) — counts ALL
-    # distinct answer submissions for the question, including the correct
-    # answer (no Score=0 filter). Equals `distinct_answers`.
-    total_incorrect_choices: int
     top_wrong_answer: str
     top_wrong_count: int
     top_wrong_pct: str
