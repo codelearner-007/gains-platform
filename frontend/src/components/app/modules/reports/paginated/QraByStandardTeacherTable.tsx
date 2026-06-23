@@ -60,19 +60,19 @@ function StandardBlockHead({
   return (
     <tr className="font-semibold" style={{ backgroundColor: HEADER_BAR_BG }}>
       <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
-        <SortableHeader column="question_no" label="No." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+        <SortableHeader column="question_no" label="No." title="Question Number" description="Question sequence number within the standard/teacher block." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
       <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
         <SortableHeader column="question" label="Question" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
       <th scope="col" className="border-r border-b px-2 py-1 text-right" style={{ borderColor: LAYOUT_BORDER }}>
-        <SortableHeader column="grade_average" label="% Correct" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
+        <SortableHeader column="grade_average" label="% Correct" title="Percent Correct" description="Share of students who answered the question correctly." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
       </th>
       <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
         <SortableHeader column="correct_answer" label="Correct Answer" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
       <th scope="col" className="border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
-        <SortableHeader column="incorrect_choice_details" label="Incorrect Choice Details" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+        <SortableHeader column="incorrect_choice_details" label="Incorrect Choice Details" title="Incorrect Choice Details" description="Per-distractor breakdown of wrong answers chosen and percent who chose each." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
     </tr>
   );

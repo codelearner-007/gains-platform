@@ -122,6 +122,8 @@ export default function QuestionDetailTable({
                 <SortableHeader
                   column="question_no"
                   label="No"
+                  title="Question Number"
+                  description="The question's position on the assessment; links to incorrect-answer details."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -141,6 +143,8 @@ export default function QuestionDetailTable({
                 <SortableHeader
                   column="grade_average"
                   label="% of Correct Answers"
+                  title="% of Correct Answers (Grade Average)"
+                  description="Percent of students who answered this question correctly."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -151,6 +155,8 @@ export default function QuestionDetailTable({
                 <SortableHeader
                   column="correct_answer"
                   label="Correct Answer"
+                  title="Correct Answer"
+                  description="The correct option(s) for the question, with answer-choice positions."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -160,6 +166,8 @@ export default function QuestionDetailTable({
                 <SortableHeader
                   column="incorrect_choice_details"
                   label="Incorrect Choice Details"
+                  title="Incorrect Choice Details"
+                  description="For each wrong option, the percent of students who chose it and its text."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -169,6 +177,8 @@ export default function QuestionDetailTable({
                 <SortableHeader
                   column="incorrect_details_name"
                   label="Incorrect Details Name"
+                  title="Incorrect Details (Student Names)"
+                  description="The names of students who picked each incorrect choice."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -178,6 +188,8 @@ export default function QuestionDetailTable({
                 <SortableHeader
                   column="standards"
                   label="Standards"
+                  title="Standards (codes)"
+                  description="The learning standard code(s) the question is aligned to."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -187,6 +199,8 @@ export default function QuestionDetailTable({
                 <SortableHeader
                   column="description"
                   label="Description"
+                  title="Standard Description"
+                  description="Plain-English description of the aligned standard(s)."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}

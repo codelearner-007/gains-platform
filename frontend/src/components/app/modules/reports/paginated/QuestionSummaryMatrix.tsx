@@ -21,6 +21,7 @@ import {
   qsrPerformanceColor,
 } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
+import HeaderTooltip from '@/components/app/modules/reports/shared/HeaderTooltip';
 import {
   SortableHeader,
   sortRowsBy,
@@ -190,7 +191,7 @@ export default function QuestionSummaryMatrix({
                   borderColor: LAYOUT_BORDER,
                 }}
               >
-                Score %
+                <HeaderTooltip title="Score Percent" description="Assessment-level percent score (points earned / points possible).">Score %</HeaderTooltip>
               </th>
             </tr>
             <tr>
@@ -202,7 +203,7 @@ export default function QuestionSummaryMatrix({
                   borderColor: LAYOUT_BORDER,
                 }}
               >
-                Possible Points
+                <HeaderTooltip title="Possible Points" description="Maximum points obtainable for the assessment.">Possible Points</HeaderTooltip>
               </th>
               <th
                 scope="col"
@@ -212,7 +213,7 @@ export default function QuestionSummaryMatrix({
                   borderColor: LAYOUT_BORDER,
                 }}
               >
-                # Correct Answers
+                <HeaderTooltip title="Number of Correct Answers" description="Count of correct answers / points earned for the assessment."># Correct Answers</HeaderTooltip>
               </th>
               <th
                 scope="col"
@@ -222,7 +223,7 @@ export default function QuestionSummaryMatrix({
                   borderColor: LAYOUT_BORDER,
                 }}
               >
-                Score %
+                <HeaderTooltip title="Score Percent" description="Assessment-level percent score (points earned / points possible).">Score %</HeaderTooltip>
               </th>
             </tr>
           </thead>
@@ -280,7 +281,7 @@ export default function QuestionSummaryMatrix({
           <tr>
             <th
               colSpan={3}
-              className="border-r border-b text-left text-white px-2 py-1 sticky left-0 z-10"
+              className="border-r border-b text-left text-white px-2 py-1"
               style={{ backgroundColor: PBIX_ACCENT_NAVY, borderColor: LAYOUT_BORDER }}
             >
               Standards
@@ -330,10 +331,10 @@ export default function QuestionSummaryMatrix({
           <tr>
             <th
               scope="col"
-              className="border-r border-b text-left px-2 py-1 sticky left-0 z-10"
+              className="border-r border-b text-left px-2 py-1"
               style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
             >
-              <SortableHeader column="instructor" label="Classroom Instructors" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="instructor" label="Classroom Instructors" title="Classroom Instructors" description="Section instructor who taught the student; rows are grouped by this." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th
               scope="col"
@@ -347,7 +348,7 @@ export default function QuestionSummaryMatrix({
               className="border-r border-b text-right px-2 py-1"
               style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
             >
-              <SortableHeader column="score" label="Score %" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
+              <SortableHeader column="score" label="Score %" title="Score Percent" description="Student's overall percent score on the assessment (points earned / points possible)." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
             {questions.map((q) => {
               // Header Highlights variant: color the Question-No header by the
@@ -380,14 +381,14 @@ export default function QuestionSummaryMatrix({
               className="border-r border-b text-right px-2 py-1"
               style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
             >
-              Possible Points
+              <HeaderTooltip title="Possible Points" description="Maximum points obtainable across all questions for this student.">Possible Points</HeaderTooltip>
             </th>
             <th
               scope="col"
               className="border-b text-right px-2 py-1"
               style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER }}
             >
-              # Correct Answers
+              <HeaderTooltip title="Number of Correct Answers" description="Count of points the student earned across all questions."># Correct Answers</HeaderTooltip>
             </th>
           </tr>
         </thead>

@@ -65,25 +65,25 @@ export default function QraPaginatedTable({ questions }: Props) {
         <thead>
           <tr className="font-semibold" style={{ backgroundColor: HEADER_BAR_BG }}>
             <th scope="col" className={`${headerCls} text-left w-[44px]`} style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="question_no" label="No." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="question_no" label="No." title="Question Number" description="The question's sequence number on the assessment." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th scope="col" className={`${headerCls} text-left`} style={{ borderColor: LAYOUT_BORDER }}>
               <SortableHeader column="question" label="Question" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th scope="col" className={`${headerCls} text-left w-[140px]`} style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="standard" label="Standard" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="standard" label="Standard" title="Standard" description="The CPALMS academic standard the question aligns to." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th scope="col" className={`${headerCls} text-right w-[80px]`} style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="grade_average" label="% of Correct Answers" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
+              <SortableHeader column="grade_average" label="% of Correct Answers" title="% of Correct Answers" description="Share of students who answered this question correctly." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
             <th scope="col" className={`${headerCls} text-left w-[160px]`} style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="correct_answer" label="Correct Answer" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="correct_answer" label="Correct Answer" title="Correct Answer" description="The correct answer choice(s) for this question." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th scope="col" className={`${headerCls} text-left`} style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="incorrect_choice_details" label="Incorrect Choice details" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="incorrect_choice_details" label="Incorrect Choice details" title="Incorrect Choice Details" description="Each wrong answer chosen and the percent of students who chose it." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th scope="col" className="border-b px-2 py-1 text-left w-[220px]" style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="incorrect_details_name" label="Students with Incorrect Choice" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="incorrect_details_name" label="Students with Incorrect Choice" title="Students with Incorrect Choice" description="Names of students grouped by the incorrect choice they selected." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
           </tr>
         </thead>

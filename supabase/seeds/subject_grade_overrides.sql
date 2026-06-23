@@ -294,6 +294,25 @@ FROM (VALUES
   ('Grade 6','Language Arts','Reading'),
   ('Grade 7','Language Arts','Reading'),
   ('Grade 8','Language Arts','Reading'),
+  -- 2025-26 download renamed Crestwell's Reading folder set to the literal
+  -- raw subject "ELA" (this backup ships Summative/ELA/ AND Summative/Reading/
+  -- copies of the SAME physical assessments — e.g. "Module Assessment: Be a
+  -- Super Citizen", same 16 students/section, same 17 questions). Legacy folds
+  -- the ELA-family into Reading (Crestwell's canonical subjects are
+  -- Reading/Math/Science/History — there is NO standalone ELA). Without this
+  -- the duplicate "ELA" subject_id surfaces a phantom ELA tile on the dashboard
+  -- and double-counts (GAI-13). All 14 Crestwell ELA items already exist as
+  -- same-name/grade Reading items, so uuid_6 merges them losslessly into the
+  -- existing Reading subject_id.
+  ('Grade K','ELA','Reading'),
+  ('Grade 1','ELA','Reading'),
+  ('Grade 2','ELA','Reading'),
+  ('Grade 3','ELA','Reading'),
+  ('Grade 4','ELA','Reading'),
+  ('Grade 5','ELA','Reading'),
+  ('Grade 6','ELA','Reading'),
+  ('Grade 7','ELA','Reading'),
+  ('Grade 8','ELA','Reading'),
   ('Grade K','Mathematics','Math'),
   ('Grade 1','Mathematics','Math'),
   ('Grade 2','Mathematics','Math'),

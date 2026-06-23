@@ -8,6 +8,7 @@ import {
   LAYOUT_BORDER,
   performanceColor,
 } from '@/lib/reports/colors';
+import { splitStandards } from '@/lib/reports/format';
 import {
   SortableHeader,
   sortRowsBy,
@@ -22,6 +23,7 @@ interface Props {
 type ByTeacherSortKey =
   | 'question_no'
   | 'question'
+  | 'standard'
   | 'grade_average'
   | 'correct_answer'
   | 'incorrect_choice_details';
@@ -35,6 +37,8 @@ const SORT_ACCESSORS: Record<
     return Number.isFinite(n) ? n : (q.question_no ?? '');
   },
   question: (q) => (q.question || '').toLowerCase(),
+  standard: (q) =>
+    splitStandards(q.cpalms_standard || q.standards).join(' ').toLowerCase(),
   grade_average: (q) => q.grade_average ?? null,
   correct_answer: (q) => (q.correct_answer || '').toLowerCase(),
   incorrect_choice_details: (q) =>
@@ -61,19 +65,22 @@ export default function QraByTeacherTable({ teacherGroups }: Props) {
         <thead>
           <tr className="font-semibold" style={{ backgroundColor: HEADER_BAR_BG }}>
             <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="question_no" label="No." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="question_no" label="No." title="Question Number" description="The question's sequence number within the assessment." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
               <SortableHeader column="question" label="Question" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
+            <th scope="col" className="border-r border-b px-2 py-1 text-left w-[140px]" style={{ borderColor: LAYOUT_BORDER }}>
+              <SortableHeader column="standard" label="Standard" title="Standard (CPALMS code)" description="The CPALMS academic standard code the question aligns to." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+            </th>
             <th scope="col" className="border-r border-b px-2 py-1 text-right" style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="grade_average" label="% Correct" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
+              <SortableHeader column="grade_average" label="% Correct" title="Percent Correct" description="Share of students who answered the question correctly." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
             <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
               <SortableHeader column="correct_answer" label="Correct Answer" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th scope="col" className="border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
-              <SortableHeader column="incorrect_choice_details" label="Incorrect Choice Details" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
+              <SortableHeader column="incorrect_choice_details" label="Incorrect Choice Details" title="Incorrect Choice Details" description="Which wrong answers students chose and the percent who chose each." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
           </tr>
         </thead>
@@ -93,7 +100,7 @@ export default function QraByTeacherTable({ teacherGroups }: Props) {
                     backgroundColor: GROUP_HEADER_CYAN,
                   }}
                 >
-                  <td colSpan={2} className="px-2 py-1">
+                  <td colSpan={3} className="px-2 py-1">
                     Teacher: {group.section_instructor}
                   </td>
                   <td
@@ -115,7 +122,7 @@ export default function QraByTeacherTable({ teacherGroups }: Props) {
                     className="border-b align-top"
                     style={{ borderColor: LAYOUT_BORDER }}
                   >
-                    <PaginatedQuestionRowCells row={q} />
+                    <PaginatedQuestionRowCells row={q} showStandardsColumn />
                   </tr>
                 ))}
               </Fragment>

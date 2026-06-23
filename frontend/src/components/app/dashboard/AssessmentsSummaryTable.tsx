@@ -400,10 +400,10 @@ function ByAssessment({
           <thead className={STICKY_THEAD}>
             <tr>
               <Th><SortableHeader column="grade" label="Grade" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
-              <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th><SortableHeader column="date" label="Assessment Date" title="Assessment Date" description="Date the assessment was given." sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
               <Th><SortableHeader column="item" label="Assessment" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
-              <Th align="center"><SortableHeader column="students" label="Student Count" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
-              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th align="center"><SortableHeader column="students" label="Student Count" title="Student Count" description="Number of students who took the assessment." sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" title="Grade Average" description="Average percent-correct across the assessment, with the school-average marker." sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
               <Th align="right">Report</Th>
             </tr>
           </thead>
@@ -527,9 +527,9 @@ function ByStandard({
               <Th><SortableHeader column="standard" label="Standard" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
               <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
               <Th><SortableHeader column="subject" label="Subject" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
-              <Th align="center"><SortableHeader column="questions" label="# Questions" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th align="center"><SortableHeader column="assessments" label="# Assessments" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
+              <Th align="center"><SortableHeader column="questions" label="# Questions" title="Number of Questions" description="Count of distinct questions mapped to this standard across all assessments." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th align="center"><SortableHeader column="assessments" label="# Assessments" title="Number of Assessments" description="Count of distinct assessments with at least one question on this standard." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" title="Grade Average" description="Average percent-correct for the standard, with the school-average marker." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
             </tr>
           </thead>
           <tbody>
@@ -594,10 +594,10 @@ function ByStrandRows({
             <tr>
               <Th><SortableHeader column="grade" label="Grade" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
               <Th><SortableHeader column="strand" label="Strand" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
-              <Th align="center"><SortableHeader column="standards" label="Total Standards" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
-              <Th align="center"><SortableHeader column="questions" label="Total Questions" sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
-              <Th><SortableHeader column="average" label="Grade Average" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
-              <Th><SortableHeader column="date" label="Assessment Date" sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th align="center"><SortableHeader column="standards" label="Total Standards" title="Total Standards" description="Number of distinct standards within this strand for the assessment." sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
+              <Th align="center"><SortableHeader column="questions" label="Total Questions" title="Total Questions" description="Number of questions within this strand for the assessment." sortColumn={sort} sortDirection={dir} onClick={onSort} align="center" /></Th>
+              <Th><SortableHeader column="average" label="Grade Average" title="Grade Average" description="Average percent-correct for the strand, with the school-average marker." sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
+              <Th><SortableHeader column="date" label="Assessment Date" title="Assessment Date" description="Date the assessment was given." sortColumn={sort} sortDirection={dir} onClick={onSort} /></Th>
               <Th>Assessment</Th>
             </tr>
           </thead>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ColumnTooltip } from '@/components/app/modules/reports/shared/HeaderTooltip';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -171,6 +172,8 @@ export function SortableHeader<K extends string>({
   onClick,
   className,
   align = 'left',
+  title,
+  description,
 }: {
   column: K;
   label: string;
@@ -179,6 +182,14 @@ export function SortableHeader<K extends string>({
   onClick: (col: K) => void;
   className?: string;
   align?: 'left' | 'center' | 'right';
+  /**
+   * Full column name shown in a hover/focus tooltip (GAI-19). Provide this when
+   * the rendered `label` is abbreviated or sits in a narrow/truncating column.
+   * Defaults to `label` inside the tooltip when only `description` is given.
+   */
+  title?: string;
+  /** Optional one-line description shown under the title in the tooltip. */
+  description?: string;
 }) {
   const active = column === sortColumn;
   const alignCls =
@@ -187,7 +198,7 @@ export function SortableHeader<K extends string>({
       : align === 'right'
         ? 'justify-end text-right'
         : 'justify-start text-left';
-  return (
+  const button = (
     <button
       type="button"
       onClick={() => onClick(column)}
@@ -201,5 +212,16 @@ export function SortableHeader<K extends string>({
       <span className="truncate">{label}</span>
       <SortIndicator active={active} direction={sortDirection} />
     </button>
+  );
+
+  // No tooltip metadata → render the bare sortable button (unchanged behavior).
+  if (!title && !description) return button;
+
+  // The sort button IS the focusable trigger, so the tooltip is keyboard-
+  // reachable (not hover-only) and appears immediately (delayDuration={0}).
+  return (
+    <ColumnTooltip title={title ?? label} description={description}>
+      {button}
+    </ColumnTooltip>
   );
 }

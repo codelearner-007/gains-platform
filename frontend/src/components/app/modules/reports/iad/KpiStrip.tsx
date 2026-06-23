@@ -82,11 +82,6 @@ export default function KpiStrip({ kpis }: Props) {
           value: String(kpis.distinct_answers),
         },
         {
-          label: 'Total Incorrect Choices',
-          valueClassName: IAD_VALUE_CLASSNAME,
-          value: String(kpis.total_incorrect_choices),
-        },
-        {
           label: 'Most Common Wrong',
           valueClassName: 'text-[14px]',
           value: (

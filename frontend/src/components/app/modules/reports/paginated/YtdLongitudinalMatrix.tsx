@@ -118,17 +118,17 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
           {/* Row 1: standard codes (span sub-cols) + leading/trailing labels */}
           <tr>
             <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={headStyle}>
-              <SortableHeader column="instructor" label="Classroom Instructors" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} className="text-white" />
+              <SortableHeader column="instructor" label="Classroom Instructors" title="Classroom Instructors" description="Section instructor who taught the student; rows are grouped by this." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} className="text-white" />
             </th>
             <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={headStyle}>
               <SortableHeader column="student" label="Student Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} className="text-white" />
             </th>
             <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-              <SortableHeader column="score" label="Score %" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
+              <SortableHeader column="score" label="Score %" title="Score Percent" description="Student's overall year-to-date percent score across all standards." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
             {showTestsTaken && (
               <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-                <SortableHeader column="tests_taken" label="Tests Taken" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
+                <SortableHeader column="tests_taken" label="Tests Taken" title="Tests Taken" description="Count of assessments the student has taken year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
               </th>
             )}
             {standards.map((s) => (
@@ -147,10 +147,10 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
               </th>
             ))}
             <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-              <SortableHeader column="points_possible" label="Possible Points" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
+              <SortableHeader column="points_possible" label="Possible Points" title="Possible Points" description="Maximum points obtainable across all standards year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
             <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
-              <SortableHeader column="points_received" label="# Correct Answers" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
+              <SortableHeader column="points_received" label="# Correct Answers" title="Number of Correct Answers" description="Total points received across all standards year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
           </tr>
           {/* Row 2: per-standard Score / % sub-headers */}

@@ -84,6 +84,8 @@ export function StrandsTable({
               <SortableHeader
                 column="strand"
                 label="Strand"
+                title="Strand"
+                description="The broad content area grouping related standards."
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onClick={onHeaderClick}
@@ -93,6 +95,8 @@ export function StrandsTable({
               <SortableHeader
                 column="num_standards"
                 label="# of Standards"
+                title="Number of Standards"
+                description="Count of distinct standards that fall under this strand."
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onClick={onHeaderClick}
@@ -103,6 +107,8 @@ export function StrandsTable({
               <SortableHeader
                 column="num_questions"
                 label="# of Questions"
+                title="Number of Questions"
+                description="Count of assessment questions tagged to this strand."
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onClick={onHeaderClick}
@@ -113,6 +119,8 @@ export function StrandsTable({
               <SortableHeader
                 column="grade_average"
                 label="% per Strand"
+                title="Correct % per Strand"
+                description="Average percent of students answering correctly across this strand's questions."
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onClick={onHeaderClick}
@@ -248,6 +256,8 @@ export function StandardsTable({
               <SortableHeader
                 column="schoology_standard"
                 label="Standards"
+                title="Standard"
+                description="The individual learning standard/skill code (e.g. MA.912.A) measured."
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onClick={onHeaderClick}
@@ -257,6 +267,8 @@ export function StandardsTable({
               <SortableHeader
                 column="num_questions"
                 label="# of Questions"
+                title="Number of Questions"
+                description="Count of assessment questions tagged to this standard."
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onClick={onHeaderClick}
@@ -267,6 +279,8 @@ export function StandardsTable({
               <SortableHeader
                 column="grade_average"
                 label="% per Standard"
+                title="Correct % per Standard"
+                description="Average percent of students answering correctly across this standard's questions."
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onClick={onHeaderClick}

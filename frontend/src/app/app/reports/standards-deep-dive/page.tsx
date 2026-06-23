@@ -107,7 +107,7 @@ export default function StandardsDeepDivePage() {
             )}
 
             <div className="mb-2">
-              <SectionHeader title="Number of Standards by Strand" />
+              <SectionHeader title="Performance by Strand" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                 <div className="min-w-0">
                   <StrandRowList

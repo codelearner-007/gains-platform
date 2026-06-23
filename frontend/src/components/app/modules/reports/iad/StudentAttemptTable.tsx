@@ -207,6 +207,8 @@ export default function StudentAttemptTable({
                 <SortableHeader
                   column="is_correct"
                   label="Correct?"
+                  title="Correct?"
+                  description="Whether the student's answer was correct or incorrect."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -217,6 +219,8 @@ export default function StudentAttemptTable({
                 <SortableHeader
                   column="points_received"
                   label="Points"
+                  title="Points Received / Points Possible"
+                  description="Points the student earned out of points possible on this question."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -227,6 +231,8 @@ export default function StudentAttemptTable({
                 <SortableHeader
                   column="score_pct"
                   label="Score %"
+                  title="Score Percentage"
+                  description="The student's score on this question as a percentage of points possible."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
@@ -237,6 +243,8 @@ export default function StudentAttemptTable({
                 <SortableHeader
                   column="latest_attempt"
                   label="Submitted"
+                  title="Submitted"
+                  description="Date and time of the student's latest attempt."
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onClick={onHeaderClick}
