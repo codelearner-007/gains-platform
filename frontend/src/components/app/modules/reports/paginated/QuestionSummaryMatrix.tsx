@@ -1,6 +1,7 @@
 'use client';
 
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
+import { MinusCircle, PlusCircle } from 'lucide-react';
 import type {
   QuestionSummaryMatrixPayload,
   QsmQuestionColumn,
@@ -136,6 +137,37 @@ export default function QuestionSummaryMatrix({
   } = payload;
 
   const spans = useMemo(() => buildStandardSpans(questions), [questions]);
+
+  // Per-standard "Score %" drill: each standard-code header carries a +/-
+  // toggle. When expanded, a per-standard Score% column is appended right after
+  // that standard's question columns (the "summary of the questions within that
+  // standard"). Default = collapsed (questions only), so the base layout is
+  // unchanged. Every header/data/subtotal/footer row iterates the SAME `columns`
+  // model below, which is the single invariant that keeps the columns aligned.
+  const [expandedStandards, setExpandedStandards] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const toggleStandard = (code: string) =>
+    setExpandedStandards((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+
+  type MatrixCol =
+    | { kind: 'q'; q: QsmQuestionColumn; code: string }
+    | { kind: 'score'; code: string; span: StandardSpan };
+  const columns = useMemo<MatrixCol[]>(() => {
+    const out: MatrixCol[] = [];
+    for (const s of spans) {
+      for (const q of s.questions) out.push({ kind: 'q', q, code: s.cpalms });
+      if (expandedStandards.has(s.cpalms)) {
+        out.push({ kind: 'score', code: s.cpalms, span: s });
+      }
+    }
+    return out;
+  }, [spans, expandedStandards]);
 
   // The fixed row-label columns are click-to-sortable (the legacy tableEx
   // matrix sorted on its row headers). Default keeps the server/legacy row
@@ -307,15 +339,36 @@ export default function QuestionSummaryMatrix({
                   fg = QSR_HEADER_HILITE_FG;
                 }
               }
+              const isExp = expandedStandards.has(s.cpalms);
               return (
                 <th
                   key={`${s.cpalms}-${i}`}
-                  colSpan={s.span}
+                  colSpan={s.span + (isExp ? 1 : 0)}
                   className="border-r border-b text-center font-semibold px-2 py-1"
                   style={{ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER }}
                   title={s.cpalms}
                 >
-                  {s.cpalms}
+                  <span className="inline-flex items-center justify-center gap-1">
+                    <span>{s.cpalms}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleStandard(s.cpalms)}
+                      aria-expanded={isExp}
+                      aria-label={
+                        isExp
+                          ? `Hide Score % for ${s.cpalms}`
+                          : `Show Score % for ${s.cpalms}`
+                      }
+                      title={isExp ? 'Hide standard Score %' : 'Show standard Score %'}
+                      className="print:hidden inline-flex items-center justify-center rounded-full p-0.5 align-middle text-current opacity-70 transition hover:bg-current/20 hover:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current cursor-pointer"
+                    >
+                      {isExp ? (
+                        <MinusCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : (
+                        <PlusCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                    </button>
+                  </span>
                 </th>
               );
             })}
@@ -350,15 +403,40 @@ export default function QuestionSummaryMatrix({
             >
               <SortableHeader column="score" label="Score %" title="Score Percent" description="Student's overall percent score on the assessment (points earned / points possible)." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
-            {questions.map((q) => {
-              // Header Highlights variant: color the Question-No header by the
-              // question's Score% — legacy RDL `Question_No` 0.6/0.8 IIf.
+            {columns.map((col, ci) => {
+              if (col.kind === 'q') {
+                const q = col.q;
+                // Header Highlights variant: color the Question-No header by the
+                // question's Score% — legacy RDL `Question_No` 0.6/0.8 IIf.
+                let bg = PBIX_ACCENT_LIGHT_BLUE;
+                let fg: string | undefined;
+                if (headerHighlights) {
+                  const band = qsrHeaderBandColor(
+                    grandTotal.per_question_pct[q.question_id] ?? null,
+                  );
+                  if (band) {
+                    bg = band;
+                    fg = QSR_HEADER_HILITE_FG;
+                  }
+                }
+                return (
+                  <th
+                    key={q.question_id}
+                    scope="col"
+                    className="border-r border-b text-center px-1 py-1 font-semibold"
+                    style={{ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER }}
+                    title={`${q.question_no}: ${sanitizeShortAnswer(q.correct_answer) || 'n/a'}`}
+                  >
+                    {q.question_no}
+                  </th>
+                );
+              }
+              // Per-standard Score% sub-header (matches the standard band color
+              // in the header-highlights variant).
               let bg = PBIX_ACCENT_LIGHT_BLUE;
               let fg: string | undefined;
               if (headerHighlights) {
-                const band = qsrHeaderBandColor(
-                  grandTotal.per_question_pct[q.question_id] ?? null,
-                );
+                const band = qsrHeaderBandColor(grandTotal.band_pct[col.code] ?? null);
                 if (band) {
                   bg = band;
                   fg = QSR_HEADER_HILITE_FG;
@@ -366,13 +444,17 @@ export default function QuestionSummaryMatrix({
               }
               return (
                 <th
-                  key={q.question_id}
+                  key={`hscore-${col.code}-${ci}`}
                   scope="col"
                   className="border-r border-b text-center px-1 py-1 font-semibold"
                   style={{ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER }}
-                  title={`${q.question_no}: ${sanitizeShortAnswer(q.correct_answer) || 'n/a'}`}
                 >
-                  {q.question_no}
+                  <HeaderTooltip
+                    title="Score Percent"
+                    description={`Score % across the ${col.code} questions (points earned / points possible).`}
+                  >
+                    Score %
+                  </HeaderTooltip>
                 </th>
               );
             })}
@@ -457,27 +539,45 @@ export default function QuestionSummaryMatrix({
                   >
                     {pct(student.score_pct)}
                   </td>
-                  {questions.map((q) => {
-                    const cell = student.cells[q.question_id] ?? null;
-                    const bg = cell === null ? '#fff' : qsrCellColor(cell);
-                    const aria =
-                      cell === null
-                        ? 'not attempted'
-                        : cell >= 0.5
-                          ? 'correct'
-                          : 'incorrect';
+                  {columns.map((col, ci) => {
+                    if (col.kind === 'q') {
+                      const q = col.q;
+                      const cell = student.cells[q.question_id] ?? null;
+                      const bg = cell === null ? '#fff' : qsrCellColor(cell);
+                      const aria =
+                        cell === null
+                          ? 'not attempted'
+                          : cell >= 0.5
+                            ? 'correct'
+                            : 'incorrect';
+                      return (
+                        <td
+                          key={q.question_id}
+                          className="border-r px-1 py-0.5 text-center font-semibold tabular-nums"
+                          style={{
+                            backgroundColor: bg ?? '#fff',
+                            color: '#000',
+                            borderColor: LAYOUT_BORDER,
+                          }}
+                          aria-label={`${q.question_no} ${aria}`}
+                        >
+                          {cell === null ? '—' : pts(cell)}
+                        </td>
+                      );
+                    }
+                    const sp = student.band_pct[col.code] ?? null;
                     return (
                       <td
-                        key={q.question_id}
+                        key={`score-${col.code}-${ci}`}
                         className="border-r px-1 py-0.5 text-center font-semibold tabular-nums"
                         style={{
-                          backgroundColor: bg ?? '#fff',
+                          backgroundColor: sp === null ? '#fff' : qsrPerformanceColor(sp),
                           color: '#000',
                           borderColor: LAYOUT_BORDER,
                         }}
-                        aria-label={`${q.question_no} ${aria}`}
+                        aria-label={`${col.code} score`}
                       >
-                        {cell === null ? '—' : pts(cell)}
+                        {sp === null ? '—' : pct(sp)}
                       </td>
                     );
                   })}
@@ -512,18 +612,16 @@ export default function QuestionSummaryMatrix({
                     (acc, s) => acc + s.correct_count,
                     0,
                   );
-                  const perQ = questions.map((q) => {
-                    const possible =
-                      group.per_question_possible[q.question_id] ?? 0;
-                    const correct =
-                      group.per_question_correct[q.question_id] ?? 0;
-                    return {
-                      qid: q.question_id,
-                      correct,
-                      attempted: possible,
-                      pct: group.per_question_pct[q.question_id] ?? 0,
-                    };
-                  });
+                  const bandPoss = (span: StandardSpan) =>
+                    span.questions.reduce(
+                      (a, q) => a + (group.per_question_possible[q.question_id] ?? 0),
+                      0,
+                    );
+                  const bandCorr = (span: StandardSpan) =>
+                    span.questions.reduce(
+                      (a, q) => a + (group.per_question_correct[q.question_id] ?? 0),
+                      0,
+                    );
                   return (
                     <Fragment key={`${group.section_instructor}-subtotal`}>
                       <tr
@@ -545,15 +643,33 @@ export default function QuestionSummaryMatrix({
                         >
                           {pts(teacherCorrect)}
                         </td>
-                        {perQ.map((p) => (
-                          <td
-                            key={`sub-cc-${p.qid}`}
-                            className="border-r px-1 py-0.5 text-center tabular-nums"
-                            style={{ borderColor: LAYOUT_BORDER }}
-                          >
-                            {p.attempted > 0 ? pts(p.correct) : '—'}
-                          </td>
-                        ))}
+                        {columns.map((col, ci) => {
+                          if (col.kind === 'q') {
+                            const possible =
+                              group.per_question_possible[col.q.question_id] ?? 0;
+                            const correct =
+                              group.per_question_correct[col.q.question_id] ?? 0;
+                            return (
+                              <td
+                                key={`sub-cc-${col.q.question_id}`}
+                                className="border-r px-1 py-0.5 text-center tabular-nums"
+                                style={{ borderColor: LAYOUT_BORDER }}
+                              >
+                                {possible > 0 ? pts(correct) : '—'}
+                              </td>
+                            );
+                          }
+                          const poss = bandPoss(col.span);
+                          return (
+                            <td
+                              key={`sub-cc-score-${col.code}-${ci}`}
+                              className="border-r px-1 py-0.5 text-center tabular-nums"
+                              style={{ borderColor: LAYOUT_BORDER }}
+                            >
+                              {poss > 0 ? pts(bandCorr(col.span)) : '—'}
+                            </td>
+                          );
+                        })}
                         <td
                           className="border-r"
                           style={{ borderColor: LAYOUT_BORDER }}
@@ -584,21 +700,42 @@ export default function QuestionSummaryMatrix({
                         >
                           {pct(group.teacher_score_pct)}
                         </td>
-                        {perQ.map((p) => (
-                          <td
-                            key={`sub-pct-${p.qid}`}
-                            className="border-r px-1 py-0.5 text-center tabular-nums"
-                            style={{
-                              borderColor: LAYOUT_BORDER,
-                              backgroundColor:
-                                p.attempted > 0
-                                  ? qsrPerformanceColor(p.pct)
-                                  : undefined,
-                            }}
-                          >
-                            {p.attempted > 0 ? pct(p.pct) : '—'}
-                          </td>
-                        ))}
+                        {columns.map((col, ci) => {
+                          if (col.kind === 'q') {
+                            const possible =
+                              group.per_question_possible[col.q.question_id] ?? 0;
+                            const p =
+                              group.per_question_pct[col.q.question_id] ?? 0;
+                            return (
+                              <td
+                                key={`sub-pct-${col.q.question_id}`}
+                                className="border-r px-1 py-0.5 text-center tabular-nums"
+                                style={{
+                                  borderColor: LAYOUT_BORDER,
+                                  backgroundColor:
+                                    possible > 0 ? qsrPerformanceColor(p) : undefined,
+                                }}
+                              >
+                                {possible > 0 ? pct(p) : '—'}
+                              </td>
+                            );
+                          }
+                          const poss = bandPoss(col.span);
+                          const p = poss > 0 ? bandCorr(col.span) / poss : 0;
+                          return (
+                            <td
+                              key={`sub-pct-score-${col.code}-${ci}`}
+                              className="border-r px-1 py-0.5 text-center tabular-nums"
+                              style={{
+                                borderColor: LAYOUT_BORDER,
+                                backgroundColor:
+                                  poss > 0 ? qsrPerformanceColor(p) : undefined,
+                              }}
+                            >
+                              {poss > 0 ? pct(p) : '—'}
+                            </td>
+                          );
+                        })}
                         <td
                           className="border-r"
                           style={{ borderColor: LAYOUT_BORDER }}
@@ -633,15 +770,25 @@ export default function QuestionSummaryMatrix({
             >
               {pts(grandTotal.possible_points)}
             </td>
-            {questions.map((q) => (
-              <td
-                key={`pp-${q.question_id}`}
-                className="border-r px-1 py-1 text-center tabular-nums"
-                style={{ borderColor: LAYOUT_BORDER }}
-              >
-                {pts(grandTotal.per_question_possible[q.question_id] ?? 0)}
-              </td>
-            ))}
+            {columns.map((col, ci) =>
+              col.kind === 'q' ? (
+                <td
+                  key={`pp-${col.q.question_id}`}
+                  className="border-r px-1 py-1 text-center tabular-nums"
+                  style={{ borderColor: LAYOUT_BORDER }}
+                >
+                  {pts(grandTotal.per_question_possible[col.q.question_id] ?? 0)}
+                </td>
+              ) : (
+                <td
+                  key={`pp-score-${col.code}-${ci}`}
+                  className="border-r px-1 py-1 text-center tabular-nums"
+                  style={{ borderColor: LAYOUT_BORDER }}
+                >
+                  {pts(grandTotal.band_possible[col.code] ?? 0)}
+                </td>
+              ),
+            )}
             <td
               className="border-r px-2 py-1 text-right tabular-nums"
               style={{ borderColor: LAYOUT_BORDER }}
@@ -675,15 +822,25 @@ export default function QuestionSummaryMatrix({
             >
               {pts(grandTotal.correct_count)}
             </td>
-            {questions.map((q) => (
-              <td
-                key={`cc-${q.question_id}`}
-                className="border-r px-1 py-1 text-center tabular-nums"
-                style={{ borderColor: LAYOUT_BORDER }}
-              >
-                {pts(grandTotal.per_question_correct[q.question_id] ?? 0)}
-              </td>
-            ))}
+            {columns.map((col, ci) =>
+              col.kind === 'q' ? (
+                <td
+                  key={`cc-${col.q.question_id}`}
+                  className="border-r px-1 py-1 text-center tabular-nums"
+                  style={{ borderColor: LAYOUT_BORDER }}
+                >
+                  {pts(grandTotal.per_question_correct[col.q.question_id] ?? 0)}
+                </td>
+              ) : (
+                <td
+                  key={`cc-score-${col.code}-${ci}`}
+                  className="border-r px-1 py-1 text-center tabular-nums"
+                  style={{ borderColor: LAYOUT_BORDER }}
+                >
+                  {pts(grandTotal.band_correct[col.code] ?? 0)}
+                </td>
+              ),
+            )}
             <td className="border-r" style={{ borderColor: LAYOUT_BORDER }} />
             <td style={{ borderColor: LAYOUT_BORDER }} />
           </tr>
@@ -707,11 +864,18 @@ export default function QuestionSummaryMatrix({
             >
               {pct(grandTotal.score_pct)}
             </td>
-            {questions.map((q) => {
-              const p = grandTotal.per_question_pct[q.question_id] ?? 0;
+            {columns.map((col, ci) => {
+              const p =
+                col.kind === 'q'
+                  ? grandTotal.per_question_pct[col.q.question_id] ?? 0
+                  : grandTotal.band_pct[col.code] ?? 0;
               return (
                 <td
-                  key={`pct-${q.question_id}`}
+                  key={
+                    col.kind === 'q'
+                      ? `pct-${col.q.question_id}`
+                      : `pct-score-${col.code}-${ci}`
+                  }
                   className="border-r px-1 py-1 text-center tabular-nums"
                   style={{
                     borderColor: LAYOUT_BORDER,

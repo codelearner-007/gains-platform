@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import type { QuestionOverall } from '@/lib/reports/types';
-import { cellColor, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
+import { cellColor, GRID_LINE, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import {
   formatAnswerHtml,
   formatCorrectAnswerWithPositions,
@@ -63,6 +63,18 @@ const QRA_INITIAL_DIRECTIONS: Partial<Record<QraSortKey, 'asc' | 'desc'>> = {
   question_no: 'asc',
 };
 
+// Freeze the column-header row while the question list scrolls inside its own
+// container. The opaque white background (from tableHeaderStyleLarge) occludes
+// scrolling body rows; the inset box-shadow stands in for the bottom border,
+// which `border-collapse: collapse` otherwise drops off a sticky header.
+const stickyHeader: typeof headerStyle = {
+  ...headerStyle,
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
+  boxShadow: `inset 0 -1px 0 ${GRID_LINE}`,
+};
+
 export default function QuestionDetailTable({
   questions,
   itemId,
@@ -98,7 +110,10 @@ export default function QuestionDetailTable({
           </span>
         ) : null}
       </div>
-      <div className="w-full overflow-auto">
+      <div
+        className="w-full overflow-auto print:overflow-visible print:!max-h-none"
+        style={{ maxHeight: '72vh' }}
+      >
         <table
           style={{
             borderCollapse: 'collapse',
@@ -118,7 +133,7 @@ export default function QuestionDetailTable({
           </colgroup>
           <thead>
             <tr>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>
+              <th style={{ ...stickyHeader, textAlign: 'center' }}>
                 <SortableHeader
                   column="question_no"
                   label="No"
@@ -130,7 +145,7 @@ export default function QuestionDetailTable({
                   align="center"
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeader}>
                 <SortableHeader
                   column="question"
                   label="Question"
@@ -139,7 +154,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>
+              <th style={{ ...stickyHeader, textAlign: 'center' }}>
                 <SortableHeader
                   column="grade_average"
                   label="% of Correct Answers"
@@ -151,7 +166,7 @@ export default function QuestionDetailTable({
                   align="center"
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeader}>
                 <SortableHeader
                   column="correct_answer"
                   label="Correct Answer"
@@ -162,7 +177,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeader}>
                 <SortableHeader
                   column="incorrect_choice_details"
                   label="Incorrect Choice Details"
@@ -173,7 +188,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeader}>
                 <SortableHeader
                   column="incorrect_details_name"
                   label="Incorrect Details Name"
@@ -184,7 +199,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeader}>
                 <SortableHeader
                   column="standards"
                   label="Standards"
@@ -195,7 +210,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeader}>
                 <SortableHeader
                   column="description"
                   label="Description"

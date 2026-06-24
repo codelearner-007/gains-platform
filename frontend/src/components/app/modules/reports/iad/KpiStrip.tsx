@@ -41,7 +41,7 @@ function TopWrongValue({
 export default function KpiStrip({ kpis }: Props) {
   return (
     <SharedKpiStrip
-      cols={6}
+      cols={5}
       tiles={[
         {
           label: 'Total Students',

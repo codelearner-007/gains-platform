@@ -282,9 +282,14 @@ class ReportService:
         return list(seen)
 
     async def _compute_canonical_kpis_for_item(
-        self, item_id: str
+        self, item_id: str, instructor: Optional[str] = None
     ) -> dict[str, Any]:
         """Single source of truth for per-assessment KPI strip values.
+
+        ``instructor`` (OPTIONAL, single comma-separated string) narrows the
+        merged report to the sections taught by ANY of the listed instructors;
+        Total Students and every numeric recompute over that narrowed section
+        set. NULL/empty = no filter (byte-identical to the full merge).
 
         Returns a dict consumed by BOTH
         :meth:`build_question_response_analysis` and
@@ -320,7 +325,7 @@ class ReportService:
         ``total_possible_point`` / ``total_score`` — pass-through from
         ``cube_school_summary``.
         """
-        row = await self.cube.get_canonical_kpis_for_item(item_id) or {}
+        row = await self.cube.get_canonical_kpis_for_item(item_id, instructor) or {}
         return {
             "total_students": to_int(row.get("total_students")),
             "total_questions": to_int(row.get("total_questions")),
@@ -333,7 +338,7 @@ class ReportService:
         }
 
     async def _build_alignment_data_quality_for_item(
-        self, item_id: str
+        self, item_id: str, instructor: Optional[str] = None
     ) -> AlignmentDataQuality:
         """Build the per-assessment AlignmentDataQuality block.
 
@@ -347,7 +352,7 @@ class ReportService:
         offending labels via ``unmatched_labels`` so the UI can render
         them inline (e.g. ``"Social Studies"`` on a Grade K Math item).
         """
-        quality = await self.cube.get_alignment_quality_for_item(item_id)
+        quality = await self.cube.get_alignment_quality_for_item(item_id, instructor)
         q_total = quality["questions_total"]
         q_aligned = quality["questions_with_alignment"]
         nonempty_count = quality["nonempty_standards_count"]
@@ -359,7 +364,7 @@ class ReportService:
         unmatched_labels: Optional[list[str]] = None
         if cause == "labels_not_mapped":
             labels = await self.cube.get_unmatched_alignment_labels_for_item(
-                item_id, limit=5
+                item_id, limit=5, instructor=instructor
             )
             unmatched_labels = labels or None
 
@@ -375,11 +380,17 @@ class ReportService:
         )
 
     async def _build_strand_standard_rollups(
-        self, item_id: str
+        self, item_id: str, instructor: Optional[str] = None
     ) -> tuple[list[SddStrandRow], list[SddStandardRow]]:
-        """Shared aggregation used by both SDD and QRA endpoints."""
-        strand_rows = await self.cube.get_strand_rollup_for_item(item_id)
-        standard_rows = await self.cube.get_standard_rollup_for_item(item_id)
+        """Shared aggregation used by both SDD and QRA endpoints.
+
+        ``instructor`` (OPTIONAL) narrows the merged report to the matching
+        sections; NULL/empty = no filter (byte-identical).
+        """
+        strand_rows = await self.cube.get_strand_rollup_for_item(item_id, instructor)
+        standard_rows = await self.cube.get_standard_rollup_for_item(
+            item_id, instructor
+        )
 
         strands_rollup = [
             SddStrandRow(
@@ -451,13 +462,21 @@ class ReportService:
     # Question-Response-Analysis (composed payload)
     # ────────────────────────────────────────────────────────────────────
     async def build_question_response_analysis(
-        self, item_id: str
+        self, item_id: str, instructor: Optional[str] = None
     ) -> QuestionResponseAnalysisPayload:
-        meta_row = await self.cube.get_assessment_meta(item_id)
+        """Composed QRA payload for one MERGED assessment.
+
+        ``instructor`` (OPTIONAL, single comma-separated string) narrows the
+        merged multi-section report to the sections taught by ANY of the listed
+        instructors. NULL/empty = no filter, byte-identical to the full merge.
+        """
+        meta_row = await self.cube.get_assessment_meta(item_id, instructor)
         if not meta_row:
             raise ResourceNotFoundError("Assessment", item_id)
 
-        question_rows = await self.cube.get_questions_overall_for_item(item_id)
+        question_rows = await self.cube.get_questions_overall_for_item(
+            item_id, instructor
+        )
 
         # ─── AssessmentMeta ────────────────────────────────────────────────
         first_access = meta_row.get("first_access")
@@ -470,14 +489,14 @@ class ReportService:
         # ─── KPIs (canonical, legacy-DAX-equivalent) ──────────────────────
         # Both QRA and SDD compute KPIs through this helper so the strip
         # values can never disagree for the same item.
-        canon = await self._compute_canonical_kpis_for_item(item_id)
+        canon = await self._compute_canonical_kpis_for_item(item_id, instructor)
 
         # ─── Strands & Standards rollups (per assessment) ─────────────────
         # Compute BEFORE building the KPI strip so the "Other" synthesis
         # (Schoology / legacy PBIX parity for unaligned assessments) can
         # bump ``canon["total_standards"]`` to 1 before the KPI is frozen.
         strands_rollup, standards_rollup = await self._build_strand_standard_rollups(
-            item_id
+            item_id, instructor
         )
         strands_rollup, standards_rollup, synthesized_other = (
             self._synthesize_other_rollups(strands_rollup, standards_rollup, canon)
@@ -491,7 +510,9 @@ class ReportService:
         # for the same question (fixes multi-select questions like Q12
         # where cube row-grain SUM/SUM gives 23.97% but per-student
         # collapsed gives 27.78%, matching the canonical KPI).
-        canon_per_q = await self.cube.get_canonical_per_question_grades(item_id)
+        canon_per_q = await self.cube.get_canonical_per_question_grades(
+            item_id, instructor
+        )
         canon_q_by_id = {
             safe_str(r.get("question_id")): to_float(r.get("grade_average"))
             for r in canon_per_q
@@ -561,7 +582,9 @@ class ReportService:
         # the AlignmentEmptyState card when the assessment has no aligned
         # questions (mirrors SDD behaviour). Rollups already computed above
         # alongside the KPI synthesis.
-        data_quality = await self._build_alignment_data_quality_for_item(item_id)
+        data_quality = await self._build_alignment_data_quality_for_item(
+            item_id, instructor
+        )
 
         return QuestionResponseAnalysisPayload(
             assessment=assessment,
@@ -576,9 +599,15 @@ class ReportService:
     # Standards Deep Dive interactive (per-assessment, mirrors PBIX page #16)
     # ────────────────────────────────────────────────────────────────────
     async def build_standards_deep_dive(
-        self, item_id: str
+        self, item_id: str, instructor: Optional[str] = None
     ) -> StandardsDeepDivePayload:
-        meta_row = await self.cube.get_assessment_meta(item_id)
+        """Per-assessment SDD payload for one MERGED assessment.
+
+        ``instructor`` (OPTIONAL, single comma-separated string) narrows the
+        merged multi-section report to the sections taught by ANY of the listed
+        instructors. NULL/empty = no filter, byte-identical to the full merge.
+        """
+        meta_row = await self.cube.get_assessment_meta(item_id, instructor)
         if not meta_row:
             raise ResourceNotFoundError("Assessment", item_id)
 
@@ -594,14 +623,14 @@ class ReportService:
         # ``_compute_canonical_kpis_for_item`` for the formula contract
         # (matches legacy PBIX DAX semantics for # Standards, Grade Avg,
         # Highest/Lowest at per-question grain).
-        canon = await self._compute_canonical_kpis_for_item(item_id)
+        canon = await self._compute_canonical_kpis_for_item(item_id, instructor)
 
         # ─── Strand + standard rollups (shared with QRA) ──────────────────
         # Compute BEFORE building the KPI strip so the "Other" synthesis
         # (Schoology / legacy PBIX parity for unaligned assessments) can
         # bump ``canon["total_standards"]`` to 1 before the KPI is frozen.
         strands_rollup, standards_rollup = await self._build_strand_standard_rollups(
-            item_id
+            item_id, instructor
         )
         strands_rollup, standards_rollup, synthesized_other = (
             self._synthesize_other_rollups(strands_rollup, standards_rollup, canon)
@@ -627,7 +656,7 @@ class ReportService:
         # one bar per ``dim_standard.cPalms_Standard`` filtered to the
         # band; bucketing uses the same 70/80 thresholds the perf-color
         # DAX uses.
-        band_rows = await self.cube.get_standard_bands_for_item(item_id)
+        band_rows = await self.cube.get_standard_bands_for_item(item_id, instructor)
         band_high: list[SddBandStandardRow] = []
         band_mid: list[SddBandStandardRow] = []
         band_low: list[SddBandStandardRow] = []
@@ -668,7 +697,9 @@ class ReportService:
             else:
                 band_low.append(other_band_row)
 
-        data_quality = await self._build_alignment_data_quality_for_item(item_id)
+        data_quality = await self._build_alignment_data_quality_for_item(
+            item_id, instructor
+        )
 
         return StandardsDeepDivePayload(
             assessment=assessment,

@@ -29,7 +29,7 @@ export default function GradeChips({
     return (
       <div className="flex gap-2 overflow-hidden px-0.5 py-3">
         {Array.from({ length: 9 }).map((_, i) => (
-          <Skeleton key={i} className="h-9 min-w-[80px] max-w-[180px] flex-1 rounded-full" />
+          <Skeleton key={i} className="h-9 w-24 shrink-0 rounded-full" />
         ))}
       </div>
     );
@@ -48,7 +48,7 @@ export default function GradeChips({
             disabled={disabled}
             onClick={() => onSelect(isSelected ? undefined : g)}
             className={[
-              'h-9 min-w-[80px] max-w-[180px] flex-1 rounded-full border px-4 text-center text-sm font-medium transition-colors',
+              'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               'enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-55',
               isSelected

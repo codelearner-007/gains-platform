@@ -17,11 +17,13 @@ import {
   SummaryByStandardsHeader,
 } from '@/components/app/modules/reports/qra/Strands_StandardsTables';
 import ActiveFilterBar from '@/components/app/modules/reports/shared/ActiveFilterBar';
+import ReportSlicer from '@/components/app/modules/reports/shared/ReportSlicer';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
 import AssessmentReportShell from '@/components/app/modules/reports/shared/AssessmentReportShell';
 import { useAssessmentReport } from '@/components/app/modules/reports/shared/useAssessmentReport';
 import { useReportFilters } from '@/lib/reports/filters';
+import { useInstructorRoster } from '@/lib/reports/use-instructor-roster';
 import { deriveQra } from '@/lib/reports/filter-helpers';
 import { getReportBySlug } from '@/lib/reports/report-types';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
@@ -34,15 +36,36 @@ export default function QuestionResponseAnalysisPage() {
 
   const { schoolId } = useSelectedSchool();
 
+  const {
+    filters,
+    setStrand,
+    setStandard,
+    setInstructor,
+    clearInstructors,
+    removeChip,
+    reset,
+    activeChips,
+  } = useReportFilters();
+
+  // Instructor filter is applied SERVER-SIDE (the merged payload has no
+  // per-instructor grain), so it is part of the query key / request.
+  const instructorParam = filters.instructors.length
+    ? filters.instructors.join(',')
+    : undefined;
+
   const { data, isLoading, isError, error, refetch, ready } =
     useAssessmentReport({
       ready: !!itemId,
-      queryKey: reportsKeys.qra(itemId ?? '', schoolId ?? undefined),
-      queryFn: () => reportsApi.qra(itemId as string, schoolId ?? undefined),
+      queryKey: reportsKeys.qra(itemId ?? '', schoolId ?? undefined, instructorParam),
+      queryFn: () =>
+        reportsApi.qra(itemId as string, schoolId ?? undefined, instructorParam),
     });
 
-  const { filters, setStrand, setStandard, reset, activeChips } =
-    useReportFilters();
+  const instructorRoster = useInstructorRoster(
+    data,
+    filters.instructors.length,
+    itemId,
+  );
 
   const filtered = useMemo(
     () => (data ? deriveQra(data, filters) : null),
@@ -84,13 +107,21 @@ export default function QuestionResponseAnalysisPage() {
               <KpiStrip kpis={filtered.kpis} />
             </div>
 
+            {instructorRoster.length > 1 && (
+              <div className="mb-2 print:hidden">
+                <ReportSlicer
+                  label="Instructor"
+                  options={instructorRoster}
+                  selected={new Set(filters.instructors)}
+                  onToggle={setInstructor}
+                  onClear={clearInstructors}
+                />
+              </div>
+            )}
+
             <ActiveFilterBar
               chips={activeChips}
-              onRemove={(chip) =>
-                chip.key === 'strand'
-                  ? setStrand(chip.value)
-                  : setStandard(chip.value)
-              }
+              onRemove={removeChip}
               onClear={reset}
             />
 

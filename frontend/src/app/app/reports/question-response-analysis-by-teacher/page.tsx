@@ -6,7 +6,7 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import ReportBreadcrumb, {
   assessmentCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
-import PaginatedReportHeader from '@/components/app/modules/reports/paginated/PaginatedReportHeader';
+import AssessmentReportHeader from '@/components/app/modules/reports/shared/AssessmentReportHeader';
 import PaginatedKpiStrip from '@/components/app/modules/reports/paginated/PaginatedKpiStrip';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraByTeacherTable from '@/components/app/modules/reports/paginated/QraByTeacherTable';
@@ -73,10 +73,11 @@ export default function QraByTeacherPage() {
             </div>
 
             <div className="mb-2">
-              <PaginatedReportHeader
+              <AssessmentReportHeader
                 assessment={data.assessment}
                 title={REPORT_NAME}
-                subtitle="By Classroom Instructor"
+                caption="By Classroom Instructor"
+                variant="dense"
               />
             </div>
 

@@ -9,12 +9,15 @@ import {
   performanceColor,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
+import OpenInReportPopover from '@/components/app/modules/reports/shared/OpenInReportPopover';
 
 interface StandardRowListProps {
   standards: SddStandardRow[];
   // Multi-select: every active standard code. Clicking a row toggles membership.
   selectedStandards?: string[];
   onSelectStandard?: (schoology_standard: string) => void;
+  /** When set, each row shows an "open in QRA filtered by this standard" link. */
+  itemId?: string;
 }
 
 // Sorted ascending by grade_avg so worst performers appear first
@@ -24,6 +27,7 @@ export default function StandardRowList({
   standards,
   selectedStandards,
   onSelectStandard,
+  itemId,
 }: StandardRowListProps) {
   const selectedSet = useMemo(
     () => new Set(selectedStandards ?? []),
@@ -117,6 +121,13 @@ export default function StandardRowList({
                 >
                   {pctLabel}
                 </div>
+                {itemId ? (
+                  <OpenInReportPopover
+                    itemId={itemId}
+                    standard={row.schoology_standard}
+                    label={row.schoology_standard}
+                  />
+                ) : null}
               </li>
             );
           })}

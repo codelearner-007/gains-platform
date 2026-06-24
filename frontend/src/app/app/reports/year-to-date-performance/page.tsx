@@ -25,7 +25,7 @@ import YtdLongitudinalMatrix, {
   type YtdVariant,
 } from '@/components/app/modules/reports/paginated/YtdLongitudinalMatrix';
 import { getReportBySlug } from '@/lib/reports/report-types';
-import { LAYOUT_BORDER } from '@/lib/reports/colors';
+import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 
 const BASE_PATH = '/app/reports/year-to-date-performance';
 const REPORT_NAME = getReportBySlug('year-to-date-performance').canonicalName;
@@ -88,24 +88,20 @@ export default function YearToDatePerformancePage() {
         />
       ) : !data ? null : (
         <>
-          <div
-            className="mb-2 bg-white border px-3 py-2"
-            style={{ borderColor: LAYOUT_BORDER }}
-          >
-            <div className="text-[18px] font-bold text-black leading-tight">
-              Longitudinal Report - Year To Date
-            </div>
-            <div className="text-[12px] text-neutral-700 leading-tight">
-              Student Performance by Standards
-            </div>
-            <div className="text-[13px] text-black leading-tight">
-              {[
+          <div className="mb-2">
+            <ReportPageHeader
+              logoUrl={data.school.logo_url}
+              schoolName={data.school.name || undefined}
+              title="Longitudinal Report - Year To Date"
+              subtitle="Student Performance by Standards"
+              meta={[
                 data.assessment_type,
                 [data.subject, data.grade].filter(Boolean).join(' - '),
               ]
                 .filter(Boolean)
                 .join(' | ')}
-            </div>
+              variant="dense"
+            />
           </div>
 
           {data.standards.length === 0 ? (

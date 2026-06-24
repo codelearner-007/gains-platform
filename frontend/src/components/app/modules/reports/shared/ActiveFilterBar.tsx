@@ -15,6 +15,7 @@ interface ActiveFilterBarProps {
 const CHIP_LABEL: Record<ActiveFilterChip['key'], string> = {
   strand: 'Strand',
   standard: 'Standard',
+  instructor: 'Instructor',
 };
 
 export default function ActiveFilterBar({

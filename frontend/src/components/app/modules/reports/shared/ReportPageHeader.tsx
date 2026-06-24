@@ -3,10 +3,14 @@ import { LAYOUT_BORDER } from '@/lib/reports/colors';
 
 /**
  * Shared report page header — logo (or school-name text) on the left, title +
- * optional subtitle and meta lines on the right.
+ * optional caption/subtitle/meta lines on the right.
  *
- * Used by the QRA, SDD, and YTD report views. The QRA/SDD callers go through
- * `AssessmentReportHeader`; the YTD page calls this component directly.
+ * THE single header for every report view: the interactive QRA/SDD/IAD and the
+ * paginated QSR/QRA-paginated/by-teacher/by-standard-teacher views all go
+ * through `AssessmentReportHeader`; the program reports (Standard/Strand
+ * Summary, YTD) call this component directly. The `dense` variant reproduces
+ * the tighter paginated/print layout (smaller logo + title) so those views keep
+ * their compact look while still showing the logo.
  *
  * Logo policy: a school logo is rendered ONLY when the school actually has a
  * `logo_url`. No school currently has one configured, so we must NOT fall back
@@ -27,20 +31,30 @@ interface ReportPageHeaderProps {
   /** School name; shown as text in the logo's place when there is no logo. */
   schoolName?: string;
   title: string;
+  /** Optional italic caption under the title (e.g. "By Classroom Instructor"). */
+  caption?: string;
   subtitle?: string;
   meta?: string;
+  /** `dense` = compact paginated/print layout (smaller logo + title). */
+  variant?: 'default' | 'dense';
 }
 
 export default function ReportPageHeader({
   logoUrl,
   schoolName,
   title,
+  caption,
   subtitle,
   meta,
+  variant = 'default',
 }: ReportPageHeaderProps) {
+  const dense = variant === 'dense';
+  const logoSize = dense ? 52 : 80;
   return (
     <div
-      className="flex items-center gap-4 px-4 py-3 bg-white border"
+      className={`flex items-center bg-white border ${
+        dense ? 'gap-3 px-3 py-2' : 'gap-4 px-4 py-3'
+      }`}
       style={{ borderColor: LAYOUT_BORDER }}
     >
       {logoUrl ? (
@@ -48,25 +62,42 @@ export default function ReportPageHeader({
           <Image
             src={logoUrl}
             alt={schoolName ? `${schoolName} logo` : title}
-            width={80}
-            height={80}
+            width={logoSize}
+            height={logoSize}
             priority
             unoptimized={isRemoteLogo(logoUrl)}
-            style={{ width: 80, height: 80 }}
+            style={{ width: logoSize, height: logoSize }}
             className="object-contain"
           />
         </div>
       ) : schoolName ? (
-        <div className="flex-shrink-0 max-w-[160px] text-[15px] font-bold text-black leading-tight">
+        <div
+          className={`flex-shrink-0 max-w-[160px] font-bold text-black leading-tight ${
+            dense ? 'text-[13px]' : 'text-[15px]'
+          }`}
+        >
           {schoolName}
         </div>
       ) : null}
       <div className="min-w-0 flex-1">
-        <h1 className="text-[28px] font-bold text-black leading-tight">
+        <h1
+          className={`font-bold text-black leading-tight ${
+            dense ? 'text-[18px]' : 'text-[28px]'
+          }`}
+        >
           {title}
         </h1>
+        {caption && (
+          <div className="text-[12px] italic text-neutral-700 leading-snug">
+            {caption}
+          </div>
+        )}
         {subtitle && (
-          <div className="mt-1 text-[14px] text-black leading-snug">
+          <div
+            className={`text-black leading-snug ${
+              dense ? 'text-[12px]' : 'mt-1 text-[14px]'
+            }`}
+          >
             {subtitle}
           </div>
         )}

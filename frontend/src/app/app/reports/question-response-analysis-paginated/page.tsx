@@ -6,7 +6,7 @@ import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
 import ReportBreadcrumb, {
   assessmentCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
-import PaginatedReportHeader from '@/components/app/modules/reports/paginated/PaginatedReportHeader';
+import AssessmentReportHeader from '@/components/app/modules/reports/shared/AssessmentReportHeader';
 import PaginatedFooter from '@/components/app/modules/reports/paginated/PaginatedFooter';
 import QraPaginatedTable from '@/components/app/modules/reports/paginated/QraPaginatedTable';
 import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTypeSwitcher';
@@ -72,9 +72,10 @@ export default function QraPaginatedPage() {
             </div>
 
             <div className="mb-2">
-              <PaginatedReportHeader
+              <AssessmentReportHeader
                 assessment={data.assessment}
                 title={REPORT_NAME}
+                variant="dense"
               />
             </div>
 
