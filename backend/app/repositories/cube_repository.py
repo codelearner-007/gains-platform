@@ -108,6 +108,24 @@ _DI_INSTRUCTOR_FILTER_SQL = """(CAST(:instructor AS TEXT) IS NULL OR EXISTS (
                   WHERE btrim(_ins.name) = btrim(CAST(:instructor AS TEXT))
               ))"""
 
+# MULTI-instructor narrowing for the MERGED per-assessment ``items`` CTE
+# (``SELECT item_id FROM dim_item WHERE subject_id = :instr_subject_id``).
+# ``:instructor`` is a single comma-separated string (e.g. "Jane Doe,John
+# Smith"); an item matches when ANY comma-split element of its
+# ``dim_item.section_instructors`` equals (btrim) ANY comma-split element of
+# the requested list. Both sides use the SAME btrim/comma-split as
+# ``dim_repository.list_instructors`` so a full name matches exactly with no
+# substring over-match. NULL/empty ``:instructor`` short-circuits to TRUE, so
+# the enclosing query stays byte-identical to the pre-filter read. References
+# ``dim_item`` unqualified so it drops straight into the merged-report
+# ``items`` CTE (no ``di`` alias).
+_DI_ITEM_INSTRUCTOR_MATCH_SQL = """(CAST(:instructor AS TEXT) IS NULL OR EXISTS (
+                  SELECT 1
+                  FROM unnest(string_to_array(dim_item.section_instructors, ',')) AS _ins(name)
+                  JOIN unnest(string_to_array(CAST(:instructor AS TEXT), ',')) AS _sel(want)
+                    ON btrim(_ins.name) = btrim(_sel.want)
+              ))"""
+
 
 class CubeRepository:
     """Reads from the cube_* and supporting fact tables."""
@@ -149,7 +167,7 @@ class CubeRepository:
     # ~27.8%) and the single-strand control ``7892351049``.
     # ────────────────────────────────────────────────────────────────────
     async def get_canonical_kpis_for_item(
-        self, subject_id: str
+        self, subject_id: str, instructor: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """MERGED canonical KPIs for one assessment (all section copies pooled).
 
@@ -163,11 +181,18 @@ class CubeRepository:
         MAX(Total_Students)))`` — the per-section student counts summed. A
         single-section assessment (one item_id == one subject_id) is
         byte-identical to the pre-merge per-item read.
+
+        ``instructor`` (OPTIONAL, single comma-separated string) narrows the
+        ``items`` CTE to the sections taught by ANY of the listed instructors;
+        every downstream metric (Total Students, points, per-question grades)
+        recomputes over the narrowed section set. NULL/empty = no filter,
+        byte-identical to today.
         """
         sql = text(
-            """
+            f"""
             WITH items AS (
                 SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
             ),
             -- Map each per-section fact question_id to its section-agnostic
             -- question_no (the merged question identity). question_no is the
@@ -202,9 +227,12 @@ class CubeRepository:
                 FROM per_user_q
                 GROUP BY question_no
             ),
-            -- MERGED school totals. total_possible_point / total_score come
-            -- from the (school_id, subject_id) GROUPING-SETS rollup row
-            -- (item_id IS NULL) — already SUM(points) across every section.
+            -- MERGED school totals, recomputed over the (instructor-)narrowed
+            -- ``items`` section set so an instructor filter pools only the
+            -- matching sections. With NULL/empty :instructor ``items`` spans
+            -- every section, and SUM over the per-section (item_id IS NOT NULL)
+            -- rows equals the (school_id, subject_id) GROUPING-SETS rollup row
+            -- (item_id IS NULL) — so the unfiltered read stays byte-identical.
             -- total_students mirrors legacy SUMX(SUMMARIZE(Item_ID,
             -- MAX(Total_Students))): sum the per-section student counts (MAX
             -- de-dups the multi-subject duplicate rows a single item can carry
@@ -212,24 +240,19 @@ class CubeRepository:
             -- collapses to the lone per-item value.
             school AS (
                 SELECT
-                    (
-                        SELECT COALESCE(SUM(ts), 0)
-                        FROM (
-                            SELECT item_id, MAX(total_students) AS ts
-                            FROM cube_school_summary
-                            WHERE subject_id = :subject_id
-                              AND item_id IS NOT NULL
-                            GROUP BY item_id
-                        ) per_item
-                    )                                AS total_students,
-                    rollup.total_possible_point,
-                    rollup.total_score
+                    COALESCE(SUM(ts), 0)            AS total_students,
+                    SUM(possible)                   AS total_possible_point,
+                    SUM(score)                      AS total_score
                 FROM (
-                    SELECT total_possible_point, total_score
+                    SELECT item_id,
+                           MAX(total_students)      AS ts,
+                           SUM(total_possible_point) AS possible,
+                           SUM(total_score)          AS score
                     FROM cube_school_summary
-                    WHERE subject_id = :subject_id AND item_id IS NULL
-                    LIMIT 1
-                ) rollup
+                    WHERE subject_id = :subject_id
+                      AND item_id IN (SELECT item_id FROM items)
+                    GROUP BY item_id
+                ) per_item
             ),
             std AS (
                 SELECT COUNT(DISTINCT standard) AS total_standards
@@ -263,12 +286,17 @@ class CubeRepository:
             ),
             cube_ga AS (
                 SELECT
+                    -- Points-weighted merged grade over the narrowed section
+                    -- set. SUM/SUM across the per-section (item_id IS NOT NULL)
+                    -- rows of ``items`` equals the (subject_id, item_id IS NULL)
+                    -- rollup row's total_score/total_possible_point when no
+                    -- instructor filter is applied — byte-identical unfiltered.
                     (
-                        SELECT total_score::numeric
-                                 / NULLIF(total_possible_point, 0)
+                        SELECT SUM(total_score)::numeric
+                                 / NULLIF(SUM(total_possible_point), 0)
                         FROM cube_school_summary
-                        WHERE subject_id = :subject_id AND item_id IS NULL
-                        LIMIT 1
+                        WHERE subject_id = :subject_id
+                          AND item_id IN (SELECT item_id FROM items)
                     )                  AS grade_average,
                     MAX(qga)           AS grade_max,
                     MIN(qga)           AS grade_min
@@ -300,7 +328,9 @@ class CubeRepository:
                 (SELECT total_score FROM school)           AS total_score
             """
         )
-        result = await self.session.execute(sql, {"subject_id": subject_id})
+        result = await self.session.execute(
+            sql, {"subject_id": subject_id, "instructor": instructor}
+        )
         row = result.first()
         return _row_to_dict(row) if row else None
 
@@ -457,7 +487,7 @@ class CubeRepository:
         return rows, total
 
     async def get_canonical_per_question_grades(
-        self, subject_id: str
+        self, subject_id: str, instructor: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Per-question grade_average using the canonical per-user collapse,
         MERGED across all section copies of the assessment.
@@ -470,11 +500,15 @@ class CubeRepository:
         so the per-question table cannot disagree with the Lowest/Highest
         KPI for the same assessment. Widening the fact filter to the section
         set pools every section's students per question.
+
+        ``instructor`` (OPTIONAL) narrows the ``items`` CTE to the matching
+        sections; NULL/empty = no filter (byte-identical to today).
         """
         sql = text(
-            """
+            f"""
             WITH items AS (
                 SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
             ),
             -- Map each per-section fact question_id to its section-agnostic
             -- question_no (the merged QRA question identity), so the override
@@ -507,7 +541,9 @@ class CubeRepository:
             GROUP BY question_no
             """
         )
-        result = await self.session.execute(sql, {"subject_id": subject_id})
+        result = await self.session.execute(
+            sql, {"subject_id": subject_id, "instructor": instructor}
+        )
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
@@ -571,7 +607,9 @@ class CubeRepository:
     # Question-level summaries (cube_question_summary +
     # cube_question_summary_overall)
     # ────────────────────────────────────────────────────────────────────
-    async def get_questions_overall_for_item(self, subject_id: str) -> List[Dict[str, Any]]:
+    async def get_questions_overall_for_item(
+        self, subject_id: str, instructor: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """One row per question for a MERGED assessment (all section copies pooled).
 
         Keyed on ``subject_id``. ``cube_question_summary`` (per-item) reads widen
@@ -588,11 +626,21 @@ class CubeRepository:
         ``cube_question_summary`` list. For a single-section assessment cqso
         pools exactly that one section, so the list is identical to the
         pre-merge per-item read (parity preserved).
+
+        ``instructor`` (OPTIONAL) narrows the ``items`` CTE — and therefore the
+        per-question_no numerics / metadata / grades sourced from the
+        per-section ``cube_question_summary`` — to the matching sections.
+        NULL/empty = no filter (byte-identical). The pooled distractor /
+        named-student list (``cqso_agg``) is sourced from the section-agnostic
+        ``cube_question_summary_overall`` (keyed on subject_id) which carries no
+        per-section split, so it stays the merged content — the same boundary
+        the dashboard By-Strand grid keeps for its cqso-sourced grade.
         """
         sql = text(
-            """
+            f"""
             WITH items AS (
                 SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
             ),
             -- Per-question_no metadata + text from the per-section cube. The
             -- merged grain is question_no (section-agnostic; equals the legacy
@@ -707,7 +755,9 @@ class CubeRepository:
                      qm.question_no
             """
         )
-        result = await self.session.execute(sql, {"subject_id": subject_id})
+        result = await self.session.execute(
+            sql, {"subject_id": subject_id, "instructor": instructor}
+        )
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
@@ -843,7 +893,7 @@ class CubeRepository:
     # AND the QRA Strands/Standards summary tables).
     # ────────────────────────────────────────────────────────────────────
     async def get_strand_rollup_for_item(
-        self, subject_id: str
+        self, subject_id: str, instructor: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """One row per Strand for a given MERGED assessment.
 
@@ -870,11 +920,19 @@ class CubeRepository:
         Restricts identifiers via an exact-match join on the item's
         ``dim_question_data.standard`` set so unaligned assessments yield
         zero strand rows.
+
+        ``instructor`` (OPTIONAL) narrows the ``items`` CTE (and so the
+        num_standards / num_questions counts that key off it) to the matching
+        sections; NULL/empty = no filter (byte-identical). The merged strand
+        grade (``strand_grade``, sourced from the section-agnostic cqso by
+        subject_id) stays the pooled merged value — the same boundary the
+        dashboard By-Strand grid keeps.
         """
         sql = text(
-            """
+            f"""
             WITH items AS (
                 SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
             ),
             item_codes AS (
                 SELECT DISTINCT standard AS code
@@ -946,7 +1004,9 @@ class CubeRepository:
             ORDER BY sq.strand
             """
         )
-        result = await self.session.execute(sql, {"subject_id": subject_id})
+        result = await self.session.execute(
+            sql, {"subject_id": subject_id, "instructor": instructor}
+        )
         return [_row_to_dict(r) for r in result.all()]
 
     async def get_strand_rows_page(
@@ -1092,7 +1152,7 @@ class CubeRepository:
         return rows, total
 
     async def get_standard_rollup_for_item(
-        self, subject_id: str
+        self, subject_id: str, instructor: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """One row per Schoology canonical standard for a given MERGED assessment.
 
@@ -1132,11 +1192,18 @@ class CubeRepository:
         Alias codes whose identifier carries no cqso rows resolve to
         NULL — legacy renders these unassessed Schoology aliases as a
         BLANK cell (not 0.0%); see MASTER_PLAN §6 Decision 3.
+
+        ``instructor`` (OPTIONAL) narrows the ``items`` CTE (and the per-code
+        num_questions that keys off it) to the matching sections; NULL/empty =
+        no filter (byte-identical). The merged per-code/per-identifier grade
+        (sourced from the section-agnostic cqso by subject_id) stays the pooled
+        merged value — same boundary as the dashboard By-Strand grid.
         """
         sql = text(
-            """
+            f"""
             WITH items AS (
                 SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
             ),
             item_codes AS (
                 SELECT DISTINCT standard AS code
@@ -1214,11 +1281,13 @@ class CubeRepository:
             ORDER BY l.strand, l.schoology_standard
             """
         )
-        result = await self.session.execute(sql, {"subject_id": subject_id})
+        result = await self.session.execute(
+            sql, {"subject_id": subject_id, "instructor": instructor}
+        )
         return [_row_to_dict(r) for r in result.all()]
 
     async def get_standard_bands_for_item(
-        self, subject_id: str
+        self, subject_id: str, instructor: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """One row per schoology_standard for the SDD 100%-stacked band charts.
 
@@ -1231,11 +1300,17 @@ class CubeRepository:
         Uses the same exact-match restriction as
         ``get_standard_rollup_for_item`` so band bars and the per-standard
         table render the same set of Schoology codes.
+
+        ``instructor`` (OPTIONAL) narrows the ``items`` CTE; both the band
+        membership AND the points-weighted band grade (sourced from the
+        per-section ``cube_question_summary`` scoped by ``items``) recompute
+        over the matching sections. NULL/empty = no filter (byte-identical).
         """
         sql = text(
-            """
+            f"""
             WITH items AS (
                 SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                  AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
             ),
             item_codes AS (
                 SELECT DISTINCT standard AS code
@@ -1284,7 +1359,9 @@ class CubeRepository:
             ORDER BY l.schoology_standard
             """
         )
-        result = await self.session.execute(sql, {"subject_id": subject_id})
+        result = await self.session.execute(
+            sql, {"subject_id": subject_id, "instructor": instructor}
+        )
         return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
@@ -1464,50 +1541,65 @@ class CubeRepository:
         category: Optional[str] = None,
         section: Optional[str] = None,
     ) -> int:
-        """Total Students for the Standard/Strand Summary, legacy semantics.
+        """Total Students for the Standard/Strand Summary — DISTINCT headcount.
 
-        Replicates the PBIX DAX measure (``04_dax_measures.csv:103``)::
+        Stakeholder validation (Jun 24 dashboard review / Linear GAI-20):
+        the dashboard "Total Students" tile read as unreasonably high — one
+        grade showed thousands because the legacy PBIX measure summed
+        per-assessment headcounts (``SUMX(SUMMARIZE(Item_ID, MAX(Total_
+        Students)))``, ``04_dax_measures.csv:103``), so a student who sat N
+        assessments counted N times (e.g. Grade 1 = 11,075 attempt-sum vs 263
+        distinct students). The product owner flagged this in review and asked
+        for a believable count, so this metric is now a TRUE DISTINCT student
+        headcount — a deliberate, documented deviation from the legacy
+        SUMX mirror (MASTER_PLAN §6 Decision 7).
 
-            Total Student =
-            SUMX(
-                SUMMARIZE(
-                    'cube_school_summary',
-                    'cube_school_summary'[Item_ID],
-                    "UniqueTotalQuestions", MAX('cube_school_summary'[Total_Students])
-                ),
-                [UniqueTotalQuestions]
-            )
-
-        i.e. SUM over distinct ``Item_ID`` of the per-item ``MAX(Total_
-        Students)`` — a student who sits N assessments contributes N times.
-        This is **not** a DISTINCT headcount (the prior implementation,
-        which under-counted: Athenian school-wide = 332 distinct vs the
-        legacy 1049). MASTER_PLAN §6 Decision 7 / §7 STDSUM-1.
-
-        ``cube_school_summary`` is the Spark ``rollup`` cube
-        (40_schoology_py_spec.md §`Cube_School_Summary`), so the
-        subject/year/grade rollup rows carry a NULL ``Item_ID``; those
-        collapse into a single SUMMARIZE group exactly as legacy's DAX
-        groups them. Filters dereference via ``dim_subject`` (cube only
-        carries ``subject_id``), mirroring ``_CQSO_YTD_FILTER_SQL``;
-        ``section`` is below this grain and intentionally ignored.
+        Distinct students come from ``fact_student_submission`` scoped by the
+        same ``dim_subject`` filters (session/subject/grade/category). Cube-only
+        (parquet-loaded) schools have no fact rows, so for them we fall back to
+        the **de-leaked** legacy SUMX from ``cube_school_summary`` (the prior
+        query also erroneously folded the NULL-``Item_ID`` subject/grade rollup
+        rows into the sum via ``COALESCE(item_id,'')``; this fallback filters
+        ``item_id IS NOT NULL`` so it matches the true legacy SUMX). ``section``
+        is below this grain and intentionally ignored.
         """
         sql = text(
             """
-            SELECT COALESCE(SUM(per_item_students), 0)::bigint AS total_students
-            FROM (
-                SELECT COALESCE(css.item_id, '')   AS item_key,
-                       MAX(css.total_students)     AS per_item_students
-                FROM cube_school_summary css
-                LEFT JOIN dim_subject dsubj
-                  ON dsubj.school_id = css.school_id
-                 AND dsubj.subject_id = css.subject_id
+            WITH distinct_students AS (
+                SELECT COUNT(DISTINCT f.user_uid) AS n
+                FROM fact_student_submission f
+                JOIN dim_subject dsubj
+                  ON dsubj.school_id = f.school_id
+                 AND dsubj.subject_id = f.subject_id
                 WHERE (CAST(:session_filter AS TEXT) IS NULL OR dsubj.session = CAST(:session_filter AS TEXT))
                   AND (CAST(:subject AS TEXT) IS NULL OR dsubj.subject = CAST(:subject AS TEXT))
                   AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
                   AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))
-                GROUP BY COALESCE(css.item_id, '')
-            ) per_item
+            ),
+            cube_sumx AS (
+                SELECT COALESCE(SUM(per_item_students), 0) AS n
+                FROM (
+                    SELECT css.item_id,
+                           MAX(css.total_students) AS per_item_students
+                    FROM cube_school_summary css
+                    LEFT JOIN dim_subject dsubj
+                      ON dsubj.school_id = css.school_id
+                     AND dsubj.subject_id = css.subject_id
+                    WHERE css.item_id IS NOT NULL
+                      AND (CAST(:session_filter AS TEXT) IS NULL OR dsubj.session = CAST(:session_filter AS TEXT))
+                      AND (CAST(:subject AS TEXT) IS NULL OR dsubj.subject = CAST(:subject AS TEXT))
+                      AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
+                      AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))
+                    GROUP BY css.item_id
+                ) per_item
+            )
+            -- Prefer the distinct headcount; fall back to the cube SUMX only
+            -- for fact-less schools. NULLIF lets Postgres skip the cube_sumx
+            -- scan whenever the distinct count is non-zero (the common case).
+            SELECT COALESCE(
+                       NULLIF((SELECT n FROM distinct_students), 0),
+                       (SELECT n FROM cube_sumx)
+                   )::bigint AS total_students
             """
         )
         result = await self.session.execute(
@@ -1725,7 +1817,7 @@ class CubeRepository:
     # answer-option multiplicity.
 
     async def get_alignment_quality_for_item(
-        self, subject_id: str
+        self, subject_id: str, instructor: Optional[str] = None
     ) -> Dict[str, int]:
         """Count distinct questions vs. distinct aligned-questions for one item.
 
@@ -1747,9 +1839,12 @@ class CubeRepository:
           failed the exact-match join (``identifier IS NULL``). Used to gate
           the Category-B copy and to size the unmatched-label list in
           ``_build_alignment_data_quality_for_item``.
+
+        ``instructor`` (OPTIONAL) narrows the item set to the matching
+        sections; NULL/empty = no filter (byte-identical).
         """
         sql = text(
-            """
+            f"""
             SELECT
                 COUNT(DISTINCT question_id) AS questions_total,
                 COUNT(DISTINCT question_id)
@@ -1768,10 +1863,15 @@ class CubeRepository:
             FROM dim_question_data
             WHERE item_id IN (
                       SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                        AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
                   )
             """
         )
-        row = (await self.session.execute(sql, {"subject_id": subject_id})).first()
+        row = (
+            await self.session.execute(
+                sql, {"subject_id": subject_id, "instructor": instructor}
+            )
+        ).first()
         if row is None:
             return {
                 "questions_total": 0,
@@ -1790,7 +1890,7 @@ class CubeRepository:
         }
 
     async def get_unmatched_alignment_labels_for_item(
-        self, subject_id: str, limit: int = 5
+        self, subject_id: str, limit: int = 5, instructor: Optional[str] = None
     ) -> List[str]:
         """Return distinct raw standard labels that failed to map to a CPALMS code.
 
@@ -1800,13 +1900,17 @@ class CubeRepository:
         assessment). Sorted alphabetically; capped at ``limit`` so a
         pathological item with hundreds of malformed labels doesn't bloat
         the payload.
+
+        ``instructor`` (OPTIONAL) narrows the item set to the matching
+        sections; NULL/empty = no filter (byte-identical).
         """
         sql = text(
-            """
+            f"""
             SELECT DISTINCT standard
             FROM dim_question_data
             WHERE item_id IN (
                       SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                        AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
                   )
               AND standard IS NOT NULL
               AND standard <> ''
@@ -1816,7 +1920,8 @@ class CubeRepository:
             """
         )
         result = await self.session.execute(
-            sql, {"subject_id": subject_id, "limit": int(limit)}
+            sql,
+            {"subject_id": subject_id, "limit": int(limit), "instructor": instructor},
         )
         return [str(r[0]) for r in result.all() if r[0] is not None]
 
@@ -1927,7 +2032,9 @@ class CubeRepository:
     # ────────────────────────────────────────────────────────────────────
     # Helpers used by the composed report endpoint
     # ────────────────────────────────────────────────────────────────────
-    async def get_assessment_meta(self, subject_id: str) -> Optional[Dict[str, Any]]:
+    async def get_assessment_meta(
+        self, subject_id: str, instructor: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """Compose the MERGED AssessmentMeta for one assessment (subject_id).
 
         The same-named assessment given to N sections is one report: the header
@@ -1937,14 +2044,20 @@ class CubeRepository:
         type, school) come from the earliest section copy; assessment_date is
         the earliest across sections. first_access / latest_attempt span the
         whole section set.
+
+        ``instructor`` (OPTIONAL) narrows the ``items`` CTE to the matching
+        sections, so the merged header (section names + section instructors
+        UNION) reflects only the selected instructors; NULL/empty = no filter
+        (byte-identical to the full-merge header).
         """
         sql = text(
-            """
+            f"""
             WITH items AS (
                 SELECT item_id, school_id, item_name, item_type, subject_id,
                        section_name, section_instructors, assessment_date
                 FROM dim_item
                 WHERE subject_id = :subject_id
+                  AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
             ),
             rep AS (
                 SELECT * FROM items
@@ -2018,25 +2131,33 @@ class CubeRepository:
             LIMIT 1
             """
         )
-        result = await self.session.execute(sql, {"subject_id": subject_id})
+        result = await self.session.execute(
+            sql, {"subject_id": subject_id, "instructor": instructor}
+        )
         row = result.first()
         if not row:
             return None
         meta = _row_to_dict(row)
 
-        # First/latest access from the fact table, across the section set.
+        # First/latest access from the fact table, across the (instructor-)
+        # narrowed section set. NULL/empty :instructor = full section set.
         access_sql = text(
-            """
+            f"""
             SELECT
                 MIN(first_access)   AS first_access,
                 MAX(latest_attempt) AS latest_attempt
             FROM fact_student_submission
             WHERE item_id IN (
                       SELECT item_id FROM dim_item WHERE subject_id = :subject_id
+                        AND {_DI_ITEM_INSTRUCTOR_MATCH_SQL}
                   )
             """
         )
-        access_row = (await self.session.execute(access_sql, {"subject_id": subject_id})).first()
+        access_row = (
+            await self.session.execute(
+                access_sql, {"subject_id": subject_id, "instructor": instructor}
+            )
+        ).first()
         if access_row:
             meta["first_access"] = access_row._mapping["first_access"]
             meta["latest_attempt"] = access_row._mapping["latest_attempt"]

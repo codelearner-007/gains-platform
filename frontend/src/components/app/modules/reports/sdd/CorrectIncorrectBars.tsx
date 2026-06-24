@@ -11,6 +11,7 @@ import {
   PERF_YELLOW,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
+import OpenInReportPopover from '@/components/app/modules/reports/shared/OpenInReportPopover';
 
 const BAND_COLORS = {
   high: PERF_GREEN,
@@ -26,6 +27,8 @@ interface BandPanelProps {
   // Multi-select: every active standard code. Clicking a bar toggles membership.
   selectedStandards?: Set<string>;
   onSelectStandard?: (schoology_standard: string) => void;
+  /** When set, each bar shows an "open in QRA filtered by this standard" link. */
+  itemId?: string;
 }
 
 /**
@@ -51,6 +54,7 @@ function BandPanel({
   emptyMessage,
   selectedStandards,
   onSelectStandard,
+  itemId,
 }: BandPanelProps) {
   const hasSelection = !!selectedStandards && selectedStandards.size > 0;
   const sorted = useMemo(
@@ -88,6 +92,7 @@ function BandPanel({
                   !selectedStandards?.has(r.schoology_standard)
                 }
                 onSelect={onSelectStandard}
+                itemId={itemId}
               />
             ))}
           </ul>
@@ -103,12 +108,14 @@ function BandRow({
   selected = false,
   dim = false,
   onSelect,
+  itemId,
 }: {
   row: SddBandStandardRow;
   correctColor: string;
   selected?: boolean;
   dim?: boolean;
   onSelect?: (schoology_standard: string) => void;
+  itemId?: string;
 }) {
   const pct = Math.max(0, Math.min(1, row.grade_average));
   const pctText = formatPercent(pct, 1);
@@ -149,6 +156,13 @@ function BandRow({
       >
         {pctText}
       </div>
+      {itemId ? (
+        <OpenInReportPopover
+          itemId={itemId}
+          standard={row.schoology_standard}
+          label={row.schoology_standard}
+        />
+      ) : null}
     </li>
   );
 }
@@ -160,6 +174,8 @@ interface PerformanceBandBarsProps {
   // Multi-select: every active standard code. Clicking a bar toggles membership.
   selectedStandards?: string[];
   onSelectStandard?: (schoology_standard: string) => void;
+  /** When set, each bar shows an "open in QRA filtered by this standard" link. */
+  itemId?: string;
 }
 
 export default function PerformanceBandBars({
@@ -168,12 +184,13 @@ export default function PerformanceBandBars({
   bandLow,
   selectedStandards,
   onSelectStandard,
+  itemId,
 }: PerformanceBandBarsProps) {
   const selectedSet = useMemo(
     () => new Set(selectedStandards ?? []),
     [selectedStandards],
   );
-  const shared = { selectedStandards: selectedSet, onSelectStandard };
+  const shared = { selectedStandards: selectedSet, onSelectStandard, itemId };
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
       <BandPanel

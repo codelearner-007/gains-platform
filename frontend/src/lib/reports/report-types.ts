@@ -288,6 +288,10 @@ export interface ReportHrefContext {
   item_id?: string;
   /** Question id — only honoured by the IAD drill-through. */
   question_id?: string | null;
+  /** Pre-applied strand filter (e.g. jumping from SDD into the interactive QRA). */
+  strand?: string | null;
+  /** Pre-applied standard filter (schoology_standard code). */
+  standard?: string | null;
 }
 
 type ReportHref =
@@ -311,5 +315,9 @@ export function buildHref(slug: ReportSlug, ctx: ReportHrefContext = {}): Report
   if (slug === 'incorrect-answer-details' && ctx.question_id) {
     query.question_id = ctx.question_id;
   }
+  // Cross-report filter deep-link: the interactive QRA reads ?strand / ?standard
+  // via useReportFilters, so a link carrying them lands pre-filtered.
+  if (ctx.strand) query.strand = ctx.strand;
+  if (ctx.standard) query.standard = ctx.standard;
   return { pathname, query };
 }

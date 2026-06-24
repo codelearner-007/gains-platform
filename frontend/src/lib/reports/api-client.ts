@@ -68,15 +68,15 @@ export const reportsApi = {
       handleResponse<AccessibleSchool[]>,
     ),
 
-  qra: (itemId: string, schoolId?: string) =>
+  qra: (itemId: string, schoolId?: string, instructor?: string) =>
     fetch(
-      `/api/v1/reports/question-response-analysis/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
+      `/api/v1/reports/question-response-analysis/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId, instructor })}`,
       { credentials: 'include' },
     ).then(handleResponse<QuestionResponseAnalysisPayload>),
 
-  sdd: (itemId: string, schoolId?: string) =>
+  sdd: (itemId: string, schoolId?: string, instructor?: string) =>
     fetch(
-      `/api/v1/reports/standards-deep-dive/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId })}`,
+      `/api/v1/reports/standards-deep-dive/${encodeURIComponent(itemId)}${buildQuery({ school_id: schoolId, instructor })}`,
       { credentials: 'include' },
     ).then(handleResponse<StandardsDeepDivePayload>),
 
@@ -215,10 +215,10 @@ export const reportsApi = {
 export const reportsKeys = {
   all: ['reports'] as const,
   schools: () => [...reportsKeys.all, 'schools', 'accessible'] as const,
-  qra: (itemId: string, schoolId?: string) =>
-    [...reportsKeys.all, 'qra', itemId, schoolId ?? null] as const,
-  sdd: (itemId: string, schoolId?: string) =>
-    [...reportsKeys.all, 'sdd', itemId, schoolId ?? null] as const,
+  qra: (itemId: string, schoolId?: string, instructor?: string) =>
+    [...reportsKeys.all, 'qra', itemId, schoolId ?? null, instructor ?? null] as const,
+  sdd: (itemId: string, schoolId?: string, instructor?: string) =>
+    [...reportsKeys.all, 'sdd', itemId, schoolId ?? null, instructor ?? null] as const,
   ytd: (filters?: AssessmentFilters) =>
     [...reportsKeys.all, 'ytd', filters ?? {}] as const,
   iad: (itemId: string, questionId: string, schoolId?: string) =>

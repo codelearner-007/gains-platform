@@ -74,11 +74,19 @@ def _xlsx_response(kind: str, item_name: Optional[str], payload: object) -> Stre
 )
 async def question_response_analysis(
     item_id: str,
+    instructor: Optional[str] = Query(None, max_length=2000),
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> QuestionResponseAnalysisPayload:
-    """Composed QRA payload matching frontend dataset.ts. Requires: reports:read"""
+    """Composed QRA payload matching frontend dataset.ts. Requires: reports:read
+
+    ``instructor`` (OPTIONAL) is a single comma-separated string of section
+    instructors (e.g. ``"Jane Doe,John Smith"``). When provided, the merged
+    multi-section report is narrowed to the sections taught by ANY of the
+    listed instructors. Empty/omitted = no filter (full merge, byte-identical).
+    """
+    instructor = instructor.strip() if instructor and instructor.strip() else None
     service = ReportService(db)
-    return await service.build_question_response_analysis(item_id)
+    return await service.build_question_response_analysis(item_id, instructor)
 
 
 @router.get(
@@ -88,11 +96,19 @@ async def question_response_analysis(
 )
 async def standards_deep_dive(
     item_id: str,
+    instructor: Optional[str] = Query(None, max_length=2000),
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StandardsDeepDivePayload:
-    """Per-assessment SDD payload (mirrors PBIX page #16). Requires: reports:read"""
+    """Per-assessment SDD payload (mirrors PBIX page #16). Requires: reports:read
+
+    ``instructor`` (OPTIONAL) is a single comma-separated string of section
+    instructors (e.g. ``"Jane Doe,John Smith"``). When provided, the merged
+    multi-section report is narrowed to the sections taught by ANY of the
+    listed instructors. Empty/omitted = no filter (full merge, byte-identical).
+    """
+    instructor = instructor.strip() if instructor and instructor.strip() else None
     service = ReportService(db)
-    return await service.build_standards_deep_dive(item_id)
+    return await service.build_standards_deep_dive(item_id, instructor)
 
 
 @router.get(

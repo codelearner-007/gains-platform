@@ -8,18 +8,22 @@ import {
   performanceColor,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
+import OpenInReportPopover from '@/components/app/modules/reports/shared/OpenInReportPopover';
 
 interface StrandRowListProps {
   strands: SddStrandRow[];
   // Multi-select: every active strand value. Clicking a row toggles membership.
   selectedStrands?: string[];
   onSelectStrand?: (strand: string) => void;
+  /** When set, each row shows an "open in QRA filtered by this strand" link. */
+  itemId?: string;
 }
 
 export default function StrandRowList({
   strands,
   selectedStrands,
   onSelectStrand,
+  itemId,
 }: StrandRowListProps) {
   const selectedSet = useMemo(
     () => new Set(selectedStrands ?? []),
@@ -103,6 +107,13 @@ export default function StrandRowList({
                       {row.strand}
                     </span>
                   </div>
+                  {itemId ? (
+                    <OpenInReportPopover
+                      itemId={itemId}
+                      strand={row.strand}
+                      label={row.strand}
+                    />
+                  ) : null}
                 </div>
                 <div className="text-[10px] text-neutral-700 pl-1">
                   {row.num_standards} Standard
