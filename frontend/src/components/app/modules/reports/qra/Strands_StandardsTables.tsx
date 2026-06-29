@@ -10,7 +10,9 @@ import { formatPercent } from '@/lib/reports/format';
 import {
   tableCellStyle as cellStyle,
   tableHeaderStyle,
+  stickyHeaderStyle,
 } from '../shared/tableStyles';
+import ScrollableTableContainer from '../shared/ScrollableTableContainer';
 import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
 type StrandSortKey = 'strand' | 'num_standards' | 'num_questions' | 'grade_average';
@@ -77,10 +79,11 @@ export function StrandsTable({
       >
         Correct % by Strands
       </div>
+      <ScrollableTableContainer maxHeight="60vh">
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th style={tableHeaderStyle}>
+            <th style={stickyHeaderStyle(tableHeaderStyle, { top: 0 })}>
               <SortableHeader
                 column="strand"
                 label="Strand"
@@ -91,7 +94,7 @@ export function StrandsTable({
                 onClick={onHeaderClick}
               />
             </th>
-            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+            <th style={stickyHeaderStyle({ ...tableHeaderStyle, textAlign: 'center' }, { top: 0 })}>
               <SortableHeader
                 column="num_standards"
                 label="# of Standards"
@@ -103,7 +106,7 @@ export function StrandsTable({
                 align="center"
               />
             </th>
-            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+            <th style={stickyHeaderStyle({ ...tableHeaderStyle, textAlign: 'center' }, { top: 0 })}>
               <SortableHeader
                 column="num_questions"
                 label="# of Questions"
@@ -115,7 +118,7 @@ export function StrandsTable({
                 align="center"
               />
             </th>
-            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+            <th style={stickyHeaderStyle({ ...tableHeaderStyle, textAlign: 'center' }, { top: 0 })}>
               <SortableHeader
                 column="grade_average"
                 label="% per Strand"
@@ -206,6 +209,7 @@ export function StrandsTable({
           )}
         </tbody>
       </table>
+      </ScrollableTableContainer>
     </div>
   );
 }
@@ -249,10 +253,11 @@ export function StandardsTable({
       >
         Correct % by Standards
       </div>
+      <ScrollableTableContainer maxHeight="60vh">
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th style={tableHeaderStyle}>
+            <th style={stickyHeaderStyle(tableHeaderStyle, { top: 0 })}>
               <SortableHeader
                 column="schoology_standard"
                 label="Standards"
@@ -263,7 +268,7 @@ export function StandardsTable({
                 onClick={onHeaderClick}
               />
             </th>
-            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+            <th style={stickyHeaderStyle({ ...tableHeaderStyle, textAlign: 'center' }, { top: 0 })}>
               <SortableHeader
                 column="num_questions"
                 label="# of Questions"
@@ -275,7 +280,7 @@ export function StandardsTable({
                 align="center"
               />
             </th>
-            <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>
+            <th style={stickyHeaderStyle({ ...tableHeaderStyle, textAlign: 'center' }, { top: 0 })}>
               <SortableHeader
                 column="grade_average"
                 label="% per Standard"
@@ -359,6 +364,7 @@ export function StandardsTable({
           )}
         </tbody>
       </table>
+      </ScrollableTableContainer>
     </div>
   );
 }

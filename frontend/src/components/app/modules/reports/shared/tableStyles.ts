@@ -42,3 +42,62 @@ export const tableCellStyleLarge: CSSProperties = {
   verticalAlign: 'top',
   backgroundColor: '#FFFFFF',
 };
+
+// ── Frozen-table helpers ───────────────────────────────────────────────────
+// Shared sticky-cell factories used with <ScrollableTableContainer>. Generalised
+// from the proven inline pattern in qra/QuestionDetailTable. Sticky lives on the
+// CELLS (Chrome ignores sticky on <thead>/<tr> under border-collapse), with an
+// opaque background to occlude scrolling rows and an inset box-shadow to repaint
+// the hairline border that border-collapse drops off a stuck cell. The
+// `@media print` block in globals.css resets all of this so PDFs print full.
+
+// Stacking order: body 0 < frozen left column 1 < frozen header 2 < corner 3
+// (a corner = a cell that is both in the header row AND a frozen left column).
+export const STICKY_Z = { col: 1, header: 2, corner: 3 } as const;
+
+// Fixed widths + cumulative left offsets for the Question Summary matrix's three
+// frozen label columns (the only table wide enough to need sticky-left columns).
+export const QSM_LABEL_COLS = { instructor: 150, student: 170, score: 70 } as const;
+export const QSM_LEFT = { instructor: 0, student: 150, score: 320 } as const;
+
+/**
+ * Freeze a `<thead>` cell to the top of the scroll viewport. `top` is 0 for a
+ * single header row, or the rendered height of row 1 for the 2nd row of a
+ * multi-row header. Supplying `left` makes it a frozen CORNER (top + left).
+ */
+export function stickyHeaderStyle(
+  base: CSSProperties,
+  opts: { top?: number; left?: number; border?: string } = {},
+): CSSProperties {
+  const { top = 0, left, border = GRID_LINE } = opts;
+  const shadow = [`inset 0 -1px 0 ${border}`]; // bottom hairline
+  if (left !== undefined) shadow.push(`inset -1px 0 0 ${border}`); // right hairline (corner)
+  return {
+    ...base,
+    position: 'sticky',
+    top,
+    ...(left !== undefined ? { left } : {}),
+    zIndex: left !== undefined ? STICKY_Z.corner : STICKY_Z.header,
+    boxShadow: shadow.join(', '),
+  };
+}
+
+/**
+ * Freeze a body/label cell to the left edge during horizontal scroll. Requires
+ * an opaque `background` (border-collapse cells have none of their own) and a
+ * cumulative `left` offset.
+ */
+export function stickyLeftStyle(
+  base: CSSProperties,
+  opts: { left: number; background: string; border?: string },
+): CSSProperties {
+  const { left, background, border = GRID_LINE } = opts;
+  return {
+    ...base,
+    position: 'sticky',
+    left,
+    zIndex: STICKY_Z.col,
+    background,
+    boxShadow: `inset -1px 0 0 ${border}`,
+  };
+}

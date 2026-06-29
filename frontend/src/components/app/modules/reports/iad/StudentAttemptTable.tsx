@@ -15,7 +15,9 @@ import {
 import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
+  stickyHeaderStyle,
 } from '../shared/tableStyles';
+import ScrollableTableContainer from '../shared/ScrollableTableContainer';
 import { formatAnswerHtml } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
 import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
@@ -167,7 +169,7 @@ export default function StudentAttemptTable({
           </button>
         </div>
       </div>
-      <div className="w-full overflow-auto">
+      <ScrollableTableContainer>
         <table
           style={{
             borderCollapse: 'collapse',
@@ -185,7 +187,7 @@ export default function StudentAttemptTable({
           </colgroup>
           <thead>
             <tr>
-              <th style={headerStyle}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="user_name"
                   label="Student"
@@ -194,7 +196,7 @@ export default function StudentAttemptTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="answer_submission"
                   label="Their Answer"
@@ -203,7 +205,7 @@ export default function StudentAttemptTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'center' }, { top: 0 })}>
                 <SortableHeader
                   column="is_correct"
                   label="Correct?"
@@ -215,7 +217,7 @@ export default function StudentAttemptTable({
                   align="center"
                 />
               </th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'right' }, { top: 0 })}>
                 <SortableHeader
                   column="points_received"
                   label="Points"
@@ -227,7 +229,7 @@ export default function StudentAttemptTable({
                   align="right"
                 />
               </th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'right' }, { top: 0 })}>
                 <SortableHeader
                   column="score_pct"
                   label="Score %"
@@ -239,7 +241,7 @@ export default function StudentAttemptTable({
                   align="right"
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="latest_attempt"
                   label="Submitted"
@@ -336,7 +338,7 @@ export default function StudentAttemptTable({
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollableTableContainer>
     </div>
   );
 }

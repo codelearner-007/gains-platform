@@ -16,10 +16,20 @@ import {
   type SortDirection,
 } from '@/lib/reports/useTableSort';
 import PaginatedQuestionRowCells from './PaginatedQuestionRow';
+import ScrollableTableContainer from '../shared/ScrollableTableContainer';
+import { stickyHeaderStyle } from '../shared/tableStyles';
 
 interface Props {
   standardGroups: QraStandardGroup[];
 }
+
+// Header-band bg lives on each <th> (a <tr> bg won't paint behind a sticky cell).
+// Each per-standard block's thead sticks at the top of the shared scroll viewport
+// while that block is in view (sectioned sticky).
+const STD_STICKY_TH = stickyHeaderStyle(
+  { backgroundColor: HEADER_BAR_BG, borderColor: LAYOUT_BORDER },
+  { top: 0, border: LAYOUT_BORDER },
+);
 
 type StdTeacherSortKey =
   | 'question_no'
@@ -58,20 +68,20 @@ function StandardBlockHead({
   onHeaderClick: (c: StdTeacherSortKey) => void;
 }) {
   return (
-    <tr className="font-semibold" style={{ backgroundColor: HEADER_BAR_BG }}>
-      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+    <tr className="font-semibold">
+      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
         <SortableHeader column="question_no" label="No." title="Question Number" description="Question sequence number within the standard/teacher block." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
-      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
         <SortableHeader column="question" label="Question" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
-      <th scope="col" className="border-r border-b px-2 py-1 text-right" style={{ borderColor: LAYOUT_BORDER }}>
+      <th scope="col" className="border-r border-b px-2 py-1 text-right" style={STD_STICKY_TH}>
         <SortableHeader column="grade_average" label="% Correct" title="Percent Correct" description="Share of students who answered the question correctly." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
       </th>
-      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
         <SortableHeader column="correct_answer" label="Correct Answer" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
-      <th scope="col" className="border-b px-2 py-1 text-left" style={{ borderColor: LAYOUT_BORDER }}>
+      <th scope="col" className="border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
         <SortableHeader column="incorrect_choice_details" label="Incorrect Choice Details" title="Incorrect Choice Details" description="Per-distractor breakdown of wrong answers chosen and percent who chose each." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
     </tr>
@@ -89,7 +99,8 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
     );
 
   return (
-    <div className="space-y-3">
+    <ScrollableTableContainer>
+      <div className="space-y-3">
       {standardGroups.map((sg, idx) => (
         <div
           key={`${sg.cpalms_standard}-${idx}`}
@@ -194,6 +205,7 @@ export default function QraByStandardTeacherTable({ standardGroups }: Props) {
           </table>
         </div>
       ))}
-    </div>
+      </div>
+    </ScrollableTableContainer>
   );
 }

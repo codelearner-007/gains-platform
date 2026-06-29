@@ -60,7 +60,7 @@ export default function StandardRowList({
           No standards data
         </div>
       ) : (
-        <ul className="flex-1 overflow-y-auto max-h-[360px] px-2 py-2 flex flex-col gap-1">
+        <ul className="flex-1 overflow-y-auto max-h-[360px] print:max-h-none print:overflow-visible px-2 py-2 flex flex-col gap-1">
           {rows.map((row, i) => {
             // Unassessed alias standard: blank %, empty bar (legacy BLANK).
             const unassessed = row.grade_average == null;
