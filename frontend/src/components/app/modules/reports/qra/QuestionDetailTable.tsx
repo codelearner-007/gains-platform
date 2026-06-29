@@ -93,7 +93,7 @@ export default function QuestionDetailTable({
         className="px-3 py-1.5 text-[14px] font-bold text-black"
         style={{ backgroundColor: HEADER_BAR_BG }}
       >
-        Question Summary Report
+        Question Detail
         {itemId ? (
           <span className="ml-2 text-[11px] font-normal text-neutral-700 print:hidden">
             (click a question number to drill into incorrect-answer details)
