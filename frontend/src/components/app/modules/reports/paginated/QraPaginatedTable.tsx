@@ -1,12 +1,12 @@
 'use client';
 
 import type { PaginatedQuestionRow } from '@/lib/reports/types';
-import { HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
+import { LAYOUT_BORDER } from '@/lib/reports/colors';
 import { splitStandards } from '@/lib/reports/format';
 import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 import PaginatedQuestionRowCells from './PaginatedQuestionRow';
 import ScrollableTableContainer from '../shared/ScrollableTableContainer';
-import { stickyHeaderStyle } from '../shared/tableStyles';
+import { STICKY_HEADER_BAND } from '../shared/tableStyles';
 
 interface Props {
   questions: PaginatedQuestionRow[];
@@ -58,11 +58,6 @@ export default function QraPaginatedTable({ questions }: Props) {
     });
 
   const headerCls = 'border-r border-b px-2 py-1';
-  // Header-band bg lives on each <th> (a <tr> bg won't paint behind a sticky cell).
-  const stickyTh = stickyHeaderStyle(
-    { backgroundColor: HEADER_BAR_BG, borderColor: LAYOUT_BORDER },
-    { top: 0, border: LAYOUT_BORDER },
-  );
   return (
     <ScrollableTableContainer
       className="bg-white border"
@@ -71,25 +66,25 @@ export default function QraPaginatedTable({ questions }: Props) {
       <table className="min-w-full text-[11px] border-collapse">
         <thead>
           <tr className="font-semibold">
-            <th scope="col" className={`${headerCls} text-left w-[44px]`} style={stickyTh}>
+            <th scope="col" className={`${headerCls} text-left w-[44px]`} style={STICKY_HEADER_BAND}>
               <SortableHeader column="question_no" label="No." title="Question Number" description="The question's sequence number on the assessment." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
-            <th scope="col" className={`${headerCls} text-left`} style={stickyTh}>
+            <th scope="col" className={`${headerCls} text-left`} style={STICKY_HEADER_BAND}>
               <SortableHeader column="question" label="Question" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
-            <th scope="col" className={`${headerCls} text-left w-[140px]`} style={stickyTh}>
+            <th scope="col" className={`${headerCls} text-left w-[140px]`} style={STICKY_HEADER_BAND}>
               <SortableHeader column="standard" label="Standard" title="Standard" description="The CPALMS academic standard the question aligns to." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
-            <th scope="col" className={`${headerCls} text-right w-[80px]`} style={stickyTh}>
+            <th scope="col" className={`${headerCls} text-right w-[80px]`} style={STICKY_HEADER_BAND}>
               <SortableHeader column="grade_average" label="% of Correct Answers" title="% of Correct Answers" description="Share of students who answered this question correctly." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
-            <th scope="col" className={`${headerCls} text-left w-[160px]`} style={stickyTh}>
+            <th scope="col" className={`${headerCls} text-left w-[160px]`} style={STICKY_HEADER_BAND}>
               <SortableHeader column="correct_answer" label="Correct Answer" title="Correct Answer" description="The correct answer choice(s) for this question." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
-            <th scope="col" className={`${headerCls} text-left`} style={stickyTh}>
+            <th scope="col" className={`${headerCls} text-left`} style={STICKY_HEADER_BAND}>
               <SortableHeader column="incorrect_choice_details" label="Incorrect Choice details" title="Incorrect Choice Details" description="Each wrong answer chosen and the percent of students who chose it." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
-            <th scope="col" className="border-b px-2 py-1 text-left w-[220px]" style={stickyTh}>
+            <th scope="col" className="border-b px-2 py-1 text-left w-[220px]" style={STICKY_HEADER_BAND}>
               <SortableHeader column="incorrect_details_name" label="Students with Incorrect Choice" title="Students with Incorrect Choice" description="Names of students grouped by the incorrect choice they selected." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
           </tr>

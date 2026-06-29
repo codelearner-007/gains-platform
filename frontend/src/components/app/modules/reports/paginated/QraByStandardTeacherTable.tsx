@@ -4,7 +4,6 @@ import { Fragment } from 'react';
 import type { PaginatedQuestionRow, QraStandardGroup } from '@/lib/reports/types';
 import {
   GROUP_HEADER_CYAN,
-  HEADER_BAR_BG,
   LAYOUT_BORDER,
   PBIX_ACCENT_NAVY,
   performanceColor,
@@ -17,19 +16,11 @@ import {
 } from '@/lib/reports/useTableSort';
 import PaginatedQuestionRowCells from './PaginatedQuestionRow';
 import ScrollableTableContainer from '../shared/ScrollableTableContainer';
-import { stickyHeaderStyle } from '../shared/tableStyles';
+import { STICKY_HEADER_BAND } from '../shared/tableStyles';
 
 interface Props {
   standardGroups: QraStandardGroup[];
 }
-
-// Header-band bg lives on each <th> (a <tr> bg won't paint behind a sticky cell).
-// Each per-standard block's thead sticks at the top of the shared scroll viewport
-// while that block is in view (sectioned sticky).
-const STD_STICKY_TH = stickyHeaderStyle(
-  { backgroundColor: HEADER_BAR_BG, borderColor: LAYOUT_BORDER },
-  { top: 0, border: LAYOUT_BORDER },
-);
 
 type StdTeacherSortKey =
   | 'question_no'
@@ -58,6 +49,8 @@ const INITIAL_DIRECTIONS: Partial<Record<StdTeacherSortKey, 'asc' | 'desc'>> = {
   grade_average: 'asc',
 };
 
+// Each per-standard block's thead sticks at the top of the shared scroll
+// viewport while that block is in view (sectioned sticky).
 function StandardBlockHead({
   sortColumn,
   sortDirection,
@@ -69,19 +62,19 @@ function StandardBlockHead({
 }) {
   return (
     <tr className="font-semibold">
-      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
+      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STICKY_HEADER_BAND}>
         <SortableHeader column="question_no" label="No." title="Question Number" description="Question sequence number within the standard/teacher block." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
-      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
+      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STICKY_HEADER_BAND}>
         <SortableHeader column="question" label="Question" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
-      <th scope="col" className="border-r border-b px-2 py-1 text-right" style={STD_STICKY_TH}>
+      <th scope="col" className="border-r border-b px-2 py-1 text-right" style={STICKY_HEADER_BAND}>
         <SortableHeader column="grade_average" label="% Correct" title="Percent Correct" description="Share of students who answered the question correctly." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
       </th>
-      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
+      <th scope="col" className="border-r border-b px-2 py-1 text-left" style={STICKY_HEADER_BAND}>
         <SortableHeader column="correct_answer" label="Correct Answer" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
-      <th scope="col" className="border-b px-2 py-1 text-left" style={STD_STICKY_TH}>
+      <th scope="col" className="border-b px-2 py-1 text-left" style={STICKY_HEADER_BAND}>
         <SortableHeader column="incorrect_choice_details" label="Incorrect Choice Details" title="Incorrect Choice Details" description="Per-distractor breakdown of wrong answers chosen and percent who chose each." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
       </th>
     </tr>

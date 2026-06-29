@@ -486,24 +486,4 @@
     stroke: #fff !important;
     stroke-width: 2px !important;
   }
-
-  /* Frozen scroll tables (ScrollableTableContainer) print as full static
-     documents: drop the height cap + inner scrollbar, and neutralise the
-     per-cell sticky + box-shadow so headers don't float over content or double
-     their borders across page breaks. */
-  .report-scroll {
-    max-height: none !important;
-    overflow: visible !important;
-  }
-  .report-scroll thead th,
-  .report-scroll thead td,
-  .report-wide-matrix tbody th,
-  .report-wide-matrix tbody td {
-    position: static !important;
-    box-shadow: none !important;
-  }
-  /* Let the matrix's fixed label-column widths reflow to the shrunk print layout. */
-  .report-wide-matrix col {
-    width: auto !important;
-  }
 }
