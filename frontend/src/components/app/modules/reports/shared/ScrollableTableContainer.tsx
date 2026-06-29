@@ -18,14 +18,14 @@ interface Props {
 /**
  * The single scroll viewport every per-assessment report table wraps its
  * `<table>` in. `overflow-auto` gives BOTH vertical (within the height cap) and
- * horizontal (when the table is wider) scroll; the sticky `<thead>`/first-column
- * cells that keep headers + labels frozen live on the cells themselves (see
- * `stickyHeaderStyle` / `stickyLeftStyle` in tableStyles.ts), not here.
+ * horizontal (when the table is wider) scroll; the sticky `<thead>` cells that
+ * keep the column headers frozen live on the cells themselves (see
+ * `stickyHeaderStyle` in tableStyles.ts), not here.
  *
- * Print-safe: `print:overflow-visible print:!max-h-none` (the `!` beats the
- * inline maxHeight) plus the `.report-scroll` rules in globals.css `@media print`
- * drop the cap, the scrollbars, and the per-cell sticky so the exported PDF
- * shows the complete, static table.
+ * Print-safe via inline utilities only: `print:overflow-visible print:!max-h-none`
+ * (the `!` beats the inline maxHeight) drop the cap + clipping so the exported
+ * PDF shows the full table — `position: sticky` falls back to static in paged
+ * media, so no extra print CSS is needed.
  */
 export default function ScrollableTableContainer({
   children,
@@ -35,7 +35,7 @@ export default function ScrollableTableContainer({
 }: Props) {
   return (
     <div
-      className={`report-scroll w-full overflow-auto print:overflow-visible print:!max-h-none ${className}`}
+      className={`w-full overflow-auto print:overflow-visible print:!max-h-none ${className}`}
       style={{ maxHeight, ...style }}
     >
       {children}

@@ -1,14 +1,14 @@
 'use client';
 
-import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { MinusCircle, PlusCircle } from 'lucide-react';
-import ScrollableTableContainer from '../shared/ScrollableTableContainer';
 import {
-  stickyHeaderStyle,
-  stickyLeftStyle,
-  QSM_LABEL_COLS,
-  QSM_LEFT,
-} from '../shared/tableStyles';
+  Fragment,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
+import { MinusCircle, PlusCircle } from 'lucide-react';
 import type {
   QuestionSummaryMatrixPayload,
   QsmQuestionColumn,
@@ -30,6 +30,8 @@ import {
 } from '@/lib/reports/colors';
 import { sanitizeShortAnswer } from '@/lib/reports/format';
 import HeaderTooltip from '@/components/app/modules/reports/shared/HeaderTooltip';
+import ScrollableTableContainer from '@/components/app/modules/reports/shared/ScrollableTableContainer';
+import { stickyHeaderStyle } from '@/components/app/modules/reports/shared/tableStyles';
 import {
   SortableHeader,
   sortRowsBy,
@@ -143,21 +145,28 @@ export default function QuestionSummaryMatrix({
     per_student_available: perStudentAvailable = true,
   } = payload;
 
-  // The 2nd header row sticks below the 1st; its `top` offset must equal the
-  // rendered height of row 1 (which varies with the +/- toggle / font / zoom),
-  // so we measure it live instead of hardcoding.
+  const spans = useMemo(() => buildStandardSpans(questions), [questions]);
+
+  // Freeze BOTH header rows while the matrix scrolls. The 2nd row sticks just
+  // below the 1st, so its `top` is the measured height of row 1 (font/zoom-
+  // dependent, hence measured not hardcoded). No frozen left columns — under
+  // auto table-layout their pixel offsets can't be guaranteed, so they're left
+  // to scroll horizontally with the body.
   const row1Ref = useRef<HTMLTableRowElement>(null);
   const [row1H, setRow1H] = useState(25);
   useLayoutEffect(() => {
     const el = row1Ref.current;
     if (!el) return;
-    setRow1H(el.offsetHeight);
-    const ro = new ResizeObserver(() => setRow1H(el.offsetHeight));
+    const sync = () => setRow1H(el.offsetHeight);
+    sync();
+    const ro = new ResizeObserver(sync);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-
-  const spans = useMemo(() => buildStandardSpans(questions), [questions]);
+  const hdr1 = (b: CSSProperties) =>
+    stickyHeaderStyle(b, { top: 0, border: LAYOUT_BORDER });
+  const hdr2 = (b: CSSProperties) =>
+    stickyHeaderStyle(b, { top: row1H, border: LAYOUT_BORDER });
 
   // Per-standard "Score %" drill: each standard-code header carries a +/-
   // toggle. When expanded, a per-standard Score% column is appended right after
@@ -329,21 +338,13 @@ export default function QuestionSummaryMatrix({
       style={{ borderColor: LAYOUT_BORDER }}
     >
       <table className="report-wide-matrix min-w-full text-[11px] border-collapse">
-        <colgroup>
-          <col style={{ width: QSM_LABEL_COLS.instructor }} />
-          <col style={{ width: QSM_LABEL_COLS.student }} />
-          <col style={{ width: QSM_LABEL_COLS.score }} />
-        </colgroup>
         <thead>
           {/* Standard code row */}
           <tr ref={row1Ref}>
             <th
               colSpan={3}
               className="border-r border-b text-left text-white px-2 py-1"
-              style={stickyHeaderStyle(
-                { backgroundColor: PBIX_ACCENT_NAVY, borderColor: LAYOUT_BORDER },
-                { top: 0, left: 0, border: LAYOUT_BORDER },
-              )}
+              style={hdr1({ backgroundColor: PBIX_ACCENT_NAVY, borderColor: LAYOUT_BORDER })}
             >
               Standards
             </th>
@@ -374,10 +375,7 @@ export default function QuestionSummaryMatrix({
                   key={`${s.cpalms}-${i}`}
                   colSpan={s.span + (isExp ? 1 : 0)}
                   className="border-r border-b text-center font-semibold px-2 py-1"
-                  style={stickyHeaderStyle(
-                    { backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER },
-                    { top: 0, border: LAYOUT_BORDER },
-                  )}
+                  style={hdr1({ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER })}
                   title={s.cpalms}
                 >
                   <span className="inline-flex items-center justify-center gap-1">
@@ -407,10 +405,7 @@ export default function QuestionSummaryMatrix({
             <th
               colSpan={2}
               className="border-l border-b text-white px-2 py-1 text-center"
-              style={stickyHeaderStyle(
-                { backgroundColor: PBIX_ACCENT_NAVY, borderColor: LAYOUT_BORDER },
-                { top: 0, border: LAYOUT_BORDER },
-              )}
+              style={hdr1({ backgroundColor: PBIX_ACCENT_NAVY, borderColor: LAYOUT_BORDER })}
             >
               Totals
             </th>
@@ -420,30 +415,21 @@ export default function QuestionSummaryMatrix({
             <th
               scope="col"
               className="border-r border-b text-left px-2 py-1"
-              style={stickyHeaderStyle(
-                { backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER },
-                { top: row1H, left: QSM_LEFT.instructor, border: LAYOUT_BORDER },
-              )}
+              style={hdr2({ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER })}
             >
               <SortableHeader column="instructor" label="Classroom Instructors" title="Classroom Instructors" description="Section instructor who taught the student; rows are grouped by this." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th
               scope="col"
               className="border-r border-b text-left px-2 py-1"
-              style={stickyHeaderStyle(
-                { backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER },
-                { top: row1H, left: QSM_LEFT.student, border: LAYOUT_BORDER },
-              )}
+              style={hdr2({ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER })}
             >
               <SortableHeader column="student" label="Student Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} />
             </th>
             <th
               scope="col"
               className="border-r border-b text-right px-2 py-1"
-              style={stickyHeaderStyle(
-                { backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER },
-                { top: row1H, left: QSM_LEFT.score, border: LAYOUT_BORDER },
-              )}
+              style={hdr2({ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER })}
             >
               <SortableHeader column="score" label="Score %" title="Score Percent" description="Student's overall percent score on the assessment (points earned / points possible)." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="right" />
             </th>
@@ -468,10 +454,7 @@ export default function QuestionSummaryMatrix({
                     key={q.question_id}
                     scope="col"
                     className="border-r border-b text-center px-1 py-1 font-semibold"
-                    style={stickyHeaderStyle(
-                      { backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER },
-                      { top: row1H, border: LAYOUT_BORDER },
-                    )}
+                    style={hdr2({ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER })}
                     title={`${q.question_no}: ${sanitizeShortAnswer(q.correct_answer) || 'n/a'}`}
                   >
                     {q.question_no}
@@ -494,10 +477,7 @@ export default function QuestionSummaryMatrix({
                   key={`hscore-${col.code}-${ci}`}
                   scope="col"
                   className="border-r border-b text-center px-1 py-1 font-semibold"
-                  style={stickyHeaderStyle(
-                    { backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER },
-                    { top: row1H, border: LAYOUT_BORDER },
-                  )}
+                  style={hdr2({ backgroundColor: bg, color: fg, borderColor: LAYOUT_BORDER })}
                 >
                   <HeaderTooltip
                     title="Score Percent"
@@ -511,20 +491,14 @@ export default function QuestionSummaryMatrix({
             <th
               scope="col"
               className="border-r border-b text-right px-2 py-1"
-              style={stickyHeaderStyle(
-                { backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER },
-                { top: row1H, border: LAYOUT_BORDER },
-              )}
+              style={hdr2({ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER })}
             >
               <HeaderTooltip title="Possible Points" description="Maximum points obtainable across all questions for this student.">Possible Points</HeaderTooltip>
             </th>
             <th
               scope="col"
               className="border-b text-right px-2 py-1"
-              style={stickyHeaderStyle(
-                { backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER },
-                { top: row1H, border: LAYOUT_BORDER },
-              )}
+              style={hdr2({ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER })}
             >
               <HeaderTooltip title="Number of Correct Answers" description="Count of points the student earned across all questions."># Correct Answers</HeaderTooltip>
             </th>
@@ -555,20 +529,13 @@ export default function QuestionSummaryMatrix({
                       rowSpan={
                         group.students.length + (showTeacherSubtotal ? 2 : 0)
                       }
-                      className="border-r px-2 py-1 align-top font-semibold overflow-hidden"
-                      style={stickyLeftStyle(
-                        {
-                          borderColor: LAYOUT_BORDER,
-                          backgroundColor: instructorBg,
-                        },
-                        {
-                          left: QSM_LEFT.instructor,
-                          background: instructorBg,
-                          border: LAYOUT_BORDER,
-                        },
-                      )}
+                      className="border-r px-2 py-1 align-top font-semibold"
+                      style={{
+                        borderColor: LAYOUT_BORDER,
+                        backgroundColor: instructorBg,
+                      }}
                     >
-                      <div className="truncate">
+                      <div>
                         {redacted
                           ? redactName(group.section_instructor, 'Instructor')
                           : group.section_instructor}
@@ -580,21 +547,14 @@ export default function QuestionSummaryMatrix({
                   ) : null}
                   <th
                     scope="row"
-                    className="border-r px-2 py-1 truncate max-w-[170px] text-left font-normal"
-                    style={stickyLeftStyle(
-                      {
-                        borderColor: LAYOUT_BORDER,
-                        // Legacy SSRS bands the Student Name cell by the student's
-                        // Score % (pink/yellow/green), same as the Score % column —
-                        // not white. Verbatim from the legacy QSR PDFs.
-                        backgroundColor: qsrPerformanceColor(student.score_pct),
-                      },
-                      {
-                        left: QSM_LEFT.student,
-                        background: qsrPerformanceColor(student.score_pct),
-                        border: LAYOUT_BORDER,
-                      },
-                    )}
+                    className="border-r px-2 py-1 truncate max-w-[180px] text-left font-normal"
+                    style={{
+                      borderColor: LAYOUT_BORDER,
+                      // Legacy SSRS bands the Student Name cell by the student's
+                      // Score % (pink/yellow/green), same as the Score % column —
+                      // not white. Verbatim from the legacy QSR PDFs.
+                      backgroundColor: qsrPerformanceColor(student.score_pct),
+                    }}
                   >
                     {redacted
                       ? redactName(student.user_uid, 'Student')
@@ -602,17 +562,10 @@ export default function QuestionSummaryMatrix({
                   </th>
                   <td
                     className="border-r px-2 py-1 text-right tabular-nums font-semibold"
-                    style={stickyLeftStyle(
-                      {
-                        borderColor: LAYOUT_BORDER,
-                        backgroundColor: qsrPerformanceColor(student.score_pct),
-                      },
-                      {
-                        left: QSM_LEFT.score,
-                        background: qsrPerformanceColor(student.score_pct),
-                        border: LAYOUT_BORDER,
-                      },
-                    )}
+                    style={{
+                      borderColor: LAYOUT_BORDER,
+                      backgroundColor: qsrPerformanceColor(student.score_pct),
+                    }}
                   >
                     {pct(student.score_pct)}
                   </td>
@@ -710,27 +663,13 @@ export default function QuestionSummaryMatrix({
                       >
                         <td
                           className="border-r px-2 py-1"
-                          style={stickyLeftStyle(
-                            { borderColor: LAYOUT_BORDER },
-                            {
-                              left: QSM_LEFT.student,
-                              background: QSR_TEACHER_BAND,
-                              border: LAYOUT_BORDER,
-                            },
-                          )}
+                          style={{ borderColor: LAYOUT_BORDER }}
                         >
                           # Correct Answers
                         </td>
                         <td
                           className="border-r px-2 py-1 text-right tabular-nums"
-                          style={stickyLeftStyle(
-                            { borderColor: LAYOUT_BORDER },
-                            {
-                              left: QSM_LEFT.score,
-                              background: QSR_TEACHER_BAND,
-                              border: LAYOUT_BORDER,
-                            },
-                          )}
+                          style={{ borderColor: LAYOUT_BORDER }}
                         >
                           {pts(teacherCorrect)}
                         </td>
@@ -776,34 +715,18 @@ export default function QuestionSummaryMatrix({
                       >
                         <td
                           className="border-r px-2 py-1"
-                          style={stickyLeftStyle(
-                            { borderColor: LAYOUT_BORDER },
-                            {
-                              left: QSM_LEFT.student,
-                              background: QSR_TEACHER_BAND,
-                              border: LAYOUT_BORDER,
-                            },
-                          )}
+                          style={{ borderColor: LAYOUT_BORDER }}
                         >
                           Score %
                         </td>
                         <td
                           className="border-r px-2 py-1 text-right tabular-nums"
-                          style={stickyLeftStyle(
-                            {
-                              borderColor: LAYOUT_BORDER,
-                              backgroundColor: qsrPerformanceColor(
-                                group.teacher_score_pct,
-                              ),
-                            },
-                            {
-                              left: QSM_LEFT.score,
-                              background: qsrPerformanceColor(
-                                group.teacher_score_pct,
-                              ),
-                              border: LAYOUT_BORDER,
-                            },
-                          )}
+                          style={{
+                            borderColor: LAYOUT_BORDER,
+                            backgroundColor: qsrPerformanceColor(
+                              group.teacher_score_pct,
+                            ),
+                          }}
                         >
                           {pct(group.teacher_score_pct)}
                         </td>
@@ -866,38 +789,14 @@ export default function QuestionSummaryMatrix({
           >
             <td
               className="border-r px-2 py-1"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.instructor,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
+              style={{ borderColor: LAYOUT_BORDER }}
             >
               Possible Points
             </td>
-            <td
-              className="border-r"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.student,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
-            />
+            <td className="border-r" style={{ borderColor: LAYOUT_BORDER }} />
             <td
               className="border-r px-2 py-1 text-right tabular-nums"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.score,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
+              style={{ borderColor: LAYOUT_BORDER }}
             >
               {pts(grandTotal.possible_points)}
             </td>
@@ -942,38 +841,14 @@ export default function QuestionSummaryMatrix({
           >
             <td
               className="border-r px-2 py-1"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.instructor,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
+              style={{ borderColor: LAYOUT_BORDER }}
             >
               # Correct Answers
             </td>
-            <td
-              className="border-r"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.student,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
-            />
+            <td className="border-r" style={{ borderColor: LAYOUT_BORDER }} />
             <td
               className="border-r px-2 py-1 text-right tabular-nums"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.score,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
+              style={{ borderColor: LAYOUT_BORDER }}
             >
               {pts(grandTotal.correct_count)}
             </td>
@@ -1005,41 +880,17 @@ export default function QuestionSummaryMatrix({
           >
             <td
               className="border-r px-2 py-1"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.instructor,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
+              style={{ borderColor: LAYOUT_BORDER }}
             >
               Score %
             </td>
-            <td
-              className="border-r"
-              style={stickyLeftStyle(
-                { borderColor: LAYOUT_BORDER },
-                {
-                  left: QSM_LEFT.student,
-                  background: QSR_POINTS_GREY,
-                  border: LAYOUT_BORDER,
-                },
-              )}
-            />
+            <td className="border-r" style={{ borderColor: LAYOUT_BORDER }} />
             <td
               className="border-r px-2 py-1 text-right tabular-nums"
-              style={stickyLeftStyle(
-                {
-                  borderColor: LAYOUT_BORDER,
-                  backgroundColor: qsrPerformanceColor(grandTotal.score_pct),
-                },
-                {
-                  left: QSM_LEFT.score,
-                  background: qsrPerformanceColor(grandTotal.score_pct),
-                  border: LAYOUT_BORDER,
-                },
-              )}
+              style={{
+                borderColor: LAYOUT_BORDER,
+                backgroundColor: qsrPerformanceColor(grandTotal.score_pct),
+              }}
             >
               {pct(grandTotal.score_pct)}
             </td>
