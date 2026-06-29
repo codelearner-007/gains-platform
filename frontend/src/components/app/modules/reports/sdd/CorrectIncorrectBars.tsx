@@ -79,7 +79,7 @@ function BandPanel({
           {emptyMessage}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto max-h-[360px] px-2 py-2">
+        <div className="flex-1 overflow-y-auto max-h-[360px] print:max-h-none print:overflow-visible px-2 py-2">
           <ul className="flex flex-col gap-1.5">
             {sorted.map((r, i) => (
               <BandRow

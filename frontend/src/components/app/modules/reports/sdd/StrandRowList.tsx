@@ -49,7 +49,7 @@ export default function StrandRowList({
           No strand data
         </div>
       ) : (
-        <ul className="flex-1 overflow-y-auto max-h-[260px] p-2 flex flex-col gap-1.5">
+        <ul className="flex-1 overflow-y-auto max-h-[260px] print:max-h-none print:overflow-visible p-2 flex flex-col gap-1.5">
           {rows.map((row, i) => {
             const pct = Math.max(0, Math.min(1, row.grade_average ?? 0));
             const fill = performanceColor(pct);

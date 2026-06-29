@@ -14,7 +14,9 @@ import { distractorFill } from './distractorFill';
 import {
   tableCellStyle as cellBase,
   tableHeaderStyle as headerStyle,
+  stickyHeaderStyle,
 } from '../shared/tableStyles';
+import ScrollableTableContainer from '../shared/ScrollableTableContainer';
 import { formatAnswerHtml } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
 import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
@@ -81,7 +83,7 @@ export default function DistractorTable({ rows }: Props) {
       >
         Distractor Breakdown
       </div>
-      <div className="w-full overflow-auto">
+      <ScrollableTableContainer>
         <table
           style={{
             borderCollapse: 'collapse',
@@ -98,7 +100,7 @@ export default function DistractorTable({ rows }: Props) {
           </colgroup>
           <thead>
             <tr>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'center' }, { top: 0 })}>
                 <SortableHeader
                   column="is_correct"
                   label="Status"
@@ -110,7 +112,7 @@ export default function DistractorTable({ rows }: Props) {
                   align="center"
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="answer_submission"
                   label="Answer"
@@ -119,7 +121,7 @@ export default function DistractorTable({ rows }: Props) {
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'right' }, { top: 0 })}>
                 <SortableHeader
                   column="students_count"
                   label="# Students"
@@ -131,7 +133,7 @@ export default function DistractorTable({ rows }: Props) {
                   align="right"
                 />
               </th>
-              <th style={{ ...headerStyle, textAlign: 'right' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'right' }, { top: 0 })}>
                 <SortableHeader
                   column="share_of_attempts"
                   label="%"
@@ -143,7 +145,7 @@ export default function DistractorTable({ rows }: Props) {
                   align="right"
                 />
               </th>
-              <th style={headerStyle}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <HeaderTooltip
                   title="Answer Distribution"
                   description="Bar showing each choice's share of attempts relative to the most-picked choice."
@@ -242,7 +244,7 @@ export default function DistractorTable({ rows }: Props) {
             )}
           </tbody>
         </table>
-      </div>
+      </ScrollableTableContainer>
     </div>
   );
 }

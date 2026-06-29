@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import type { QuestionOverall } from '@/lib/reports/types';
-import { cellColor, GRID_LINE, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
+import { cellColor, HEADER_BAR_BG, LAYOUT_BORDER } from '@/lib/reports/colors';
 import {
   formatAnswerHtml,
   formatCorrectAnswerWithPositions,
@@ -12,9 +12,11 @@ import {
   splitStandards,
 } from '@/lib/reports/format';
 import RichReportHtml from '../shared/RichReportHtml';
+import ScrollableTableContainer from '../shared/ScrollableTableContainer';
 import {
   tableCellStyleLarge as cellBase,
   tableHeaderStyleLarge as headerStyle,
+  stickyHeaderStyle,
 } from '../shared/tableStyles';
 import { SortableHeader, useTableSort } from '@/lib/reports/useTableSort';
 
@@ -63,18 +65,6 @@ const QRA_INITIAL_DIRECTIONS: Partial<Record<QraSortKey, 'asc' | 'desc'>> = {
   question_no: 'asc',
 };
 
-// Freeze the column-header row while the question list scrolls inside its own
-// container. The opaque white background (from tableHeaderStyleLarge) occludes
-// scrolling body rows; the inset box-shadow stands in for the bottom border,
-// which `border-collapse: collapse` otherwise drops off a sticky header.
-const stickyHeader: typeof headerStyle = {
-  ...headerStyle,
-  position: 'sticky',
-  top: 0,
-  zIndex: 1,
-  boxShadow: `inset 0 -1px 0 ${GRID_LINE}`,
-};
-
 export default function QuestionDetailTable({
   questions,
   itemId,
@@ -110,10 +100,7 @@ export default function QuestionDetailTable({
           </span>
         ) : null}
       </div>
-      <div
-        className="w-full overflow-auto print:overflow-visible print:!max-h-none"
-        style={{ maxHeight: '72vh' }}
-      >
+      <ScrollableTableContainer>
         <table
           style={{
             borderCollapse: 'collapse',
@@ -133,7 +120,7 @@ export default function QuestionDetailTable({
           </colgroup>
           <thead>
             <tr>
-              <th style={{ ...stickyHeader, textAlign: 'center' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'center' }, { top: 0 })}>
                 <SortableHeader
                   column="question_no"
                   label="No"
@@ -145,7 +132,7 @@ export default function QuestionDetailTable({
                   align="center"
                 />
               </th>
-              <th style={stickyHeader}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="question"
                   label="Question"
@@ -154,7 +141,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={{ ...stickyHeader, textAlign: 'center' }}>
+              <th style={stickyHeaderStyle({ ...headerStyle, textAlign: 'center' }, { top: 0 })}>
                 <SortableHeader
                   column="grade_average"
                   label="% of Correct Answers"
@@ -166,7 +153,7 @@ export default function QuestionDetailTable({
                   align="center"
                 />
               </th>
-              <th style={stickyHeader}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="correct_answer"
                   label="Correct Answer"
@@ -177,7 +164,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={stickyHeader}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="incorrect_choice_details"
                   label="Incorrect Choice Details"
@@ -188,7 +175,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={stickyHeader}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="incorrect_details_name"
                   label="Incorrect Details Name"
@@ -199,7 +186,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={stickyHeader}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="standards"
                   label="Standards"
@@ -210,7 +197,7 @@ export default function QuestionDetailTable({
                   onClick={onHeaderClick}
                 />
               </th>
-              <th style={stickyHeader}>
+              <th style={stickyHeaderStyle(headerStyle, { top: 0 })}>
                 <SortableHeader
                   column="description"
                   label="Description"
@@ -382,7 +369,7 @@ export default function QuestionDetailTable({
             })}
           </tbody>
         </table>
-      </div>
+      </ScrollableTableContainer>
     </div>
   );
 }
