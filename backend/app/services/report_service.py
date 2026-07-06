@@ -865,11 +865,20 @@ class ReportService:
     ) -> YearToDatePerformancePayload:
         """Legacy YTD Longitudinal paginated matrix (PBIX ord 8/9/10).
 
-        Rows are grouped Classroom Instructor → Student; columns are the
-        standards assessed YTD for the (session, grade, subject,
-        assessment_type) scope. Every cell + subtotal + grand total is
-        POINTS-based: Score = SUM(points_received)/SUM(points_possible) at
-        that grain (matching the legacy SSRS PDFs, e.g. grand 36/45 = 80%).
+        Faithful clone of the SSRS matrix, sourced from ``cube_user_summary``
+        (legacy's own ``cube_users_summary``) — one scoped GROUP BY, no fact
+        re-derivation. Rows are grouped Classroom Instructor → Student; columns
+        are the standards assessed YTD for the (session, grade, subject,
+        assessment_type[, section]) scope. Per the legacy RDL:
+
+        * per-standard **Score** cell = ``SUM(score)/SUM(possible)`` (``n/N``);
+        * per-standard **%** cell = ``SUM(score)/user_possible_point`` — the
+          per-student YEAR denominator ("contribution to year", small values);
+        * student **Score %** = mastery ``SUM(score)/SUM(possible)``;
+        * **Possible Points** column = ``MAX(user_overall_possible_point)``;
+        * **# Correct Answers** column = ``SUM(score)``;
+        * year grand-total band reads the precomputed ``*_by_overall_year``
+          columns verbatim (not a re-sum of the visible cells).
         """
         f = filters or YTDFilters()
         meta = await self.cube.get_ytd_school_meta(
@@ -879,14 +888,8 @@ class ReportService:
             category=f.category,
             section=f.section,
         ) or {}
-        cell_rows = await self.cube.get_ytd_longitudinal_cells(
-            f.session, f.subject, f.grade, f.category
-        )
-        tests_rows = await self.cube.get_ytd_longitudinal_tests_taken(
-            f.session, f.subject, f.grade, f.category
-        )
-        unit_rows = await self.cube.get_ytd_longitudinal_standard_units(
-            f.session, f.subject, f.grade, f.category
+        rows = await self.cube.get_ytd_cells_from_cus(
+            f.session, f.subject, f.grade, f.category, f.section
         )
 
         school = YTDSchoolInfo(
@@ -897,92 +900,93 @@ class ReportService:
             assessment_types=_coerce_str_list(meta.get("assessment_types")),
         )
 
-        tests_taken_by_user: dict[str, int] = {
-            safe_str(r.get("user_uid")): to_int(r.get("tests_taken"))
-            for r in tests_rows
-        }
-        unit_names_by_std: dict[str, str] = {
-            safe_str(r.get("standard_label")): safe_str(r.get("unit_names"))
-            for r in unit_rows
-        }
+        def _pct(recv: float, poss: float) -> float:
+            return round(recv / poss, 6) if poss > 0 else 0.0
 
-        # ── Standard columns ─────────────────────────────────────────────────
-        # Legacy SSRS orders the standard columns ASCENDING by the standard's
-        # overall Score% (lowest-scoring standard first) — the grand-total
-        # "Score %" row in the legacy PDF reads left→right 48%, 61%, 65%, …,
-        # 96%. Ties break alphabetically by label for determinism.
-        std_meta: dict[str, str] = {}  # label → schoology code
+        # Year grand-total band = the precomputed ``*_by_overall_year`` columns
+        # (constant within a scope); read once off any row.
+        grand_year_recv = to_float(rows[0].get("grand_score")) if rows else 0.0
+        grand_year_poss = to_float(rows[0].get("grand_possible")) if rows else 0.0
+
+        # ── Standard columns ────────────────────────────────────────────────
+        # Legacy orders the standard columns ASCENDING by each standard's overall
+        # mastery Score% (SUM(score)/SUM(possible)); ties break alphabetically.
         std_totals: dict[str, list[float]] = {}  # label → [recv, poss]
-        for r in cell_rows:
+        unit_names_by_std: dict[str, str] = {}
+        for r in rows:
             label = safe_str(r.get("standard_label"))
             if not label:
                 continue
-            if label not in std_meta:
-                std_meta[label] = safe_str(r.get("schoology_standard")) or label
             agg = std_totals.setdefault(label, [0.0, 0.0])
             agg[0] += to_float(r.get("points_received"))
             agg[1] += to_float(r.get("points_possible"))
+            if label not in unit_names_by_std:
+                unit_names_by_std[label] = safe_str(r.get("unit_names"))
 
         def _std_score(label: str) -> float:
             recv, poss = std_totals.get(label, [0.0, 0.0])
-            return round(recv / poss, 6) if poss > 0 else 0.0
+            return _pct(recv, poss)
 
-        ordered_labels = sorted(std_meta, key=lambda lab: (_std_score(lab), lab))
+        ordered_labels = sorted(std_totals, key=lambda lab: (_std_score(lab), lab))
         standards = [
             YtdStandardColumn(
                 standard_label=label,
-                schoology_standard=std_meta[label],
+                schoology_standard=label,
                 unit_names=unit_names_by_std.get(label, ""),
             )
             for label in ordered_labels
         ]
 
-        # ── Teacher → student → (standard) accumulation ─────────────────────
-        # teacher → user_uid → {name, cells: {label: [recv, poss]}}
+        # ── Teacher → student → (standard) pivot ────────────────────────────
+        # Each (teacher, student, standard) is one SQL row → direct assignment.
         teachers: dict[str, dict[str, dict[str, Any]]] = {}
-        for r in cell_rows:
+        for r in rows:
             teacher = safe_str(r.get("section_instructors")) or "Unassigned"
             uid = safe_str(r.get("user_uid"))
             label = safe_str(r.get("standard_label"))
-            recv = to_float(r.get("points_received"))
-            poss = to_float(r.get("points_possible"))
             student = teachers.setdefault(teacher, {}).setdefault(
                 uid,
-                {"user_name": safe_str(r.get("user_name")), "cells": {}},
+                {
+                    "user_name": safe_str(r.get("user_name")),
+                    # per-student constants (identical on every one of the
+                    # student's rows).
+                    "user_possible_point": to_float(r.get("user_possible_point")),
+                    "user_overall_possible_point": to_float(
+                        r.get("user_overall_possible_point")
+                    ),
+                    "tests_taken": to_int(r.get("tests_taken")),
+                    "cells": {},
+                },
             )
-            cur = student["cells"].setdefault(label, [0.0, 0.0])
-            cur[0] += recv
-            cur[1] += poss
+            student["cells"][label] = [
+                to_float(r.get("points_received")),
+                to_float(r.get("points_possible")),
+            ]
 
-        def _pct(recv: float, poss: float) -> float:
-            return round(recv / poss, 6) if poss > 0 else 0.0
-
-        teacher_groups: list[YtdTeacherGroup] = []
-        grand_recv = 0.0
-        grand_poss = 0.0
-        grand_std: dict[str, list[float]] = {}
-
-        # Legacy SSRS orders the Classroom Instructor groups ASCENDING by the
-        # teacher's overall Score% (lowest-scoring teacher first) — the legacy
-        # PDF runs 80.9% → 81.8% → 84.7%. Ties break alphabetically by name.
         def _teacher_score(name: str) -> float:
             recv = sum(v[0] for s in teachers[name].values() for v in s["cells"].values())
             poss = sum(v[1] for s in teachers[name].values() for v in s["cells"].values())
-            return round(recv / poss, 6) if poss > 0 else 0.0
+            return _pct(recv, poss)
 
+        teacher_groups: list[YtdTeacherGroup] = []
+        grand_std: dict[str, list[float]] = {}
+
+        # Legacy orders Classroom-Instructor groups ASCENDING by teacher mastery
+        # Score%, students ASCENDING by their mastery Score%.
         for teacher in sorted(teachers, key=lambda t: (_teacher_score(t), t)):
             students_list: list[YtdStudentRow] = []
-            t_recv = 0.0
-            t_poss = 0.0
             t_std: dict[str, list[float]] = {}
             for uid, s in teachers[teacher].items():
+                upp = s["user_possible_point"]        # per-standard "%" denominator
                 s_recv = sum(v[0] for v in s["cells"].values())
                 s_poss = sum(v[1] for v in s["cells"].values())
                 cells = {
                     label: YtdCell(
                         points_received=round(v[0], 4),
                         points_possible=round(v[1], 4),
-                        score_pct=_pct(v[0], v[1]),
+                        # per-standard "%" = contribution to the student's YEAR
+                        # possible total (legacy Textbox30 = Sum(Score)/UserYear).
+                        score_pct=round(v[0] / upp, 6) if upp > 0 else 0.0,
                     )
                     for label, v in s["cells"].items()
                 }
@@ -990,15 +994,14 @@ class ReportService:
                     YtdStudentRow(
                         user_uid=uid,
                         user_name=s["user_name"],
-                        score_pct=_pct(s_recv, s_poss),
-                        tests_taken=tests_taken_by_user.get(uid, 0),
-                        points_received=round(s_recv, 4),
-                        points_possible=round(s_poss, 4),
+                        score_pct=_pct(s_recv, s_poss),          # mastery
+                        tests_taken=s["tests_taken"],
+                        points_received=round(s_recv, 4),        # # Correct Answers
+                        # "Possible Points" column = Max(user_overall_possible_point).
+                        points_possible=round(s["user_overall_possible_point"], 4),
                         cells=cells,
                     )
                 )
-                t_recv += s_recv
-                t_poss += s_poss
                 for label, v in s["cells"].items():
                     agg = t_std.setdefault(label, [0.0, 0.0])
                     agg[0] += v[0]
@@ -1006,8 +1009,9 @@ class ReportService:
                     g = grand_std.setdefault(label, [0.0, 0.0])
                     g[0] += v[0]
                     g[1] += v[1]
-            # Legacy sorts students ascending by overall Score %.
             students_list.sort(key=lambda x: x.score_pct)
+            t_recv = sum(v[0] for v in t_std.values())
+            t_poss = sum(v[1] for v in t_std.values())
             teacher_groups.append(
                 YtdTeacherGroup(
                     section_instructor=teacher,
@@ -1017,24 +1021,22 @@ class ReportService:
                         label: YtdStandardTotal(
                             points_received=round(v[0], 4),
                             points_possible=round(v[1], 4),
-                            score_pct=_pct(v[0], v[1]),
+                            score_pct=_pct(v[0], v[1]),   # subtotal Score% = mastery
                         )
                         for label, v in t_std.items()
                     },
                 )
             )
-            grand_recv += t_recv
-            grand_poss += t_poss
 
         grand_total = YtdGrandTotal(
-            points_received=round(grand_recv, 4),
-            points_possible=round(grand_poss, 4),
-            score_pct=_pct(grand_recv, grand_poss),
+            points_received=round(grand_year_recv, 4),        # Score_By_OverallYear
+            points_possible=round(grand_year_poss, 4),        # Possible_By_OverallYear
+            score_pct=_pct(grand_year_recv, grand_year_poss),
             standard_totals={
                 label: YtdStandardTotal(
                     points_received=round(v[0], 4),
                     points_possible=round(v[1], 4),
-                    score_pct=_pct(v[0], v[1]),
+                    score_pct=_pct(v[0], v[1]),   # per-standard grand = mastery
                 )
                 for label, v in grand_std.items()
             },

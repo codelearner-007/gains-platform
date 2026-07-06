@@ -14,6 +14,8 @@ import {
   PBIX_ACCENT_LIGHT_BLUE,
   GROUP_HEADER_CYAN,
   REPORT_TEXT_DARK,
+  QSR_POINTS_GREY,
+  qsrPerformanceColor,
 } from '@/lib/reports/colors';
 import {
   SortableHeader,
@@ -29,8 +31,12 @@ import {
  * (e.g. "4/7"), % = SUM(received)/SUM(possible) at every grain. Per-teacher
  * subtotal rows ("# Correct Answers" / "Score %") follow each group, and
  * grand-total rows ("Possible Points" / "# Correct Answers" / "Score %")
- * close the report. The legacy YTD PDFs are NOT colour-banded (unlike QSR),
- * so cells render plain.
+ * close the report. Cells carry the legacy SSRS perf 3-color banding
+ * (verbatim RDL BackgroundColor IIf → exact hexes via qsrPerformanceColor):
+ * Student Name / Score% / Tests-Taken and the subtotal/grand Score% band on
+ * the student's mastery Score%; each per-standard "%" cell bands on its own
+ * value (the "contribution-to-year" ratio); the raw-points helper cells
+ * (Score n/N, Possible Points, # Correct) use the neutral legacy grey.
  *
  * Variant differences (purely presentational):
  *   • 1 — Tests Taken column + per-standard Score AND %
@@ -289,46 +295,76 @@ function TeacherBlock({
         </td>
       </tr>
 
-      {students.map((st) => (
-        <tr key={st.user_uid}>
-          <td className="px-2 py-1" style={{ border }} />
-          <td className="px-2 py-1 whitespace-nowrap" style={{ border }}>
-            {st.user_name}
-          </td>
-          <td className="px-2 py-1 text-center" style={{ border }}>
-            {fmtPct(st.score_pct)}
-          </td>
-          {showTestsTaken && (
-            <td className="px-2 py-1 text-center" style={{ border }}>
-              {st.tests_taken}
+      {students.map((st) => {
+        // Legacy bands the Student Name / Score% / Tests-Taken cells on the
+        // student's overall mastery Score% (RDL Textbox…BackgroundColor).
+        const stBg = qsrPerformanceColor(st.score_pct);
+        return (
+          <tr key={st.user_uid}>
+            <td className="px-2 py-1" style={{ border }} />
+            <td
+              className="px-2 py-1 whitespace-nowrap"
+              style={{ border, backgroundColor: stBg }}
+            >
+              {st.user_name}
             </td>
-          )}
-          {standards.map((s) => {
-            const cell = st.cells[s.standard_label];
-            if (showScore) {
-              return [
-                <td key={`${s.standard_label}-sc`} className="px-2 py-1 text-center" style={{ border }}>
-                  {cell ? fmtScore(cell) : '-'}
-                </td>,
-                <td key={`${s.standard_label}-pc`} className="px-2 py-1 text-center" style={{ border }}>
-                  {cell ? fmtPct(cell.score_pct) : '-'}
-                </td>,
-              ];
-            }
-            return (
-              <td key={`${s.standard_label}-pc`} className="px-2 py-1 text-center" style={{ border }}>
-                {cell ? fmtPct(cell.score_pct) : '-'}
+            <td className="px-2 py-1 text-center" style={{ border, backgroundColor: stBg }}>
+              {fmtPct(st.score_pct)}
+            </td>
+            {showTestsTaken && (
+              <td className="px-2 py-1 text-center" style={{ border, backgroundColor: stBg }}>
+                {st.tests_taken}
               </td>
-            );
-          })}
-          <td className="px-2 py-1 text-center" style={{ border }}>
-            {fmtPts(st.points_possible)}
-          </td>
-          <td className="px-2 py-1 text-center" style={{ border }}>
-            {fmtPts(st.points_received)}
-          </td>
-        </tr>
-      ))}
+            )}
+            {standards.map((s) => {
+              const cell = st.cells[s.standard_label];
+              // Per-standard "%" bands on its own (contribution) value; the
+              // Score "n/N" cell uses the neutral legacy grey. No-data → "-",
+              // white (unfilled), per RDL IsNothing(Possible_Points).
+              const pctBg = cell ? qsrPerformanceColor(cell.score_pct) : undefined;
+              if (showScore) {
+                return [
+                  <td
+                    key={`${s.standard_label}-sc`}
+                    className="px-2 py-1 text-center"
+                    style={{ border, backgroundColor: cell ? QSR_POINTS_GREY : undefined }}
+                  >
+                    {cell ? fmtScore(cell) : '-'}
+                  </td>,
+                  <td
+                    key={`${s.standard_label}-pc`}
+                    className="px-2 py-1 text-center"
+                    style={{ border, backgroundColor: pctBg }}
+                  >
+                    {cell ? fmtPct(cell.score_pct) : '-'}
+                  </td>,
+                ];
+              }
+              return (
+                <td
+                  key={`${s.standard_label}-pc`}
+                  className="px-2 py-1 text-center"
+                  style={{ border, backgroundColor: pctBg }}
+                >
+                  {cell ? fmtPct(cell.score_pct) : '-'}
+                </td>
+              );
+            })}
+            <td
+              className="px-2 py-1 text-center"
+              style={{ border, backgroundColor: QSR_POINTS_GREY }}
+            >
+              {fmtPts(st.points_possible)}
+            </td>
+            <td
+              className="px-2 py-1 text-center"
+              style={{ border, backgroundColor: QSR_POINTS_GREY }}
+            >
+              {fmtPts(st.points_received)}
+            </td>
+          </tr>
+        );
+      })}
 
       {/* Per-teacher subtotal: # Correct Answers + Score % */}
       <tr>
@@ -392,14 +428,26 @@ function StdFootCell({
   border: string;
 }) {
   let value = '';
+  let bg: string | undefined;
   if (total) {
-    if (kind === 'pct') value = fmtPct(total.score_pct);
-    else if (kind === 'received') value = fmtPts(total.points_received);
-    else value = fmtPts(total.points_possible);
+    if (kind === 'pct') {
+      value = fmtPct(total.score_pct);
+      // Subtotal/grand Score% bands on mastery (RDL Textbox69/Textbox84).
+      bg = qsrPerformanceColor(total.score_pct);
+    } else if (kind === 'received') {
+      value = fmtPts(total.points_received);
+      bg = QSR_POINTS_GREY;
+    } else {
+      value = fmtPts(total.points_possible);
+      bg = QSR_POINTS_GREY;
+    }
   }
   return (
     <>
-      <td className="px-2 py-1 text-center font-semibold" style={{ border }}>
+      <td
+        className="px-2 py-1 text-center font-semibold"
+        style={{ border, backgroundColor: bg }}
+      >
         {value}
       </td>
       {showScore && <td className="px-2 py-1" style={{ border }} />}
