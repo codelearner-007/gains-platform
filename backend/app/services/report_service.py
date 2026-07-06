@@ -161,7 +161,11 @@ _HTML_TAG_RE = re.compile(r"<(?!https?://)[^>]+>")
 def _strip_html(s: Optional[str]) -> str:
     if not s:
         return ""
-    return _HTML_TAG_RE.sub("", s).strip()
+    # Strip tags, then decode entities so the plain text reads cleanly
+    # (e.g. "x&nbsp;&gt;&nbsp;a" -> "x > a") — legacy's cleaned descriptions
+    # are entity-free. `<https://…>` image placeholders are preserved by the
+    # tag regex and carry no entities, so unescape leaves them intact.
+    return _html.unescape(_HTML_TAG_RE.sub("", s)).strip()
 
 
 def _format_pct(v: float) -> str:
