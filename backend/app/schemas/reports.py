@@ -505,20 +505,6 @@ class StrandSummaryFilters(BaseModel):
     strand: Optional[str] = None
 
 
-class StrandSummaryKpis(BaseModel):
-    """Top-of-page KPIs for the Strand Summary."""
-
-    total_strands: int
-    total_standards: int
-    total_questions: int
-    total_assessments: int
-    total_students: int
-    grade_average: float
-    grade_average_pct: str
-    worst_strand: str
-    worst_strand_pct: str
-
-
 class StrandSummaryRollupRow(BaseModel):
     """One row per Strand for the school-wide rollup."""
 
@@ -544,26 +530,18 @@ class StrandSummaryStandardRow(BaseModel):
     grade_average_pct: str
 
 
-class StrandSummaryBandRow(BaseModel):
-    """Band-shaped row for the 100%-stacked-bars panels."""
-
-    strand: str
-    num_standards: int
-    num_questions: int
-    grade_average: float
-
-
 class StrandSummaryPayload(BaseModel):
-    """School-wide strand rollup (mirrors PBIX page #15)."""
+    """Legacy Strand Summary (PBIX page #15): per-strand card repeater.
+
+    Legacy renders only the per-strand tiles + the within-strand per-standard
+    breakdown — no KPI-card strip, treemap, rollup table or band bars (those
+    were non-legacy additions and are removed for parity).
+    """
 
     school: YTDSchoolInfo
     filters_applied: StrandSummaryFilters
-    kpis: StrandSummaryKpis
     strands_rollup: List[StrandSummaryRollupRow]
     standards_rollup: List[StrandSummaryStandardRow]
-    band_high: List[StrandSummaryBandRow]
-    band_mid: List[StrandSummaryBandRow]
-    band_low: List[StrandSummaryBandRow]
     data_quality: Optional[AlignmentDataQuality] = None
     data_refreshed_at: str = ""
 

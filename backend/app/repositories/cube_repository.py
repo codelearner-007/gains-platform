@@ -1627,69 +1627,60 @@ class CubeRepository:
         """
         sql = text(
             f"""
-            WITH scoped_qs AS (
-                SELECT DISTINCT
-                    qs.school_id,
-                    qs.ukey,
-                    qs.identifier,
-                    qs.item_id,
-                    dsub.subject
-                FROM cube_question_summary qs
-                JOIN dim_subject dsub
-                  ON dsub.subject_id = qs.subject_id
-                 AND dsub.school_id = qs.school_id
-                WHERE {_QS_SCHOOL_FILTER_SQL}
-            ),
-            strand_q AS (
-                SELECT DISTINCT
-                    ds.strand,
-                    sq.ukey,
-                    sq.identifier,
-                    sq.item_id,
-                    sq.subject
-                FROM scoped_qs sq
-                JOIN dim_strand ds
-                  ON ds.identifier = sq.identifier
-                WHERE ds.strand IS NOT NULL
-                  AND ds.strand <> ''
-            ),
-            qso_avg AS (
-                SELECT ukey, AVG(grade_average) AS grade_average
-                FROM cube_question_summary_overall
-                GROUP BY ukey
+            WITH strand_agg AS (
+                -- One row per Strand from the overall cube (legacy's DAX table),
+                -- joined to dim_standard by the standard CODE. Legacy measures:
+                --   grade_average = AVERAGE(cqso[Grade_Average])       (flat)
+                --   num_standards = DISTINCTCOUNT(cqso[Standards])     (by code)
+                --   num_questions = DISTINCTCOUNT(cqso[Question_No])
+                -- Scoped via dim_subject (session/subject/grade/assessment_type);
+                -- no section grain on this page.
+                SELECT ds.strand                        AS strand,
+                       COUNT(DISTINCT cqso.standards)    AS num_standards,
+                       COUNT(DISTINCT cqso.question_no)  AS num_questions,
+                       AVG(cqso.grade_average)           AS grade_average
+                FROM cube_question_summary_overall cqso
+                JOIN dim_subject dsubj
+                  ON dsubj.school_id = cqso.school_id
+                 AND dsubj.subject_id = cqso.subject_id
+                JOIN dim_standard ds
+                  ON ds.schoology_standard = cqso.standards
+                WHERE {_CQSO_YTD_FILTER_SQL}
+                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND cqso.standards IS NOT NULL AND cqso.standards <> ''
+                GROUP BY ds.strand
             ),
             strand_subjects AS (
-                SELECT strand, ARRAY_AGG(DISTINCT subject ORDER BY subject) AS subjects
-                FROM strand_q
-                WHERE subject IS NOT NULL AND subject <> ''
-                GROUP BY strand
+                SELECT ds.strand AS strand,
+                       ARRAY_AGG(DISTINCT dsubj.subject ORDER BY dsubj.subject) AS subjects
+                FROM cube_question_summary_overall cqso
+                JOIN dim_subject dsubj
+                  ON dsubj.school_id = cqso.school_id
+                 AND dsubj.subject_id = cqso.subject_id
+                JOIN dim_standard ds
+                  ON ds.schoology_standard = cqso.standards
+                WHERE {_CQSO_YTD_FILTER_SQL}
+                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND dsubj.subject IS NOT NULL AND dsubj.subject <> ''
+                GROUP BY ds.strand
             )
             SELECT
-                sq.strand                                          AS strand,
-                COUNT(DISTINCT sq.identifier)                      AS num_standards,
-                COUNT(DISTINCT sq.ukey)                            AS num_questions,
-                COUNT(DISTINCT sq.item_id)                         AS num_assessments,
-                AVG(COALESCE(qa.grade_average, 0))                 AS grade_average,
-                COALESCE(ss.subjects, ARRAY[]::text[])             AS subjects
-            FROM strand_q sq
-            LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
-            LEFT JOIN strand_subjects ss ON ss.strand = sq.strand
-            GROUP BY sq.strand, ss.subjects
-            ORDER BY sq.strand
+                sa.strand                                AS strand,
+                sa.num_standards                         AS num_standards,
+                sa.num_questions                         AS num_questions,
+                0                                        AS num_assessments,
+                sa.grade_average                         AS grade_average,
+                COALESCE(ss.subjects, ARRAY[]::text[])   AS subjects
+            FROM strand_agg sa
+            LEFT JOIN strand_subjects ss ON ss.strand = sa.strand
+            ORDER BY sa.strand
             """
         )
-        # Same RLS-opaque-estimate guard as get_school_standard_rollup: force a
-        # hash join for the qso_avg join so cube_question_summary_overall isn't
-        # re-aggregated per strand row under a Nested Loop. Planner-only; output
-        # identical.
-        await self.session.execute(text("SET LOCAL enable_nestloop = off"))
         result = await self.session.execute(
             sql,
             _school_filter_params(session_filter, subject, grade, category, section),
         )
-        rows = [_row_to_dict(r) for r in result.all()]
-        await self.session.execute(text("RESET enable_nestloop"))
-        return rows
+        return [_row_to_dict(r) for r in result.all()]
 
     async def get_school_standard_rollup(
         self,

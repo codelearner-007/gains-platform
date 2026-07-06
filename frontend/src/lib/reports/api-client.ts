@@ -98,14 +98,10 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<StandardSummaryPayload>),
 
-  strandSummary: (filters?: StrandSummaryFilters, strandsOnly?: boolean) =>
-    fetch(
-      `/api/v1/reports/strand-summary${buildQuery({
-        ...filters,
-        strands_only: strandsOnly ? 'true' : undefined,
-      })}`,
-      { credentials: 'include' },
-    ).then(handleResponse<StrandSummaryPayload>),
+  strandSummary: (filters?: StrandSummaryFilters) =>
+    fetch(`/api/v1/reports/strand-summary${buildQuery(filters)}`, {
+      credentials: 'include',
+    }).then(handleResponse<StrandSummaryPayload>),
 
   alignmentDataQuality: () =>
     fetch('/api/v1/reports/data-quality/standards-alignment', {
@@ -240,8 +236,8 @@ export const reportsKeys = {
     [...reportsKeys.all, 'qra-by-std-teacher', itemId, schoolId ?? null] as const,
   standardSummary: (filters?: StandardSummaryFilters, cardsOnly?: boolean) =>
     [...reportsKeys.all, 'standardSummary', filters ?? {}, cardsOnly ?? false] as const,
-  strandSummary: (filters?: StrandSummaryFilters, strandsOnly?: boolean) =>
-    [...reportsKeys.all, 'strandSummary', filters ?? {}, strandsOnly ?? false] as const,
+  strandSummary: (filters?: StrandSummaryFilters) =>
+    [...reportsKeys.all, 'strandSummary', filters ?? {}] as const,
   dashboardOverview: (
     filters?: Pick<AssessmentFilters, 'session' | 'category' | 'grade' | 'school_id'>,
   ) => [...reportsKeys.all, 'dashboard-overview', filters ?? {}] as const,

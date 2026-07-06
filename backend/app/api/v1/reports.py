@@ -234,18 +234,15 @@ async def strand_summary(
     grade: Optional[str] = None,
     section: Optional[str] = None,
     strand: Optional[str] = None,
-    strands_only: bool = False,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StrandSummaryPayload:
-    """School-wide strand rollup (mirrors PBIX page #15).
+    """Legacy Strand Summary (PBIX page #15): per-strand card repeater.
 
-    Aggregates cube_question_summary by strand across all assessments in
-    the selected scope. All filter params optional; default = whole-school
-    rollup. The ``strand`` filter narrows the per-standard drill list
-    when the client cross-filters on a strand selection. ``strands_only=true``
-    is the dashboard's lean path — returns just ``strands_rollup`` (+ bands),
-    skipping the per-standard rollup and school-wide KPI queries it never reads.
-    Requires: reports:read.
+    Per-strand grade_average = AVERAGE(cqso[Grade_Average]); # standards =
+    DISTINCTCOUNT(cqso[Standards]) (by code); # questions =
+    DISTINCTCOUNT(cqso[Question_No]); scoped via dim_subject. The ``strand``
+    param narrows the within-strand per-standard breakdown. All filter params
+    optional; default = whole-school. Requires: reports:read.
     """
     service = ReportService(db)
     return await service.build_strand_summary(
@@ -257,7 +254,6 @@ async def strand_summary(
             section=section,
             strand=strand,
         ),
-        strands_only=strands_only,
     )
 
 
