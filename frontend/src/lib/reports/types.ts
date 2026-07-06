@@ -446,19 +446,12 @@ export interface StandardSummaryRollupRow {
   last_change_date_time: string | null;
 }
 
-export interface StandardSummaryStrandCount {
-  strand: string;
-  num_standards: number;
-  num_questions: number;
-  grade_average: number;
-}
-
 export interface StandardSummaryPayload {
   school: YTDSchoolInfo;
   filters_applied: StandardSummaryFilters;
+  // Not rendered on the report (removed for parity); read by the dashboard.
   kpis: StandardSummaryKpis;
   standards: StandardSummaryRollupRow[];
-  strand_counts: StandardSummaryStrandCount[];
   data_quality?: AlignmentDataQuality | null;
 }
 

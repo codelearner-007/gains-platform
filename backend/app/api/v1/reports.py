@@ -178,13 +178,16 @@ async def standard_summary(
     subject: Optional[str] = None,
     grade: Optional[str] = None,
     section: Optional[str] = None,
+    cards_only: bool = False,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StandardSummaryPayload:
-    """School-wide standards rollup (mirrors PBIX page #14).
+    """Legacy Standard Summary (PBIX page #14): per-cPalms_Standard card grid.
 
-    Aggregates cube_standard_summary across all assessments in the
-    selected scope. All filter params optional; default = whole-school
-    rollup. Requires: reports:read.
+    Per-standard correct% = AVERAGE(cube_question_summary_overall[Grade_Average]),
+    # of questions = DISTINCTCOUNT(cqso[Question_No]), scoped via dim_subject.
+    ``cards_only=true`` is the report page's lean path — it skips the KPI cube
+    reads (incl. the total_students fact scan) that only the dashboard renders.
+    All filter params optional; default = whole-school. Requires: reports:read.
     """
     service = ReportService(db)
     return await service.build_standard_summary(
@@ -194,7 +197,8 @@ async def standard_summary(
             subject=subject,
             grade=grade,
             section=section,
-        )
+        ),
+        cards_only=cards_only,
     )
 
 

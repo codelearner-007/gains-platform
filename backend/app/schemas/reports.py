@@ -438,7 +438,9 @@ class StandardSummaryFilters(BaseModel):
 
 
 class StandardSummaryKpis(BaseModel):
-    """Five KPI cards rendered at the top of the Standard Summary page."""
+    """School-wide KPI block. NOT rendered on the legacy Standard Summary page
+    (removed from the report for parity) but consumed by the dashboard's stat
+    cards (Total Students / Total Standards / school average)."""
 
     total_standards: int
     total_questions: int
@@ -474,23 +476,18 @@ class StandardSummaryRollupRow(BaseModel):
     last_change_date_time: Optional[str] = None
 
 
-class StandardSummaryStrandCount(BaseModel):
-    """Auxiliary distribution: # of standards per strand for the bar chart."""
-
-    strand: str
-    num_standards: int
-    num_questions: int
-    grade_average: float
-
-
 class StandardSummaryPayload(BaseModel):
-    """School-wide standards rollup (mirrors PBIX page #14)."""
+    """School-wide per-standard card grid (legacy PBIX page #14).
+
+    Legacy renders only a per-standard card repeater — no KPI-card strip,
+    ranked bar, rollup table or by-strand chart (those were non-legacy
+    additions and have been removed for parity).
+    """
 
     school: YTDSchoolInfo
     filters_applied: StandardSummaryFilters
     kpis: StandardSummaryKpis
     standards: List[StandardSummaryRollupRow]
-    strand_counts: List[StandardSummaryStrandCount]
     data_quality: Optional[AlignmentDataQuality] = None
 
 

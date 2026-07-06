@@ -1709,87 +1709,70 @@ class CubeRepository:
         """
         sql = text(
             f"""
-            WITH scoped_qs AS (
-                SELECT DISTINCT
-                    qs.school_id,
-                    qs.ukey,
-                    qs.identifier,
-                    qs.item_id,
-                    dsub.grade
-                FROM cube_question_summary qs
-                JOIN dim_subject dsub
-                  ON dsub.subject_id = qs.subject_id
-                 AND dsub.school_id = qs.school_id
-                WHERE {_QS_SCHOOL_FILTER_SQL}
+            WITH scoped_cqso AS (
+                -- Every overall-cube row in scope (legacy scopes the Standard
+                -- Summary through dim_subject: session/subject/grade/assessment_type;
+                -- there is no section grain on this page). This is the DAX
+                -- table the page's measures read.
+                SELECT cqso.standards        AS schoology_standard,
+                       cqso.question_no      AS question_no,
+                       cqso.grade_average    AS grade_average,
+                       dsubj.grade           AS grade
+                FROM cube_question_summary_overall cqso
+                JOIN dim_subject dsubj
+                  ON dsubj.school_id = cqso.school_id
+                 AND dsubj.subject_id = cqso.subject_id
+                WHERE {_CQSO_YTD_FILTER_SQL}
+                  AND cqso.standards IS NOT NULL AND cqso.standards <> ''
             ),
-            std_q AS (
-                SELECT DISTINCT
-                    iq.ukey,
-                    iq.identifier,
-                    iq.item_id,
-                    iq.grade,
-                    ds.strand,
-                    dst.schoology_standard,
-                    dst.cpalms_standard,
-                    dst.cluster,
-                    dst.cognitive_complexity_rating,
-                    dst.subject AS std_subject,
-                    dst.custom_cleaned_description,
-                    dst.description,
-                    dst.last_change_date_time
-                FROM scoped_qs iq
-                LEFT JOIN dim_strand ds
-                  ON ds.identifier = iq.identifier
-                LEFT JOIN LATERAL (
-                    SELECT schoology_standard, cpalms_standard, cluster,
-                           cognitive_complexity_rating, subject,
-                           custom_cleaned_description, description,
-                           last_change_date_time
-                    FROM dim_standard
-                    WHERE identifier = iq.identifier
-                    LIMIT 1
-                ) dst ON TRUE
-                WHERE COALESCE(NULLIF(dst.schoology_standard, ''), '') <> ''
-                  AND (CAST(:strand AS TEXT) IS NULL OR ds.strand = CAST(:strand AS TEXT))
+            agg AS (
+                -- One row per standard CODE: legacy `Grade_Average_Standard_Measure`
+                -- = AVERAGE(cqso[Grade_Average]) (flat, BLANK when empty) and
+                -- `Total Question` = DISTINCTCOUNT(cqso[Question_No]).
+                SELECT schoology_standard,
+                       COUNT(DISTINCT question_no) AS num_questions,
+                       AVG(grade_average)          AS grade_average,
+                       COALESCE(
+                           array_agg(DISTINCT NULLIF(grade, ''))
+                             FILTER (WHERE NULLIF(grade, '') IS NOT NULL),
+                           ARRAY[]::text[]
+                       )                           AS grades
+                FROM scoped_cqso
+                GROUP BY schoology_standard
             ),
-            qso_avg AS (
-                SELECT ukey, AVG(grade_average) AS grade_average
-                FROM cube_question_summary_overall
-                GROUP BY ukey
+            std_meta AS (
+                -- One dim_standard row per code (dedupe aliases deterministically)
+                -- for the card chrome: strand / cluster / cognitive complexity /
+                -- description / curriculum subject / adopted date.
+                SELECT DISTINCT ON (schoology_standard)
+                    schoology_standard, cpalms_standard, strand, cluster,
+                    cognitive_complexity_rating, subject,
+                    custom_cleaned_description, description, last_change_date_time
+                FROM dim_standard
+                WHERE schoology_standard IS NOT NULL AND schoology_standard <> ''
+                ORDER BY schoology_standard, identifier
             )
             SELECT
-                COALESCE(sq.schoology_standard, '')                AS schoology_standard,
-                COALESCE(NULLIF(sq.cpalms_standard, ''),
-                         sq.schoology_standard, '')                AS cpalms_standard,
-                COALESCE(sq.strand, '')                            AS strand,
-                COALESCE(sq.cluster, '')                           AS cluster,
-                COALESCE(sq.cognitive_complexity_rating, '')       AS cognitive_complexity,
-                COALESCE(NULLIF(sq.custom_cleaned_description, ''),
-                         sq.description, '')                       AS description,
-                COALESCE(sq.std_subject, '')                       AS subject,
-                COALESCE(
-                    array_agg(DISTINCT NULLIF(sq.grade, ''))
-                      FILTER (WHERE NULLIF(sq.grade, '') IS NOT NULL),
-                    ARRAY[]::text[]
-                )                                                  AS grades,
-                COUNT(DISTINCT sq.ukey)                            AS num_questions,
-                COUNT(DISTINCT sq.item_id)                         AS num_assessments,
-                AVG(COALESCE(qa.grade_average, 0))                 AS grade_average,
-                MAX(sq.last_change_date_time)                      AS last_change_date_time
-            FROM std_q sq
-            LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
-            GROUP BY 1, 2, 3, 4, 5, 6, 7
-            ORDER BY 3 NULLS LAST, 1
+                a.schoology_standard                              AS schoology_standard,
+                COALESCE(NULLIF(m.cpalms_standard, ''),
+                         a.schoology_standard)                    AS cpalms_standard,
+                COALESCE(m.strand, '')                            AS strand,
+                COALESCE(m.cluster, '')                           AS cluster,
+                COALESCE(m.cognitive_complexity_rating, '')       AS cognitive_complexity,
+                COALESCE(NULLIF(m.custom_cleaned_description, ''),
+                         m.description, '')                       AS description,
+                COALESCE(m.subject, '')                           AS subject,
+                a.grades                                          AS grades,
+                a.num_questions                                   AS num_questions,
+                0                                                 AS num_assessments,
+                a.grade_average                                   AS grade_average,
+                m.last_change_date_time                           AS last_change_date_time
+            FROM agg a
+            LEFT JOIN std_meta m ON m.schoology_standard = a.schoology_standard
+            WHERE (CAST(:strand AS TEXT) IS NULL OR m.strand = CAST(:strand AS TEXT))
+            ORDER BY m.strand NULLS LAST, a.schoology_standard
             """
         )
-        # Force a hash/merge join for the qso_avg join. Under RLS the
-        # `school_id = current_setting('app.current_school_id')` predicate is
-        # opaque to the planner, so it under-estimates the scoped set at ~1 row
-        # and picks a Nested Loop that RE-AGGREGATES cube_question_summary_overall
-        # once per std_q row (48M join-filter rows → ~30s on a real school). A
-        # hash join computes qso_avg once. Transaction-scoped + reset so sibling
-        # queries are unaffected; output is identical (planner-only change).
-        await self.session.execute(text("SET LOCAL enable_nestloop = off"))
         result = await self.session.execute(
             sql,
             {
@@ -1799,9 +1782,7 @@ class CubeRepository:
                 "strand": strand,
             },
         )
-        rows = [_row_to_dict(r) for r in result.all()]
-        await self.session.execute(text("RESET enable_nestloop"))
-        return rows
+        return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
     # Standards-alignment data quality
