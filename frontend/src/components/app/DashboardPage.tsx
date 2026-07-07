@@ -31,6 +31,9 @@ import AssessmentsSummaryTable, {
   type AssessmentSortKey,
   type StrandRowSortKey,
 } from '@/components/app/dashboard/AssessmentsSummaryTable';
+import StudentsSummaryTable, {
+  type StudentSortKey,
+} from '@/components/app/dashboard/StudentsSummaryTable';
 
 const PROGRAM_REPORTS = getReportsByGroup('program');
 const PAGE_SIZE = 25;
@@ -65,6 +68,16 @@ const STRAND_INITIAL_DIR: Record<StrandRowSortKey, 'asc' | 'desc'> = {
   average: 'desc',
 };
 
+/** First-click direction per By-Students sort column. */
+const STUDENT_INITIAL_DIR: Record<StudentSortKey, 'asc' | 'desc'> = {
+  name: 'asc',
+  overall: 'desc',
+  assessments: 'desc',
+  subjects: 'desc',
+};
+
+type SummaryMode = 'assessments' | 'students';
+
 /** Latest academic year = highest session string (e.g. "2025-26" > "2024-25"). */
 function latestSession(sessions: { session: string | null }[]): string | undefined {
   return sessions
@@ -83,6 +96,9 @@ export function DashboardPage() {
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [strandSort, setStrandSort] = useState<StrandRowSortKey>('date');
   const [strandDir, setStrandDir] = useState<'asc' | 'desc'>('desc');
+  const [mode, setMode] = useState<SummaryMode>('assessments');
+  const [studentSort, setStudentSort] = useState<StudentSortKey>('name');
+  const [studentDir, setStudentDir] = useState<'asc' | 'desc'>('asc');
   const [inited, setInited] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const initedSchool = useRef<string | null>(null);
@@ -111,6 +127,17 @@ export function DashboardPage() {
       }
     },
     [strandSort],
+  );
+
+  const onStudentSort = useCallback(
+    (col: StudentSortKey) => {
+      if (col === studentSort) setStudentDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      else {
+        setStudentSort(col);
+        setStudentDir(STUDENT_INITIAL_DIR[col]);
+      }
+    },
+    [studentSort],
   );
 
   // Sessions feed the default-year pick. Shared query key with ReportFilters /
@@ -147,6 +174,9 @@ export function DashboardPage() {
     setDir('desc');
     setStrandSort('date');
     setStrandDir('desc');
+    setMode('assessments');
+    setStudentSort('name');
+    setStudentDir('asc');
     setInited(true);
   }, [sessionsQ.data, schoolId, inited, schoolLoading]);
 
@@ -217,6 +247,28 @@ export function DashboardPage() {
     placeholderData: (prev) => prev,
   });
 
+  // By Students — server-paginated roster (same filter scope; only fetched
+  // while the Students view is active).
+  const studentsQ = useInfiniteQuery({
+    queryKey: reportsKeys.studentsBrowse(filters, schoolId ?? undefined, {
+      q: debouncedSearch,
+      sort: studentSort,
+      dir: studentDir,
+    }),
+    queryFn: ({ pageParam }) =>
+      reportsApi.studentsBrowse(filters, schoolId ?? undefined, {
+        q: debouncedSearch || undefined,
+        sort: studentSort,
+        dir: studentDir,
+        limit: PAGE_SIZE,
+        offset: pageParam,
+      }),
+    enabled: inited && mode === 'students',
+    initialPageParam: 0,
+    getNextPageParam: nextPageParam,
+    placeholderData: (prev) => prev,
+  });
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -282,6 +334,14 @@ export function DashboardPage() {
     [strandRowsQ.data],
   );
   const strandTotal = strandRowsQ.data?.pages[0]?.total ?? 0;
+  const studentRows = useMemo(
+    () => studentsQ.data?.pages.flatMap((p) => p.rows) ?? [],
+    [studentsQ.data],
+  );
+  const studentTotal = studentsQ.data?.pages[0]?.total ?? 0;
+  const studentFetching = studentsQ.isFetching && !studentsQ.isFetchingNextPage;
+  const studentLoading = mode === 'students' && (!inited || studentsQ.isPending);
+  const studentBusy = studentLoading || (mode === 'students' && studentFetching);
 
   const headerLoading = !inited || stdQ.isLoading;
   // In-flight (refetch) state — NOT a scroll fetch-more — for the two grids.
@@ -298,17 +358,26 @@ export function DashboardPage() {
   // field's clear-X for a spinner mid-use).
   const searchLoading =
     search.trim() !== debouncedSearch ||
-    (debouncedSearch.length > 0 && (asmtFetching || strandFetching));
+    (debouncedSearch.length > 0 &&
+      (mode === 'students' ? studentFetching : asmtFetching || strandFetching));
 
   const anyError =
-    overviewQ.isError || stdQ.isError || asmtQ.isError || strandRowsQ.isError;
+    overviewQ.isError ||
+    stdQ.isError ||
+    asmtQ.isError ||
+    strandRowsQ.isError ||
+    studentsQ.isError;
 
   // Lock the click-filters (subject cards, grade chips, popover) while ANY
   // filter-dependent query is refetching, so rapid clicks can't interleave
   // requests or mix filters. Scroll fetch-more and the debounced search are
   // intentionally excluded (the search box stays typeable).
   const filtersBusy =
-    overviewQ.isFetching || stdQ.isFetching || asmtFetching || strandFetching;
+    overviewQ.isFetching ||
+    stdQ.isFetching ||
+    asmtFetching ||
+    strandFetching ||
+    studentFetching;
 
   // KPIs are computed at the per-question OVERALL grain (no section), so they
   // stay school-wide; flag that only when a section narrows the tables.
@@ -329,7 +398,7 @@ export function DashboardPage() {
         search={search}
         onSearchChange={setSearch}
         searchLoading={searchLoading}
-        resultCount={assessmentTotal}
+        resultCount={mode === 'students' ? studentTotal : assessmentTotal}
         refreshedAt={refreshedAt}
         onRefresh={handleRefresh}
         refreshing={refreshing}
@@ -382,34 +451,83 @@ export function DashboardPage() {
         <StatCard label="Total Students" value={kpis?.total_students ?? '—'} hint={schoolWideHint} icon={Users} loading={headerLoading} />
         <StatCard label="Total Standards" value={kpis?.total_standards ?? '—'} icon={GraduationCap} loading={headerLoading} />
         <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} hint={schoolWideHint} icon={ListChecks} loading={headerLoading} />
-        <StatCard label="Assessments" value={asmtBusy ? '—' : assessmentTotal} icon={BookOpen} loading={asmtBusy} />
+        {mode === 'students' ? (
+          <StatCard label="Students" value={studentBusy ? '—' : studentTotal} icon={Users} loading={studentBusy} />
+        ) : (
+          <StatCard label="Assessments" value={asmtBusy ? '—' : assessmentTotal} icon={BookOpen} loading={asmtBusy} />
+        )}
         <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} hint={schoolWideHint} icon={Percent} loading={headerLoading} />
       </div>
 
-      <AssessmentsSummaryTable
-        schoolAverage={schoolAverage}
-        assessments={assessmentRows}
-        assessmentTotal={assessmentTotal}
-        assessmentHasMore={asmtQ.hasNextPage}
-        assessmentFetchingMore={asmtQ.isFetchingNextPage}
-        onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
-        assessmentSort={sort}
-        assessmentDir={dir}
-        onAssessmentSort={onSort}
-        assessmentLoading={asmtLoading}
-        strandRows={strandRows}
-        strandTotal={strandTotal}
-        strandHasMore={strandRowsQ.hasNextPage}
-        strandFetchingMore={strandRowsQ.isFetchingNextPage}
-        onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
-        strandSort={strandSort}
-        strandDir={strandDir}
-        onStrandSort={onStrandSort}
-        strandLoading={strandLoading}
-        standards={stdQ.data?.standards ?? []}
-        search={search}
-        loading={stdLoading}
-      />
+      {/* By Assessment ⇄ By Student — same filters/search, different query. */}
+      <div className="flex items-center justify-between gap-2">
+        <div
+          role="tablist"
+          aria-label="Summary view"
+          className="inline-flex rounded-md bg-muted/60 p-0.5"
+        >
+          {(['assessments', 'students'] as const).map((m) => {
+            const active = mode === m;
+            return (
+              <button
+                key={m}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setMode(m)}
+                className={`rounded px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                  active
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-foreground/70 hover:bg-background'
+                }`}
+              >
+                {m === 'assessments' ? 'By Assessment' : 'By Student'}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {mode === 'students' ? (
+        <StudentsSummaryTable
+          schoolId={schoolId ?? undefined}
+          session={filters.session}
+          classAverage={schoolAverage}
+          rows={studentRows}
+          total={studentTotal}
+          hasMore={studentsQ.hasNextPage}
+          isFetchingMore={studentsQ.isFetchingNextPage}
+          onFetchMore={() => void studentsQ.fetchNextPage()}
+          sort={studentSort}
+          dir={studentDir}
+          onSort={onStudentSort}
+          loading={studentLoading}
+        />
+      ) : (
+        <AssessmentsSummaryTable
+          schoolAverage={schoolAverage}
+          assessments={assessmentRows}
+          assessmentTotal={assessmentTotal}
+          assessmentHasMore={asmtQ.hasNextPage}
+          assessmentFetchingMore={asmtQ.isFetchingNextPage}
+          onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
+          assessmentSort={sort}
+          assessmentDir={dir}
+          onAssessmentSort={onSort}
+          assessmentLoading={asmtLoading}
+          strandRows={strandRows}
+          strandTotal={strandTotal}
+          strandHasMore={strandRowsQ.hasNextPage}
+          strandFetchingMore={strandRowsQ.isFetchingNextPage}
+          onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
+          strandSort={strandSort}
+          strandDir={strandDir}
+          onStrandSort={onStrandSort}
+          strandLoading={strandLoading}
+          standards={stdQ.data?.standards ?? []}
+          search={search}
+          loading={stdLoading}
+        />
+      )}
 
       {/* Program (school-wide) reports — always-visible launcher buttons. */}
       <section className="space-y-2 pt-1">
