@@ -2276,15 +2276,48 @@ class CubeRepository:
                     cus.user_possible_point,
                     cus.user_overall_possible_point,
                     cus.total_score_by_overall_year,
-                    cus.total_possible_point_by_overall_year
+                    cus.total_possible_point_by_overall_year,
+                    cus.session,
+                    cus.subject,
+                    cus.grade,
+                    cus.assessment_type
                 FROM cube_user_summary cus
                 WHERE {_CUS_YTD_FILTER_SQL}
             ),
             grand AS (
-                SELECT
-                    MAX(total_score_by_overall_year)::float          AS grand_score,
-                    MAX(total_possible_point_by_overall_year)::float AS grand_possible
-                FROM scoped
+                -- The `*_by_overall_year` columns are precomputed per
+                -- (session, subject, grade, assessment_type) group. When the
+                -- scope spans several groups (session/type left unpinned — the
+                -- page only requires subject+grade) sum ONE value per distinct
+                -- group; MAX would return just the largest group's year total.
+                -- A single-group scope collapses to exactly that group's value
+                -- (legacy parity).
+                SELECT SUM(gs)::float AS grand_score,
+                       SUM(gp)::float AS grand_possible
+                FROM (
+                    SELECT DISTINCT session, subject, grade, assessment_type,
+                           total_score_by_overall_year          AS gs,
+                           total_possible_point_by_overall_year AS gp
+                    FROM scoped
+                ) d
+            ),
+            user_year AS (
+                -- Per-student year denominators, likewise summed across the
+                -- distinct groups the student appears in: user_possible_point
+                -- drives the per-standard "%" (contribution) denominator,
+                -- user_overall_possible_point the "Possible Points" column.
+                -- Single-group scope → the student's one value.
+                SELECT user_uid,
+                       SUM(upp)::float  AS user_possible_point,
+                       SUM(uopp)::float AS user_overall_possible_point
+                FROM (
+                    SELECT DISTINCT user_uid, session, subject, grade,
+                           assessment_type,
+                           user_possible_point         AS upp,
+                           user_overall_possible_point AS uopp
+                    FROM scoped
+                ) d
+                GROUP BY user_uid
             ),
             tests AS (
                 SELECT user_uid, COUNT(DISTINCT item_name) AS tests_taken
@@ -2305,9 +2338,7 @@ class CubeRepository:
                     MIN(user_name)                          AS user_name,
                     standard_label,
                     SUM(total_score)::float                 AS points_received,
-                    SUM(total_possible_point)::float        AS points_possible,
-                    MAX(user_possible_point)::float         AS user_possible_point,
-                    MAX(user_overall_possible_point)::float AS user_overall_possible_point
+                    SUM(total_possible_point)::float        AS points_possible
                 FROM scoped
                 GROUP BY section_instructors, user_uid, standard_label
             )
@@ -2318,14 +2349,15 @@ class CubeRepository:
                 c.standard_label,
                 c.points_received,
                 c.points_possible,
-                c.user_possible_point,
-                c.user_overall_possible_point,
+                uy.user_possible_point,
+                uy.user_overall_possible_point,
                 t.tests_taken,
                 u.unit_names,
                 g.grand_score,
                 g.grand_possible
             FROM cells c
             JOIN tests t ON t.user_uid = c.user_uid
+            JOIN user_year uy ON uy.user_uid = c.user_uid
             LEFT JOIN units u ON u.standard_label = c.standard_label
             CROSS JOIN grand g
             """
