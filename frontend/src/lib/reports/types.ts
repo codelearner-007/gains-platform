@@ -203,6 +203,134 @@ export interface AssessmentSummaryPage {
   offset: number;
 }
 
+// ─── Per-student reports ─────────────────────────────────────────────────
+// Percentages are 0–100 (one decimal); `band` is computed server-side so the
+// UI maps band→colour without re-implementing the 70/80 thresholds.
+
+export type PerfBandName = 'green' | 'yellow' | 'pink' | 'na';
+
+export interface StudentMasteryDist {
+  green: number;
+  yellow: number;
+  pink: number;
+  total: number;
+}
+
+export interface StudentSubjectStat {
+  subject: string;
+  grade: string | null;
+  pct: number | null;
+  band: PerfBandName;
+}
+
+/** One row in the dashboard "By Students" roster. */
+export interface StudentBrowseRow {
+  uid: string;
+  name: string;
+  grades: string[];
+  overall_pct: number | null;
+  overall_band: PerfBandName;
+  n_subjects: number;
+  n_assessments: number;
+  subjects: StudentSubjectStat[];
+  mastery: StudentMasteryDist;
+}
+
+export interface StudentBrowsePage {
+  rows: StudentBrowseRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface StudentIdentity {
+  uid: string;
+  name: string;
+  first: string | null;
+  last: string | null;
+  grad_year: string | null;
+  gender: string | null;
+}
+
+export interface ReportSchoolInfo {
+  name: string;
+  logo_url: string | null;
+  current_session: string;
+}
+
+export interface StudentAssessmentRow {
+  item_id: string;
+  name: string;
+  date: string | null;
+  n_questions: number;
+  score: number | null;
+  possible: number | null;
+  pct: number | null;
+  band: PerfBandName;
+  class_pct: number | null;
+}
+
+export interface StudentStandardRow {
+  identifier: string;
+  code: string;
+  description: string | null;
+  strand: string | null;
+  cluster: string | null;
+  complexity: string | null;
+  direct_link: string | null;
+  n_questions: number;
+  pct: number | null;
+  band: PerfBandName;
+}
+
+export interface StudentStrandRow {
+  strand: string;
+  n_questions: number;
+  pct: number | null;
+  band: PerfBandName;
+}
+
+export interface StudentSubjectReport {
+  subject: string;
+  grade: string | null;
+  assessment_types: string | null;
+  pct: number | null;
+  band: PerfBandName;
+  score: number | null;
+  possible: number | null;
+  n_questions: number;
+  n_assessments: number;
+  class_pct: number | null;
+  class_n_students: number | null;
+  mastery: StudentMasteryDist;
+  assessments: StudentAssessmentRow[];
+  standards: StudentStandardRow[];
+  strands: StudentStrandRow[];
+}
+
+export interface StudentOverall {
+  pct: number | null;
+  band: PerfBandName;
+  score: number | null;
+  possible: number | null;
+  n_subjects: number;
+  n_assessments: number;
+  n_standards: number;
+  class_pct: number | null;
+  class_n_students: number | null;
+  mastery: StudentMasteryDist;
+}
+
+export interface PerStudentReportPayload {
+  student: StudentIdentity;
+  school: ReportSchoolInfo;
+  session: string;
+  grades: string[];
+  overall: StudentOverall;
+  subjects: StudentSubjectReport[];
+  has_data: boolean;
+}
+
 // ─── Multi-tenant — accessible schools (school switcher) ─────────────────
 
 export interface AccessibleSchool {

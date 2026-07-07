@@ -487,3 +487,53 @@
     stroke-width: 2px !important;
   }
 }
+
+/* ── Per-student report: portrait document + clean pagination ──────────────
+   The @page above is A4 LANDSCAPE for the wide QSR/QRA/YTD student×question
+   matrices. The per-student report is a portrait document. Rather than a NAMED
+   page (which forces an implicit break-after → a trailing blank *landscape*
+   default page), the report route (app/students/[uid]/report/page.tsx) injects
+   an in-body `@page { size: A4 portrait }` that overrides the landscape default
+   for that route only. Here we just keep each block from splitting badly so the
+   portrait pages fill instead of leaving big gaps. */
+@media print {
+  .per-student-report {
+    background: #ffffff !important;
+  }
+  /* Portrait A4 content width (~770px) sits right at Tailwind's `md` breakpoint,
+     so the responsive grids would collapse to a single column — stacking the
+     Overview ring/radar/donut vertically (tall → page 1 empty, 12 pages). Force
+     the desktop side-by-side layout so the Overview stays HORIZONTAL and fits on
+     page 1, and the subject trend/strand stay two-up. */
+  .per-student-report .kpi-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+  .per-student-report .overview-grid {
+    grid-template-columns: 1fr auto 1.4fr auto 1fr !important;
+    align-items: center !important;
+  }
+  .per-student-report .overview-divider {
+    display: block !important;
+  }
+  .per-student-report .subject-grid,
+  .per-student-report .subject-split {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  /* Drop card shadows in print: they add nothing on paper and Chrome's
+     print-preview rasterizer can choke on many shadowed/rounded cards (the
+     "broken thumbnail" page-1 glitch), even though the saved PDF is fine. */
+  .per-student-report,
+  .per-student-report * {
+    box-shadow: none !important;
+  }
+  /* The app shell wraps report content in two 100vh (min-h-screen) columns +
+     a padded <main>. In paged media a 100vh min-height forces the container to a
+     full page even when the content is shorter, appending a trailing blank page.
+     Collapse it to the content height for the per-student report. */
+  body:has(.per-student-report) .min-h-screen {
+    min-height: 0 !important;
+  }
+  body:has(.per-student-report) main {
+    padding: 0 !important;
+  }
+}
