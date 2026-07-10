@@ -508,5 +508,6 @@ Permanent reference docs in `docs/`. Read the relevant file before guessing — 
 
 **Bug-fix writeups** (historical record of major numeric fixes — read to avoid undoing them)
 - `docs/audit/fixes/01_q12_multiselect_applied.md` — Q12 multi-select aggregation collapse at the cube `totals` CTE. Read before touching `cube_question_summary.sql` or `cube_question_summary_overall.sql`.
+- `docs/audit/fixes/02_assessment_misfiling_prod_runbook.md` — self-contained runbook for the assessment-misfiling data fixes (relabel / twin-merge / phantom-cleanup+heal / dqd-cleanup) applied on local dev, with the exact SQL patterns + step-by-step safe procedure to replay them on **production**. Read before applying any misfiling/label fix to prod (prod has no raw/staging → never re-run the pipeline).
 
 **Don't read unless directly relevant** — these are deep technical references; the file headers tell you when they apply. Skip them by default.
