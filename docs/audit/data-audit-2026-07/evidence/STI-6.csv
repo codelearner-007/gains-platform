@@ -1,0 +1,10 @@
+school_id,school_name,item_id,item_name,null_section_fact_rows,with_section_nid,dim_item_section_name,section_instructors,cube_named_groups,cube_blank_groups,cube_section_labels,cube_status
+019eb11c-410a-7ffb-86e6-a0294c669670,Athenian Academy of Technology and the Arts,7797157446,The Fight for Freedom Unit Test,935,935,4th Period,Nicole Swidarski,1,1,<blank> | Sec 1,SPLIT (named+blank)
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,Crestwell School,7998804188,"Chapter 18 Test: Collect, Represent, and Interpret Data",627,627,Section AB,"Sandra Doughan, MaryBeth Taylor",0,1,<blank>,ALL BLANK in cube
+019eb11c-410a-7ffb-86e6-a0294c669670,Athenian Academy of Technology and the Arts,7338399356,Unit 1 Benchmark Test: Investigating Questions,460,460,Leiva,Ana Leiva,0,1,<blank>,ALL BLANK in cube
+019eb11c-410a-7ffb-86e6-a0294c669670,Athenian Academy of Technology and the Arts,7799452545,Unit 10 Benchmark Test: Life Cycles and Growth,400,400,Baclohan,Maria Baclohan,1,1,<blank> | Sec 2,SPLIT (named+blank)
+019eb11c-410a-7ffb-86e6-a0294c669670,Athenian Academy of Technology and the Arts,7334741824,Module Assessment: Stories on Stage,396,396,Vaughn,Mary Vaughn,1,0,Sec 1,no blank in cube
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,Crestwell School,7998804147,Chapter 15 Test: Volume,336,336,Section AB,"Sandra Doughan, MaryBeth Taylor",0,1,<blank>,ALL BLANK in cube
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,Crestwell School,7998804135,Chapter 14 Test: Classify Two-Dimensional and Three-Dimensional Figures,285,285,Section AB,"Sandra Doughan, MaryBeth Taylor",0,1,<blank>,ALL BLANK in cube
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,Crestwell School,8134559640,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,58,58,Section AB,"Sandra Doughan, MaryBeth Taylor",0,1,<blank>,ALL BLANK in cube
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,Crestwell School,7998804173,Chapter 17 Test: Graphs and Patterns,23,23,Section AB,"Sandra Doughan, MaryBeth Taylor",0,1,<blank>,ALL BLANK in cube

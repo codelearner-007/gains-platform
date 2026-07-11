@@ -1,0 +1,25 @@
+school,item_id,item_name,pattern,qd_subjects,qd_grades,ds_subject,ds_grade,conflict_pairs,drift_rows
+Athenian Academy of Technology and the Arts,7337899774,Happy Healthy Me: Weekly Assessment: Week 3,grade_drift_vs_dim_subject,ELA,Grade K,ELA,Grade 1,,36
+Athenian Academy of Technology and the Arts,7625334305,Science CW FSSA book matter #1,grade_drift_vs_dim_subject,Science,Grade 4,Science,Grade 5,,9
+Athenian Academy of Technology and the Arts,7799442022,Module Assessment: Home of the Free and the Brave,grade_drift_vs_dim_subject,ELA,Grade 1,ELA,Grade K,,30
+Athenian Academy of Technology and the Arts,7892346412,Through an Animal?s Eyes Unit Test,grade_drift_vs_dim_subject,ELA,Grade 6,ELA,Grade 8,,50
+Athenian Academy of Technology and the Arts,8342066250,Module Assessment: Zoom In!,grade_drift_vs_dim_subject,ELA,Grade 1,ELA,Grade K,,23
+Athenian Academy of Technology and the Arts,7696812668,Unit 3 Lesson 3 Quiz,two_label_sets,Science|Social Studies,Grade 1,,,4,
+Athenian Academy of Technology and the Arts,7701493741,Unit 3 Lesson 3 Quiz,two_label_sets,Science|Social Studies,Grade 1,,,4,
+Athenian Academy of Technology and the Arts,7789287431,M7W2 Vocabulary Quiz,two_label_sets,ELA|Math,Grade 3,,,9,
+Athenian Academy of Technology and the Arts,7334633943,"Now You See It, Now You Don't: Weekly Assessment: Week 2",two_label_sets+grade_drift_vs_dim_subject,ELA,Grade 1|Grade K,ELA,Grade 1,22,22
+Central Florida Preparatory School,7816901887,Home Sweet Habitat: Weekly Assessment: Week 3,grade_drift_vs_dim_subject,ELA,Grade 3,ELA,Grade 2,,14
+Central Florida Preparatory School,7823076023,Home Sweet Habitat: Weekly Assessment: Week 3,grade_drift_vs_dim_subject,ELA,Grade 3,ELA,Grade 2,,9
+Central Florida Preparatory School,8347030584,Topic 8: Sectionalism and Civil War (1820-1865),grade_drift_vs_dim_subject,Civics,Grade 7,History,Grade 8,,20
+Central Florida Preparatory School,8216302399,Topic 3 Assessment A,two_label_sets,HS Honors Algebra I|Math,Higher-Ed,,,21,
+Central Florida Preparatory School,8368439603,Topic 9: Civil Rights and Reform in the 1960s (1945–1968),two_label_sets,ELA|HS United States History,Higher-Ed,,,4,
+Crestwell School,7929054690,What Makes Us Who We Are?: Weekly Assessment: Week 2,two_label_sets,ELA|Reading,Grade 4,,,10,
+Crestwell School,7929054711,Module Assessment: What Makes Us Who We Are?,two_label_sets,ELA|Reading,Grade 4,,,21,
+Crestwell School,8030067964,Module Assessment: Come to Your Senses,two_label_sets,ELA|Reading,Grade 4,,,23,
+Crestwell School,8030068539,Come to Your Senses: Weekly Assessment: Week 1,two_label_sets,ELA|Reading,Grade 4,,,10,
+Crestwell School,8030068554,Module Assessment: Come to Your Senses,two_label_sets,ELA|Reading,Grade 4,,,23,
+Crestwell School,8043769075,Come to Your Senses: Weekly Assessment: Week 2,two_label_sets,ELA|Reading,Grade 4,,,13,
+Crestwell School,8043771169,Come to Your Senses: Weekly Assessment: Week 2,two_label_sets,ELA|Reading,Grade 4,,,13,
+Crestwell School,8067707756,Let Freedom Ring!: Weekly Assessment: Week 2,two_label_sets,ELA|Reading,Grade 3,,,10,
+Crestwell School,8076248252,Module Assessment: Natural Disasters,two_label_sets,ELA|Reading,Grade 5,,,21,
+Crestwell School,8076251173,Module Assessment: Natural Disasters,two_label_sets,ELA|Reading,Grade 5,,,21,

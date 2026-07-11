@@ -1,0 +1,7 @@
+check_name,school_id,item_id,session,grade,subject,assessment_type,drift_type
+cube_user_summary_labels,019eb11c-410a-7ffb-86e6-a0294c669670,7625334305,2024-25,Grade 4,Science,Lesson  Assessments,LABEL_IN_CUBE_NOT_FACT
+cube_user_summary_labels,019eb11c-410a-7ffb-86e6-a0294c669670,7625334305,2024-25,Grade 5,Science,Lesson  Assessments,LABEL_IN_FACT_NOT_CUBE
+cube_user_summary_labels,019eb11c-413b-7a66-a7d8-a18f14736ede,7816901887,2024-25,Grade 2,ELA,Weekly Test,LABEL_IN_FACT_NOT_CUBE
+cube_user_summary_labels,019eb11c-413b-7a66-a7d8-a18f14736ede,7816901887,2024-25,Grade 3,ELA,Weekly Test,LABEL_IN_CUBE_NOT_FACT
+cube_user_summary_labels,019eb11c-413b-7a66-a7d8-a18f14736ede,7823076023,2024-25,Grade 2,ELA,Weekly Test,LABEL_IN_FACT_NOT_CUBE
+cube_user_summary_labels,019eb11c-413b-7a66-a7d8-a18f14736ede,7823076023,2024-25,Grade 3,ELA,Weekly Test,LABEL_IN_CUBE_NOT_FACT

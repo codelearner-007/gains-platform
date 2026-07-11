@@ -1,0 +1,522 @@
+school_name,item_id,item_name,user_uid,question_id,position_number,answer_submission,rows_in_partition,distinct_orderkey,distinct_submission_grade,submission,points_received,points_possible,keep_determinism
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,117456791,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,117456791,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,117456791,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325909,2156448417,1,25 ¢,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325909,2156448417,3,62 ¢,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325909,2156448417,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325910,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325910,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325910,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325913,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325913,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325913,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325915,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325915,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325915,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325916,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325916,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123325916,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123326289,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123326289,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123326289,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123326290,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123326290,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123326290,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123361647,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123361647,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123361647,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123553968,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123553968,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,123553968,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,125287571,2156448417,2,25 ¢,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,125287571,2156448417,1,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,125287571,2156448417,3,62 ¢,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,131695161,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,131695161,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,131695161,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,132352826,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,132352826,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,132352826,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,134917827,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,134917827,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,134917827,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137429905,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137429905,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137429905,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137429909,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137429909,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137429909,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137430923,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137430923,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,137430923,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,138670197,2156448417,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,138670197,2156448417,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893397296,Chapter 11,138670197,2156448417,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,117456243,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,117456243,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,117456243,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,117456247,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,117456247,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,117456247,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123325912,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123325912,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123325912,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326337,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326337,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326337,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326340,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326340,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326340,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326341,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326341,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123326341,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361650,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361650,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361650,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361671,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361671,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361671,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361678,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361678,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361678,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361703,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361703,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123361703,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123565731,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123565731,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,123565731,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,124695264,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,124695264,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,124695264,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,125274084,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,125274084,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,125274084,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,125287572,2156448823,2,62 ¢,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,125287572,2156448823,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,125287572,2156448823,1,25 ¢,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,131695157,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,131695157,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,131695157,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,131695591,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,131695591,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,131695591,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137429908,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137429908,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137429908,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137429910,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137429910,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137429910,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137857451,2156448823,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137857451,2156448823,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,137857451,2156448823,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,141677198,2156448823,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,141677198,2156448823,2,62 ¢,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893398191,Chapter 11,141677198,2156448823,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,117456245,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,117456245,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,117456245,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,117493728,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,117493728,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,117493728,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326339,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326339,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326339,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326346,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326346,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326346,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326449,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326449,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326449,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326459,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326459,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326459,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326468,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326468,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123326468,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361642,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361642,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361642,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361670,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361670,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361670,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361674,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361674,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361674,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361676,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361676,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361676,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361705,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361705,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,123361705,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,131695164,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,131695164,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,131695164,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,131863005,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,131863005,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,131863005,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137429907,2156449178,1,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137429907,2156449178,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137429907,2156449178,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137430924,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137430924,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137430924,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137573733,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137573733,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,137573733,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,141306478,2156449178,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,141306478,2156449178,3,25 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,7893399559,Chapter 11,141306478,2156449178,2,62 ¢,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,100886683,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,100886683,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,124421570,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,124421570,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,132721640,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,132721640,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,135741689,2192554629,3,<strong><em>x</em> = 9</strong>,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,135741689,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,137497393,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,137497393,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,137498414,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,137498414,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,137857105,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,137857105,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,140435414,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,140435414,2192554629,3,<strong><em>x</em> = 9</strong>,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,140605426,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,140605426,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,73961288,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,73961288,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,73961436,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,73961436,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649685,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649685,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649693,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649693,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649703,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649703,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649705,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649705,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649716,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649716,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649723,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649723,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649727,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,85649727,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,98608520,2192554629,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029075849,Module 10 Test,98608520,2192554619,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,110144292,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,110144292,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,113154116,2192554981,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,113154116,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,113383156,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,113383156,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,117497940,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,117497940,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,123362771,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,123362771,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,123362965,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,123362965,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,124450250,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,124450250,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,131921301,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,131921301,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,137497394,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,137497394,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,137498413,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,137498413,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,139342626,2192554991,3,<strong><em>x</em> = 9</strong>,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,139342626,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,139415473,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,139415473,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,140832749,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,140832749,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649683,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649683,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649688,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649688,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649692,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649692,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649718,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649718,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649731,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649731,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649736,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649736,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649738,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,85649738,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,89121754,2192554981,2,<strong><em>x</em> = 6</strong>,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Athenian Academy of Technology and the Arts,8029076125,Module 10 Test,89121754,2192554991,3,<strong><em>x</em> = 3</strong>,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124292901,2241796381,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124292901,2241796381,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124292901,2241796381,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865989,2241796381,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865989,2241796381,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865989,2241796381,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865993,2241796381,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865993,2241796381,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865993,2241796381,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865999,2241796381,3,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865999,2241796381,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865999,2241796381,2,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942343,2241796381,2,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942343,2241796381,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942343,2241796381,3,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942349,2241796381,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942349,2241796381,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942349,2241796381,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942352,2241796381,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942352,2241796381,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942352,2241796381,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942362,2241796381,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942362,2241796381,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942362,2241796381,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,132358970,2241796381,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,132358970,2241796381,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,132358970,2241796381,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506870,2241796381,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506870,2241796381,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506870,2241796381,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506877,2241796381,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506877,2241796381,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506877,2241796381,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506912,2241796381,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506912,2241796381,2,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506912,2241796381,3,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506921,2241796381,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506921,2241796381,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506921,2241796381,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506939,2241796381,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506939,2241796381,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506939,2241796381,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,139631618,2241796381,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,139631618,2241796381,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,139631618,2241796381,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,141005573,2241796381,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,141005573,2241796381,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,141005573,2241796381,1,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860857,2241796381,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860857,2241796381,3,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860857,2241796381,2,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860858,2241796381,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860858,2241796381,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198449,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860858,2241796381,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109348319,2241796396,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109348319,2241796396,3,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109348319,2241796396,2,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109348322,2241796396,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109348322,2241796396,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109348322,2241796396,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109673708,2241796396,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109673708,2241796396,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,109673708,2241796396,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,116903207,2241796396,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,116903207,2241796396,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,116903207,2241796396,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,116903227,2241796396,2,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,116903227,2241796396,3,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,116903227,2241796396,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865982,2241796396,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865982,2241796396,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865982,2241796396,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865988,2241796396,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865988,2241796396,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,124865988,2241796396,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,125317872,2241796396,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,125317872,2241796396,2,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,125317872,2241796396,3,True,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942348,2241796396,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942348,2241796396,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942348,2241796396,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942358,2241796396,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942358,2241796396,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,131942358,2241796396,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506895,2241796396,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506895,2241796396,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506895,2241796396,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506905,2241796396,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506905,2241796396,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506905,2241796396,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506918,2241796396,3,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506918,2241796396,1,n/a,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,138506918,2241796396,2,True,2,1,1,1,0.6667,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93858977,2241796396,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93858977,2241796396,1,True,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93858977,2241796396,3,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860860,2241796396,1,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860860,2241796396,2,True,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Central Florida Preparatory School,8224198497,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,93860860,2241796396,3,n/a,2,1,1,1,0.3333,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955269,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955269,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955278,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955278,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955319,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955319,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955332,2242921335,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955332,2242921335,1,Option 3,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955336,2242921335,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955336,2242921335,1,Option 3,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955359,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955359,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955369,2242921335,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955369,2242921335,1,Option 3,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955387,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955387,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955458,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955458,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955479,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955479,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955491,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,134955491,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,138921979,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,138921979,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,138921980,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,138921980,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,138921981,2242921335,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798021,Chapter 10 Test: Relate Multiplication and Area,138921981,2242921335,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955279,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955279,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955283,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955283,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955289,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955289,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955328,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955328,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955341,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955341,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955357,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955357,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955388,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955388,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955408,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955408,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955432,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955432,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955482,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,134955482,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,138921983,2242921822,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,138921983,2242921822,1,Option 3,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,138921984,2242921822,1,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,138921984,2242921822,2,n/a,2,1,1,1,0.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,138921985,2242921822,1,n/a,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8228798695,Chapter 10 Test: Relate Multiplication and Area,138921985,2242921822,2,Option 3,2,1,1,1,1.0000,1.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955257,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955257,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955257,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955257,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955293,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955293,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955293,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955293,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955321,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955321,2244623267,3,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955321,2244623267,4,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955321,2244623267,1,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955338,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955338,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955338,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955338,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955348,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955348,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955348,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955348,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955354,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955354,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955354,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955354,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955421,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955421,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955421,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955421,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955423,2244623267,1,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955423,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955423,2244623267,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955423,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955443,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955443,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955443,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955443,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955459,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955459,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955459,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955459,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955518,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955518,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955518,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955518,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955530,2244623267,1,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955530,2244623267,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955530,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,134955530,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138910491,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138910491,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138910491,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138910491,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138921987,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138921987,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138921987,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,138921987,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,139014148,2244623267,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,139014148,2244623267,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,139014148,2244623267,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235929790,Chapter 12 Test: Relate Fractions and Decimals,139014148,2244623267,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955268,2244623672,1,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955268,2244623672,4,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955268,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955268,2244623672,2,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955277,2244623672,1,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955277,2244623672,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955277,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955277,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955314,2244623672,2,n/a,2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955314,2244623672,1,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955314,2244623672,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955314,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955316,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955316,2244623672,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955316,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955316,2244623672,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955343,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955343,2244623672,1,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955343,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955343,2244623672,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955345,2244623672,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955345,2244623672,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955345,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955345,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955373,2244623672,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955373,2244623672,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955373,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955373,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955415,2244623672,1,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955415,2244623672,2,n/a,2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955415,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955415,2244623672,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955434,2244623672,2,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955434,2244623672,4,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955434,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955434,2244623672,1,n/a,2,1,1,1,3.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955438,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,2,1,2.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955438,2244623672,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,2,1,2.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955438,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,2,1,2.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955438,2244623672,1,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,2,1,2.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955468,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955468,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955468,2244623672,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955468,2244623672,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955496,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955496,2244623672,1,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955496,2244623672,2,n/a,2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,134955496,2244623672,4,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,1.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,138824987,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,138824987,2244623672,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,138824987,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,138824987,2244623672,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600354,2244623672,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600354,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600354,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600354,2244623672,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600355,2244623672,1,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600355,2244623672,3,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600355,2244623672,4,n/a,2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical
+Crestwell School,8235931624,Chapter 12 Test: Relate Fractions and Decimals,141600355,2244623672,2,"<p dir=""ltr""><span style=""font-size:14px;""><strong>True</strong></span></p>",2,1,1,1,4.0000,4.0000,ARBITRARY_KEEP_score_identical

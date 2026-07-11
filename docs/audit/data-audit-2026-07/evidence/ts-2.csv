@@ -1,0 +1,45 @@
+school_id,kind,item_name,twin_a,twin_b,nq,user_uid,subj,grade_a,grade_b,sess,type_a,type_b
+019eb11c-410a-7ffb-86e6-a0294c669670,same-item-id,Chapter 12,7687741861,7687741861,,131770756,Math,Grade K,Grade K,2024-25,Assessments~Lesson  Assessments,Assessments~Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,same-item-id,Chapter 12,7687741861,7687741861,,131861995,Math,Grade K,Grade K,2024-25,Assessments~Lesson  Assessments,Assessments~Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Everyone Has a Story: Weekly Assessment: Week 3,7334679836,7799429732,14,117456792,ELA,Grade 2,Grade 2,2024-25,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,110144462,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,117497311,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,117497312,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,117497315,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,126606628,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,131695592,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,131695852,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,137498415,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,137498416,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,137498417,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,138457943,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961200,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961210,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961234,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961302,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961336,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961354,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961366,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961454,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961486,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961488,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961510,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961516,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,73961518,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,81575814,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,85652751,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Test,7893465110,8020987135,25,85652955,Math,Grade 7,Grade 7,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 1 Week 1 Vocabulary,7961702243,8016288394,2,137429911,ELA,Grade 2,Grade 2,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 5 Test,8029075760,8029076040,20,117497940,Math,Grade 6,Grade 6,2025-26,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Module 7 Week 2 Vocabulary Quiz,7445551772,7445551773,2,117456551,ELA,Grade 2,Grade 2,2024-25,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Unit 2 Benchmark Test: The Engineering Process,7803821108,7815809064,20,110137921,Science,Grade 3,Grade 3,2024-25,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Unit 2 Benchmark Test: The Engineering Process,7803821108,7815809064,20,110137960,Science,Grade 3,Grade 3,2024-25,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Unit 2 Benchmark Test: The Engineering Process,7803821108,7815809064,20,110137984,Science,Grade 3,Grade 3,2024-25,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Unit 2 Benchmark Test: The Engineering Process,7803821108,7815809064,20,110137989,Science,Grade 3,Grade 3,2024-25,Lesson  Assessments,Lesson  Assessments
+019eb11c-410a-7ffb-86e6-a0294c669670,cross-item,Unit 2 Benchmark Test: The Engineering Process,7803821108,7815809064,20,131695853,Science,Grade 3,Grade 3,2024-25,Lesson  Assessments,Lesson  Assessments
+019eb11c-413b-7a66-a7d8-a18f14736ede,cross-item,Module 2 Assessment: Come to Your Senses,8088499478,8092034736,30,138506916,ELA,Grade 4,Grade 4,2025-26,Summative,Summative
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,cross-item,Chapter 1 Test: Counting and Number Sense,7610639442,7841245375,9,136696876,Math,Grade 1,Grade 2,2024-25,Chap Test,2 sectionsAll Sections
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,cross-item,Chapter 1 Test: Counting and Number Sense,7610639551,7841245375,9,136696884,Math,Grade 1,Grade 2,2024-25,Chap Test,2 sectionsAll Sections
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,cross-item,Chapter 1 Test: Counting and Number Sense,7610639551,7841245375,9,136696902,Math,Grade 1,Grade 2,2024-25,Chap Test,2 sectionsAll Sections
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,same-item-id,What Makes Us Who We Are?: Weekly Assessment: Week 2,7929054690,7929054690,,134955415,Reading,Grade 4,Grade 4,2025-26,Summative~Weekly Test,Summative~Weekly Test
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,same-item-id,What Makes Us Who We Are?: Weekly Assessment: Week 2,7929054690,7929054690,,134955460,Reading,Grade 4,Grade 4,2025-26,Summative~Weekly Test,Summative~Weekly Test

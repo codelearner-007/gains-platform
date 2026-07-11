@@ -1,0 +1,712 @@
+Item_ID,Subject_ID,Item_Type,Item_Name,School_ID,Section_Name,Section_Instructors,assessment_date
+7779943180,b31596b9f884d81b3768324ad3f0961d70c5c24ca4221652d433d54c341cbf1e,Test/Quiz,Time to Grow!: Weekly Assessment: Week 1,554425139,02 LA - A,Amanda Malcom,2025-03-28
+7780237720,b31596b9f884d81b3768324ad3f0961d70c5c24ca4221652d433d54c341cbf1e,Test/Quiz,Time to Grow!: Weekly Assessment: Week 1,554425139,02 LA - C,Shanise Hilley,2025-03-28
+7780237758,b90a097a503383b8257954d871ebec958fa5cdd23c65a36307dbd73cb9594055,Test/Quiz,Time to Grow!: Weekly Assessment: Week 3,554425139,02 LA - C,Shanise Hilley,2025-04-11
+7780237793,ba0f7bb1aa3828645e919a27ed6742e41a00f70138e74fcd3c41f36723f94d09,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 1,554425139,02 LA - C,Shanise Hilley,2025-04-18
+7780237817,8613dff225fa343dffca6730c433607b426c102dbffd0efd8535ff2530244f21,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 3,554425139,02 LA - C,Shanise Hilley,2025-05-02
+7780237855,9c868edee0935914fc1d6c186fcefc36c43c960ac82b76af2ae5bd15dc5a5a7f,Test/Quiz,"Many Cultures, One World: Weekly Assessment: Week 2",554425139,02 LA - C,Shanise Hilley,2025-05-15
+7780398411,b31596b9f884d81b3768324ad3f0961d70c5c24ca4221652d433d54c341cbf1e,Test/Quiz,Time to Grow!: Weekly Assessment: Week 1,554425139,02 LA - B,Ashley Sanchez,2025-03-28
+7782424170,3b31fc4c3e7025a016676d1dfbf3fefb78859c259847ed1460dc89cacac273d1,Test/Quiz,Animal Behaviors: Weekly Assessment: Week 1,554425139,03 LA - C,Alexis Tillman,2025-03-31
+7787678187,e974c12b874b7dd2f7e82242add8498802ae1efc32a6a3f0d11937b488a516cf,Test/Quiz,Time to Grow!: Weekly Assessment: Week 2,554425139,02 LA - B,Ashley Sanchez,2025-04-04
+7787866945,e974c12b874b7dd2f7e82242add8498802ae1efc32a6a3f0d11937b488a516cf,Test/Quiz,Time to Grow!: Weekly Assessment: Week 2,554425139,02 LA - A,Amanda Malcom,2025-04-04
+7791692190,b90a097a503383b8257954d871ebec958fa5cdd23c65a36307dbd73cb9594055,Test/Quiz,Time to Grow!: Weekly Assessment: Week 3,554425139,02 LA - B,Ashley Sanchez,2025-04-11
+7792126785,07fa9c5e1cd00271a790a7ff7d522fd4ccd9e19f993651f7e1e3e58156ccbd5a,Test/Quiz,Animal Behaviors: Weekly Assessment: Week 2,554425139,03 LA - C,Alexis Tillman,2025-04-07
+7792435832,6dd945e807d0ee6638e48ae236166347554c8f468729427c0bea6d29f1d88d94,Test/Quiz,Unit 6 Test: Heat Sources,554425139,03 SCI - C,Alexis Tillman,2025-04-07
+7795974019,ed75b2834d8c5d29dccc5c3296d4a3a1ef818fdf7389fb1a474e2841f1f6752d,Test/Quiz,Unit 8 Test: Forces and Motion,554425139,02 SCI - A,Amanda Malcom,2025-04-09
+7796962804,ba0f7bb1aa3828645e919a27ed6742e41a00f70138e74fcd3c41f36723f94d09,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 1,554425139,02 LA - B,Ashley Sanchez,2025-04-17
+7799001172,b90a097a503383b8257954d871ebec958fa5cdd23c65a36307dbd73cb9594055,Test/Quiz,Time to Grow!: Weekly Assessment: Week 3,554425139,02 LA - A,Amanda Malcom,2025-04-11
+7800192889,0a93bc50c882d5dcb335ffbfbc3e48274c9ca9f9ff98e06e5e260913a5497ee8,Test/Quiz,Animal Behaviors: Weekly Assessment: Week 3,554425139,03 LA - C,Alexis Tillman,2025-04-11
+7806926683,ba0f7bb1aa3828645e919a27ed6742e41a00f70138e74fcd3c41f36723f94d09,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 1,554425139,02 LA - A,Amanda Malcom,2025-04-18
+7807215601,fe2581d8428e084e937bbacced5ad2a6dc984dfb8e82a359da6249e89e492463,Test/Quiz,Make a Difference: Weekly Assessment: Week 1,554425139,03 LA - C,Alexis Tillman,2025-04-18
+7807260114,8d5e72d41059e05c0d7f61c0296d1792450db95b8caeb088863b07103ac9b2ec,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 2,554425139,02 LA - B,Ashley Sanchez,2025-04-25
+7814288655,8d5e72d41059e05c0d7f61c0296d1792450db95b8caeb088863b07103ac9b2ec,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 2,554425139,02 LA - A,Amanda Malcom,2025-04-25
+7816901887,8613dff225fa343dffca6730c433607b426c102dbffd0efd8535ff2530244f21,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 3,554425139,02 LA - B,Ashley Sanchez,2025-05-02
+7817352678,077afc0fe6fcca4ade20e1e62cd652d54b72805cd9c2d5b9e40f49631f79007f,Test/Quiz,Make a Difference: Weekly Assessment: Week 2,554425139,03 LA - C,Alexis Tillman,2025-04-28
+7823076023,8613dff225fa343dffca6730c433607b426c102dbffd0efd8535ff2530244f21,Test/Quiz,Home Sweet Habitat: Weekly Assessment: Week 3,554425139,02 LA - A,Amanda Malcom,2025-05-02
+7832730105,f2d1d8b15b01fb259cb1ad28179ee39ca6bfb4c06a1a421e12a05981b52d9435,Test/Quiz,Unit Test: The Human Body,554425139,02 SCI - A,Amanda Malcom,2025-05-09
+7835513175,1c92ea089c4993cd04d7c82c9d94af86ae73a7645c881797bdc08113f1792863,Test/Quiz,Imagine! Invent!: Weekly Assessment: Week 1,554425139,03 LA - C,Alexis Tillman,2025-05-12
+7891729330,66f43f65c614c560c022af37b512068a1126c4b6b77832f5018ee6543a65bfc1,Test/Quiz,Chapter 1 Test: Counting and Number Sense,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2025-09-01
+7891731478,17f94e408c5015f6fc7f6e36f165b14bd857fd925284978017f1f7cc0e66ec95,Test/Quiz,Unit 1 Benchmark Test: How Scientists Work,554425139,01 SCI - B,"Cindy Mitchell, Alexis Tillman",2025-09-12
+7891731481,6038a19f062fccc0cb74ac2a0ca632327429d138192fdd57dcdb5212e6158320,Test/Quiz,Unit 5 Benchmark Test: Matter,554425139,01 SCI - B,"Cindy Mitchell, Alexis Tillman",2025-12-16
+7891731482,0e316bc32932edbf3fd37f32756544201a2a34b869e7e78096a5388c944d8cd7,Test/Quiz,Unit 6 Benchmark Test: Motion,554425139,01 SCI - B,"Cindy Mitchell, Alexis Tillman",2026-02-12
+7891731484,74a8eb3810a4f89774bae2bd658511d4ebdaf1f3571d739fc8f8e009c2e1d976,Test/Quiz,Unit 8 Benchmark Test: Living Things and  Their Parents,554425139,01 SCI - B,Cindy Mitchell,2026-04-20
+7891731485,5294c3c3a1fa6c5ca690bd22540732e1c503cb71d6dfe60aaf83d443244a4fe2,Test/Quiz,Unit 9 Benchmark Test: Plant and Animal Needs,554425139,01 SCI - B,Cindy Mitchell,2026-05-06
+7891731608,17f94e408c5015f6fc7f6e36f165b14bd857fd925284978017f1f7cc0e66ec95,Test/Quiz,Unit 1 Benchmark Test: How Scientists Work,554425139,01 SCI - C,"Petra Slouber, Alexis Tillman",2025-09-11
+7891731612,474520938130b52dd5a33c28e7fa9b51e417c0e631c5319c9a61910d319b32f1,Test/Quiz,Unit 4 Benchmark Test: Earth?s Resources,554425139,01 SCI - C,"Petra Slouber, Alexis Tillman",2025-11-19
+7891731613,6038a19f062fccc0cb74ac2a0ca632327429d138192fdd57dcdb5212e6158320,Test/Quiz,Unit 5 Benchmark Test: Matter,554425139,01 SCI - C,"Petra Slouber, Alexis Tillman",2025-12-16
+7891731617,0e316bc32932edbf3fd37f32756544201a2a34b869e7e78096a5388c944d8cd7,Test/Quiz,Unit 6 Benchmark Test: Motion,554425139,01 SCI - C,"Petra Slouber, Alexis Tillman",2026-02-12
+7891731620,74a8eb3810a4f89774bae2bd658511d4ebdaf1f3571d739fc8f8e009c2e1d976,Test/Quiz,Unit 8 Benchmark Test: Living Things and  Their Parents,554425139,01 SCI - C,Petra Slouber,2026-04-16
+7891731621,5294c3c3a1fa6c5ca690bd22540732e1c503cb71d6dfe60aaf83d443244a4fe2,Test/Quiz,Unit 9 Benchmark Test: Plant and Animal Needs,554425139,01 SCI - C,Petra Slouber,2026-05-06
+7891731746,6038a19f062fccc0cb74ac2a0ca632327429d138192fdd57dcdb5212e6158320,Test/Quiz,Unit 5 Benchmark Test: Matter,554425139,01 SCI - D,"Alexis Tillman, Laura YoungBrown",2025-12-16
+7891731747,0e316bc32932edbf3fd37f32756544201a2a34b869e7e78096a5388c944d8cd7,Test/Quiz,Unit 6 Benchmark Test: Motion,554425139,01 SCI - D,"Alexis Tillman, Laura YoungBrown",2026-02-12
+7891731749,74a8eb3810a4f89774bae2bd658511d4ebdaf1f3571d739fc8f8e009c2e1d976,Test/Quiz,Unit 8 Benchmark Test: Living Things and  Their Parents,554425139,01 SCI - D,Laura YoungBrown,2026-04-17
+7891742803,b3b21da63488470a66f529eaa2f2ec3e88e2c3f8dd59df174a9291eef7ca31bf,Test/Quiz,Unit 3 Benchmark Test: Earth's Surface,554425139,02 SCI - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-11-12
+7891742805,95afa9dc46fc1ca04e81035e9ab0768c9e63f20646afde5c19de4ada776351ab,Test/Quiz,Unit 4 Benchmark Test: Weather,554425139,02 SCI - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-12-18
+7891742806,15017accd87370aaac40b17a35544a0bfd14003f3453e63e677a4dea63eaae23,Test/Quiz,Unit 5 Benchmark Test: All About Matter,554425139,02 SCI - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-02-05
+7891742809,119c699ffe234461b3fe5f80dae690a3eabda7d9744e3e5a4a737466f95526b8,Test/Quiz,Unit 6 Test: Matter Can Change,554425139,02 SCI - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-02-24
+7891742812,8fed0675f10442c3292fe4b34e122298c8594a92b5b1b6ba21778047077cb0e3,Test/Quiz,Unit 7 Benchmark Test: Energy,554425139,02 SCI - C,Ashley Sanchez,2026-03-25
+7891742813,ee554a0d5c4ccd3b2268b43375a872adc887fbe3a8a86fd92591fda33b7c6227,Test/Quiz,Unit 8 Test: Forces and Motion,554425139,02 SCI - C,Ashley Sanchez,2026-04-20
+7891745751,792dc53c62a4133ab3198afd3c325e5ee7440759add4b4719a6beb1a0abdfe07,Test/Quiz,Unit 2 Benchmark: Technology In Our World,554425139,02 SCI - B,"Amanda Malcom, Alexis Tillman",2025-10-21
+7891745759,95afa9dc46fc1ca04e81035e9ab0768c9e63f20646afde5c19de4ada776351ab,Test/Quiz,Unit 4 Benchmark Test: Weather,554425139,02 SCI - B,"Amanda Malcom, Alexis Tillman",2025-12-18
+7891745761,15017accd87370aaac40b17a35544a0bfd14003f3453e63e677a4dea63eaae23,Test/Quiz,Unit 5 Benchmark Test: All About Matter,554425139,02 SCI - B,"Amanda Malcom, Alexis Tillman",2026-02-05
+7891745764,119c699ffe234461b3fe5f80dae690a3eabda7d9744e3e5a4a737466f95526b8,Test/Quiz,Unit 6 Test: Matter Can Change,554425139,02 SCI - B,"Amanda Malcom, Alexis Tillman",2026-02-24
+7891745771,ee554a0d5c4ccd3b2268b43375a872adc887fbe3a8a86fd92591fda33b7c6227,Test/Quiz,Unit 8 Test: Forces and Motion,554425139,02 SCI - B,Amanda Malcom,2026-04-20
+7891748206,792dc53c62a4133ab3198afd3c325e5ee7440759add4b4719a6beb1a0abdfe07,Test/Quiz,Unit 2 Benchmark: Technology In Our World,554425139,02 SCI - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-10-21
+7891748213,b3b21da63488470a66f529eaa2f2ec3e88e2c3f8dd59df174a9291eef7ca31bf,Test/Quiz,Unit 3 Benchmark Test: Earth's Surface,554425139,02 SCI - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-11-12
+7891748222,95afa9dc46fc1ca04e81035e9ab0768c9e63f20646afde5c19de4ada776351ab,Test/Quiz,Unit 4 Benchmark Test: Weather,554425139,02 SCI - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-12-18
+7891748231,15017accd87370aaac40b17a35544a0bfd14003f3453e63e677a4dea63eaae23,Test/Quiz,Unit 5 Benchmark Test: All About Matter,554425139,02 SCI - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-02-05
+7891748239,119c699ffe234461b3fe5f80dae690a3eabda7d9744e3e5a4a737466f95526b8,Test/Quiz,Unit 6 Test: Matter Can Change,554425139,02 SCI - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-02-24
+7891748245,8fed0675f10442c3292fe4b34e122298c8594a92b5b1b6ba21778047077cb0e3,Test/Quiz,Unit 7 Benchmark Test: Energy,554425139,02 SCI - A,Shanise Hilley,2026-03-25
+7891748248,ee554a0d5c4ccd3b2268b43375a872adc887fbe3a8a86fd92591fda33b7c6227,Test/Quiz,Unit 8 Test: Forces and Motion,554425139,02 SCI - A,Shanise Hilley,2026-04-20
+7891748251,14c0332ffa160a129a2e4b98ad52adf691856edc5cb57dd718463985fae3c4cb,Test/Quiz,Unit 9 Test: The Human Body,554425139,02 SCI - A,Shanise Hilley,2026-05-04
+7891791745,aba744b4b894cd4086f0ff8d06dd42ecd4d8fe1bad5fd9370a2199518ca32407,Test/Quiz,Unit 1 Benchmark Test: Investigating Questions,554425139,03 SCI - A,"Victoria Echevarria, Alexis Tillman",2025-09-09
+7891791747,839c931ee7cafcf6dc0137c560a0b6012c1638b1442e67f94b0ac7f243dc61a1,Test/Quiz,Unit 3 Benchmark Test: Earth and Stars,554425139,03 SCI - A,"Victoria Echevarria, Alexis Tillman",2025-10-10
+7891791748,827d4ca5d22559ebc3be88bfc7f4cce41970006bdc712033c94afdb428136207,Test/Quiz,Unit 4 Test: Properties of Matter,554425139,03 SCI - A,"Victoria Echevarria, Alexis Tillman",2025-11-06
+7891791753,aa55a154ba067ecea5cc591391dfd4ed2e7967e0487fb8d70db8dfa399d30881,Test/Quiz,Unit 7 Benchmark Test: Plants and the Environment,554425139,03 SCI - A,"Victoria Echevarria, Alexis Tillman",2026-02-05
+7891791756,318fd81878dc66189a03766230d812661c9104c3b7e4fc9e596323d0a896bf38,Test/Quiz,Unit 8 Test: Classifying Plants and Animals,554425139,03 SCI - A,Victoria Echevarria,2026-04-20
+7891794178,839c931ee7cafcf6dc0137c560a0b6012c1638b1442e67f94b0ac7f243dc61a1,Test/Quiz,Unit 3 Benchmark Test: Earth and Stars,554425139,03 SCI - B,"Nathalia Malette, Alexis Tillman",2025-10-10
+7891794198,827d4ca5d22559ebc3be88bfc7f4cce41970006bdc712033c94afdb428136207,Test/Quiz,Unit 4 Test: Properties of Matter,554425139,03 SCI - B,"Nathalia Malette, Alexis Tillman",2025-11-06
+7891794259,aa55a154ba067ecea5cc591391dfd4ed2e7967e0487fb8d70db8dfa399d30881,Test/Quiz,Unit 7 Benchmark Test: Plants and the Environment,554425139,03 SCI - B,Nathalia Malette,2026-02-05
+7891794271,318fd81878dc66189a03766230d812661c9104c3b7e4fc9e596323d0a896bf38,Test/Quiz,Unit 8 Test: Classifying Plants and Animals,554425139,03 SCI - B,Nathalia Malette,2026-04-20
+7891817507,ebd1c49d27f809c23d3cd43a4ada56d3cb66d1f5dd5bc8d865393a84cc5d93c8,Test/Quiz,Unit 2 Test: The Engineering Process,554425139,04 SCI - A,"Colleen Marrero, Alexis Tillman",2025-09-30
+7891817509,04549eac97715f9e46e1b3767a85c60634b92debdf37fd1f431eeb9f168fd498,Test/Quiz,Unit 3 Test: Earth's Place in Space,554425139,04 SCI - A,"Colleen Marrero, Alexis Tillman",2025-10-22
+7891817514,ceec481b75f0a8e510cce5da6d3417a05597ac02a369ba4af84e005a6f73f8a2,Test/Quiz,"Unit 4 Test: Rocks, Minerals and Resources",554425139,04 SCI - A,"Colleen Marrero, Alexis Tillman",2025-11-18
+7891817523,f208e5fa97ef0e39cba32dbc4b723626912990780125dab7673d4cf4baddc344,Test/Quiz,Unit 5 Test: Matter and Its Properties,554425139,04 SCI - A,"Colleen Marrero, Alexis Tillman",2025-12-17
+7891817533,0fb919f3f92e875c381ac3c87ccc10ef49787ef5d88d80408d0a16748bba5bf8,Test/Quiz,Unit 6 Test: Matter and Its Changes,554425139,04 SCI - A,"Colleen Marrero, Alexis Tillman",2026-01-14
+7891817542,f7d8416f2c64d0dd61be40d1f31cfc6c6286f37527c3450ac61a72709217b23f,Test/Quiz,Unit 7 Test: Energy and Its Uses,554425139,04 SCI - A,"Colleen Marrero, Alexis Tillman",2026-02-05
+7891817551,e31cc8f7444b17a84f28464b50c556627dcd2a6aa613471929e378f314e11bd9,Test/Quiz,Unit 8 Test: Heat,554425139,04 SCI - A,"Colleen Marrero, Alexis Tillman",2026-02-24
+7891817571,3b079f1ad9308f072e71b1641c4446decd01a78e9f6211077306fb77d404c68d,Test/Quiz,Unit 10 Test: Life Cycles and Growth,554425139,04 SCI - A,Colleen Marrero,2026-04-06
+7891817582,1d02f3386adec14f17ccf3ae913521dc8e664a23715432abce0c34764b687594,Test/Quiz,Unit 11 Test: Organisms and Their Environment,554425139,04 SCI - A,Colleen Marrero,2026-04-27
+7891829283,7069654b5f8030f539e666d4285bdfbc1f4bd64c393a0bbac9f0fb9cbde36de5,Test/Quiz,Unit 1 Test: Studying Science,554425139,04 SCI - B,"Chante Brown, Alexis Tillman",2025-09-11
+7891829295,ebd1c49d27f809c23d3cd43a4ada56d3cb66d1f5dd5bc8d865393a84cc5d93c8,Test/Quiz,Unit 2 Test: The Engineering Process,554425139,04 SCI - B,"Chante Brown, Alexis Tillman",2025-10-02
+7891829307,04549eac97715f9e46e1b3767a85c60634b92debdf37fd1f431eeb9f168fd498,Test/Quiz,Unit 3 Test: Earth's Place in Space,554425139,04 SCI - B,"Chante Brown, Alexis Tillman",2025-10-22
+7891829343,ceec481b75f0a8e510cce5da6d3417a05597ac02a369ba4af84e005a6f73f8a2,Test/Quiz,"Unit 4 Test: Rocks, Minerals and Resources",554425139,04 SCI - B,"Chante Brown, Alexis Tillman",2025-11-20
+7891829368,f208e5fa97ef0e39cba32dbc4b723626912990780125dab7673d4cf4baddc344,Test/Quiz,Unit 5 Test: Matter and Its Properties,554425139,04 SCI - B,"Chante Brown, Alexis Tillman",2025-12-18
+7891829390,f7d8416f2c64d0dd61be40d1f31cfc6c6286f37527c3450ac61a72709217b23f,Test/Quiz,Unit 7 Test: Energy and Its Uses,554425139,04 SCI - B,"Chante Brown, Alexis Tillman",2026-02-09
+7891829399,e31cc8f7444b17a84f28464b50c556627dcd2a6aa613471929e378f314e11bd9,Test/Quiz,Unit 8 Test: Heat,554425139,04 SCI - B,"Chante Brown, Alexis Tillman",2026-02-20
+7891829418,3b079f1ad9308f072e71b1641c4446decd01a78e9f6211077306fb77d404c68d,Test/Quiz,Unit 10 Test: Life Cycles and Growth,554425139,04 SCI - B,Chante Brown,2026-04-07
+7891829429,1d02f3386adec14f17ccf3ae913521dc8e664a23715432abce0c34764b687594,Test/Quiz,Unit 11 Test: Organisms and Their Environment,554425139,04 SCI - B,Chante Brown,2026-04-28
+7891846750,5c5d853b6280277ce2f58d329aa18b12e7f1c41e93c99e1e2882439e8da0adcc,Test/Quiz,Unit 1 Benchmark Test: Scientists at Work,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2025-09-12
+7891846764,5c72e24d3e318f0194d0078249a948f2fc9a655c16ff6101dc1a95aff9ab87aa,Test/Quiz,Unit 2 Benchmark Test: The Engineering Process,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2025-09-30
+7891846772,ce372881350ca2a60a1535a769f8a760cf8a95b429e84557d088ce6921bf58fe,Test/Quiz,Unit 3 Benchmark Test: The Solar System and the Universe,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2025-10-14
+7891846781,64b859ca0323294ddc549d8d79267dbffe6c87f2ff3fee5d3ff71547cf61f98a,Test/Quiz,"Unit 4 Benchmark: Weather, Climate, and the Water Cycle",554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2025-10-29
+7891846788,ccddfc8c0c7b2cc50059c1ffcf9a90b5a132b33aab9feffeba0d52d8f1a610d9,Test/Quiz,Unit 5 Benchmark Test: The Nature of Matter,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2025-11-19
+7891846796,61c7778db948d0546007edecd5732bc23e55d1b59c0071a969735c98eb25abb2,Test/Quiz,Unit 6 Benchmark Test: Forms of Energy,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2025-12-16
+7891846801,86cd9e9e959f8ac4bfe860fd083bf308c14f797734d5e9aab6c93c1197725a38,Test/Quiz,Unit 7 Benchmark Test: Working With Electricity,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2026-01-15
+7891846806,f9e2460eb5544502b7f44d904b8b98f74fafbe410bc2af933f481c796c14c424,Test/Quiz,Unit 8 Benchmark Test: Forces and Motion,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2026-02-04
+7891846818,d542f69a73375fa3cb65b4cf25958dc51e7410f4bd99a4b5b3e75151d7d8e9b4,Test/Quiz,Unit 9 Benchmark Test: The Structure of Living Things,554425139,05 SCI - A,"Jahmila McIntyre, Alexis Tillman",2026-02-24
+7891846829,95618cc6e38eec5f6754af9e0680a7dc801af08ef831ba10b56c33128911c409,Test/Quiz,Unit 11 Benchmark Test: Plants and Animal Adaptations,554425139,05 SCI - A,Jahmila McIntyre,2026-04-10
+7961237746,abc75418b46091cd485f480fcc2b75642e379301f209752d871c930aa23755b8,Test/Quiz,Energy,554425139,MS 08 PHY SC - 4th A,Maritza Serrano,2025-09-29
+7961241120,abc75418b46091cd485f480fcc2b75642e379301f209752d871c930aa23755b8,Test/Quiz,Energy,554425139,MS 08 PHY SC - 2nd B,Maritza Serrano,2025-09-29
+7961292241,bf0476e6c7b0320c989eeeda1d21c0c4187eded7eb51c8d4eb88699fc3fa6a76,Test/Quiz,Introduction to Earth's Systems,554425139,MS 06 EARTH SPACE SCI - 5th B,Maritza Serrano,2025-09-29
+7961294022,bf0476e6c7b0320c989eeeda1d21c0c4187eded7eb51c8d4eb88699fc3fa6a76,Test/Quiz,Introduction to Earth's Systems,554425139,MS 06 EARTH SPACE SCI - 7th A,Maritza Serrano,2025-09-29
+7961332573,aee8260ac7498acf5d8a0ef529bce7a56a5b8764275bda023c62cbb4aa3cf3f8,Test/Quiz,Investigation Assessment 1: Modeling Motion,554425139,HS PHYS - 3rd,Idalix Granados,2025-10-14
+7961339860,a57c00ea69f27b63b21c572a7e95a026ff7828938eb705325b5e986355cd1609,Test/Quiz,Living Things in the Biosphere,554425139,MS 07 LFE SCI - 3rd A,Maritza Serrano,2025-09-29
+7962000328,c7082dc0d775668334dd8a6e5bc92540385bf6a5921b5767e0e32d07d9280225,Test/Quiz,Topic 1: Origins of Civilization,554425139,MS 06 WH - 2nd B,Xiomara Rivas,2025-10-02
+7962235961,aa5231204ff953fcbc29eef9c2fb15bd680619069c53ab42b920f896fb73ee84,Test/Quiz,Topic 1: Who Are We?: Get Involved in Your Community,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2025-10-02
+7962236175,aa5231204ff953fcbc29eef9c2fb15bd680619069c53ab42b920f896fb73ee84,Test/Quiz,Topic 1: Who Are We?: Get Involved in Your Community,554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2025-10-02
+7963934901,eac2f8d5aed02c0d88b618922ca21cfc8b09176eddee2227ba9d856aa521f45b,Test/Quiz,Unit 1 Part 1,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2025-10-09
+7963934904,b58ac0e517d6b0e18e183b62d27f007cd219aa35e0ff123442f8b6de07e9ef11,Test/Quiz,Unit 1 Part 2,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2025-10-07
+7963936200,eac2f8d5aed02c0d88b618922ca21cfc8b09176eddee2227ba9d856aa521f45b,Test/Quiz,Unit 1 Part 1,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2025-10-09
+7963936207,b58ac0e517d6b0e18e183b62d27f007cd219aa35e0ff123442f8b6de07e9ef11,Test/Quiz,Unit 1 Part 2,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2025-10-07
+7963936946,13cd2eb3f929dc891c520d7d13137bbb5c84e3cce70917170425aead19906caa,Test/Quiz,Unit 1 Part 1,554425139,MS 07 LA II - 4th B,Maurisha Tucker-McFadden,2025-10-09
+7963936947,b3979d9dcdbcba35962e558dacf1a47b629bdd4510bd8fb53f74d3b2a05f7961,Test/Quiz,Unit 1 Part 2,554425139,MS 07 LA II - 4th B,Maurisha Tucker-McFadden,2025-10-07
+7963937400,13cd2eb3f929dc891c520d7d13137bbb5c84e3cce70917170425aead19906caa,Test/Quiz,Unit 1 Part 1,554425139,MS 07 LA II - 6th A,Maurisha Tucker-McFadden,2025-10-09
+7963937401,b3979d9dcdbcba35962e558dacf1a47b629bdd4510bd8fb53f74d3b2a05f7961,Test/Quiz,Unit 1 Part 2,554425139,MS 07 LA II - 6th A,Maurisha Tucker-McFadden,2025-10-07
+7963939073,fabff20b48d9138c5a79d1f4c0630ea0f140a8adbfd5ecce84f01a4eb841e660,Test/Quiz,Unit1 Part 1,554425139,MS 08 LA III - 2nd A,Maurisha Tucker-McFadden,2025-10-07
+7963941461,fabff20b48d9138c5a79d1f4c0630ea0f140a8adbfd5ecce84f01a4eb841e660,Test/Quiz,Unit1 Part 1,554425139,MS 08 LA III - 3rd B,"Deborah Farina, Maurisha Tucker-McFadden",2025-10-10
+7964004497,d2e2c43dc25161de2e58cf28cb919fd9ee2f1c891d4c69bb2550db8a63334673,Test/Quiz,Topic 1,554425139,HS ALG I - 7th,Margaret Polsen,2025-10-14
+7964041607,7b385d544486873f5f7f23e6798b5af99217ebca33a8ed41fa77013fc58db87d,Test/Quiz,Topic 1,554425139,MS 06 MATH - 2nd A,James Ryan,2025-09-19
+7964059500,abf2d9f9a2bfc2bb4e677f26dc753ce0f4a8d5936de4db4489c502f26cde3c94,Test/Quiz,Topic 1,554425139,MS 07 MATH  - 4th A,James Ryan,2025-10-24
+7964062196,abf2d9f9a2bfc2bb4e677f26dc753ce0f4a8d5936de4db4489c502f26cde3c94,Test/Quiz,Topic 1,554425139,MS 07 MATH  - 5th B,James Ryan,2025-10-24
+7964065626,39338c08ab24d3c16568b9a602efcef376e0852287d3725f4178215e87d607bd,Test/Quiz,Topic 1,554425139,MS PRE ALG - 3rd A,James Ryan,2025-09-18
+7964067882,39338c08ab24d3c16568b9a602efcef376e0852287d3725f4178215e87d607bd,Test/Quiz,Topic 1,554425139,MS PRE ALG - 6th B,James Ryan,2025-09-18
+7964150311,2bcb4becf27e39e8e6755d0a22354b4d955364151a111fec919836e0a9186d88,Test/Quiz,Unit 1 Part 1,554425139,HS ENG I - 1st,"Austin Matsoff, Greg Pesicek",2025-09-26
+7964150370,28888e591ba5dde3db3d05cdc1eb14c7425e6601467452f61dcabdeb24b77a37,Test/Quiz,Unit 1 Part 2,554425139,HS ENG I - 1st,"Austin Matsoff, Greg Pesicek",2025-09-29
+7964160815,4033103a4bbf1641d98f2b40276281479c1849a981c8822518ff04bdb2ae4dab,Test/Quiz,Unit 1 Part 1,554425139,HS ENG II - 2nd,Austin Matsoff,2025-09-30
+7964160840,93e05ff2510fe8a0eca66ff85e9fded75570f7ba17e1eb897cfd4e7090fd9a93,Test/Quiz,Unit 1 Part 2,554425139,HS ENG II - 2nd,Austin Matsoff,2025-10-02
+7964173973,67a4687b1324441f251e8b9d722fbcd1765ba9ef5a262811009fe0a46280a015,Test/Quiz,Unit 1 Part 1,554425139,HS ENG III - 4th,"Austin Matsoff, Greg Pesicek",2025-10-02
+7964174019,93dc94a63a843dae17b3b750c8428905d04fa667dd2130a636349004d1001273,Test/Quiz,Unit 1 Part 2,554425139,HS ENG III - 4th,"Austin Matsoff, Greg Pesicek",2025-10-03
+7964191435,1fb0673739f5c70efbb8416a988dc24632348ca73eba20b6ea8c371a8a9c4991,Test/Quiz,Unit 1 Part 1,554425139,HS ENG IV - 1st,Deborah Farina,2025-10-14
+7964191457,db639fdd7b3d5c597f79b06c502e27c10be1a5b2eb2f5b43207ad5f046beb45c,Test/Quiz,Unit 1 Part 2,554425139,HS ENG IV - 1st,Deborah Farina,2025-10-16
+7997317421,7069654b5f8030f539e666d4285bdfbc1f4bd64c393a0bbac9f0fb9cbde36de5,Test/Quiz,Unit 1 Test: Studying Science,554425139,04 SCI - C,"Alexis Tillman, Alex Zamora",2025-09-12
+7997317482,04549eac97715f9e46e1b3767a85c60634b92debdf37fd1f431eeb9f168fd498,Test/Quiz,Unit 3 Test: Earth's Place in Space,554425139,04 SCI - C,"Alexis Tillman, Alex Zamora",2025-10-21
+7997317509,ceec481b75f0a8e510cce5da6d3417a05597ac02a369ba4af84e005a6f73f8a2,Test/Quiz,"Unit 4 Test: Rocks, Minerals and Resources",554425139,04 SCI - C,"Alexis Tillman, Alex Zamora",2025-11-20
+7997317541,f208e5fa97ef0e39cba32dbc4b723626912990780125dab7673d4cf4baddc344,Test/Quiz,Unit 5 Test: Matter and Its Properties,554425139,04 SCI - C,"Alexis Tillman, Alex Zamora",2025-12-17
+7997317562,0fb919f3f92e875c381ac3c87ccc10ef49787ef5d88d80408d0a16748bba5bf8,Test/Quiz,Unit 6 Test: Matter and Its Changes,554425139,04 SCI - C,"Alexis Tillman, Alex Zamora",2026-01-15
+7997317582,f7d8416f2c64d0dd61be40d1f31cfc6c6286f37527c3450ac61a72709217b23f,Test/Quiz,Unit 7 Test: Energy and Its Uses,554425139,04 SCI - C,"Alexis Tillman, Alex Zamora",2026-02-05
+7997317607,e31cc8f7444b17a84f28464b50c556627dcd2a6aa613471929e378f314e11bd9,Test/Quiz,Unit 8 Test: Heat,554425139,04 SCI - C,"Alexis Tillman, Alex Zamora",2026-02-19
+7997317653,3b079f1ad9308f072e71b1641c4446decd01a78e9f6211077306fb77d404c68d,Test/Quiz,Unit 10 Test: Life Cycles and Growth,554425139,04 SCI - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-04-03
+7997317688,1d02f3386adec14f17ccf3ae913521dc8e664a23715432abce0c34764b687594,Test/Quiz,Unit 11 Test: Organisms and Their Environment,554425139,04 SCI - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-04-23
+7997342288,5c5d853b6280277ce2f58d329aa18b12e7f1c41e93c99e1e2882439e8da0adcc,Test/Quiz,Unit 1 Benchmark Test: Scientists at Work,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2025-09-10
+7997342323,5c72e24d3e318f0194d0078249a948f2fc9a655c16ff6101dc1a95aff9ab87aa,Test/Quiz,Unit 2 Benchmark Test: The Engineering Process,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2025-10-01
+7997342350,ce372881350ca2a60a1535a769f8a760cf8a95b429e84557d088ce6921bf58fe,Test/Quiz,Unit 3 Benchmark Test: The Solar System and the Universe,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2025-09-25
+7997342393,64b859ca0323294ddc549d8d79267dbffe6c87f2ff3fee5d3ff71547cf61f98a,Test/Quiz,"Unit 4 Benchmark: Weather, Climate, and the Water Cycle",554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2025-10-29
+7997342424,ccddfc8c0c7b2cc50059c1ffcf9a90b5a132b33aab9feffeba0d52d8f1a610d9,Test/Quiz,Unit 5 Benchmark Test: The Nature of Matter,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2025-11-20
+7997342455,61c7778db948d0546007edecd5732bc23e55d1b59c0071a969735c98eb25abb2,Test/Quiz,Unit 6 Benchmark Test: Forms of Energy,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2025-12-16
+7997342490,86cd9e9e959f8ac4bfe860fd083bf308c14f797734d5e9aab6c93c1197725a38,Test/Quiz,Unit 7 Benchmark Test: Working With Electricity,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2026-01-13
+7997342532,f9e2460eb5544502b7f44d904b8b98f74fafbe410bc2af933f481c796c14c424,Test/Quiz,Unit 8 Benchmark Test: Forces and Motion,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2026-02-04
+7997342575,d542f69a73375fa3cb65b4cf25958dc51e7410f4bd99a4b5b3e75151d7d8e9b4,Test/Quiz,Unit 9 Benchmark Test: The Structure of Living Things,554425139,05 SCI - B,"Alexis Tillman, Wei Wang",2026-02-25
+7997342639,95618cc6e38eec5f6754af9e0680a7dc801af08ef831ba10b56c33128911c409,Test/Quiz,Unit 11 Benchmark Test: Plants and Animal Adaptations,554425139,05 SCI - B,Wei Wang,2026-04-10
+7999771774,a3c2a13c6795c84bf9a99861867ed84ea4fefa928818dbe633b192ae2013c69a,Test/Quiz,Chapter 1 Test: Whole Number Place Value,554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2025-08-28
+8007101589,a97db94c4d9ab02a640dbb45707268dc06a2ba5db79d1d219e8588ec785c73b4,Test/Quiz,Chapter 1 Test: Understand Place Value,554425139,02 MTH - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-09-03
+8007108786,a97db94c4d9ab02a640dbb45707268dc06a2ba5db79d1d219e8588ec785c73b4,Test/Quiz,Chapter 1 Test: Understand Place Value,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2025-09-03
+8010914576,a97db94c4d9ab02a640dbb45707268dc06a2ba5db79d1d219e8588ec785c73b4,Test/Quiz,Chapter 1 Test: Understand Place Value,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-09-03
+8016400881,a3c2a13c6795c84bf9a99861867ed84ea4fefa928818dbe633b192ae2013c69a,Test/Quiz,Chapter 1 Test: Whole Number Place Value,554425139,04 MTH - B,Alexis Tillman,2025-09-05
+8018759369,bdf80c25fa9979c08bb333f46edbd6de49d84338d200efb0f4d3b0b8cc366e1e,Test/Quiz,Chapter 4 Test: Addition Concepts,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2025-10-14
+8018762596,27ffa5464bbc86019ea6a65e711b65d79d94ee4752fb4f4ac1270deb2cf9f947,Test/Quiz,Chapter 4 Test: Equal Groups,554425139,02 MTH - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-10-10
+8018769272,27ffa5464bbc86019ea6a65e711b65d79d94ee4752fb4f4ac1270deb2cf9f947,Test/Quiz,Chapter 4 Test: Equal Groups,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2025-10-10
+8018777326,9be1df3dc757364c4485fe893d3347cba036d362a0cd6e102d339d4749309536,Test/Quiz,Chapter 2 Test: Addition and Subtraction Strategies,554425139,03 MTH - A,"Victoria Echevarria, Alexis Tillman",2025-09-11
+8018777331,f90c9f3ef1e12610b66b8b15c8bf54f8033e8c4dd0cc394b14ff9a69096ccb92,Test/Quiz,Chapter 4 Test: Understand Multiplication,554425139,03 MTH - A,"Victoria Echevarria, Alexis Tillman",2025-10-14
+8018779616,f90c9f3ef1e12610b66b8b15c8bf54f8033e8c4dd0cc394b14ff9a69096ccb92,Test/Quiz,Chapter 4 Test: Understand Multiplication,554425139,03 MTH - B,"Nathalia Malette, Alexis Tillman",2025-10-14
+8018784758,a3c2a13c6795c84bf9a99861867ed84ea4fefa928818dbe633b192ae2013c69a,Test/Quiz,Chapter 1 Test: Whole Number Place Value,554425139,04 MTH - A,"Colleen Marrero, Alexis Tillman",2025-09-22
+8018784762,b5cd3fa15a1074c9a8b65a3f131f921209ed6a42f907eac11df91a903e0ca03e,Test/Quiz,Chapter 3 Test: Multiply by 2-Digit Numbers,554425139,04 MTH - A,"Colleen Marrero, Alexis Tillman",2025-10-27
+8018784764,6df06a670aa15f31de49295bd27cf382a3a507ac53a7376e6d9afbcd6fbbb544,Test/Quiz,Chapter 5 Test: Divide by 1-Digit Numbers,554425139,04 MTH - A,"Colleen Marrero, Alexis Tillman",2025-12-16
+8018785689,b5cd3fa15a1074c9a8b65a3f131f921209ed6a42f907eac11df91a903e0ca03e,Test/Quiz,Chapter 3 Test: Multiply by 2-Digit Numbers,554425139,04 MTH - B,"Chante Brown, Alexis Tillman",2025-10-28
+8018786737,a3c2a13c6795c84bf9a99861867ed84ea4fefa928818dbe633b192ae2013c69a,Test/Quiz,Chapter 1 Test: Whole Number Place Value,554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2025-09-06
+8018786741,b5cd3fa15a1074c9a8b65a3f131f921209ed6a42f907eac11df91a903e0ca03e,Test/Quiz,Chapter 3 Test: Multiply by 2-Digit Numbers,554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2025-10-28
+8018786743,6df06a670aa15f31de49295bd27cf382a3a507ac53a7376e6d9afbcd6fbbb544,Test/Quiz,Chapter 5 Test: Divide by 1-Digit Numbers,554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2025-12-18
+8018791226,3b57ebc22e86dc1722b092122d0daa1f8bfe1060f3936fa9dd457a4828f96361,Test/Quiz,Chapter 1 Test: Understand Multiplication and Division of Whole Numbers,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2025-09-07
+8018791228,772af42dd019ed3791ce6829262c81f696f0e7fb5a397fd00715411bb53e2a18,Test/Quiz,Chapter 2 Test: Practice Multiplication and Division of Whole Numbers,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2025-10-06
+8018791229,27967901739cc387446bc03c427fdad99bc1e44efcaa1a31d45469ab9e7684a1,Test/Quiz,Chapter 3 Test: Place Value and Decimals,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2025-10-08
+8018791230,311d1d8c4342d374779bd3e2305cf177fabb017da651d5c071c61ebeaf30631e,Test/Quiz,Chapter 4 Test: Add and Subtract Decimals,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2025-10-10
+8018791233,523cdbec19715801baae8fdd0f80054687e68dbd5797c0f43ff128042e2767c2,Test/Quiz,Chapter 5 Test: Multiply Decimals and Whole Numbers,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2025-10-28
+8018791881,3b57ebc22e86dc1722b092122d0daa1f8bfe1060f3936fa9dd457a4828f96361,Test/Quiz,Chapter 1 Test: Understand Multiplication and Division of Whole Numbers,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2025-09-08
+8018791882,772af42dd019ed3791ce6829262c81f696f0e7fb5a397fd00715411bb53e2a18,Test/Quiz,Chapter 2 Test: Practice Multiplication and Division of Whole Numbers,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2025-10-03
+8018791883,27967901739cc387446bc03c427fdad99bc1e44efcaa1a31d45469ab9e7684a1,Test/Quiz,Chapter 3 Test: Place Value and Decimals,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2025-09-30
+8018791884,311d1d8c4342d374779bd3e2305cf177fabb017da651d5c071c61ebeaf30631e,Test/Quiz,Chapter 4 Test: Add and Subtract Decimals,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2025-10-10
+8018791886,523cdbec19715801baae8fdd0f80054687e68dbd5797c0f43ff128042e2767c2,Test/Quiz,Chapter 5 Test: Multiply Decimals and Whole Numbers,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2025-10-29
+8023713374,aba744b4b894cd4086f0ff8d06dd42ecd4d8fe1bad5fd9370a2199518ca32407,Test/Quiz,Unit 1 Benchmark Test: Investigating Questions,554425139,03 SCI - B,"Nathalia Malette, Alexis Tillman",2025-09-09
+8023806670,17f94e408c5015f6fc7f6e36f165b14bd857fd925284978017f1f7cc0e66ec95,Test/Quiz,Unit 1 Benchmark Test: How Scientists Work,554425139,01 SCI - D,"Alexis Tillman, Laura YoungBrown",2025-09-09
+8028328441,9be1df3dc757364c4485fe893d3347cba036d362a0cd6e102d339d4749309536,Test/Quiz,Chapter 2 Test: Addition and Subtraction Strategies,554425139,03 MTH - B,"Nathalia Malette, Alexis Tillman",2025-09-11
+8033421831,ad33f2e21007e62677e28100643bb051326c9cabb165b621d2ca9b100960892c,Test/Quiz,Module 1 Assessment: Inventors at Work,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2025-10-08
+8033423535,ad33f2e21007e62677e28100643bb051326c9cabb165b621d2ca9b100960892c,Test/Quiz,Module 1 Assessment: Inventors at Work,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2025-10-09
+8057835840,49690812b09640f624759e12afa3e78394c2a08bac9183b57190daa6f2c1f6b6,Test/Quiz,Topic 1,554425139,HS ECON - 6th-Spring,Miguel Santiago Romero,2026-01-22
+8064182726,a36fe81ee62182a03bfc700aeff571ac8ea3812c6e70e88e418d9ab5d79f08ae,Test/Quiz,Topic 1: The Early Americas and European Exploration,554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2025-10-08
+8064184316,a36fe81ee62182a03bfc700aeff571ac8ea3812c6e70e88e418d9ab5d79f08ae,Test/Quiz,Topic 1: The Early Americas and European Exploration,554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2025-10-08
+8064353116,a57c00ea69f27b63b21c572a7e95a026ff7828938eb705325b5e986355cd1609,Test/Quiz,Living Things in the Biosphere,554425139,MS 07 LFE SCI - 6th B,Maritza Serrano,2025-10-02
+8070374010,4af12105709a58115d48fd8aac1772c569e0b8d6afc4247605aec006c0227944,Test/Quiz,Module 2 Assessment: Use Your Words,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2025-10-08
+8070374020,fc6f9f6bddf1121f655c049b180b8aeeb207f27d8559d1da58a1d68812c9c3d3,Test/Quiz,Module 3 Assessment: Let Freedom Ring!,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2025-11-07
+8070382256,4af12105709a58115d48fd8aac1772c569e0b8d6afc4247605aec006c0227944,Test/Quiz,Module 2 Assessment: Use Your Words,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2025-10-08
+8070382266,fc6f9f6bddf1121f655c049b180b8aeeb207f27d8559d1da58a1d68812c9c3d3,Test/Quiz,Module 3 Assessment: Let Freedom Ring!,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2025-11-07
+8076260570,27ffa5464bbc86019ea6a65e711b65d79d94ee4752fb4f4ac1270deb2cf9f947,Test/Quiz,Chapter 4 Test: Equal Groups,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-10-10
+8077261553,bdf80c25fa9979c08bb333f46edbd6de49d84338d200efb0f4d3b0b8cc366e1e,Test/Quiz,Chapter 4 Test: Addition Concepts,554425139,01 MTH - B,"Cindy Mitchell, Alexis Tillman",2025-10-14
+8077262828,bdf80c25fa9979c08bb333f46edbd6de49d84338d200efb0f4d3b0b8cc366e1e,Test/Quiz,Chapter 4 Test: Addition Concepts,554425139,01 MTH - C,"Petra Slouber, Alexis Tillman",2025-10-14
+8077264048,bdf80c25fa9979c08bb333f46edbd6de49d84338d200efb0f4d3b0b8cc366e1e,Test/Quiz,Chapter 4 Test: Addition Concepts,554425139,01 MTH - D,"Alexis Tillman, Laura YoungBrown",2025-10-14
+8086682371,b9c7deaa332ceadfe5b70f6437c957046a8e1f5a8f7830ff7a8093a20682bf09,Test/Quiz,Module 2 Assessment: What a Story,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2025-10-22
+8086682473,b9c7deaa332ceadfe5b70f6437c957046a8e1f5a8f7830ff7a8093a20682bf09,Test/Quiz,Module 2 Assessment: What a Story,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2025-10-22
+8087300293,50455eee8958ea489c3a6fe0a65869aabca03616c78acd9b7c901a93fe423539,Test/Quiz,Unit 3 Benchmark Test: Objects in the Sky,554425139,01 SCI - A,"Natalie Housen Edwards, Alexis Tillman",2025-10-23
+8087300300,6038a19f062fccc0cb74ac2a0ca632327429d138192fdd57dcdb5212e6158320,Test/Quiz,Unit 5 Benchmark Test: Matter,554425139,01 SCI - A,"Natalie Housen Edwards, Alexis Tillman",2025-12-16
+8087300301,0e316bc32932edbf3fd37f32756544201a2a34b869e7e78096a5388c944d8cd7,Test/Quiz,Unit 6 Benchmark Test: Motion,554425139,01 SCI - A,"Natalie Housen Edwards, Alexis Tillman",2026-02-12
+8087300305,74a8eb3810a4f89774bae2bd658511d4ebdaf1f3571d739fc8f8e009c2e1d976,Test/Quiz,Unit 8 Benchmark Test: Living Things and  Their Parents,554425139,01 SCI - A,"Natalie McKenzie, Alexis Tillman",2026-04-16
+8087300307,5294c3c3a1fa6c5ca690bd22540732e1c503cb71d6dfe60aaf83d443244a4fe2,Test/Quiz,Unit 9 Benchmark Test: Plant and Animal Needs,554425139,01 SCI - A,"Natalie McKenzie, Alexis Tillman",2026-05-14
+8087302084,50455eee8958ea489c3a6fe0a65869aabca03616c78acd9b7c901a93fe423539,Test/Quiz,Unit 3 Benchmark Test: Objects in the Sky,554425139,01 SCI - B,"Cindy Mitchell, Alexis Tillman",2025-10-22
+8087303194,50455eee8958ea489c3a6fe0a65869aabca03616c78acd9b7c901a93fe423539,Test/Quiz,Unit 3 Benchmark Test: Objects in the Sky,554425139,01 SCI - C,"Petra Slouber, Alexis Tillman",2025-10-22
+8087304331,50455eee8958ea489c3a6fe0a65869aabca03616c78acd9b7c901a93fe423539,Test/Quiz,Unit 3 Benchmark Test: Objects in the Sky,554425139,01 SCI - D,"Alexis Tillman, Laura YoungBrown",2025-10-23
+8087335627,a37f4e3ce2ee4075d121558a9c67873e78013c18c2f679511f20f31b927d0c7f,Test/Quiz,Test Topic 2: Civilizations and Peoples of the Fertile Crescent,554425139,MS 06 WH - 2nd B,Xiomara Rivas,2025-10-23
+8087339728,bea2259916b8cbcddf66851fdae6b3056e731405d5b57bc87025fad1a357e1dc,Test/Quiz,Test Topic 2: You and Your Government,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2025-10-21
+8087341078,bea2259916b8cbcddf66851fdae6b3056e731405d5b57bc87025fad1a357e1dc,Test/Quiz,Test Topic 2: You and Your Government,554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2025-10-21
+8087369264,aa872c9dc5da26d6873b40a93fa41ad20baf5478153217887c957b2dc7387d90,Test/Quiz,Test Topic 2: European Colonization of North America (1500-1750),554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2025-10-30
+8087371742,aa872c9dc5da26d6873b40a93fa41ad20baf5478153217887c957b2dc7387d90,Test/Quiz,Test Topic 2: European Colonization of North America (1500-1750),554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2025-10-30
+8088414126,792dc53c62a4133ab3198afd3c325e5ee7440759add4b4719a6beb1a0abdfe07,Test/Quiz,Unit 2 Benchmark: Technology In Our World,554425139,02 SCI - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-10-21
+8089389994,ea77616c484143ba83a7e741b9ced6567dcb714c3ce8783e55548477de94fe5e,Test/Quiz,Topic 2,554425139,HS GEOM - 3rd,"Deborah Farina, Madisun McNair, Greg Pesicek, Margaret Polsen",2025-10-27
+8089390287,0d42569a24ca0995e159ce3ce93394f9df6b4e11c41d3ba69e4dc876e7fb294b,Test/Quiz,Topic 2,554425139,HS ALG I - 7th,Margaret Polsen,2025-10-22
+8089937013,4db0e66fac76b448c797c16a2da66d79998866ab3f6531d3a34977dd02bd14ac,Test/Quiz,Topic 2,554425139,HS ALG II - 1st,Margaret Polsen,2025-12-03
+8092034631,6c871283bc2b2b1791ff778ea2d2081c99271aec219ba6f50999f3c7f4f7c77c,Test/Quiz,Module 2 Assessment: Come to Your Senses,554425139,04 LA - A,"Colleen Marrero, Alexis Tillman",2025-10-23
+8092034693,6c871283bc2b2b1791ff778ea2d2081c99271aec219ba6f50999f3c7f4f7c77c,Test/Quiz,Module 2 Assessment: Come to Your Senses,554425139,04 LA - B,"Chante Brown, Alexis Tillman",2025-10-24
+8092034736,6c871283bc2b2b1791ff778ea2d2081c99271aec219ba6f50999f3c7f4f7c77c,Test/Quiz,Module 2 Assessment: Come to Your Senses,554425139,04 LA - C,"Alexis Tillman, Alex Zamora",2025-10-23
+8092313476,22f2f4c12ef2f88176a5e2f6199cd52442d8d30fb1f5694cd0827a6c5e526720,Test/Quiz,Module 2 Assessment: Look Around and Explore!,554425139,02 LA - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-10-22
+8092315284,22f2f4c12ef2f88176a5e2f6199cd52442d8d30fb1f5694cd0827a6c5e526720,Test/Quiz,Module 2 Assessment: Look Around and Explore!,554425139,02 LA - B,"Amanda Malcom, Alexis Tillman",2025-10-22
+8092315309,22f2f4c12ef2f88176a5e2f6199cd52442d8d30fb1f5694cd0827a6c5e526720,Test/Quiz,Module 2 Assessment: Look Around and Explore!,554425139,02 LA - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-10-23
+8093370742,daa04250361e69405ef7b5a81f39794b55c47bb95fce93f9251ddaef5c9fbf52,Test/Quiz,Chapter 5 Test: 2-Digit Addition,554425139,02 MTH - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-10-27
+8093370744,daa04250361e69405ef7b5a81f39794b55c47bb95fce93f9251ddaef5c9fbf52,Test/Quiz,Chapter 5 Test: 2-Digit Addition,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2025-10-27
+8093370747,daa04250361e69405ef7b5a81f39794b55c47bb95fce93f9251ddaef5c9fbf52,Test/Quiz,Chapter 5 Test: 2-Digit Addition,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-10-27
+8093860235,c2db1e80584d9cb170b8bc83110b9af821995e80be53887b78e7171bfabe5028,Test/Quiz,Module 3 Assessment: Amazing Animals (new),554425139,01 LA - A,"Natalie Housen Edwards, Alexis Tillman",2025-10-24
+8093860260,c2db1e80584d9cb170b8bc83110b9af821995e80be53887b78e7171bfabe5028,Test/Quiz,Module 3 Assessment: Amazing Animals (new),554425139,01 LA - B,"Cindy Mitchell, Alexis Tillman",2025-10-23
+8093860309,c2db1e80584d9cb170b8bc83110b9af821995e80be53887b78e7171bfabe5028,Test/Quiz,Module 3 Assessment: Amazing Animals (new),554425139,01 LA - C,"Petra Slouber, Alexis Tillman",2025-10-23
+8093860331,c2db1e80584d9cb170b8bc83110b9af821995e80be53887b78e7171bfabe5028,Test/Quiz,Module 3 Assessment: Amazing Animals (new),554425139,01 LA - D,"Alexis Tillman, Laura YoungBrown",2025-10-23
+8095122686,f0b58779cf8d8bd09ace081db73232eef43bdebe140c05bab105ab63057dc781,Test/Quiz,Topic 2,554425139,MS 06 MATH - 2nd A,James Ryan,2025-11-04
+8095123060,f0b58779cf8d8bd09ace081db73232eef43bdebe140c05bab105ab63057dc781,Test/Quiz,Topic 2,554425139,MS 06 MATH - 7th B,James Ryan,2025-10-31
+8095123351,3ef522b993f53f066f81d8937b21826157ecaedb9cd2b5d5204ffa59ee8998d2,Test/Quiz,Topic 2,554425139,MS 07 MATH  - 4th A,James Ryan,2025-10-31
+8095125581,94c0671142d5de3668cb415959bd153cc0a9e74957e3af0cdda4745c344b5610,Test/Quiz,Topic 2,554425139,MS PRE ALG - 3rd A,James Ryan,2025-10-31
+8095125773,94c0671142d5de3668cb415959bd153cc0a9e74957e3af0cdda4745c344b5610,Test/Quiz,Topic 2,554425139,MS PRE ALG - 6th B,James Ryan,2025-10-31
+8101189630,6df06a670aa15f31de49295bd27cf382a3a507ac53a7376e6d9afbcd6fbbb544,Test/Quiz,Chapter 5 Test: Divide by 1-Digit Numbers,554425139,04 MTH - B,"Chante Brown, Alexis Tillman",2025-12-18
+8102307636,a6304ff698b9abc92686a5378fb4cd27b55d48d15577e5d70857cf1693bfe1f7,Test/Quiz,Unit 2 part 1,554425139,HS ENG I - 1st,"Austin Matsoff, Greg Pesicek",2025-12-02
+8102309491,f7059c6956c45313d8d51ee78d15d1574d5a7871816d9d98e719623e46863fbe,Test/Quiz,Unit 2 part 1,554425139,HS ENG III - 4th,"Austin Matsoff, Greg Pesicek",2025-12-09
+8102309497,26fa789278e90122b981ad1207390f5898b3500bfcdfb2e0ae169ec355a32584,Test/Quiz,Unit 2 Part 2,554425139,HS ENG III - 4th,"Austin Matsoff, Greg Pesicek",2025-12-11
+8102310161,28ad495ff776ee97178601f52a6044f6458f46c29a04c869d6e4ec6ace34c647,Test/Quiz,Unit 2 part 1,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2026-01-06
+8102310167,922b1239d3d762265ac565fee0686a498b7791cf2d99bf9de838e5df56972580,Test/Quiz,Unit 2 Part 2,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2026-01-26
+8102310357,28ad495ff776ee97178601f52a6044f6458f46c29a04c869d6e4ec6ace34c647,Test/Quiz,Unit 2 part 1,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2025-12-11
+8102310648,141dccbc1c82958fd1ca0bbe58aaf7705b456419aad526c7e7501f7e66298437,Test/Quiz,Unit 2 part 1,554425139,MS 07 LA II - 4th B,Maurisha Tucker-McFadden,2026-01-06
+8102312134,141dccbc1c82958fd1ca0bbe58aaf7705b456419aad526c7e7501f7e66298437,Test/Quiz,Unit 2 part 1,554425139,MS 07 LA II - 6th A,Maurisha Tucker-McFadden,2025-12-11
+8102313694,9a11cf6b96eb7f2e07eb48e92c22557603bcc3a9eae355fdc8422b27cafcf0b4,Test/Quiz,Unit 2 part 1,554425139,MS 08 LA III - 2nd A,Maurisha Tucker-McFadden,2026-01-13
+8102615288,d6b4114ab401b421fd05efa03edb3b75f2b14f0ab566435fc7914612a607bf35,Test/Quiz,Chapter 5 Test: Subtraction Concepts,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2025-10-30
+8102615314,d6b4114ab401b421fd05efa03edb3b75f2b14f0ab566435fc7914612a607bf35,Test/Quiz,Chapter 5 Test: Subtraction Concepts,554425139,01 MTH - B,"Cindy Mitchell, Alexis Tillman",2025-10-30
+8102615340,d6b4114ab401b421fd05efa03edb3b75f2b14f0ab566435fc7914612a607bf35,Test/Quiz,Chapter 5 Test: Subtraction Concepts,554425139,01 MTH - C,"Petra Slouber, Alexis Tillman",2025-10-30
+8102615359,d6b4114ab401b421fd05efa03edb3b75f2b14f0ab566435fc7914612a607bf35,Test/Quiz,Chapter 5 Test: Subtraction Concepts,554425139,01 MTH - D,"Alexis Tillman, Laura YoungBrown",2025-10-30
+8108245298,3ef522b993f53f066f81d8937b21826157ecaedb9cd2b5d5204ffa59ee8998d2,Test/Quiz,Topic 2,554425139,MS 07 MATH  - 5th B,James Ryan,2025-11-03
+8110540742,9c9fc93368a4d46b6f09f9c337ac1c736fced8e9b94fae30d45c899d10a2975b,Test/Quiz,Topic 3: The Revolutionary Era (1750-1783),554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2025-12-05
+8110543086,9c9fc93368a4d46b6f09f9c337ac1c736fced8e9b94fae30d45c899d10a2975b,Test/Quiz,Topic 3: The Revolutionary Era (1750-1783),554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2025-12-05
+8112638734,b22a4f8fcc302e0c456e3b08ba51c46f88822b1dba0eae151ffce6f842655693,Test/Quiz,Chapter 5 Test: Multiplication Facts and Strategies,554425139,03 MTH - A,"Victoria Echevarria, Alexis Tillman",2025-11-05
+8112638756,b22a4f8fcc302e0c456e3b08ba51c46f88822b1dba0eae151ffce6f842655693,Test/Quiz,Chapter 5 Test: Multiplication Facts and Strategies,554425139,03 MTH - B,"Nathalia Malette, Alexis Tillman",2025-11-05
+8115435724,930ec32fdf1826e0c5a60141bd124dc526ea7f13b7e5ff24bbde6387fc992257,Test/Quiz,Chapter 6 Test: More 2-Digit Addition,554425139,02 MTH - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-11-14
+8115435766,930ec32fdf1826e0c5a60141bd124dc526ea7f13b7e5ff24bbde6387fc992257,Test/Quiz,Chapter 6 Test: More 2-Digit Addition,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2025-11-14
+8115435804,930ec32fdf1826e0c5a60141bd124dc526ea7f13b7e5ff24bbde6387fc992257,Test/Quiz,Chapter 6 Test: More 2-Digit Addition,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-11-14
+8117821464,50a001e23c1f1750fc81871e6dfa39d43d9d740153bedeb48a799ed767e2ef53,Test/Quiz,Topic 2 Energy in the Atmosphere and Ocean,554425139,MS 06 EARTH SPACE SCI - 5th B,Maritza Serrano,2025-11-18
+8117821465,468acca31bfc501ca9452d6661da67bcb49975aca051c5806b33b6c411c77010,Test/Quiz,Topic 3: Weather and Climate,554425139,MS 06 EARTH SPACE SCI - 5th B,Maritza Serrano,2025-12-12
+8117821503,50a001e23c1f1750fc81871e6dfa39d43d9d740153bedeb48a799ed767e2ef53,Test/Quiz,Topic 2 Energy in the Atmosphere and Ocean,554425139,MS 06 EARTH SPACE SCI - 7th A,Maritza Serrano,2025-11-18
+8117821505,468acca31bfc501ca9452d6661da67bcb49975aca051c5806b33b6c411c77010,Test/Quiz,Topic 3: Weather and Climate,554425139,MS 06 EARTH SPACE SCI - 7th A,Maritza Serrano,2025-12-08
+8117821689,894ed8ff4fbe103cb704a96b75903358f524ac660341879e7ade91a895155d3c,Test/Quiz,Topic 2: Cells and Cell Systems,554425139,MS 07 LFE SCI - 3rd A,Maritza Serrano,2025-12-09
+8117821720,9468ab631f2ab3ff4c117d39f375d07f1e82c0eb00ac6ebd5d7355e5847cb574,Test/Quiz,Topic 2: Cells and Cell Systems,554425139,MS 07 LFE SCI - 6th B,Maritza Serrano,2025-12-05
+8117821784,86b9eb1420f18663f59fa0b0fe4993983c0511c67bdc27222ec0adce71fff4c8,Test/Quiz,Forces and Motion,554425139,MS 08 PHY SC - 4th A,Maritza Serrano,2025-11-10
+8117821864,86b9eb1420f18663f59fa0b0fe4993983c0511c67bdc27222ec0adce71fff4c8,Test/Quiz,Forces and Motion,554425139,MS 08 PHY SC - 2nd B,Maritza Serrano,2025-11-10
+8117831628,6623e6800cbe89d8da6c8e3a4e6a3a240824b6ae85bbf76ce05090e2b8979ba6,Test/Quiz,"Topic 3 Test: State, Local, and Tribal Governments Matter",554425139,MS 07 CIV - 5th A,Xiomara Rivas,2025-11-11
+8117832042,6623e6800cbe89d8da6c8e3a4e6a3a240824b6ae85bbf76ce05090e2b8979ba6,Test/Quiz,"Topic 3 Test: State, Local, and Tribal Governments Matter",554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2025-11-11
+8117833095,7bea795c4e5811d6a1aa25bdedcce4972f3540e3f521c4333267430f735812b1,Test/Quiz,Topic 3 Test: Ancient Egypt and Kush (3000 BCE - 600 BCE),554425139,MS 06 WH - 2nd B,Xiomara Rivas,2025-11-13
+8118215773,2d1bcc038d55f794c5531192802962248c549603d48ddd32c6b5a34894d55928,Test/Quiz,Topic 4: The Americas (Prehistory?A.D. 1570),554425139,HS WH - 5th,Miguel Santiago Romero,2025-12-09
+8118218139,4a7eff296e97699d28b229082c7ed125be8b8d8db17c955ce34ac5219099dc27,Test/Quiz,Topic 3,554425139,MS 06 MATH - 2nd A,James Ryan,2025-11-14
+8118219310,4a7eff296e97699d28b229082c7ed125be8b8d8db17c955ce34ac5219099dc27,Test/Quiz,Topic 3,554425139,MS 06 MATH - 7th B,James Ryan,2025-11-14
+8118220134,601dfc79442a01af70766d334b6e0ee325fe81812d08d69a222900d438bd04d2,Test/Quiz,Topic 3,554425139,MS 07 MATH  - 4th A,James Ryan,2025-11-14
+8118221170,601dfc79442a01af70766d334b6e0ee325fe81812d08d69a222900d438bd04d2,Test/Quiz,Topic 3,554425139,MS 07 MATH  - 5th B,James Ryan,2025-11-14
+8118223184,20719d3386f4971b4560233102e077e3b6f23d9c9e23a824c2a38aafd6b47385,Test/Quiz,Topic 3,554425139,MS PRE ALG - 3rd A,James Ryan,2025-11-14
+8118223798,20719d3386f4971b4560233102e077e3b6f23d9c9e23a824c2a38aafd6b47385,Test/Quiz,Topic 3,554425139,MS PRE ALG - 6th B,James Ryan,2025-11-14
+8120281490,fab1f53cfa0d1fac77cd174845a9371289e439565cbecf1956355e5ee22c4c84,Test/Quiz,Chapter 4 Test: Division Strategies,554425139,04 MTH - A,"Colleen Marrero, Alexis Tillman",2025-11-18
+8120283751,fab1f53cfa0d1fac77cd174845a9371289e439565cbecf1956355e5ee22c4c84,Test/Quiz,Chapter 4 Test: Division Strategies,554425139,04 MTH - B,"Chante Brown, Alexis Tillman",2025-11-19
+8120283787,fab1f53cfa0d1fac77cd174845a9371289e439565cbecf1956355e5ee22c4c84,Test/Quiz,Chapter 4 Test: Division Strategies,554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2025-11-18
+8123427408,b1049183956a43178c11985b4900f0ff81d5d438b69a9d3b00c84d05893a2a22,Test/Quiz,Chapter 6 Test: Addition Strategies,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2025-11-20
+8123427437,b1049183956a43178c11985b4900f0ff81d5d438b69a9d3b00c84d05893a2a22,Test/Quiz,Chapter 6 Test: Addition Strategies,554425139,01 MTH - B,"Cindy Mitchell, Alexis Tillman",2025-11-20
+8123427451,b1049183956a43178c11985b4900f0ff81d5d438b69a9d3b00c84d05893a2a22,Test/Quiz,Chapter 6 Test: Addition Strategies,554425139,01 MTH - C,"Petra Slouber, Alexis Tillman",2025-11-20
+8123427460,b1049183956a43178c11985b4900f0ff81d5d438b69a9d3b00c84d05893a2a22,Test/Quiz,Chapter 6 Test: Addition Strategies,554425139,01 MTH - D,"Alexis Tillman, Laura YoungBrown",2025-11-20
+8125390328,69e19e56d94b7193b63e20b51ae8349d95e65dd938d7232b1f674242dacec782,Test/Quiz,Chapter 6 Test: Multiplication with Multiples of 10 and 100,554425139,03 MTH - A,"Victoria Echevarria, Alexis Tillman",2025-11-19
+8125390347,69e19e56d94b7193b63e20b51ae8349d95e65dd938d7232b1f674242dacec782,Test/Quiz,Chapter 6 Test: Multiplication with Multiples of 10 and 100,554425139,03 MTH - B,"Nathalia Malette, Alexis Tillman",2025-11-19
+8126300615,74c44037ecc6cb6758c361fc387102d05efe5cf0818331e46c346d558d89127a,Test/Quiz,Stories on Stage: Weekly Assessment: Module 4 Week 1,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2025-11-14
+8126300640,74c44037ecc6cb6758c361fc387102d05efe5cf0818331e46c346d558d89127a,Test/Quiz,Stories on Stage: Weekly Assessment: Module 4 Week 1,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2025-11-14
+8129077942,c27e65cd5f375202eb26a0aeb6a40424de8d5d86d9d51ca262bcd81e9173c80d,Test/Quiz,Chapter 6 Test: Multiply Decimals,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2025-11-17
+8129077990,c27e65cd5f375202eb26a0aeb6a40424de8d5d86d9d51ca262bcd81e9173c80d,Test/Quiz,Chapter 6 Test: Multiply Decimals,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2025-11-17
+8130289934,365df630642bd220c4138f1cbaccea2ab80d21eb7afff0f3e5c171124b41e912,Test/Quiz,Stories on Stage: Weekly Assessment: Module 4 Week 2,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2025-11-21
+8130289957,365df630642bd220c4138f1cbaccea2ab80d21eb7afff0f3e5c171124b41e912,Test/Quiz,Stories on Stage: Weekly Assessment: Module 4 Week 2,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2025-11-21
+8133124607,3d8dd4080e919d7dee285d2dae178a5a89535e278e8c8e7c0b40a7c33341c8c7,Test/Quiz,Module 3 Assessment: Natural Disasters,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2025-11-19
+8133129406,3d8dd4080e919d7dee285d2dae178a5a89535e278e8c8e7c0b40a7c33341c8c7,Test/Quiz,Module 3 Assessment: Natural Disasters,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2025-11-19
+8134700619,b4e122525a045fb6c9902aabddae870bb7e9394e494d96f9a97c4547f94b154f,Test/Quiz,Topic 4: Our Founding Documents: Listen to Many Voices,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2025-11-20
+8134704459,b4e122525a045fb6c9902aabddae870bb7e9394e494d96f9a97c4547f94b154f,Test/Quiz,Topic 4: Our Founding Documents: Listen to Many Voices,554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2026-02-02
+8135423983,37a2b132c9793726e5d2cd9ee06938fcf54b3bc3ab054e6abcc73889f6587af0,Test/Quiz,Module 4 Assessment: Better Together,554425139,01 LA - A,"Natalie Housen Edwards, Alexis Tillman",2025-11-20
+8135424020,37a2b132c9793726e5d2cd9ee06938fcf54b3bc3ab054e6abcc73889f6587af0,Test/Quiz,Module 4 Assessment: Better Together,554425139,01 LA - B,"Cindy Mitchell, Alexis Tillman",2025-11-21
+8135424056,37a2b132c9793726e5d2cd9ee06938fcf54b3bc3ab054e6abcc73889f6587af0,Test/Quiz,Module 4 Assessment: Better Together,554425139,01 LA - C,"Petra Slouber, Alexis Tillman",2025-11-20
+8135424102,37a2b132c9793726e5d2cd9ee06938fcf54b3bc3ab054e6abcc73889f6587af0,Test/Quiz,Module 4 Assessment: Better Together,554425139,01 LA - D,"Alexis Tillman, Laura YoungBrown",2025-11-20
+8140495628,15e7bdc64d2ed228e7bba07ad7a5800289ce16c3ae7920f4227cf16f2e17fe5b,Test/Quiz,Topic 5: Our Constitutional Government: Join in Civil Conversations,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2025-12-05
+8140495629,ef93ab01c767d33ceba831f269e0e5f70f5b3178bbcaa18b27f018e5a8520ee9,Test/Quiz,Topic 6: The Constitution Protects Your Rights: Defend All Rights,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2025-12-12
+8140495691,15e7bdc64d2ed228e7bba07ad7a5800289ce16c3ae7920f4227cf16f2e17fe5b,Test/Quiz,Topic 5: Our Constitutional Government: Join in Civil Conversations,554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2026-02-01
+8140761555,c0c757909e5d11f7c2422e837758410b8f2f5731c870904454bba6b07d5b3fde,Test/Quiz,Topic 5: Early Civilizations of China (1700 BCE - 220 CE),554425139,MS 06 WH - 3rd A,Greg Stout,2026-01-09
+8140761677,12652cd2b2c5c632c370867df6e43a8e294821dd425e163e1c05cdfbbeec9a1a,Test/Quiz,Topic 4: Early Civilizations of India (2600 BCE - 540 CE),554425139,MS 06 WH - 2nd B,"Greg Pesicek, Xiomara Rivas",2025-12-05
+8140761678,c0c757909e5d11f7c2422e837758410b8f2f5731c870904454bba6b07d5b3fde,Test/Quiz,Topic 5: Early Civilizations of China (1700 BCE - 220 CE),554425139,MS 06 WH - 2nd B,"Greg Pesicek, Xiomara Rivas",2026-01-07
+8144719967,75d466ffb7bd721aa0feb67bdbe6398bdc44c4818ce7c3a3a194d3973ba3d3a9,Test/Quiz,Chapter 7 Test: 2-Digit Subtraction,554425139,02 MTH - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-12-11
+8144720011,75d466ffb7bd721aa0feb67bdbe6398bdc44c4818ce7c3a3a194d3973ba3d3a9,Test/Quiz,Chapter 7 Test: 2-Digit Subtraction,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2025-12-11
+8144720029,75d466ffb7bd721aa0feb67bdbe6398bdc44c4818ce7c3a3a194d3973ba3d3a9,Test/Quiz,Chapter 7 Test: 2-Digit Subtraction,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-12-11
+8148454828,0ef628656bb9296a2f928c7ad89578ebb52b1e9edef3bd5321b205547e88dcbc,Test/Quiz,Stories on Stage: Module 4 Assessment,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2025-12-05
+8148454850,0ef628656bb9296a2f928c7ad89578ebb52b1e9edef3bd5321b205547e88dcbc,Test/Quiz,Stories on Stage: Module 4 Assessment,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2025-12-05
+8148473614,221d607a62fe6745c01ec65d6434ae0fac9074755ad132cd2ba28d83ca6ef488,Test/Quiz,The American West: Weekly Assessment: Module 4 Week 1,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2025-12-05
+8148473659,221d607a62fe6745c01ec65d6434ae0fac9074755ad132cd2ba28d83ca6ef488,Test/Quiz,The American West: Weekly Assessment: Module 4 Week 1,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2025-12-05
+8150386807,0ed57266207cca76aebd9ba7750b4cf29c648c190d67ebd3e266fce3d5fa8e5a,Test/Quiz,Module 3 Assessment: Rise to the Occasion,554425139,04 LA - A,"Colleen Marrero, Alexis Tillman",2025-12-08
+8150386856,0ed57266207cca76aebd9ba7750b4cf29c648c190d67ebd3e266fce3d5fa8e5a,Test/Quiz,Module 3 Assessment: Rise to the Occasion,554425139,04 LA - B,"Chante Brown, Alexis Tillman",2025-12-10
+8150386893,0ed57266207cca76aebd9ba7750b4cf29c648c190d67ebd3e266fce3d5fa8e5a,Test/Quiz,Module 3 Assessment: Rise to the Occasion,554425139,04 LA - C,"Alexis Tillman, Alex Zamora",2025-12-17
+8152743425,d77e7a819848cef5368c0fb7b7c2351ee8ea177af9043ec5c9f85fe8f4a33db2,Test/Quiz,Thermal Energy,554425139,MS 08 PHY SC - 4th A,Maritza Serrano,2026-02-11
+8152768442,d77e7a819848cef5368c0fb7b7c2351ee8ea177af9043ec5c9f85fe8f4a33db2,Test/Quiz,Thermal Energy,554425139,MS 08 PHY SC - 2nd B,Maritza Serrano,2025-12-12
+8154778691,af3b0fd5aed018138d7e88bbedcbb52783f6109a3be34e2f5285c19107117e3a,Test/Quiz,Unit 2 part 1,554425139,HS ENG II - 2nd,Austin Matsoff,2025-12-10
+8156605106,f932533218d831f790663bb9dbf0914c06b72c22249da80223f76b76dbf1d29d,Test/Quiz,Module 3 Assessment: Meet in the Middle,554425139,02 LA - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2025-12-10
+8156605142,f932533218d831f790663bb9dbf0914c06b72c22249da80223f76b76dbf1d29d,Test/Quiz,Module 3 Assessment: Meet in the Middle,554425139,02 LA - B,"Amanda Malcom, Alexis Tillman",2025-12-12
+8156605182,f932533218d831f790663bb9dbf0914c06b72c22249da80223f76b76dbf1d29d,Test/Quiz,Module 3 Assessment: Meet in the Middle,554425139,02 LA - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2025-12-11
+8157335558,346ab4debee2b3a6375a984270abaa763b20608ead0ab88b34d5cbec540f1318,Test/Quiz,Topic 3,554425139,HS GEOM - 3rd,"Deborah Farina, Madisun McNair, Greg Pesicek, Margaret Polsen",2025-12-11
+8159696693,d4ba1048e7d3299b807ff0d111ac944691e28d828cc42aa5c89b379bf828800a,Test/Quiz,Chapter 7 Test: Divide Decimals,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2025-12-16
+8159696712,d4ba1048e7d3299b807ff0d111ac944691e28d828cc42aa5c89b379bf828800a,Test/Quiz,Chapter 7 Test: Divide Decimals,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2025-12-16
+8159775714,2df560f682ff4d79759d5febc3b9bc221bd1633d74a6f6bbeac84d221ecee840,Test/Quiz,M4 W1 Heroic Feats: Weekly Assessment: Module 4 Week 1,554425139,04 LA - A,"Colleen Marrero, Alexis Tillman",2026-01-09
+8159775758,9b1af398fef98c1394d0d8d40e58340f1d085bfaf1c7fcc438db1a1d2a2ca983,Test/Quiz,Heroic Feats: Weekly Assessment: Module 4 Week 1,554425139,04 LA - C,"Alexis Tillman, Alex Zamora",2026-01-08
+8159857646,c0ad75f2a9b6da48352fef0075f7f84a609907ec8b3f309bcc56d48890f4378f,Test/Quiz,The American West: Weekly Assessment: Week 2,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2025-12-17
+8159857677,c0ad75f2a9b6da48352fef0075f7f84a609907ec8b3f309bcc56d48890f4378f,Test/Quiz,The American West: Weekly Assessment: Week 2,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2025-12-17
+8161436131,49daf6c954b51a3d162a50861e0c311ea063b30429266859eedee566680673c3,Test/Quiz,Mid-Year Test,554425139,HS ENG IV - 1st,Deborah Farina,2025-12-16
+8161437456,f2fd4063cdd6f54109f8dce3c8646436fd367ad2674c77067d22948f59bc5f4e,Test/Quiz,Mid-Year Test,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2025-12-14
+8161439965,f2fd4063cdd6f54109f8dce3c8646436fd367ad2674c77067d22948f59bc5f4e,Test/Quiz,Mid-Year Test,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2025-12-18
+8161441039,76424df01f9c9222915821df53726fa5105325690ec9aa70864b9f107643a9a3,Test/Quiz,Mid-Year Test,554425139,MS 07 LA II - 4th B,Maurisha Tucker-McFadden,2025-12-17
+8161441556,76424df01f9c9222915821df53726fa5105325690ec9aa70864b9f107643a9a3,Test/Quiz,Mid-Year Test,554425139,MS 07 LA II - 6th A,Maurisha Tucker-McFadden,2025-12-18
+8161442182,10e8c18254ccb493329b8d2bae0f14d47bb714161e0485f248eb7f0ff6fb1c91,Test/Quiz,Mid-Year Test,554425139,MS 08 LA III - 3rd B,"Deborah Farina, Maurisha Tucker-McFadden",2025-12-17
+8161442468,10e8c18254ccb493329b8d2bae0f14d47bb714161e0485f248eb7f0ff6fb1c91,Test/Quiz,Mid-Year Test,554425139,MS 08 LA III - 2nd A,Maurisha Tucker-McFadden,2025-12-16
+8162249855,cdd14a03f8ec3918bd14457a3bebf6b2ac5c403c81823f6b3256b747bd2f0c44,Test/Quiz,Mid-Year Test,554425139,HS ENG II H - 2nd,Deborah Farina,2025-12-16
+8162251651,e64272b783a71e14ec3770e5c80800c900b6572447a59f7520ef354f9760680d,Test/Quiz,Mid year test,554425139,HS ENG III H - 4th,Deborah Farina,2025-12-17
+8162253672,6037efcabf01638e17945501887b9e46c7b70a068388da9342a318f5ae44cec8,Test/Quiz,Mid-Year Test,554425139,HS ENG IV H - 1st,Deborah Farina,2025-12-16
+8164162137,65b2360171ac3d3bfa60dfb4e8ae5cc59c6acea7fa61df202a60f1a6b5c3fb79,Test/Quiz,Chapter 7 Test: Subtraction Strategies,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2025-12-16
+8164162147,65b2360171ac3d3bfa60dfb4e8ae5cc59c6acea7fa61df202a60f1a6b5c3fb79,Test/Quiz,Chapter 7 Test: Subtraction Strategies,554425139,01 MTH - B,"Cindy Mitchell, Alexis Tillman",2025-12-17
+8164162155,65b2360171ac3d3bfa60dfb4e8ae5cc59c6acea7fa61df202a60f1a6b5c3fb79,Test/Quiz,Chapter 7 Test: Subtraction Strategies,554425139,01 MTH - C,"Petra Slouber, Alexis Tillman",2025-12-16
+8164162164,65b2360171ac3d3bfa60dfb4e8ae5cc59c6acea7fa61df202a60f1a6b5c3fb79,Test/Quiz,Chapter 7 Test: Subtraction Strategies,554425139,01 MTH - D,"Alexis Tillman, Laura YoungBrown",2025-12-16
+8166133663,deef0d4d020ebdc7ae10d2cbb99ae04bb017e3d098fbf6a4c073c0c130472c0e,Test/Quiz,Chapter 7 Test: Understand Division,554425139,03 MTH - A,"Victoria Echevarria, Alexis Tillman",2025-12-18
+8166133681,deef0d4d020ebdc7ae10d2cbb99ae04bb017e3d098fbf6a4c073c0c130472c0e,Test/Quiz,Chapter 7 Test: Understand Division,554425139,03 MTH - B,"Nathalia Malette, Alexis Tillman",2025-12-18
+8180432402,bd6388e643120ed8fe623ae5ab03163ff3fb7490cec587ac9c6413a64195349f,Test/Quiz,Chapter 8 Test: More 2-Digit Subtraction,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2026-01-15
+8188045441,75626819d74e8cc018ef1223093c74efcbf34521be07f08647c354796c770a8b,Test/Quiz,Topic 4: A Constitution for the United States (1776-Present),554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2026-01-09
+8188066941,75626819d74e8cc018ef1223093c74efcbf34521be07f08647c354796c770a8b,Test/Quiz,Topic 4: A Constitution for the United States (1776-Present),554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2026-01-11
+8195374562,f5015a6131f47cb21d311d12d59ea782a139cd677c2f3bf384d7a776e7a69efa,Test/Quiz,Unit 2 Pat 1,554425139,HS ENG IV - 1st,Deborah Farina,2026-01-12
+8195374577,253be9386df19c7150e1f671e6eb1db32665d6e2d9bc1f2732a1174da7fe6baf,Test/Quiz,Unit 2 Part 2,554425139,HS ENG IV - 1st,Deborah Farina,2026-01-12
+8195472161,d166efc7b6bb7d361bd530845b4e61fabe0e9513ffc2d590e7a721e5a6f609ef,Test/Quiz,Unit 2 part 1,554425139,HS ENG III H - 4th,Deborah Farina,2026-01-14
+8195472186,0d1228af167a9e026e6d1888c32e3cbd68a648aba93c62bbafd9e855f4d0163f,Test/Quiz,Unit 2 Part 2,554425139,HS ENG III H - 4th,Deborah Farina,2026-01-15
+8198880846,9a11cf6b96eb7f2e07eb48e92c22557603bcc3a9eae355fdc8422b27cafcf0b4,Test/Quiz,Unit 2 part 1,554425139,MS 08 LA III - 3rd B,"Deborah Farina, Maurisha Tucker-McFadden",2026-01-13
+8198880895,2dd81667042e2550a386669eff86c4d88332edf24cc9288ae746eb17567a54bb,Test/Quiz,Unit 2 Part 2,554425139,MS 08 LA III - 3rd B,"Deborah Farina, Maurisha Tucker-McFadden",2026-01-14
+8199631447,2dd81667042e2550a386669eff86c4d88332edf24cc9288ae746eb17567a54bb,Test/Quiz,Unit 2 Part 2,554425139,MS 08 LA III - 2nd A,Maurisha Tucker-McFadden,2026-01-26
+8199772451,63887c99a59d4485dfc912c853d026c792157c3cb8dafdf3324b441db7fe41a2,Test/Quiz,Unit 2 Pat 1,554425139,HS ENG IV H - 1st,Deborah Farina,2026-01-12
+8199772510,3dc7fbcb045b555030791b391adb2b00b52c081f8d51c7cc2d77170f6281b811,Test/Quiz,Unit 2 Part 2,554425139,HS ENG IV H - 1st,Deborah Farina,2026-01-12
+8200877215,a286dc5cf4ac2ac92c5565984ef0b482edeb512e5925789f6183a7e8b5bc0d28,Test/Quiz,"Module 5 Assessment: Now You See It, Now You Dont",554425139,01 LA - A,"Natalie Housen Edwards, Alexis Tillman",2026-01-15
+8200877284,a286dc5cf4ac2ac92c5565984ef0b482edeb512e5925789f6183a7e8b5bc0d28,Test/Quiz,"Module 5 Assessment: Now You See It, Now You Dont",554425139,01 LA - B,"Cindy Mitchell, Alexis Tillman",2026-01-16
+8200877359,a286dc5cf4ac2ac92c5565984ef0b482edeb512e5925789f6183a7e8b5bc0d28,Test/Quiz,"Module 5 Assessment: Now You See It, Now You Dont",554425139,01 LA - C,"Petra Slouber, Alexis Tillman",2026-01-15
+8200902444,044ad59a2eae3eda8cfc9d348a4db1ad1e75ef70968cfb78288010e63e53ce22,Test/Quiz,Chapter 8 Test: More Addition Strategies,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2026-01-16
+8200902489,044ad59a2eae3eda8cfc9d348a4db1ad1e75ef70968cfb78288010e63e53ce22,Test/Quiz,Chapter 8 Test: More Addition Strategies,554425139,01 MTH - B,"Cindy Mitchell, Alexis Tillman",2026-01-16
+8200902532,044ad59a2eae3eda8cfc9d348a4db1ad1e75ef70968cfb78288010e63e53ce22,Test/Quiz,Chapter 8 Test: More Addition Strategies,554425139,01 MTH - C,"Petra Slouber, Alexis Tillman",2026-01-16
+8200902584,044ad59a2eae3eda8cfc9d348a4db1ad1e75ef70968cfb78288010e63e53ce22,Test/Quiz,Chapter 8 Test: More Addition Strategies,554425139,01 MTH - D,"Alexis Tillman, Laura YoungBrown",2026-01-16
+8200948721,bd6388e643120ed8fe623ae5ab03163ff3fb7490cec587ac9c6413a64195349f,Test/Quiz,Chapter 8 Test: More 2-Digit Subtraction,554425139,02 MTH - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-01-15
+8200948758,bd6388e643120ed8fe623ae5ab03163ff3fb7490cec587ac9c6413a64195349f,Test/Quiz,Chapter 8 Test: More 2-Digit Subtraction,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-01-15
+8200991999,2d8ac6b0b89a9f8ab06aba2b7f5590bc50eca0919f4ead77fa3d6e087feea28f,Test/Quiz,Teamwork: Weekly Assessment: Mod 5 Week 1,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2026-01-14
+8200992054,2d8ac6b0b89a9f8ab06aba2b7f5590bc50eca0919f4ead77fa3d6e087feea28f,Test/Quiz,Teamwork: Weekly Assessment: Mod 5 Week 1,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2026-01-14
+8201010981,a443e988223e93d940aa214b7bb103283c7782ad7a728f810ec992c79e494395,Test/Quiz,Heroic Feats: Weekly Assessment: Module 4 Week 2,554425139,04 LA - A,"Colleen Marrero, Alexis Tillman",2026-01-22
+8201011025,a443e988223e93d940aa214b7bb103283c7782ad7a728f810ec992c79e494395,Test/Quiz,Heroic Feats: Weekly Assessment: Module 4 Week 2,554425139,04 LA - B,"Chante Brown, Alexis Tillman",2026-01-25
+8201011082,a443e988223e93d940aa214b7bb103283c7782ad7a728f810ec992c79e494395,Test/Quiz,Heroic Feats: Weekly Assessment: Module 4 Week 2,554425139,04 LA - C,"Alexis Tillman, Alex Zamora",2026-01-27
+8201067480,9ae61969fcca242f9f30eb8989ddffef8a1146bca0e8ecf447d6599e8f2f437f,Test/Quiz,The American West: Module 4 Assessment,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2026-01-14
+8201067599,9ae61969fcca242f9f30eb8989ddffef8a1146bca0e8ecf447d6599e8f2f437f,Test/Quiz,The American West: Module 4 Assessment,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2026-01-14
+8203499258,a0a85cfede8877473c7ce3a6cb849f6e7b6fbdc33bddac18bdd8bfee9837c25a,Test/Quiz,Investigation Assessment 2: Forces,554425139,HS PHYS - 3rd,Idalix Granados,2026-01-13
+8207006018,fcc50df5e63b7c4972accc73999c256ea3d59d2c1a595f836195b4ef8dedbc1d,Test/Quiz,Once Upon a Time: Mod 4 Weekly Assessment: Week 1,554425139,02 LA - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-01-20
+8207006055,fcc50df5e63b7c4972accc73999c256ea3d59d2c1a595f836195b4ef8dedbc1d,Test/Quiz,Once Upon a Time: Mod 4 Weekly Assessment: Week 1,554425139,02 LA - B,"Amanda Malcom, Alexis Tillman",2026-01-20
+8207006086,fcc50df5e63b7c4972accc73999c256ea3d59d2c1a595f836195b4ef8dedbc1d,Test/Quiz,Once Upon a Time: Mod 4 Weekly Assessment: Week 1,554425139,02 LA - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-01-20
+8211876460,a286dc5cf4ac2ac92c5565984ef0b482edeb512e5925789f6183a7e8b5bc0d28,Test/Quiz,"Module 5 Assessment: Now You See It, Now You Dont",554425139,01 LA - D,"Alexis Tillman, Laura YoungBrown",2026-01-15
+8216300987,01d115abb98ea7e2885f63ca3ade9da9b235d52f82d9d5fa26d2b1bc0562d849,Test/Quiz,Topic 3,554425139,HS ALG I - 7th,Madisun McNair,2026-01-27
+8216302399,6ab61bdfbc9ae0ddd5364282dc57dabdc344167edbafb63ae5fab51d405f457a,Test/Quiz,Topic 3 Assessment A,554425139,HS ALG I H - 7th,Geoffrey McCord,2026-01-21
+8224177810,e754626b858119386d1f3e6e13206a37d2cbab3015919efb5ed9657ba8ff12e6,Test/Quiz,Chapter 6 Test: Apply Multiplication to Perimeter and Area,554425139,04 MTH - A,"Colleen Marrero, Alexis Tillman",2026-01-23
+8224177837,e754626b858119386d1f3e6e13206a37d2cbab3015919efb5ed9657ba8ff12e6,Test/Quiz,Chapter 6 Test: Apply Multiplication to Perimeter and Area,554425139,04 MTH - B,"Chante Brown, Alexis Tillman",2026-01-22
+8224177869,e754626b858119386d1f3e6e13206a37d2cbab3015919efb5ed9657ba8ff12e6,Test/Quiz,Chapter 6 Test: Apply Multiplication to Perimeter and Area,554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2026-01-23
+8224198449,f9ffbca61d41856b743a88b01c8a38ea45c8e94bfc21f73675b62fb2f61b20b5,Test/Quiz,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2026-01-22
+8224198497,f9ffbca61d41856b743a88b01c8a38ea45c8e94bfc21f73675b62fb2f61b20b5,Test/Quiz,Chapter 8 Test: Add and Subtract Fractions with Unlike Denominators,554425139,05 MTH - B,"Alexis Tillman, Wei Wang",2026-01-22
+8224213811,8a22a3ef2c9e73b429659943833b71f12744302e31234133235b1a062df1b405,Test/Quiz,Teamwork: Weekly Assessment: Mod 5 Week 2,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2026-01-23
+8224213850,8a22a3ef2c9e73b429659943833b71f12744302e31234133235b1a062df1b405,Test/Quiz,Teamwork: Weekly Assessment: Mod 5 Week 2,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2026-01-23
+8224227991,6816e30b3c523920d0908691d05d7ecea202da789eb1b65bb1005251d11c9ee4,Test/Quiz,Heroic Feats: Module 4 Assessment,554425139,04 LA - A,"Colleen Marrero, Alexis Tillman",2026-01-26
+8224228068,6816e30b3c523920d0908691d05d7ecea202da789eb1b65bb1005251d11c9ee4,Test/Quiz,Heroic Feats: Module 4 Assessment,554425139,04 LA - B,"Chante Brown, Alexis Tillman",2026-01-29
+8224228133,6816e30b3c523920d0908691d05d7ecea202da789eb1b65bb1005251d11c9ee4,Test/Quiz,Heroic Feats: Module 4 Assessment,554425139,04 LA - C,"Alexis Tillman, Alex Zamora",2026-01-27
+8228272353,6f646f4631b259334aec1ae7d75f571a1a145f370ad14643c76a12e116a8ede7,Test/Quiz,Topic 5: The Renaissance and Reformation (1300?1650),554425139,HS WH - 5th,Miguel Santiago Romero,2026-01-26
+8229273120,adc607d8bb23bd6c13bd65382028791a8f1776ae8cf07f8d8913259bfda12cd5,Test/Quiz,Once Upon a Time: Mod 4 Weekly Assessment: Week 2,554425139,02 LA - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-01-29
+8229273149,adc607d8bb23bd6c13bd65382028791a8f1776ae8cf07f8d8913259bfda12cd5,Test/Quiz,Once Upon a Time: Mod 4 Weekly Assessment: Week 2,554425139,02 LA - B,"Amanda Malcom, Alexis Tillman",2026-01-29
+8229273162,adc607d8bb23bd6c13bd65382028791a8f1776ae8cf07f8d8913259bfda12cd5,Test/Quiz,Once Upon a Time: Mod 4 Weekly Assessment: Week 2,554425139,02 LA - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-01-29
+8229307219,2a4a3ef231ea0e39a18722846934d14abb23793cdfd6c2acc5d2c3ae361c3cf2,Test/Quiz,Chapter 9 Test: 2-Digit Addition and Subtraction,554425139,02 MTH - A,"GAINS Admin, Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-01-29
+8229307252,2a4a3ef231ea0e39a18722846934d14abb23793cdfd6c2acc5d2c3ae361c3cf2,Test/Quiz,Chapter 9 Test: 2-Digit Addition and Subtraction,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2026-01-29
+8229307286,2a4a3ef231ea0e39a18722846934d14abb23793cdfd6c2acc5d2c3ae361c3cf2,Test/Quiz,Chapter 9 Test: 2-Digit Addition and Subtraction,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-01-29
+8231228384,0b451f4da9b71b8f1f24abbb2ea4f14f69b29bd2dbf94478925ce546b908fc78,Test/Quiz,Project Earth: Weekly Assessment: Module 5 Week 1,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2026-01-27
+8231229585,0b451f4da9b71b8f1f24abbb2ea4f14f69b29bd2dbf94478925ce546b908fc78,Test/Quiz,Project Earth: Weekly Assessment: Module 5 Week 1,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2026-01-27
+8231589034,01b0d572f195ca24f5ca17b133fbbb0e49d021dd25e1517259f1eb667be9ab72,Test/Quiz,Topic 5: The Early Republic (1789-1825),554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2026-01-29
+8231594660,01b0d572f195ca24f5ca17b133fbbb0e49d021dd25e1517259f1eb667be9ab72,Test/Quiz,Topic 5: The Early Republic (1789-1825),554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2026-01-29
+8231865506,7ddb6eb6be9e784f4b31c9633245e39ca96e6b474754019ee22c250407386d21,Test/Quiz,Topic 7: Branches of the U.S. Government: Collaborate With Others,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2026-01-29
+8231874273,7ddb6eb6be9e784f4b31c9633245e39ca96e6b474754019ee22c250407386d21,Test/Quiz,Topic 7: Branches of the U.S. Government: Collaborate With Others,554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2026-01-29
+8235087881,e9cef10e2cf2011142c65cd59603a3dffd35cd085f5e94255baecf05bd5e6144,Test/Quiz,Chapter 8 Test: Division Facts and Strategies,554425139,03 MTH - A,"Victoria Echevarria, Alexis Tillman",2026-01-29
+8235087905,e9cef10e2cf2011142c65cd59603a3dffd35cd085f5e94255baecf05bd5e6144,Test/Quiz,Chapter 8 Test: Division Facts and Strategies,554425139,03 MTH - B,"Nathalia Malette, Alexis Tillman",2026-01-29
+8239057496,3e764140107418cea79acf2ed17358811403c2231c540aff3dc411dc8bf9e7e4,Test/Quiz,Topic 6: Ancient Greece (2000 BCE - 300 BCE),554425139,MS 06 WH - 3rd A,Greg Stout,2026-02-13
+8239060045,3e764140107418cea79acf2ed17358811403c2231c540aff3dc411dc8bf9e7e4,Test/Quiz,Topic 6: Ancient Greece (2000 BCE - 300 BCE),554425139,MS 06 WH - 2nd B,"Greg Pesicek, Xiomara Rivas",2026-02-03
+8241746024,2bbab3eed5178bf8843c4d5dd3d4152c66a5ebb5b19a0b2807a37d751f45f197,Test/Quiz,Topic 5,554425139,MS 06 MATH - 2nd A,James Ryan,2026-02-19
+8241746925,2bbab3eed5178bf8843c4d5dd3d4152c66a5ebb5b19a0b2807a37d751f45f197,Test/Quiz,Topic 5,554425139,MS 06 MATH - 7th B,James Ryan,2026-02-19
+8241748258,89efa2cca56913ecc4d1e1bf8718a644bf5f833cae8ceba97ab43153d4018aad,Test/Quiz,Topic 5,554425139,MS 07 MATH  - 4th A,James Ryan,2026-02-19
+8241749400,89efa2cca56913ecc4d1e1bf8718a644bf5f833cae8ceba97ab43153d4018aad,Test/Quiz,Topic 5,554425139,MS 07 MATH  - 5th B,James Ryan,2026-02-19
+8241880942,cf0d06cb8f5c79a8c62612dce1563e1a85f307254a0cb59eb80b603921246e8d,Test/Quiz,Topic 5,554425139,MS PRE ALG - 3rd A,James Ryan,2026-02-19
+8241881061,cf0d06cb8f5c79a8c62612dce1563e1a85f307254a0cb59eb80b603921246e8d,Test/Quiz,Topic 5,554425139,MS PRE ALG - 6th B,James Ryan,2026-02-19
+8242520224,f04888988dec71fc69d80fa35dff62ad54263807aedbfd3967a51f96c68cbd09,Test/Quiz,Chapter 9 Test: Money,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2026-02-04
+8242520245,f04888988dec71fc69d80fa35dff62ad54263807aedbfd3967a51f96c68cbd09,Test/Quiz,Chapter 9 Test: Money,554425139,01 MTH - B,"Cindy Mitchell, Alexis Tillman",2026-02-04
+8242520256,f04888988dec71fc69d80fa35dff62ad54263807aedbfd3967a51f96c68cbd09,Test/Quiz,Chapter 9 Test: Money,554425139,01 MTH - C,"Petra Slouber, Alexis Tillman",2026-02-04
+8242520270,f04888988dec71fc69d80fa35dff62ad54263807aedbfd3967a51f96c68cbd09,Test/Quiz,Chapter 9 Test: Money,554425139,01 MTH - D,"Alexis Tillman, Laura YoungBrown",2026-02-04
+8244209576,bb0b69b626decb5cd282e9a41aeee8b3403ef9bb29872d5dba3adcbe1c6a7237,Test/Quiz,Art Everywhere: Mod 5 Weekly Assessment Week 1,554425139,04 LA - A,"Colleen Marrero, Alexis Tillman",2026-02-05
+8244209591,bb0b69b626decb5cd282e9a41aeee8b3403ef9bb29872d5dba3adcbe1c6a7237,Test/Quiz,Art Everywhere: Mod 5 Weekly Assessment Week 1,554425139,04 LA - B,"Chante Brown, Alexis Tillman",2026-02-11
+8244209611,bb0b69b626decb5cd282e9a41aeee8b3403ef9bb29872d5dba3adcbe1c6a7237,Test/Quiz,Art Everywhere: Mod 5 Weekly Assessment Week 1,554425139,04 LA - C,"Alexis Tillman, Alex Zamora",2026-02-10
+8244529246,057db99522669be73534bb93bf065acec802c128968fdb2204214fa2790394a4,Test/Quiz,"Chapter 7 Test: Factors, Multiples, and Number Patterns",554425139,04 MTH - A,"Colleen Marrero, Alexis Tillman",2026-02-05
+8244529273,057db99522669be73534bb93bf065acec802c128968fdb2204214fa2790394a4,Test/Quiz,"Chapter 7 Test: Factors, Multiples, and Number Patterns",554425139,04 MTH - B,"Chante Brown, Alexis Tillman",2026-02-09
+8244529308,057db99522669be73534bb93bf065acec802c128968fdb2204214fa2790394a4,Test/Quiz,"Chapter 7 Test: Factors, Multiples, and Number Patterns",554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2026-02-09
+8244629174,7d77e3091fd58eaeaf83bcf24d9bd04dbf04a6ad6ef8a655b99f41ea15e135f5,Test/Quiz,Chapter 9 Test: Add and Subtract Fractions and Mixed Numbers with Unlike Denominators,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2026-02-04
+8244629194,7d77e3091fd58eaeaf83bcf24d9bd04dbf04a6ad6ef8a655b99f41ea15e135f5,Test/Quiz,Chapter 9 Test: Add and Subtract Fractions and Mixed Numbers with Unlike Denominators,554425139,05 MTH - B,"GAINS Admin, Alexis Tillman, Wei Wang",2026-02-05
+8245486014,00b6e37f91290fa85cd099ffbd4e45e54d64c1f30239dba0f53a6cac3d474d28,Test/Quiz,Topic 4,554425139,HS GEOM - 3rd,"Deborah Farina, Madisun McNair, Greg Pesicek",2026-02-06
+8246154751,29334bd14541c63b2d5c46f7204ef74f2727bf1a7df14ea18b2a3e97cb69473b,Test/Quiz,Once Upon a Time: Module 4 Assessment,554425139,02 LA - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-02-09
+8246154797,29334bd14541c63b2d5c46f7204ef74f2727bf1a7df14ea18b2a3e97cb69473b,Test/Quiz,Once Upon a Time: Module 4 Assessment,554425139,02 LA - B,"Amanda Malcom, Alexis Tillman",2026-02-09
+8246154861,29334bd14541c63b2d5c46f7204ef74f2727bf1a7df14ea18b2a3e97cb69473b,Test/Quiz,Once Upon a Time: Module 4 Assessment,554425139,02 LA - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-02-09
+8247281686,a83c45d2d90680dc82a40586a03780168fd0e3d5a700aa609ebf8fbdefb5bc2a,Test/Quiz,Topic 5: World War I and the 1920s,554425139,HS US HIST - 4th,Miguel Santiago Romero,2026-02-06
+8247931871,7c79076390178faaa7fed9a140981890ae039d21e57175ce137d2d74bcb1c4f7,Test/Quiz,Teamwork: Module 5 Assessment,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2026-02-06
+8247931906,7c79076390178faaa7fed9a140981890ae039d21e57175ce137d2d74bcb1c4f7,Test/Quiz,Teamwork: Module 5 Assessment,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2026-02-06
+8249955742,b2db18c26e362f762ba030382491cdf7596c695cb395605f1cd334eb5eef11e4,Test/Quiz,Investigation Assessments 3: Gravitational Forces,554425139,HS PHYS - 3rd,Idalix Granados,2026-02-09
+8249969314,45b0df5437d191665c793a5ad704602c57479f36ce06740590f2d351b14ace38,Test/Quiz,Topic 4,554425139,HS ALG I - 7th,Madisun McNair,2026-02-09
+8253258668,72d9d438814baf00982889f7f87285a06aaef8f83cd90696ea79fcd9ad1874fe,Test/Quiz,Topic 8: How Elections Work: Vote Responsibly,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2026-02-12
+8253266377,72d9d438814baf00982889f7f87285a06aaef8f83cd90696ea79fcd9ad1874fe,Test/Quiz,Topic 8: How Elections Work: Vote Responsibly,554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2026-02-12
+8253275261,ec22764c98e76738781630b39f685af21d874447cbd0066b99b0df697f356b2f,Test/Quiz,Celebrate America: Mod 6 Weekly Assessment: Week 2,554425139,01 LA - B,"Cindy Mitchell, Alexis Tillman",2026-02-10
+8253275283,ec22764c98e76738781630b39f685af21d874447cbd0066b99b0df697f356b2f,Test/Quiz,Celebrate America: Mod 6 Weekly Assessment: Week 2,554425139,01 LA - C,"Petra Slouber, Alexis Tillman",2026-02-18
+8253275306,ec22764c98e76738781630b39f685af21d874447cbd0066b99b0df697f356b2f,Test/Quiz,Celebrate America: Mod 6 Weekly Assessment: Week 2,554425139,01 LA - D,"Alexis Tillman, Laura YoungBrown",2026-02-10
+8254379528,9cffa7a2e564d150025337b09157451822f486ea502d345700585afbac5f9d60,Test/Quiz,Project Earth: Mod 5 Weekly Assessment Week 2,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2026-02-11
+8254379563,9cffa7a2e564d150025337b09157451822f486ea502d345700585afbac5f9d60,Test/Quiz,Project Earth: Mod 5 Weekly Assessment Week 2,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2026-02-11
+8255737570,fdb0f9b0b3f4d4bc0471e62473dee10b18f07f671de85d4fb85f703562cdca26,Test/Quiz,Unit 3 Part 1,554425139,MS 08 LA III - 2nd A,Maurisha Tucker-McFadden,2026-02-12
+8255770103,ecb455de14d91ee9cab784aa8eb1562c81dff1e4202504ff3ee46a6e6ee38917,Test/Quiz,Unit 3 Part 1,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2026-02-12
+8255770520,ecb455de14d91ee9cab784aa8eb1562c81dff1e4202504ff3ee46a6e6ee38917,Test/Quiz,Unit 3 Part 1,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2026-02-12
+8255775972,2c1bbb054b3a5af5f4d8f1c543e7c23ea89e296d23659e6fd91bdcfd7c85767c,Test/Quiz,Unit 3 Part 1,554425139,MS 07 LA II - 4th B,Maurisha Tucker-McFadden,2026-02-12
+8255776872,2c1bbb054b3a5af5f4d8f1c543e7c23ea89e296d23659e6fd91bdcfd7c85767c,Test/Quiz,Unit 3 Part 1,554425139,MS 07 LA II - 6th A,Maurisha Tucker-McFadden,2026-02-12
+8257123641,b6f2601daeaf95b0035a91a258414de7e63ba84cf346af28f11c5ea21b264884,Test/Quiz,Unit 3 Part 2,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2026-02-20
+8257124994,b6f2601daeaf95b0035a91a258414de7e63ba84cf346af28f11c5ea21b264884,Test/Quiz,Unit 3 Part 2,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2026-02-19
+8257127873,fad2ade092133125082aba1b50924f06c064d2340226c8730e309ee90f55b588,Test/Quiz,Unit 3 Part 2,554425139,MS 07 LA II - 4th B,Maurisha Tucker-McFadden,2026-02-18
+8257130451,fad2ade092133125082aba1b50924f06c064d2340226c8730e309ee90f55b588,Test/Quiz,Unit 3 Part 2,554425139,MS 07 LA II - 6th A,Maurisha Tucker-McFadden,2026-02-13
+8257138829,0d0f47e5c32780634507590fb28a13999d627c7f9847825c85c38207aa7d0e85,Test/Quiz,Unit 3 Part 2,554425139,MS 08 LA III - 2nd A,Maurisha Tucker-McFadden,2026-02-13
+8257504182,059736b8c13aa29facb312c3250df517b1bc1f361286cad9a347afb278901b1c,Test/Quiz,Chapter 9 Test: Apply Multiplication and Division,554425139,03 MTH - A,"Victoria Echevarria, Alexis Tillman",2026-02-13
+8257504195,059736b8c13aa29facb312c3250df517b1bc1f361286cad9a347afb278901b1c,Test/Quiz,Chapter 9 Test: Apply Multiplication and Division,554425139,03 MTH - B,"Nathalia Malette, Alexis Tillman",2026-02-13
+8257513470,8b4048040ee6bab63f7fe6d34459a81e10ec24d28049761de1d82c4f0eeb5bd8,Test/Quiz,Animal Behaviors: Weekly Assessment: Mod 6 Week 1,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2026-02-13
+8257513480,8b4048040ee6bab63f7fe6d34459a81e10ec24d28049761de1d82c4f0eeb5bd8,Test/Quiz,Animal Behaviors: Weekly Assessment: Mod 6 Week 1,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2026-02-13
+8258440058,d4679546fa2dd5f33f13835bdf1657c145c3583ddbbd334e9e24bf6da469db61,Test/Quiz,Waves and Electromagnetic Radiation,554425139,MS 08 PHY SC - 2nd B,Maritza Serrano,2026-02-25
+8259446640,cc8bb7e9bd28cb5e2956de88f404b2edaa21eff1dcb34085ed80b736a5e1a6aa,Test/Quiz,Topic 3,554425139,HS ALG II H - 1st,Geoffrey McCord,2026-02-18
+8259495227,7740db996c95eecf25fa762fb35b812de29e9e8fc71fd71d50611044d1be804a,Test/Quiz,Topic 3,554425139,HS ALG II - 1st,Madisun McNair,2026-02-17
+8261346599,b687ded9a3c18b491be04f5c050bbf325da75b3fc94764c0b8fe6f3240d77d4c,Test/Quiz,Topic 2,554425139,HS ECON - 6th-Spring,Miguel Santiago Romero,2026-02-23
+8262076008,0ad2f051b44dfb13aaa5c58d7c31f516366086f32d3246749e002f2d14e01ef3,Test/Quiz,Art Everywhere: Mod 5 Weekly Assessment Week 2,554425139,04 LA - A,"Colleen Marrero, Alexis Tillman",2026-02-19
+8262076032,0ad2f051b44dfb13aaa5c58d7c31f516366086f32d3246749e002f2d14e01ef3,Test/Quiz,Art Everywhere: Mod 5 Weekly Assessment Week 2,554425139,04 LA - B,"Chante Brown, Alexis Tillman",2026-02-20
+8262076048,0ad2f051b44dfb13aaa5c58d7c31f516366086f32d3246749e002f2d14e01ef3,Test/Quiz,Art Everywhere: Mod 5 Weekly Assessment Week 2,554425139,04 LA - C,"Alexis Tillman, Alex Zamora",2026-02-19
+8262227805,2b21115e5329f2f37c440986d4007d23ba2edfba70c7c87ed0e9ae9698cbf9fa,Test/Quiz,Chapter 10 Test: Addition and Subtraction Relationships,554425139,01 MTH - A,"Natalie Housen Edwards, Alexis Tillman",2026-02-24
+8262227842,2b21115e5329f2f37c440986d4007d23ba2edfba70c7c87ed0e9ae9698cbf9fa,Test/Quiz,Chapter 10 Test: Addition and Subtraction Relationships,554425139,01 MTH - B,"Cindy Mitchell, Alexis Tillman",2026-02-25
+8262227860,2b21115e5329f2f37c440986d4007d23ba2edfba70c7c87ed0e9ae9698cbf9fa,Test/Quiz,Chapter 10 Test: Addition and Subtraction Relationships,554425139,01 MTH - C,"Petra Slouber, Alexis Tillman",2026-02-26
+8262227865,2b21115e5329f2f37c440986d4007d23ba2edfba70c7c87ed0e9ae9698cbf9fa,Test/Quiz,Chapter 10 Test: Addition and Subtraction Relationships,554425139,01 MTH - D,"Alexis Tillman, Laura YoungBrown",2026-02-26
+8262250043,62f095de11911813ce271538d064ec76dc8a5e11c9ea8d738b7fd8d42117b1b7,Test/Quiz,Chapter 12 Test: Time,554425139,02 MTH - A,Shanise Hilley,2026-03-27
+8262250049,62f095de11911813ce271538d064ec76dc8a5e11c9ea8d738b7fd8d42117b1b7,Test/Quiz,Chapter 12 Test: Time,554425139,02 MTH - B,Amanda Malcom,2026-03-27
+8262250063,62f095de11911813ce271538d064ec76dc8a5e11c9ea8d738b7fd8d42117b1b7,Test/Quiz,Chapter 12 Test: Time,554425139,02 MTH - C,Ashley Sanchez,2026-03-27
+8262266516,a7c83483a791b5eb996d775edcb79b5bed4d411cf37f709ab0beaa83daa56578,Test/Quiz,Chapter 8 Test: Fraction Equivalence,554425139,04 MTH - A,"Colleen Marrero, Alexis Tillman",2026-02-26
+8262266543,a7c83483a791b5eb996d775edcb79b5bed4d411cf37f709ab0beaa83daa56578,Test/Quiz,Chapter 8 Test: Fraction Equivalence,554425139,04 MTH - B,"Chante Brown, Alexis Tillman",2026-02-24
+8262266558,a7c83483a791b5eb996d775edcb79b5bed4d411cf37f709ab0beaa83daa56578,Test/Quiz,Chapter 8 Test: Fraction Equivalence,554425139,04 MTH - C,"Alexis Tillman, Alex Zamora",2026-02-24
+8262275994,792a8b0d7d9f73f5de2d089ddc74eb14a5344cba43f070b3db8271ccc9e84913,Test/Quiz,Chapter 10 Test: Multiply Fractions,554425139,05 MTH - A,"Alexis Tillman, Wei Wang",2026-02-24
+8262276017,792a8b0d7d9f73f5de2d089ddc74eb14a5344cba43f070b3db8271ccc9e84913,Test/Quiz,Chapter 10 Test: Multiply Fractions,554425139,05 MTH - B,"GAINS Admin, Alexis Tillman, Wei Wang",2026-02-24
+8262300500,8f2429d6b9ea5109ba396b961d1e7219c66cc1108e94fdbe943a44af13b7ec80,Test/Quiz,Celebrate America: Module 6 Assesment,554425139,01 LA - A,"Natalie Housen Edwards, Alexis Tillman",2026-02-23
+8262300560,8f2429d6b9ea5109ba396b961d1e7219c66cc1108e94fdbe943a44af13b7ec80,Test/Quiz,Celebrate America: Module 6 Assesment,554425139,01 LA - B,"Cindy Mitchell, Alexis Tillman",2026-02-23
+8262300586,8f2429d6b9ea5109ba396b961d1e7219c66cc1108e94fdbe943a44af13b7ec80,Test/Quiz,Celebrate America: Module 6 Assesment,554425139,01 LA - C,"Petra Slouber, Alexis Tillman",2026-02-24
+8262300618,8f2429d6b9ea5109ba396b961d1e7219c66cc1108e94fdbe943a44af13b7ec80,Test/Quiz,Celebrate America: Module 6 Assesment,554425139,01 LA - D,"Alexis Tillman, Laura YoungBrown",2026-02-24
+8262316401,511679d337d1eb45f2d768a88da3a47446ff572aec84d666d63c3ae0ed3aa159,Test/Quiz,Project Earth: Module 5 Assessment,554425139,05 LA - A,"Jahmila McIntyre, Alexis Tillman",2026-02-24
+8262316454,511679d337d1eb45f2d768a88da3a47446ff572aec84d666d63c3ae0ed3aa159,Test/Quiz,Project Earth: Module 5 Assessment,554425139,05 LA - B,"Jahmila McIntyre, Alexis Tillman",2026-02-24
+8264803451,7ecd262c15caf38df384dcdd61f4e50de1e37caa77864eb3c339e23f20239a2f,Test/Quiz,Topic 6: The Age of Jackson and Westward Expansion (1824-1860),554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2026-02-20
+8264804608,7ecd262c15caf38df384dcdd61f4e50de1e37caa77864eb3c339e23f20239a2f,Test/Quiz,Topic 6: The Age of Jackson and Westward Expansion (1824-1860),554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2026-02-20
+8265481913,004b4a56b55c0a1a5bff527224c4a09b209bbc04721275da866adb9a02ca3141,Test/Quiz,Lead the Way: Mod 5 Weekly Assessment: Week 1,554425139,02 LA - A,"Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-02-20
+8265481933,004b4a56b55c0a1a5bff527224c4a09b209bbc04721275da866adb9a02ca3141,Test/Quiz,Lead the Way: Mod 5 Weekly Assessment: Week 1,554425139,02 LA - B,"Amanda Malcom, Alexis Tillman",2026-02-20
+8265481949,004b4a56b55c0a1a5bff527224c4a09b209bbc04721275da866adb9a02ca3141,Test/Quiz,Lead the Way: Mod 5 Weekly Assessment: Week 1,554425139,02 LA - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-02-20
+8269373890,9dab5ac404687db35085e5f8ebdeac9dece395a93136d75f094870411c70943c,Test/Quiz,Animal Behaviors: Weekly Assessment: Mod 6 Week 2,554425139,03 LA - A,"Victoria Echevarria, Alexis Tillman",2026-02-24
+8269373908,9dab5ac404687db35085e5f8ebdeac9dece395a93136d75f094870411c70943c,Test/Quiz,Animal Behaviors: Weekly Assessment: Mod 6 Week 2,554425139,03 LA - B,"Nathalia Malette, Alexis Tillman",2026-02-24
+8270674719,0c2310cb28b9021a7fa9f246aeca092f3e0e20d52f7f76ac6e3df6ce741949f3,Test/Quiz,Topic 5,554425139,HS GEOM - 3rd,"Deborah Farina, Madisun McNair, Greg Pesicek",2026-02-26
+8272404145,a2a03ba153ac31653e56c63ea8aeda9a1e0959640372885eb09bdd61957fbfe2,Test/Quiz,Topic 4: Earth's Surface Systems,554425139,MS 06 EARTH SPACE SCI - 5th B,Maritza Serrano,2026-02-26
+8272404615,a2a03ba153ac31653e56c63ea8aeda9a1e0959640372885eb09bdd61957fbfe2,Test/Quiz,Topic 4: Earth's Surface Systems,554425139,MS 06 EARTH SPACE SCI - 7th A,Maritza Serrano,2026-03-02
+8272405023,5ff1d72aa68fe144a9eb5969d3a5b07a7c40a9c2fd228d166662a907a5da7fc0,Test/Quiz,Topic 3: Reproduction and Genetics,554425139,MS 07 LFE SCI - 3rd A,Maritza Serrano,2026-02-27
+8272405389,69f378f67164bcd308c520accb51428380757459a6b6e7c02aa1f3c80aaa938b,Test/Quiz,Topic 3: Reproduction and Genetics,554425139,MS 07 LFE SCI - 6th B,Maritza Serrano,2026-03-02
+8273238667,200dd5f1955db68bfb816227ad65f0b0a92247a7b094fa400410cad8a5094167,Test/Quiz,Topic 7: The Roman Republic (800 BCE - 30 BCE),554425139,MS 06 WH - 2nd B,"Greg Pesicek, Xiomara Rivas",2026-02-27
+8273239461,d8627e17830443b1fdadb3d4cc32ef9c82b33a33a2169f2a32ab2ac1cf75868d,Test/Quiz,The Big Outdoors: Mod 7 Weekly Assessment: Week 1,554425139,01 LA - A,Natalie Housen Edwards,2026-03-12
+8273239476,d8627e17830443b1fdadb3d4cc32ef9c82b33a33a2169f2a32ab2ac1cf75868d,Test/Quiz,The Big Outdoors: Mod 7 Weekly Assessment: Week 1,554425139,01 LA - B,Cindy Mitchell,2026-03-23
+8273239496,d8627e17830443b1fdadb3d4cc32ef9c82b33a33a2169f2a32ab2ac1cf75868d,Test/Quiz,The Big Outdoors: Mod 7 Weekly Assessment: Week 1,554425139,01 LA - C,Petra Slouber,2026-03-11
+8273246666,200dd5f1955db68bfb816227ad65f0b0a92247a7b094fa400410cad8a5094167,Test/Quiz,Topic 7: The Roman Republic (800 BCE - 30 BCE),554425139,MS 06 WH - 3rd A,Greg Stout,2026-02-27
+8273450508,668b493e6b7d1ae76b60593820f8cd0e7ffc8249656d55197e33e1fc6a57a34a,Test/Quiz,Chapter 11 Test: Money,554425139,02 MTH - A,"GAINS Admin, Shanise Hilley, Amanda Malcom, Alexis Tillman",2026-02-27
+8273450524,668b493e6b7d1ae76b60593820f8cd0e7ffc8249656d55197e33e1fc6a57a34a,Test/Quiz,Chapter 11 Test: Money,554425139,02 MTH - B,"Amanda Malcom, Alexis Tillman",2026-02-27
+8273450539,668b493e6b7d1ae76b60593820f8cd0e7ffc8249656d55197e33e1fc6a57a34a,Test/Quiz,Chapter 11 Test: Money,554425139,02 MTH - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-02-27
+8273490708,e66aa756e5eb9a9762bc4998f4cce86f83b3bbc4e0697df143e7e4ec4ac8af5a,Test/Quiz,Chapter 11 Test: Geometry: Three-Dimensional Solids,554425139,01 MTH - A,Natalie Housen Edwards,2026-03-26
+8273490740,e66aa756e5eb9a9762bc4998f4cce86f83b3bbc4e0697df143e7e4ec4ac8af5a,Test/Quiz,Chapter 11 Test: Geometry: Three-Dimensional Solids,554425139,01 MTH - B,Cindy Mitchell,2026-03-26
+8273490756,e66aa756e5eb9a9762bc4998f4cce86f83b3bbc4e0697df143e7e4ec4ac8af5a,Test/Quiz,Chapter 11 Test: Geometry: Three-Dimensional Solids,554425139,01 MTH - C,Petra Slouber,2026-03-26
+8273490771,e66aa756e5eb9a9762bc4998f4cce86f83b3bbc4e0697df143e7e4ec4ac8af5a,Test/Quiz,Chapter 11 Test: Geometry: Three-Dimensional Solids,554425139,01 MTH - D,Laura YoungBrown,2026-03-26
+8273780092,33c2516c9f6ea6fb9a653e4525728965f4473893008bb1bb19b6fd254dc3fc2a,Test/Quiz,Topic 6: The Great Depression and the New Deal (1928-1941),554425139,HS US HIST - 4th,Miguel Santiago Romero,2026-03-02
+8273818985,fb3b021dba9fceab5628e89d84e8ede57d8f7de928a7ca93fa02ccd8ace01949,Test/Quiz,Topic 6: New Global Connections (1415?1796),554425139,HS WH - 5th,Miguel Santiago Romero,2026-02-27
+8276471768,209dcab0da2c91867670c174eb7c36307a3ae2be3adb1768ada7f141720434c3,Test/Quiz,Topic 5,554425139,HS ALG I - 7th,Madisun McNair,2026-03-02
+8281054367,8823acfa587548563a8dd0f024dcc857db9339116ddb0342b7b349a2b5dc814b,Test/Quiz,Lead the Way: Mod 5 Weekly Assessment: Week 2,554425139,02 LA - A,Shanise Hilley,2026-03-10
+8281054395,8823acfa587548563a8dd0f024dcc857db9339116ddb0342b7b349a2b5dc814b,Test/Quiz,Lead the Way: Mod 5 Weekly Assessment: Week 2,554425139,02 LA - B,Amanda Malcom,2026-03-10
+8281054426,8823acfa587548563a8dd0f024dcc857db9339116ddb0342b7b349a2b5dc814b,Test/Quiz,Lead the Way: Mod 5 Weekly Assessment: Week 2,554425139,02 LA - C,"Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-03-10
+8281168614,a41ec1de7b697e228465144c9365a7b2287240ad515672cbea91ae7d21589798,Test/Quiz,Animal Behaviors: Module 6 Assessment,554425139,03 LA - A,Victoria Echevarria,2026-03-10
+8281168656,a41ec1de7b697e228465144c9365a7b2287240ad515672cbea91ae7d21589798,Test/Quiz,Animal Behaviors: Module 6 Assessment,554425139,03 LA - B,Nathalia Malette,2026-03-11
+8281483482,387e161e916647e8bb7f9e4bc9937bcb87df408ea813acd72111bb61e384311e,Test/Quiz,Unit 3 Part 1,554425139,HS ENG III H - 4th,Deborah Farina,2026-03-05
+8281483542,1f9ae96e77417676a45b5d2017c13da020899bb2c9bf12b9bae6a4a57123611e,Test/Quiz,Unit 3 Part 2,554425139,HS ENG III H - 4th,Deborah Farina,2026-03-05
+8282809989,2c10bdec43c3a9dcd0a15436c01e23fd5bd1bb7bbf7ac51a547f6fa8e1cdeeb9,Test/Quiz,Chapter 11 Test: Understand Perimeter,554425139,03 MTH - A,Victoria Echevarria,2026-03-11
+8282809999,2c10bdec43c3a9dcd0a15436c01e23fd5bd1bb7bbf7ac51a547f6fa8e1cdeeb9,Test/Quiz,Chapter 11 Test: Understand Perimeter,554425139,03 MTH - B,Nathalia Malette,2026-03-12
+8282857552,aa6312a16e7ba99881eeeeeb28227be30631256d7a69e70ccfdcbaf85b9d4569,Test/Quiz,Unit 9 Test: Forces and Motion,554425139,04 SCI - A,Colleen Marrero,2026-03-09
+8282857567,aa6312a16e7ba99881eeeeeb28227be30631256d7a69e70ccfdcbaf85b9d4569,Test/Quiz,Unit 9 Test: Forces and Motion,554425139,04 SCI - B,Chante Brown,2026-03-10
+8282857586,aa6312a16e7ba99881eeeeeb28227be30631256d7a69e70ccfdcbaf85b9d4569,Test/Quiz,Unit 9 Test: Forces and Motion,554425139,04 SCI - C,Alex Zamora,2026-03-09
+8283391448,4cc1bbece783f3825cf79e824b55251818a59114e1e1cf5884b8f1fbdcf10fba,Test/Quiz,Art Everywhere: Module 5 Assessment,554425139,04 LA - A,Colleen Marrero,2026-03-10
+8283391490,4cc1bbece783f3825cf79e824b55251818a59114e1e1cf5884b8f1fbdcf10fba,Test/Quiz,Art Everywhere: Module 5 Assessment,554425139,04 LA - B,Chante Brown,2026-03-10
+8283391522,4cc1bbece783f3825cf79e824b55251818a59114e1e1cf5884b8f1fbdcf10fba,Test/Quiz,Art Everywhere: Module 5 Assessment,554425139,04 LA - C,Alex Zamora,2026-03-09
+8283875834,a874efb8d77058b1c2d7df97b647595aab9cfb20b32bf84b53a539fc31e0662b,Test/Quiz,Investigation 4: Electric Forces,554425139,HS PHYS - 3rd,Idalix Granados,2026-03-06
+8286339438,baa2a4a459f49b2aa5ca3caca334cca0131bd5d43380d1ca1326037cbb003445,Test/Quiz,Topic 4,554425139,HS ALG II - 1st,Madisun McNair,2026-03-09
+8287573557,fa8f133e1340f4b030f88b6693d1cc8501cbef078fd5d37413980b0e2074515a,Test/Quiz,Chapter 9 Test: Compare Fractions,554425139,04 MTH - A,Colleen Marrero,2026-03-12
+8287573590,fa8f133e1340f4b030f88b6693d1cc8501cbef078fd5d37413980b0e2074515a,Test/Quiz,Chapter 9 Test: Compare Fractions,554425139,04 MTH - B,Chante Brown,2026-03-11
+8287573618,fa8f133e1340f4b030f88b6693d1cc8501cbef078fd5d37413980b0e2074515a,Test/Quiz,Chapter 9 Test: Compare Fractions,554425139,04 MTH - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-03-11
+8287623781,b0315d325ba9760b6f4eee972b5e089fe21968fd181b2192fcdff4c4831b95c8,Test/Quiz,Unit 10 Benchmark Test: Changes in Environments,554425139,05 SCI - A,Jahmila McIntyre,2026-03-12
+8287623832,b0315d325ba9760b6f4eee972b5e089fe21968fd181b2192fcdff4c4831b95c8,Test/Quiz,Unit 10 Benchmark Test: Changes in Environments,554425139,05 SCI - B,Wei Wang,2026-03-11
+8288324077,f693caaaa9c96aac1a1358c3154283cd07480930b6ee93f311fe2e0790b6692e,Test/Quiz,Topic 6,554425139,MS 06 MATH - 2nd A,James Ryan,2026-03-27
+8288324185,f693caaaa9c96aac1a1358c3154283cd07480930b6ee93f311fe2e0790b6692e,Test/Quiz,Topic 6,554425139,MS 06 MATH - 7th B,James Ryan,2026-03-27
+8288324350,5c6cee71162a752162151829d8ee2546da212a34506fdae83c6064b30b1cbb85,Test/Quiz,Topic 6,554425139,MS 07 MATH  - 4th A,James Ryan,2026-03-27
+8288324440,5c6cee71162a752162151829d8ee2546da212a34506fdae83c6064b30b1cbb85,Test/Quiz,Topic 6,554425139,MS 07 MATH  - 5th B,James Ryan,2026-03-26
+8288324629,0ba26a011db5c0585d8cf6670bd38a8f2e2fb1ebc5eb11b76a57d9244a4be3d7,Test/Quiz,Topic 6,554425139,MS PRE ALG - 3rd A,James Ryan,2026-03-27
+8288324748,0ba26a011db5c0585d8cf6670bd38a8f2e2fb1ebc5eb11b76a57d9244a4be3d7,Test/Quiz,Topic 6,554425139,MS PRE ALG - 6th B,James Ryan,2026-03-27
+8288325025,1825c797d934baca410edda410a85b0a730fefb9cf7cf398b2d8692b992eeb6f,Test/Quiz,Unit 3 Part 1,554425139,HS ENG IV - 1st,Deborah Farina,2026-03-10
+8288325295,d92fda52c82e906e1401b0cabf2e5f93346f45132fb2581ab5ee7908c481837d,Test/Quiz,Unit 3 Part 1,554425139,HS ENG IV H - 1st,Deborah Farina,2026-03-10
+8288332885,a1e948732b2004626f15349270790ac28acb7b7c7a85e65db28765fd1f34fc55,Test/Quiz,Topic 9: The Media and You: Find Accurate Information,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2026-03-11
+8288339726,a1e948732b2004626f15349270790ac28acb7b7c7a85e65db28765fd1f34fc55,Test/Quiz,Topic 9: The Media and You: Find Accurate Information,554425139,MS 07 CIV - 3rd B,Xiomara Rivas,2026-03-10
+8288568116,4ed4c90fae24d750cac7b377356256818bf8dce51e220ffd6b41ae395e97ec63,Test/Quiz,Art for Everyone: Mod 6 Weekly Assessment: Week 1,554425139,05 LA - A,Jahmila McIntyre,2026-03-10
+8288568143,4ed4c90fae24d750cac7b377356256818bf8dce51e220ffd6b41ae395e97ec63,Test/Quiz,Art for Everyone: Mod 6 Weekly Assessment: Week 1,554425139,05 LA - B,Jahmila McIntyre,2026-03-10
+8288734446,c829f8ceb258f284f24347fe552b824ed26525a06eff3d341f32f277fd43a6e3,Test/Quiz,Chapter 11 Test: Divide Fractions,554425139,05 MTH - A,Wei Wang,2026-03-12
+8288734466,c829f8ceb258f284f24347fe552b824ed26525a06eff3d341f32f277fd43a6e3,Test/Quiz,Chapter 11 Test: Divide Fractions,554425139,05 MTH - B,Wei Wang,2026-03-12
+8289907436,5df7887fd8cbda5b1337b1d86602171895260bdd6263176782214e5f0568ec1d,Test/Quiz,Topic 6,554425139,HS ALG I - 7th,Madisun McNair,2026-03-11
+8289910221,14e446c0f9828b46dcd3d8feb238380daf0490532912ccc07c558587e7d5cedd,Test/Quiz,Unit 3 Part 2,554425139,HS ENG IV - 1st,Deborah Farina,2026-03-11
+8289910571,9948ed6f993047b594fa2fcf6b4f652c23f28d95539c74aaab3d612d1adfc19d,Test/Quiz,Unit 3 Part 2,554425139,HS ENG IV H - 1st,Deborah Farina,2026-03-11
+8291223663,c11ab3ba17417b0dc3a4bdc5d74e842646be6bd8b829cdb269e78c5a95566759,Test/Quiz,Topic 3,554425139,HS ECON - 6th-Spring,Miguel Santiago Romero,2026-03-12
+8323376256,30ec0cf18a764063b1b289ca6e05febaa08c673a5b2cf6cfee0cfb185bed99d0,Test/Quiz,Unit 3 Part 1,554425139,HS ENG II - 2nd,Austin Matsoff,2026-03-26
+8323376260,2f0ab01948fb264c03a5b8f0e9921f55db6a2c6ca4ba9de62b26a96cbf3a8df3,Test/Quiz,Unit 3 Part 2,554425139,HS ENG II - 2nd,Austin Matsoff,2026-03-27
+8326782298,cfadc071932583cdd78ab259353013be204241147d149937b2f01ac22bec8d47,Test/Quiz,Unit 3 Part 1,554425139,HS ENG I - 1st,"Austin Matsoff, Greg Pesicek",2026-03-26
+8326782311,22ee4625dedb2b46547849111540b6b8fbf22a17035ed22ee60a35afd8f8ba1f,Test/Quiz,Unit 3 Part 2,554425139,HS ENG I - 1st,"Austin Matsoff, Greg Pesicek",2026-03-27
+8326850838,3b38b4081f8121b534551255c61b785a719c151ebe781cd441908720ef5626d6,Test/Quiz,Topic 7: World War II,554425139,HS US HIST - 4th,Miguel Santiago Romero,2026-03-26
+8326852201,74d48161ed60469eab20fb1fc1747ead6471d4746bf063829f504e3fca9e60bc,Test/Quiz,Topic 7: Absolutism and Revolution,554425139,HS WH - 5th,Miguel Santiago Romero,2026-03-26
+8326855555,e9cf7bfde6e0a749921ca21e5ec57725b0cd363515af2b3c7901999ba66c8c30,Test/Quiz,Topic 8: The Roman and Byzantine Empires (30 BCE - 1453 CE),554425139,MS 06 WH - 3rd A,Greg Stout,2026-04-10
+8326856475,e9cf7bfde6e0a749921ca21e5ec57725b0cd363515af2b3c7901999ba66c8c30,Test/Quiz,Topic 8: The Roman and Byzantine Empires (30 BCE - 1453 CE),554425139,MS 06 WH - 2nd B,"Greg Pesicek, Xiomara Rivas",2026-03-27
+8327012426,fdb0f9b0b3f4d4bc0471e62473dee10b18f07f671de85d4fb85f703562cdca26,Test/Quiz,Unit 3 Part 1,554425139,MS 08 LA III - 3rd B,"Deborah Farina, Maurisha Tucker-McFadden",2026-03-30
+8327012430,0d0f47e5c32780634507590fb28a13999d627c7f9847825c85c38207aa7d0e85,Test/Quiz,Unit 3 Part 2,554425139,MS 08 LA III - 3rd B,"Deborah Farina, Maurisha Tucker-McFadden",2026-03-31
+8330395855,8d8530d00091645a0be94f3385b212005a9be9859b83cf66b98ac58d2b39c2c3,Test/Quiz,Topic 5,554425139,HS ALG II - 1st,Madisun McNair,2026-03-31
+8330780174,a6d3e77e068511d348d2378526ad6db9897e6b99d8e316f26733b4a3f89abb7b,Test/Quiz,Lead the Way: Module 5 Assesment,554425139,02 LA - B,Amanda Malcom,2026-03-30
+8330782410,a6d3e77e068511d348d2378526ad6db9897e6b99d8e316f26733b4a3f89abb7b,Test/Quiz,Lead the Way: Module 5 Assesment,554425139,02 LA - C,"GAINS Admin, Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-03-30
+8330800483,a6d3e77e068511d348d2378526ad6db9897e6b99d8e316f26733b4a3f89abb7b,Test/Quiz,Lead the Way: Module 5 Assesment,554425139,02 LA - A,Shanise Hilley,2026-03-30
+8330846244,d41651100687ea823cfacbdc14f406b2f803827d324936ce9dda9dd9c1b71179,Test/Quiz,Marvels of Nature: Mod 6 Weekly Assessment: Week 1,554425139,04 LA - A,Colleen Marrero,2026-04-03
+8330846283,d41651100687ea823cfacbdc14f406b2f803827d324936ce9dda9dd9c1b71179,Test/Quiz,Marvels of Nature: Mod 6 Weekly Assessment: Week 1,554425139,04 LA - B,Chante Brown,2026-04-01
+8330846316,bcd50426a66a21ce47f361ba6b204e0748c49384969de1606bb8bc5c798f2c11,Test/Quiz,M6W1 Weekly Assessment: Marvels of Nature:,554425139,04 LA - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-03-30
+8331119618,676e3fd152df9d7ee2d21e7362e44c04eaa35626725914b967cefa9a72a2be3e,Test/Quiz,Make a Difference: Weekly Assessment: Mod 7 Week 1,554425139,03 LA - A,Victoria Echevarria,2026-03-30
+8331119633,676e3fd152df9d7ee2d21e7362e44c04eaa35626725914b967cefa9a72a2be3e,Test/Quiz,Make a Difference: Weekly Assessment: Mod 7 Week 1,554425139,03 LA - B,Nathalia Malette,2026-03-30
+8331562546,2e12afb2a58017f2defd94ad6b252347a9da8dc99abe5b2de5503d37c2f62cb3,Test/Quiz,Art for Everyone: Mod 6 Weekly Assessment: Week 2,554425139,05 LA - A,Jahmila McIntyre,2026-03-31
+8331562565,2e12afb2a58017f2defd94ad6b252347a9da8dc99abe5b2de5503d37c2f62cb3,Test/Quiz,Art for Everyone: Mod 6 Weekly Assessment: Week 2,554425139,05 LA - B,Jahmila McIntyre,2026-03-31
+8331599999,e5beacdb4d231e18e7da1666db6603968c7eaf280e607d961811eb042ae11811,Test/Quiz,Chapter 12 Test: Geometry: Two-Dimensional Shapes,554425139,01 MTH - A,"Natalie McKenzie, Alexis Tillman",2026-04-08
+8331600020,e5beacdb4d231e18e7da1666db6603968c7eaf280e607d961811eb042ae11811,Test/Quiz,Chapter 12 Test: Geometry: Two-Dimensional Shapes,554425139,01 MTH - B,Cindy Mitchell,2026-04-08
+8331600035,e5beacdb4d231e18e7da1666db6603968c7eaf280e607d961811eb042ae11811,Test/Quiz,Chapter 12 Test: Geometry: Two-Dimensional Shapes,554425139,01 MTH - C,Petra Slouber,2026-04-08
+8331600049,e5beacdb4d231e18e7da1666db6603968c7eaf280e607d961811eb042ae11811,Test/Quiz,Chapter 12 Test: Geometry: Two-Dimensional Shapes,554425139,01 MTH - D,Laura YoungBrown,2026-04-09
+8331681508,1038f179d4ba3619c8cf6c249b5729d73e5179a6148cb5b5fa25034269053f30,Test/Quiz,Topic 7,554425139,HS ALG I - 7th,Madisun McNair,2026-04-13
+8331695850,5759c0bb844977d8383eb6a176198d4145c7e2b807935338dc4becc5b756cec5,Test/Quiz,Topic 10: The United States and the World: Make Decisions,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2026-03-31
+8331697612,5759c0bb844977d8383eb6a176198d4145c7e2b807935338dc4becc5b756cec5,Test/Quiz,Topic 10: The United States and the World: Make Decisions,554425139,MS 07 CIV - 3rd B,"Greg Pesicek, Xiomara Rivas",2026-03-31
+8331747140,84c558cfafd964f06b1dd25642ab50f86c6fe3a63bf66092fa3586f91dc4bbbc,Test/Quiz,Topic 7: Society and Culture Before the Civil War (1820-1860),554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2026-03-31
+8331748638,84c558cfafd964f06b1dd25642ab50f86c6fe3a63bf66092fa3586f91dc4bbbc,Test/Quiz,Topic 7: Society and Culture Before the Civil War (1820-1860),554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2026-03-31
+8331872167,1f987b33ef36a71172ca058d8a96076d1d9f864b086495be6499a59a7b72b092,Test/Quiz,Investigation 7: Energy,554425139,HS PHYS - 3rd,"Idalix Granados, Jamesha John-Lewis",2026-03-31
+8332051196,96988b869f9e2baea18e5276a007a8de305c762be6b832e497f8517ee56a2456,Test/Quiz,Topic 4,554425139,HS ALG II H - 1st,Geoffrey McCord,2026-03-31
+8332546713,203e237192de5cfce578c8d3b22aace6d3808d89e47a7bd12f9466d2471dc227,Test/Quiz,Chapter 12 Test: Algebra: Expressions,554425139,05 MTH - A,Wei Wang,2026-03-31
+8332547892,203e237192de5cfce578c8d3b22aace6d3808d89e47a7bd12f9466d2471dc227,Test/Quiz,Chapter 12 Test: Algebra: Expressions,554425139,05 MTH - B,Wei Wang,2026-04-01
+8332619471,a337abc6be981a04699503111f816bf56027bfb336d5f4b9dbaf0f8203d55843,Test/Quiz,Topic 7,554425139,HS GEOM - 3rd,"Deborah Farina, Madisun McNair, Greg Pesicek",2026-04-02
+8333544824,5bc91b6ce8e49291cd0e1f0e1473b89a09bbc2f2775538d81374d3f752511bc4,Test/Quiz,Topic 5: Minerals and Rocks in the Geosphere,554425139,MS 06 EARTH SPACE SCI - 5th B,Maritza Serrano,2026-04-13
+8333545060,5bc91b6ce8e49291cd0e1f0e1473b89a09bbc2f2775538d81374d3f752511bc4,Test/Quiz,Topic 5: Minerals and Rocks in the Geosphere,554425139,MS 06 EARTH SPACE SCI - 7th A,Maritza Serrano,2026-04-13
+8333789640,43733e4f0ef82c586c862723fdcb6973dc84028fd642652696883e85dc2f6e36,Test/Quiz,The Big Outdoors: Mod 7 Weekly Assessment: Week 2,554425139,01 LA - A,"Natalie McKenzie, Alexis Tillman",2026-04-06
+8333789645,43733e4f0ef82c586c862723fdcb6973dc84028fd642652696883e85dc2f6e36,Test/Quiz,The Big Outdoors: Mod 7 Weekly Assessment: Week 2,554425139,01 LA - B,Cindy Mitchell,2026-04-01
+8333789655,43733e4f0ef82c586c862723fdcb6973dc84028fd642652696883e85dc2f6e36,Test/Quiz,The Big Outdoors: Mod 7 Weekly Assessment: Week 2,554425139,01 LA - C,Petra Slouber,2026-04-01
+8333789668,43733e4f0ef82c586c862723fdcb6973dc84028fd642652696883e85dc2f6e36,Test/Quiz,The Big Outdoors: Mod 7 Weekly Assessment: Week 2,554425139,01 LA - D,Laura YoungBrown,2026-04-02
+8334124572,ca39e37140ae854a692b172d8ac452de4774c28093e078e93eee4617a60ba7b5,Test/Quiz,Chapter 12 Test: Time Measurement and Intervals,554425139,03 MTH - A,Victoria Echevarria,2026-04-03
+8334124600,ca39e37140ae854a692b172d8ac452de4774c28093e078e93eee4617a60ba7b5,Test/Quiz,Chapter 12 Test: Time Measurement and Intervals,554425139,03 MTH - B,Nathalia Malette,2026-04-03
+8334685138,66198a1b25a2d0c73c31ad369d2d0dcabb29a78ac2d4b55eafab07978b1ba98e,Test/Quiz,Topic 4,554425139,HS ECON - 6th-Spring,Miguel Santiago Romero,2026-04-02
+8335566941,ea4d4ab9c64db8a27bcc0755a40dc2013e3afa0b09846d38b2585a51a5525995,Test/Quiz,Topic 5,554425139,HS ALG I H - 7th,"Deborah Farina, Geoffrey McCord",2026-04-06
+8335844924,e6c618a97e10afef5dfa4a69bb1b7694794dde0b97193dcda0c505e54fb3a4d3,Test/Quiz,Make a Difference: Weekly Assessment: Mod 7 Week 2,554425139,03 LA - A,Victoria Echevarria,2026-04-06
+8335844939,e6c618a97e10afef5dfa4a69bb1b7694794dde0b97193dcda0c505e54fb3a4d3,Test/Quiz,Make a Difference: Weekly Assessment: Mod 7 Week 2,554425139,03 LA - B,Nathalia Malette,2026-04-06
+8335933215,49b6525394bca048480aa72fb90c0145abc3a884d970ee9fd6f4c373560abe4a,Test/Quiz,Marvels of Nature: Mod 6 Weekly Assessment: Week 2,554425139,04 LA - A,Colleen Marrero,2026-04-13
+8335933225,49b6525394bca048480aa72fb90c0145abc3a884d970ee9fd6f4c373560abe4a,Test/Quiz,Marvels of Nature: Mod 6 Weekly Assessment: Week 2,554425139,04 LA - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-04-13
+8337186737,3df4f4562291ce881120517f2e8d0003a14a18747f0a5ed1de93f169e748a4b0,Test/Quiz,The Big Outdoors: Module 7 Assessment,554425139,01 LA - A,"Natalie McKenzie, Alexis Tillman",2026-04-10
+8337186770,3df4f4562291ce881120517f2e8d0003a14a18747f0a5ed1de93f169e748a4b0,Test/Quiz,The Big Outdoors: Module 7 Assessment,554425139,01 LA - B,Cindy Mitchell,2026-04-09
+8337186796,3df4f4562291ce881120517f2e8d0003a14a18747f0a5ed1de93f169e748a4b0,Test/Quiz,The Big Outdoors: Module 7 Assessment,554425139,01 LA - C,Petra Slouber,2026-04-10
+8337186818,3df4f4562291ce881120517f2e8d0003a14a18747f0a5ed1de93f169e748a4b0,Test/Quiz,The Big Outdoors: Module 7 Assessment,554425139,01 LA - D,Laura YoungBrown,2026-04-13
+8337316233,0f0e8c2a6963a4a59911bd17b550ef328ad469e5c55532f2e3701dba8becdc6e,Test/Quiz,Weather Wise: Mod 6 Weekly Assessment: Week 1,554425139,02 LA - A,Shanise Hilley,2026-04-09
+8337316248,0f0e8c2a6963a4a59911bd17b550ef328ad469e5c55532f2e3701dba8becdc6e,Test/Quiz,Weather Wise: Mod 6 Weekly Assessment: Week 1,554425139,02 LA - B,Amanda Malcom,2026-04-09
+8337316259,0f0e8c2a6963a4a59911bd17b550ef328ad469e5c55532f2e3701dba8becdc6e,Test/Quiz,Weather Wise: Mod 6 Weekly Assessment: Week 1,554425139,02 LA - C,"GAINS Admin, Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-04-09
+8337684933,449c55adc29f344ceab9f8b7d56611d7c30d4640b14aabcd840dd948751f9def,Test/Quiz,Art for Everyone: Module 6 Assessment,554425139,05 LA - A,Jahmila McIntyre,2026-04-09
+8337684961,449c55adc29f344ceab9f8b7d56611d7c30d4640b14aabcd840dd948751f9def,Test/Quiz,Art for Everyone: Module 6 Assessment,554425139,05 LA - B,Jahmila McIntyre,2026-04-09
+8338223108,215425464c5bb4e65c28244f5969c396db6a9daa8a7b5ce80633d85739ce5051,Test/Quiz,Introduction to Matter,554425139,MS 08 PHY SC - 4th A,Maritza Serrano,2026-04-13
+8338223726,215425464c5bb4e65c28244f5969c396db6a9daa8a7b5ce80633d85739ce5051,Test/Quiz,Introduction to Matter,554425139,MS 08 PHY SC - 2nd B,Maritza Serrano,2026-04-13
+8339413167,e8ddba85302e54b936407dfa568234e731193b6865c47f160e356f4e7f7cf4b8,Test/Quiz,Unit 3 Part 1,554425139,HS ENG II H - 2nd,Deborah Farina,2026-04-13
+8339413189,0fb80dc4a94289900c8915cb2b9a0e5310af55a6eca6c9937c18dd0cd9de755d,Test/Quiz,Unit 3 Part 2,554425139,HS ENG II H - 2nd,Deborah Farina,2026-04-14
+8341129775,6fc268940142e4cfecef8f1a1e5eea5b63a3bf0ff7294c5044d13f397ac57b4b,Test/Quiz,Topic 8,554425139,HS GEOM - 3rd,"Deborah Farina, Madisun McNair, Greg Pesicek",2026-04-09
+8341726127,6bee586a161f1454a70356f9231300c56e9aad09a4ed8122a694c4d52d0cf3da,Test/Quiz,Topic 8: The Industrial Revolution (1750?1914),554425139,HS WH - 5th,"Greg Pesicek, Miguel Santiago Romero",2026-04-10
+8342111042,41945ea9a5d5aa3090646158da618d0f25f22763e37dbc06aa66e31595440522,Test/Quiz,Chapter 13 Test: Perimeter and Area of Rectangles with Fractional and Decimal Side Lengths,554425139,05 MTH - A,Wei Wang,2026-04-10
+8342111067,41945ea9a5d5aa3090646158da618d0f25f22763e37dbc06aa66e31595440522,Test/Quiz,Chapter 13 Test: Perimeter and Area of Rectangles with Fractional and Decimal Side Lengths,554425139,05 MTH - B,Wei Wang,2026-04-10
+8345947558,3e146bbe2c64bdf2d74bac68b5bf839e44050afbef52509fa12312dabe13a169,Test/Quiz,Chapter 13 Test: Length in Customary Units,554425139,02 MTH - A,Shanise Hilley,2026-04-14
+8345947606,3e146bbe2c64bdf2d74bac68b5bf839e44050afbef52509fa12312dabe13a169,Test/Quiz,Chapter 13 Test: Length in Customary Units,554425139,02 MTH - B,Amanda Malcom,2026-04-14
+8345947652,3e146bbe2c64bdf2d74bac68b5bf839e44050afbef52509fa12312dabe13a169,Test/Quiz,Chapter 13 Test: Length in Customary Units,554425139,02 MTH - C,Ashley Sanchez,2026-04-14
+8346376251,b2792e197c98f47f1f63895511263ebb73b14fc560b743e1a9027eb5e44efc25,Test/Quiz,Make a Difference: Module 7 Assessment,554425139,03 LA - A,Victoria Echevarria,2026-04-14
+8346376301,b2792e197c98f47f1f63895511263ebb73b14fc560b743e1a9027eb5e44efc25,Test/Quiz,Make a Difference: Module 7 Assessment,554425139,03 LA - B,Nathalia Malette,2026-04-14
+8347028845,d1489bb7ac7e20fc359bb620bca6655d9ea5d9d2082e1900c55101762e3b2586,Test/Quiz,Topic 11: The Economy and You: Apply Math Skills to Social Studies,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2026-04-14
+8347029347,d1489bb7ac7e20fc359bb620bca6655d9ea5d9d2082e1900c55101762e3b2586,Test/Quiz,Topic 11: The Economy and You: Apply Math Skills to Social Studies,554425139,MS 07 CIV - 3rd B,"Greg Pesicek, Xiomara Rivas",2026-04-14
+8347029866,2f49e4c16483b3bb86501003480e29a9925ad4d274d0d852258277999811eabf,Test/Quiz,Topic 8: Sectionalism and Civil War (1820-1865),554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2026-04-14
+8347030584,2f49e4c16483b3bb86501003480e29a9925ad4d274d0d852258277999811eabf,Test/Quiz,Topic 8: Sectionalism and Civil War (1820-1865),554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2026-04-14
+8347031150,af6abdfb22f563270a3d19e014e09d6219cec2f69b1d8a63e203c87902b71388,Test/Quiz,Topic 8: Postwar America (1945?1960),554425139,HS US HIST - 4th,"Greg Pesicek, Miguel Santiago Romero",2026-04-14
+8349090053,7d94d98454542033bf07e791c0ddbae8f57b1ec5e215b164c7e6ad8b72e02a35,Test/Quiz,Chapter 11 Test: Multiply Fractions and Whole Numbers,554425139,04 MTH - A,Colleen Marrero,2026-04-15
+8349090081,7d94d98454542033bf07e791c0ddbae8f57b1ec5e215b164c7e6ad8b72e02a35,Test/Quiz,Chapter 11 Test: Multiply Fractions and Whole Numbers,554425139,04 MTH - B,Chante Brown,2026-04-17
+8349090108,7d94d98454542033bf07e791c0ddbae8f57b1ec5e215b164c7e6ad8b72e02a35,Test/Quiz,Chapter 11 Test: Multiply Fractions and Whole Numbers,554425139,04 MTH - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-04-17
+8349556979,b1cdd2cff533d221a1868b13046196e1bb2051d803c0c8f61f07ef8a4039c213,Test/Quiz,Chapter 13 Test: Fraction Concepts,554425139,01 MTH - A,"Natalie McKenzie, Alexis Tillman",2026-04-16
+8349556993,b1cdd2cff533d221a1868b13046196e1bb2051d803c0c8f61f07ef8a4039c213,Test/Quiz,Chapter 13 Test: Fraction Concepts,554425139,01 MTH - B,Cindy Mitchell,2026-04-17
+8349557005,b1cdd2cff533d221a1868b13046196e1bb2051d803c0c8f61f07ef8a4039c213,Test/Quiz,Chapter 13 Test: Fraction Concepts,554425139,01 MTH - C,Petra Slouber,2026-04-16
+8349557020,b1cdd2cff533d221a1868b13046196e1bb2051d803c0c8f61f07ef8a4039c213,Test/Quiz,Chapter 13 Test: Fraction Concepts,554425139,01 MTH - D,Laura YoungBrown,2026-04-17
+8349685421,724e2bde4386025afc361b7bda13030bc3d7d65b8545a36bffb7b4b780fd856b,Test/Quiz,Weather Wise: Module 6 Assesment,554425139,02 LA - A,Shanise Hilley,2026-04-27
+8349685437,724e2bde4386025afc361b7bda13030bc3d7d65b8545a36bffb7b4b780fd856b,Test/Quiz,Weather Wise: Module 6 Assesment,554425139,02 LA - B,Amanda Malcom,2026-04-27
+8349685455,724e2bde4386025afc361b7bda13030bc3d7d65b8545a36bffb7b4b780fd856b,Test/Quiz,Weather Wise: Module 6 Assesment,554425139,02 LA - C,"GAINS Admin, Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-04-27
+8349702563,2ccb5c84f29bcbea04dc50df4e6a51d46ab05e4364cd4b371d32cca0758803f9,Test/Quiz,Weather Wise: Mod 6 Weekly Assessment: Week 2,554425139,02 LA - A,Shanise Hilley,2026-04-17
+8349702573,2ccb5c84f29bcbea04dc50df4e6a51d46ab05e4364cd4b371d32cca0758803f9,Test/Quiz,Weather Wise: Mod 6 Weekly Assessment: Week 2,554425139,02 LA - B,Amanda Malcom,2026-04-16
+8349702588,2ccb5c84f29bcbea04dc50df4e6a51d46ab05e4364cd4b371d32cca0758803f9,Test/Quiz,Weather Wise: Mod 6 Weekly Assessment: Week 2,554425139,02 LA - C,"GAINS Admin, Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-04-15
+8349740857,13e3e5ca99edcc4c86c65dc9ec99fdbb4e3efe29fcb137ae2fe57254c011dd3d,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 1,554425139,01 LA - A,"Natalie McKenzie, Alexis Tillman",2026-04-21
+8349740876,13e3e5ca99edcc4c86c65dc9ec99fdbb4e3efe29fcb137ae2fe57254c011dd3d,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 1,554425139,01 LA - B,Cindy Mitchell,2026-04-17
+8349740888,13e3e5ca99edcc4c86c65dc9ec99fdbb4e3efe29fcb137ae2fe57254c011dd3d,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 1,554425139,01 LA - C,Petra Slouber,2026-04-21
+8349740898,13e3e5ca99edcc4c86c65dc9ec99fdbb4e3efe29fcb137ae2fe57254c011dd3d,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 1,554425139,01 LA - D,Laura YoungBrown,2026-04-23
+8351344822,6c9eaf31364e66a5e03a665e3726f7732394ea953e3ec4e90240e764ac094f20,Test/Quiz,Chapter 13 Test: Understand Fractions as Numbers,554425139,03 MTH - A,Victoria Echevarria,2026-04-22
+8351344848,6c9eaf31364e66a5e03a665e3726f7732394ea953e3ec4e90240e764ac094f20,Test/Quiz,Chapter 13 Test: Understand Fractions as Numbers,554425139,03 MTH - B,Nathalia Malette,2026-04-22
+8352493441,e272c2cec40a0eaf757872d96442f8104d154cda21c6773571e1b3b378560d84,Test/Quiz,Unit 4 Part 1,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2026-04-17
+8352493442,1c698b98d257755a33f470dc0eabb0e7f561d3a07f56b5d199e20d1deaed1dff,Test/Quiz,Unit 4 Part 2,554425139,MS 06 LA I - 3rd B,Maurisha Tucker-McFadden,2026-04-20
+8352493877,e272c2cec40a0eaf757872d96442f8104d154cda21c6773571e1b3b378560d84,Test/Quiz,Unit 4 Part 1,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2026-04-17
+8352493878,1c698b98d257755a33f470dc0eabb0e7f561d3a07f56b5d199e20d1deaed1dff,Test/Quiz,Unit 4 Part 2,554425139,MS 06 LA I - 5th A,Maurisha Tucker-McFadden,2026-04-20
+8352495237,ce566e0fac6f71f5ad3ef346fed420fbae8aef1b930aac6436bde3aecf1db874,Test/Quiz,Topic 9: Civilizations of East Asia and Southeast Asia (250 BCE - 1644 CE),554425139,MS 06 WH - 2nd B,"Greg Pesicek, Xiomara Rivas",2026-04-17
+8355239297,c39463bc3a66bd51a9aed2b05bf19552004271840621067a0f1278294705e339,Test/Quiz,Topic 7,554425139,MS 06 MATH - 2nd A,James Ryan,2026-05-07
+8355243000,c39463bc3a66bd51a9aed2b05bf19552004271840621067a0f1278294705e339,Test/Quiz,Topic 7,554425139,MS 06 MATH - 7th B,James Ryan,2026-05-07
+8355248502,b5b36463179d5f0715d91e77bf96e7b256b66055c8fa42541df8b59b509ea494,Test/Quiz,Topic 7,554425139,MS 07 MATH  - 4th A,James Ryan,2026-05-07
+8355253478,b5b36463179d5f0715d91e77bf96e7b256b66055c8fa42541df8b59b509ea494,Test/Quiz,Topic 7,554425139,MS 07 MATH  - 5th B,James Ryan,2026-05-07
+8355591256,9ca3c9aac7d244f273c59eb72a50975e60dac98abb75dbc343e111c09d39d4ba,Test/Quiz,Topic 9,554425139,HS GEOM - 3rd,"Deborah Farina, Madisun McNair, Greg Pesicek",2026-04-20
+8356513569,860ff8ff3dbe3cdc1219f2dab90412330cfe9e7d7fc542825ee0bfe430c989c8,Test/Quiz,Topic 7,554425139,MS PRE ALG - 3rd A,James Ryan,2026-05-07
+8356514540,860ff8ff3dbe3cdc1219f2dab90412330cfe9e7d7fc542825ee0bfe430c989c8,Test/Quiz,Topic 7,554425139,MS PRE ALG - 6th B,James Ryan,2026-05-07
+8357741333,06bbf8d5bc2601d916692fbad07cf9505416445d11cf87c7f1e33dc2618d0ac9,Test/Quiz,Marvels of Nature: Module 6 Assessment,554425139,04 LA - A,Colleen Marrero,2026-04-21
+8357741357,06bbf8d5bc2601d916692fbad07cf9505416445d11cf87c7f1e33dc2618d0ac9,Test/Quiz,Marvels of Nature: Module 6 Assessment,554425139,04 LA - B,Chante Brown,2026-04-22
+8357741387,06bbf8d5bc2601d916692fbad07cf9505416445d11cf87c7f1e33dc2618d0ac9,Test/Quiz,Marvels of Nature: Module 6 Assessment,554425139,04 LA - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-04-21
+8357768566,6f4b9f2664b3490bef42815d5adfda0b3314d966569b66557bee8fe0f17cb95c,Test/Quiz,Chapter 14 Test: Measurement,554425139,01 MTH - A,"Natalie McKenzie, Alexis Tillman",2026-04-29
+8357768588,6f4b9f2664b3490bef42815d5adfda0b3314d966569b66557bee8fe0f17cb95c,Test/Quiz,Chapter 14 Test: Measurement,554425139,01 MTH - B,Cindy Mitchell,2026-04-29
+8357768613,6f4b9f2664b3490bef42815d5adfda0b3314d966569b66557bee8fe0f17cb95c,Test/Quiz,Chapter 14 Test: Measurement,554425139,01 MTH - C,Petra Slouber,2026-04-29
+8357768628,6f4b9f2664b3490bef42815d5adfda0b3314d966569b66557bee8fe0f17cb95c,Test/Quiz,Chapter 14 Test: Measurement,554425139,01 MTH - D,Laura YoungBrown,2026-04-29
+8359056663,ee1390854c16fac9908cf5fef55a7b76871c4f10764066b66d3d67d2217150c5,Test/Quiz,Chapter 14 Test: Classify Two-Dimensional and Three-Dimensional Figures,554425139,05 MTH - A,Wei Wang,2026-04-24
+8359056698,ee1390854c16fac9908cf5fef55a7b76871c4f10764066b66d3d67d2217150c5,Test/Quiz,Chapter 14 Test: Classify Two-Dimensional and Three-Dimensional Figures,554425139,05 MTH - B,Wei Wang,2026-04-24
+8360405752,b900521177db44e0ab3b1a02bd47cfd315a81962ec2fca9853f87ed51ae5d379,Test/Quiz,"Imagine! Invent!, Module 8 Weekly Assessment: Week 1",554425139,03 LA - A,Victoria Echevarria,2026-04-24
+8360405769,caeef799e26510ee4c56ca638295962730ca5c755b39da060f16998fdb21affa,Test/Quiz,"Imagine! Invent!, Weekly Assessment: Mod 8 Week 1",554425139,03 LA - B,Nathalia Malette,2026-04-23
+8361289039,d753a11dc0816f396573266d0174eaa02e00599ad3375dfb6a840f02524300a7,Test/Quiz,Topic 4: Change Over Time,554425139,MS 07 LFE SCI - 3rd A,Maritza Serrano,2026-04-28
+8361289662,caed231d75f7ecf29c04ca9c6cfbc4dd16f64f640247ce5185739ad8a92c4ac1,Test/Quiz,Topic 4: Change Over Time,554425139,MS 07 LFE SCI - 6th B,Maritza Serrano,2026-04-30
+8362096503,0a17e7f65c7ae57e9d57a48f4365088afb1ad172f95d3d5cb2ba24798e8e3512,Test/Quiz,A New Home Weekly Assessment: Module 8 Week 1,554425139,05 LA - A,Jahmila McIntyre,2026-04-27
+8362096526,0a17e7f65c7ae57e9d57a48f4365088afb1ad172f95d3d5cb2ba24798e8e3512,Test/Quiz,A New Home Weekly Assessment: Module 8 Week 1,554425139,05 LA - B,Jahmila McIntyre,2026-04-27
+8362151551,a42f2b054ad6714a8b7c5068b810227fb91cc9d3ca588d7305daf49daa398f27,Test/Quiz,Tricksters and Tall Tales: Weekly Assessment: Mod 7 Week 1,554425139,04 LA - A,Colleen Marrero,2026-05-04
+8362151564,a42f2b054ad6714a8b7c5068b810227fb91cc9d3ca588d7305daf49daa398f27,Test/Quiz,Tricksters and Tall Tales: Weekly Assessment: Mod 7 Week 1,554425139,04 LA - B,Chante Brown,2026-05-04
+8362151581,a42f2b054ad6714a8b7c5068b810227fb91cc9d3ca588d7305daf49daa398f27,Test/Quiz,Tricksters and Tall Tales: Weekly Assessment: Mod 7 Week 1,554425139,04 LA - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-05-06
+8362242422,e8d843ae84c1a2d313575efec53fe16fc37b94b9a4717422761a91423093934e,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 2,554425139,01 LA - A,"Natalie McKenzie, Alexis Tillman",2026-04-30
+8362242436,e8d843ae84c1a2d313575efec53fe16fc37b94b9a4717422761a91423093934e,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 2,554425139,01 LA - B,Cindy Mitchell,2026-04-30
+8362242449,e8d843ae84c1a2d313575efec53fe16fc37b94b9a4717422761a91423093934e,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 2,554425139,01 LA - C,Petra Slouber,2026-04-30
+8362242461,e8d843ae84c1a2d313575efec53fe16fc37b94b9a4717422761a91423093934e,Test/Quiz,Module 8: Tell Me a Story Weekly Assessment: Week 2,554425139,01 LA - D,Laura YoungBrown,2026-04-30
+8362299752,1429f72beb3f903c227bef4564dc264344e20df12720423f796163c8deb36aa7,Test/Quiz,"Imagine! Invent!, Weekly Assessment: Week 2",554425139,03 LA - A,Victoria Echevarria,2026-05-05
+8362299771,1429f72beb3f903c227bef4564dc264344e20df12720423f796163c8deb36aa7,Test/Quiz,"Imagine! Invent!, Weekly Assessment: Week 2",554425139,03 LA - B,Nathalia Malette,2026-05-05
+8362343085,074cb4b5d7854eb1eeeacaa54ef8a5784fbaa287a66b97a8ef07b4b743b61244,Test/Quiz,Chapter 15 Test: Time,554425139,01 MTH - A,"Natalie McKenzie, Alexis Tillman",2026-05-12
+8362343109,074cb4b5d7854eb1eeeacaa54ef8a5784fbaa287a66b97a8ef07b4b743b61244,Test/Quiz,Chapter 15 Test: Time,554425139,01 MTH - B,Cindy Mitchell,2026-05-12
+8362343122,074cb4b5d7854eb1eeeacaa54ef8a5784fbaa287a66b97a8ef07b4b743b61244,Test/Quiz,Chapter 15 Test: Time,554425139,01 MTH - C,Petra Slouber,2026-05-12
+8362343136,074cb4b5d7854eb1eeeacaa54ef8a5784fbaa287a66b97a8ef07b4b743b61244,Test/Quiz,Chapter 15 Test: Time,554425139,01 MTH - D,Laura YoungBrown,2026-05-12
+8362776921,069211f70d0689709f7e060bc049fa84d1e6ea4c3943885edc140961a9fb9fa0,Test/Quiz,Topic 8,554425139,HS ALG I - 7th,Madisun McNair,2026-04-27
+8362777143,7e6fef47bf7ced3625c6a9be3c98eaeb66340697c24bad7bd50dc1f8608b97ac,Test/Quiz,Topic 5,554425139,HS ECON - 6th-Spring,Miguel Santiago Romero,2026-04-28
+8365584035,394ceafc0d3ec5e5551ab5755252424970056ea1e350205c5dce960688a94002,Test/Quiz,Chapter 14 Test: Length in Metric Units,554425139,02 MTH - A,Shanise Hilley,2026-04-28
+8365584050,394ceafc0d3ec5e5551ab5755252424970056ea1e350205c5dce960688a94002,Test/Quiz,Chapter 14 Test: Length in Metric Units,554425139,02 MTH - B,Amanda Malcom,2026-04-28
+8365584067,394ceafc0d3ec5e5551ab5755252424970056ea1e350205c5dce960688a94002,Test/Quiz,Chapter 14 Test: Length in Metric Units,554425139,02 MTH - C,Ashley Sanchez,2026-04-28
+8368249539,820c9a99fca7944213be71806ab1874808a6dc757869d340b2d32a36f69c20ac,Test/Quiz,Topic 9 The Reconstruction Era,554425139,MS 08 US HIST - 4th B,Xiomara Rivas,2026-04-30
+8368256753,820c9a99fca7944213be71806ab1874808a6dc757869d340b2d32a36f69c20ac,Test/Quiz,Topic 9 The Reconstruction Era,554425139,MS 08 US HIST - 6th A,Xiomara Rivas,2026-04-30
+8368388717,2967f8587330ac4ae4ce888cae67518ed201379b8b5ea78e0246a0c0fece2f9c,Test/Quiz,Topic 12: Government and the Economy: Express Ideas Effectively,554425139,MS 07 CIV - 5th A,Xiomara Rivas,2026-04-30
+8368389451,2967f8587330ac4ae4ce888cae67518ed201379b8b5ea78e0246a0c0fece2f9c,Test/Quiz,Topic 12: Government and the Economy: Express Ideas Effectively,554425139,MS 07 CIV - 3rd B,"Greg Pesicek, Xiomara Rivas",2026-04-30
+8368439603,1640c0e3f41f80dc88567c296e9e083c8b85227db4d88e827883ac7a4d224c75,Test/Quiz,Topic 9: Civil Rights and Reform in the 1960s (1945–1968),554425139,HS US HIST - 4th,"Greg Pesicek, Miguel Santiago Romero, Sitara Shamsheer",2026-04-30
+8369992661,3c5b662a5b6f8fb413ed3ff57b40f72f958ecbb994f9a004d6c3c3a8c562aa27,Test/Quiz,Topic 6,554425139,HS ECON - 6th-Spring,Miguel Santiago Romero,2026-05-12
+8369994919,e814bcda7baa05c92eef8c0d7e24a436b7c5a4a70e399884d99716cfa78c9167,Test/Quiz,Topic 9: Nationalism and the Spread of Democracy (1790–1914),554425139,HS WH - 5th,"Greg Pesicek, Miguel Santiago Romero",2026-05-05
+8370036059,53101ef2f0bc13ba89c3ad8dffc7549141a6230fbfa5850b0ea6961d19b24a6f,Test/Quiz,Topic 6: Plate Tectonics,554425139,MS 06 EARTH SPACE SCI - 5th B,Maritza Serrano,2026-05-01
+8370037336,53101ef2f0bc13ba89c3ad8dffc7549141a6230fbfa5850b0ea6961d19b24a6f,Test/Quiz,Topic 6: Plate Tectonics,554425139,MS 06 EARTH SPACE SCI - 7th A,Maritza Serrano,2026-05-01
+8371766709,0ae837ae4ba7e76eb2fb06a506ac86247fa7b37ece9262b7b4995600ff157918,Test/Quiz,Topic 10: The Vietnam War Era (1954–1975),554425139,HS US HIST - 4th,"Greg Pesicek, Miguel Santiago Romero, Sitara Shamsheer",2026-05-08
+8373543985,f55404c45c674ff097e6dffc9b6fa3a6b736bf194041a056fb2a48c045bf1031,Test/Quiz,Chapter 15 Test: Volume,554425139,05 MTH - A,Wei Wang,2026-05-12
+8373544019,f55404c45c674ff097e6dffc9b6fa3a6b736bf194041a056fb2a48c045bf1031,Test/Quiz,Chapter 15 Test: Volume,554425139,05 MTH - B,Wei Wang,2026-05-12
+8373837481,4475a4ae98ab37e15a8beb3f48e8026df9ee6c738755d14ec676243c6aed2430,Test/Quiz,Topic 10: The Age of Imperialism (1800–1914),554425139,HS WH - 5th,"Greg Pesicek, Miguel Santiago Romero",2026-05-14
+8376239379,c510b3803ccdd88bd26c129826d4b686106895607d0974355c85b568e1973637,Test/Quiz,Chapter 14 Test: Compare Fractions and Identify Equivalent Fractions,554425139,03 MTH - A,Victoria Echevarria,2026-05-11
+8376239390,c510b3803ccdd88bd26c129826d4b686106895607d0974355c85b568e1973637,Test/Quiz,Chapter 14 Test: Compare Fractions and Identify Equivalent Fractions,554425139,03 MTH - B,Nathalia Malette,2026-05-11
+8376276662,ac11d65b5641e1358b4e5e39f629db5cf683e164415689fbd70c874e36e46070,Test/Quiz,Everyone Has a Story: Mod 7 Weekly Assessment: Week 1,554425139,02 LA - A,Shanise Hilley,2026-05-07
+8376276677,ac11d65b5641e1358b4e5e39f629db5cf683e164415689fbd70c874e36e46070,Test/Quiz,Everyone Has a Story: Mod 7 Weekly Assessment: Week 1,554425139,02 LA - B,Amanda Malcom,2026-05-08
+8376276686,ac11d65b5641e1358b4e5e39f629db5cf683e164415689fbd70c874e36e46070,Test/Quiz,Everyone Has a Story: Mod 7 Weekly Assessment: Week 1,554425139,02 LA - C,"GAINS Admin, Amanda Malcom, Ashley Sanchez, Alexis Tillman",2026-05-07
+8376292815,46277e57626702e11d8672f2ae1f0e5fcb988129a27860f46eb59c916266bca6,Test/Quiz,A New Home: Weekly Assessment: Mod 8 Week 2,554425139,05 LA - A,Jahmila McIntyre,2026-05-07
+8376292825,46277e57626702e11d8672f2ae1f0e5fcb988129a27860f46eb59c916266bca6,Test/Quiz,A New Home: Weekly Assessment: Mod 8 Week 2,554425139,05 LA - B,Jahmila McIntyre,2026-05-07
+8376377202,0a9a8d821c57ffcea48e952ad518abf67d87c6cbd706f64c30a56a88cb2a7706,Test/Quiz,Tricksters and Tall Tales: Weekly Assessment: Mod 7 Week 2,554425139,04 LA - A,Colleen Marrero,2026-05-13
+8376377242,0a9a8d821c57ffcea48e952ad518abf67d87c6cbd706f64c30a56a88cb2a7706,Test/Quiz,Tricksters and Tall Tales: Weekly Assessment: Mod 7 Week 2,554425139,04 LA - B,Chante Brown,2026-05-15
+8376377260,0a9a8d821c57ffcea48e952ad518abf67d87c6cbd706f64c30a56a88cb2a7706,Test/Quiz,Tricksters and Tall Tales: Weekly Assessment: Mod 7 Week 2,554425139,04 LA - C,"Deborah Armstrong, Alexis Tillman, Alex Zamora",2026-05-19
+8376496133,a1cd7b2c101ba7e6f7aeac3bcbb449929355a6250863642ad9af75a918fd581b,Test/Quiz,Chapter 15 Test: Geometry,554425139,02 MTH - A,Shanise Hilley,2026-05-13
+8376496142,a1cd7b2c101ba7e6f7aeac3bcbb449929355a6250863642ad9af75a918fd581b,Test/Quiz,Chapter 15 Test: Geometry,554425139,02 MTH - B,Amanda Malcom,2026-05-14
+8376496149,a1cd7b2c101ba7e6f7aeac3bcbb449929355a6250863642ad9af75a918fd581b,Test/Quiz,Chapter 15 Test: Geometry,554425139,02 MTH - C,Ashley Sanchez,2026-05-13
+8385621887,b1621cbd8dddbb49b557e8d93a785d13bd450b3965e62b94ca09e809d7b8feda,Test/Quiz,Tell Me a Story: Module 8 Assessment,554425139,01 LA - A,"Natalie McKenzie, Alexis Tillman",2026-05-14
+8385621926,b1621cbd8dddbb49b557e8d93a785d13bd450b3965e62b94ca09e809d7b8feda,Test/Quiz,Tell Me a Story: Module 8 Assessment,554425139,01 LA - B,Cindy Mitchell,2026-05-14
+8385621965,b1621cbd8dddbb49b557e8d93a785d13bd450b3965e62b94ca09e809d7b8feda,Test/Quiz,Tell Me a Story: Module 8 Assessment,554425139,01 LA - C,Petra Slouber,2026-05-15
+8385622033,b1621cbd8dddbb49b557e8d93a785d13bd450b3965e62b94ca09e809d7b8feda,Test/Quiz,Tell Me a Story: Module 8 Assessment,554425139,01 LA - D,Laura YoungBrown,2026-05-14

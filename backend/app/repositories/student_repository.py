@@ -178,7 +178,9 @@ class StudentRepository:
                        COALESCE(m.total, 0) AS mastery_total,
                        COUNT(*) OVER() AS total
                 FROM per_student ps
-                LEFT JOIN dim_student dst ON dst.uid = ps.user_uid
+                LEFT JOIN dim_student dst
+                       ON dst.uid = ps.user_uid
+                      AND dst.school_id = NULLIF(current_setting('app.current_school_id', true), '')::uuid
                 LEFT JOIN mastery m ON m.user_uid = ps.user_uid
             )
             SELECT * FROM final

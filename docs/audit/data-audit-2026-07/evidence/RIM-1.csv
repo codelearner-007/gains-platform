@@ -1,0 +1,17 @@
+school,slicer_subject,items_current_dqd_subject,items_via_dim_subject,items_with_alignment_via_dim_subject,aligned_questions_via_dim_subject,base_dqd_labels,fact_rows_pp_gt0,verdict
+Central Florida Preparatory School,HS Alegra II,0,4,4,94,Math,901,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Algebra I,0,8,8,220,Math,3718,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Economics,0,6,6,221,History,2296,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS English I,0,5,5,123,ELA,2402,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS English II,0,5,5,106,ELA,775,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS English III,0,4,4,59,ELA,565,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS English IV,0,7,7,133,ELA,402,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Geometry,0,7,7,163,Math,2013,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Honors Algebra II,0,2,2,45,Math,161,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Honors English II,0,3,3,83,ELA,588,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Honors English III,0,5,5,103,ELA,309,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Honors English IV,0,5,5,104,ELA,630,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Physics,0,5,4,235,Science,3772,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS World History,0,7,7,156,History,2290,ZERO_COVERAGE_collapses_to_Other
+Central Florida Preparatory School,HS Honors Algebra I,1,2,2,71,HS Honors Algebra I|Math,120,PARTIAL_stray_coverage
+Central Florida Preparatory School,HS United States History,5,6,6,207,ELA|HS United States History,3785,PARTIAL_stray_coverage

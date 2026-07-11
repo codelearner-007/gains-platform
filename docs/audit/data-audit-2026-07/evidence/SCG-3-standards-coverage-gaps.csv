@@ -1,0 +1,10 @@
+school_name,standard,note,item_id,item_name,session,subject,grade,fact_rows,students
+Central Florida Preparatory School,ELA.6.RL.6.4.2,"malformed B.E.S.T. (RL prefix; family ELA.6.R.* exists, this benchmark does not)",8352493441,Unit 4 Part 1,2025-26,ELA,Grade 6,52,18
+Central Florida Preparatory School,ELA.6.RL.6.4.2,"malformed B.E.S.T. (RL prefix; family ELA.6.R.* exists, this benchmark does not)",8352493877,Unit 4 Part 1,2025-26,ELA,Grade 6,48,20
+Central Florida Preparatory School,ELA.6.V.3.4,B.E.S.T. vocab (ELA.6.V.1.* exist; V.3.4 benchmark missing),8352493441,Unit 4 Part 1,2025-26,ELA,Grade 6,28,18
+Central Florida Preparatory School,ELA.6.V.3.4,B.E.S.T. vocab (ELA.6.V.1.* exist; V.3.4 benchmark missing),8352493877,Unit 4 Part 1,2025-26,ELA,Grade 6,26,20
+Central Florida Preparatory School,LA.2.LA.2.1.6.3,"2007-era LA.* code, framework retired, no dim_standard row",7806926683,Home Sweet Habitat: Weekly Assessment: Week 1,2024-25,ELA,Grade 2,14,13
+Central Florida Preparatory School,LA.2.LA.2.1.7.4,"2007-era LA.* code, framework retired, no dim_standard row",7806926683,Home Sweet Habitat: Weekly Assessment: Week 1,2024-25,ELA,Grade 2,39,13
+Athenian Academy of Technology and the Arts,MA.5.MACC.5.NBT.1.3.b,legacy MACC prefix; MAFS equivalent MA.5.MAFS.5.NBT.1.3.b EXISTS (mappable near-miss),7337978776,Chapter 3,2024-25,Math,Grade 5,20,20
+Athenian Academy of Technology and the Arts,MA.5.MACC.5.NBT.1.3.b,legacy MACC prefix; MAFS equivalent MA.5.MAFS.5.NBT.1.3.b EXISTS (mappable near-miss),7337979059,Chapter 3,2024-25,Math,Grade 5,20,20
+Central Florida Preparatory School,SOC.H.PreK-K.1,PreK-K social studies code on an HS US History assessment,8273780092,Topic 6: The Great Depression and the New Deal (1928-1941),2025-26,HS United States History,Higher-Ed,17,17

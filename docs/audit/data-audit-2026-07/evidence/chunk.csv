@@ -1,0 +1,251 @@
+item_id,item_name,section_name,section_instructors,subject,grade,session,assessment_type,students,questions,std_prefixes
+8033012840,Module 1 Grammar Review,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,18,15,
+8033013036,Module 1 Phonics Review,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,20,11,
+8033013307,Module 1 HFW Assessment,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,18,22,
+8034176197,Module 1 Phonics Review,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,20,11,
+8038833106,Module 1 Phonics Review,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,21,11,
+8041798583,Author's Purpose Quiz,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,21,10,
+8041801079,Module 1 HFW Assessment,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,21,22,
+8042164659,Module 1 HFW Assessment,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,20,22,
+8042166966,Author's Purpose Quiz,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,20,10,
+8042168339,Module 1 Grammar Review,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,20,15,
+8043741105,Quiz 4,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,38,5,
+8043748847,Quiz 4,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,25,5,
+8046218909,M2W1 Vocab Quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8046439423,Unit 2 Lesson 1 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,21,4,
+8046487450,2.1 Vocabulary Quiz,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,6,
+8047224518,Unit 2 Lesson 1 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8047229109,2.1 Vocabulary Quiz,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,19,6,
+8049326463,Module 2 Week 1 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8049469169,Module 2 Week 1 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8053230186,2.1 Vocabulary Quiz,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,19,6,
+8053233585,Unit 2 Lesson 1 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,21,4,
+8055074381,Chapters 3 & 6 Test,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,23,20,MA.K
+8055258121,Quiz 4,2nd Period,Benjamin Hitzig,Civics,Grade 8,2025-26,Lesson  Assessments,31,5,
+8055343226,Quiz 5,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,36,5,
+8055362999,Chapters 3 & 6 Test,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,24,20,MA.K
+8055407250,Quiz 5,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,27,5,
+8055416739,M2W1 Vocab Quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,17,1,
+8055500764,Chapters 3 & 6 Test,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,25,20,MA.K
+8057432855,Unit 2 Lesson 3 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8057644154,M2W2 Vocab Quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8057645223,M2W3 Vocab Quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8059962640,M2W2 Vocabulary Quiz,Vaughn,Mary Vaughn,ELA,Grade 3,2025-26,Lesson  Assessments,21,9,
+8064290999,Unit 2 Lesson 3 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8064311024,Control of Florida Comprehension,Figueredo,Barbara Figueredo,Social Studies,Grade 4,2025-26,Lesson  Assessments,20,10,
+8064311725,Control of Florida Comprehension,Bagley,Kayla Bagley,Social Studies,Grade 4,2025-26,Lesson  Assessments,20,10,
+8064482757,Unit 2 Lesson 3 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8065628761,Module 2 Week 2 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8065901758,Control of Florida Comprehension,Leiva,Ana Leiva,Social Studies,Grade 4,2025-26,Lesson  Assessments,19,10,
+8065959699,Module 2 Week 2 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,17,2,
+8065962317,M2W2 Vocab Quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,17,1,
+8066821818,Module 2 Week 3 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,16,2,
+8068323186,Module 2 Week 3 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8070020639,2.3 Vocabulary Quiz,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,20,6,
+8070046993,2.3 Vocabulary Quiz,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,6,
+8073490319,Articles of Confederation open book quiz,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,26,7,
+8074119422,Chapters 7 & 8 Part 1,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,24,14,MA.K
+8074397284,2.3 Vocabulary Quiz,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,21,6,
+8074628569,M2W3 Vocab Quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,18,1,
+8074632081,Module 2 Week 3 Vocabulary Quiz,Agostino,Gabriela Agostino,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8074718690,Chapters 7 & 8 Part 1,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,25,14,MA.K
+8075178372,Chapters 7 & 8 Part 1,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,24,14,MA.K
+8076157136,Quiz 5,2nd Period,Benjamin Hitzig,Civics,Grade 8,2025-26,Lesson  Assessments,27,5,
+8076165986,Quiz 6,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,35,5,
+8077435954,Unit 3 Lesson 1 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,21,4,
+8082413883,Module 2 HFW Assessment,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,18,24,
+8082415340,Module 2 Grammar Quiz,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,20,15,
+8083614889,Module 2 Grammar Quiz,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,15,
+8083787013,Module 2 Grammar Quiz,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,21,15,
+8083787711,Module 2 HFW Assessment,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,20,24,
+8083788877,Module 2 HFW Assessment,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,24,
+8085353973,The Bill of Rights Quiz,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,27,10,
+8085379296,Florida Treaties Comprehension,Figueredo,Barbara Figueredo,Social Studies,Grade 4,2025-26,Lesson  Assessments,20,8,
+8085438535,Unit 3 Lesson 1 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,21,4,
+8085496323,Quiz 1,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,40,5,
+8085622108,Unit 3 Lesson 1 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8086855969,M3W1 Vocab,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,18,1,
+8091388756,Chapters 7 & 8 Part 2,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,24,13,MA.K
+8091729271,Chapters 7 & 8 Part 2,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,24,13,MA.K
+8092205127,Chapters 7 & 8 Part 2,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,25,13,MA.K
+8093409216,Unit 3 Lesson 3 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8093432994,Unit 3 Lesson 3 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8093554844,M3W1 Vocab,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,17,1,
+8093612696,Module 3 Week 1 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8093638773,Unit 3 Lesson 3 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8093668904,Module 3 Week 1 Vocabulary Quiz,Agostino,Gabriela Agostino,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8093785079,M3W1 Vocabulary  Quiz,Vaughn,Mary Vaughn,ELA,Grade 3,2025-26,Lesson  Assessments,20,6,
+8093858365,Module 3 Week 1 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8095408985,M3W2 Vocab,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8097502483,Module 3 Meet in the Middle Week 2 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8104180371,M3W2 Vocab,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,17,1,
+8104228865,Module 3 Meet in the Middle Week 2 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8104525784,Module 3 Meet in the Middle Week 2 Vocabulary Quiz,Agostino,Gabriela Agostino,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8107224032,M3W3 Vocab Quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8107847778,Module 3 Week 3 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8110327370,Module 3 Week 3 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8112140343,Chapter 16 Part 1,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,22,12,MA.K
+8112622324,Chapter 16.1,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,24,12,MA.K
+8113075929,Chapter 16.1,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,23,12,MA.K
+8116071906,M3W3 Vocab Quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,17,1,
+8116143202,M3W3 Vocabulary Quiz,Vaughn,Mary Vaughn,ELA,Grade 3,2025-26,Lesson  Assessments,20,8,
+8116266523,Module 3 Week 3 Vocabulary Quiz,Agostino,Gabriela Agostino,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8119451862,Module 3 Generative Vocab Quiz,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,17,12,
+8119465522,Module 3 Grammar Quiz,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,17,9,
+8119469338,Module 3 HFW Quiz,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,16,24,
+8120381772,Module 3 Generative Vocab Quiz,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,12,
+8120386475,Module 3 Grammar Quiz,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,9,
+8122018182,Chapter 4 Practice Test #3,3rd Period,Steven Burney,Algebra,Grade 8,2025-26,Lesson  Assessments,28,9,"AI.MA,MA.9-12,MA.912"
+8122208970,Chapter 16.2,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,23,12,MA.K
+8122432424,Module 3 Generative Vocab Quiz,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,21,12,
+8122571822,Module 3 Grammar Quiz,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,21,9,
+8122611768,Chapter 16.2,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,23,12,MA.K
+8122682301,Chapter 4 Test,3rd Period,Steven Burney,Algebra,Grade 8,2025-26,Lesson  Assessments,27,20,"AI.MA,MA.9-12,MA.912"
+8122934647,Module 3 HFW Quiz,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,24,
+8123033606,Chapter 16.2,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,24,12,MA.K
+8123321004,Module 3 HFW Quiz,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,19,24,
+8126215170,Quiz 2,2nd Period,Benjamin Hitzig,Civics,Grade 8,2025-26,Lesson  Assessments,26,5,
+8126265514,Quiz 2,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,38,5,
+8126292235,Quiz 2,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,24,5,
+8126575277,M4W1 Vocabulary Quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,18,1,
+8129915559,Module 4 Week 1 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8130355312,Module 4 Week 1 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8133006059,M4W1 Vocabulary Quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8133500452,M4W2 Vocabulary Quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,18,1,
+8133857228,SS Magazine 3 Open Book Assessment,Birdwell,Susanna Birdwell,Social Studies,Grade 5,2025-26,Lesson  Assessments,19,10,
+8135051604,Module 4 Week 1 Vocabulary Quiz,Agostino,Gabriela Agostino,ELA,Grade 2,2025-26,Lesson  Assessments,17,2,
+8137414023,Unit 4 Lesson 3 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8146030084,Module 4 Week 2 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,19,8,
+8146497016,Unit 4 Lesson 3 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8148036226,Unit 4 Lesson 3 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8149807504,Quiz 3,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,35,5,
+8149991919,Module 4 Week 2 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,8,
+8150096175,M4W2 Vocabulary Quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8151217577,Unit 4 Lesson 4 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8151775123,Chapters 11&13,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,24,15,MA.K
+8152170360,Chapters 11&13,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,23,15,MA.K
+8152285436,Chapters 11&13,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,22,15,MA.K
+8153309986,Unit 4 Lesson 4 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8154558077,M4W3 vocab quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,18,1,
+8157479026,Unit 4 Lesson 4 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,18,4,
+8177199775,Unit 5 Lesson 1 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8183614071,Unit 5 Lesson 1 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8189851197,Unit 5 Lesson 1 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,18,4,
+8190679243,Module 4 Week 3 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8192621580,Module 4 Week 3 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8192873294,M4W3 vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8193552811,Quiz 1,2nd Period,Benjamin Hitzig,Civics,Grade 8,2025-26,Lesson  Assessments,23,5,
+8193578592,World History Quiz 1,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,38,5,
+8193592968,U.S. History Quiz 1,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,17,5,
+8194198134,M4W3  Vocabulary Quiz,Vaughn,Mary Vaughn,ELA,Grade 3,2025-26,Lesson  Assessments,20,1,
+8203118282,2 Digit Addition,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,24,15,MA.2
+8203127041,2 Digit Addition,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,22,15,MA.2
+8203574006,2 Digit Addition,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,22,15,MA.2
+8207294812,Module 8 Test,2nd Period,Steven Burney,Math,Grade 7,2025-26,Lesson  Assessments,25,16,"MA.7,MA.8"
+8211729995,Unit 6 Lesson 1 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8214008832,Module 10 Mid-Chapter Quiz,5th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,18,12,MA.6
+8214117785,Module 10 Mid-Chapter Quiz,4th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,18,12,MA.6
+8216822379,Module 5 Week 1 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8217188853,Module 5 Week 2 Vocabulary Quiz,Agostino,Gabriela Agostino,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8218515644,Unit 6 Lesson 1 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,18,4,
+8221051747,M5W1 Vocab quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8225739858,Adding 3 Numbers,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,23,15,MA.1
+8225875584,Unit 6 Lesson 1 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,17,4,
+8226054659,M5W1 Vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8226074862,Adding 3 Numbers,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,22,15,MA.1
+8226189913,Module 5 Week 1 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,20,2,
+8226200628,Module 9 Quiz,2nd Period,Steven Burney,Math,Grade 7,2025-26,Lesson  Assessments,25,10,MA.7
+8226238606,Adding 3 Numbers,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,21,15,MA.1
+8227640787,M5W2 vocab quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8229069938,"Final Northeast, Southeast, and Midwest Exam",Small,Robin Small,Social Studies,Grade 3,2025-26,Lesson  Assessments,22,3,
+8229069948,"Final Northeast, Southeast, and Midwest Exam",Vaughn,"Robin Small, Mary Vaughn",Social Studies,Grade 3,2025-26,Lesson  Assessments,21,3,
+8236900913,M5W2 vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8236972720,Quiz 1,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,23,5,
+8237130855,Module 9 Quiz #2,2nd Period,Steven Burney,Math,Grade 7,2025-26,Lesson  Assessments,23,8,MA.7
+8237170511,Vocab Quiz M5W3,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,18,1,
+8237233326,Module 5 Week 2 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8237253021,Module 5 Week 2 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,20,2,
+8237639423,Module 11 POP Quiz,4th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,17,5,MA.6
+8237933633,Module 11 POP Quiz,5th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,20,5,MA.6
+8244891289,Module 11 Test,5th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,21,25,MA.6
+8246259769,Module 5 Week 3 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,20,2,
+8247514543,World History Quiz 2,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,36,5,
+8247538581,Vocab Quiz M5W3,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,17,1,
+8247747860,Module 5 Week 3 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8250055238,Unit 7 Lesson 1 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,20,4,SCI.1
+8251466623,Unit 7 Lesson 1 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,2,4,SCI.1
+8252544686,Subtraction,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,22,15,MA.K
+8252823433,Subtraction,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,21,15,MA.K
+8252831603,Subtraction,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,23,15,MA.K
+8255792984,Unit 7 Lesson 1 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,18,4,SCI.1
+8257424520,World History Quiz 3,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,35,10,
+8257435517,Quiz 2,2nd Period,Benjamin Hitzig,Civics,Grade 8,2025-26,Lesson  Assessments,27,10,
+8257448535,Quiz 2,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,23,10,
+8257707783,Module 12 Test,4th Period,"GAINS Admin, Steven Burney",Math,Grade 6,2025-26,Lesson  Assessments,19,25,"MA.6,MA.7"
+8257707820,Module 12 Test,5th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,21,25,"MA.6,MA.7"
+8258565097,M6W1 vocab quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8260964566,6.1 Phonics Review,Sedlak,Elizabeth Sedlak,ELA,Grade 1,2025-26,Lesson  Assessments,16,4,
+8261612917,6.1 Phonics Review,Almendinger,Taylor Almendinger,ELA,Grade 1,2025-26,Lesson  Assessments,21,4,
+8263242066,6.1 Phonics Review,Reeder,Mason Reeder,ELA,Grade 1,2025-26,Lesson  Assessments,20,4,
+8263260435,Unit 7 Lesson 2 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,20,4,
+8264918425,Quiz 3,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,22,19,SOC.8
+8264924074,Unit 7 Lesson 2 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8264944793,World History Quiz 4,3rd Period,Benjamin Hitzig,History,Grade 6,2025-26,Lesson  Assessments,40,20,"SOC.6,SS.6"
+8264968178,M6W1 vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8265031585,Unit 7 Lesson 2 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8265152991,Module 6 Week 1 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,20,2,
+8265249064,Module 6 Week 1 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8272214011,2D & 3D Shapes,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,22,20,MA.K
+8272650639,2D & 3D Shapes,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,21,20,MA.K
+8272998095,2D & 3D Shapes,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,22,20,MA.K
+8273220499,Module 13 Test,5th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,21,25,MA.6
+8273926376,M6w2 vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8275906019,Unit 7 Lesson 5 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,21,4,
+8276527893,Unit 7 Lesson 3 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,18,4,
+8279391756,M7W1 vocab quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,18,1,
+8282370327,Chapter 19,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,21,19,MA.K
+8282395267,Unit 7 Lesson 5 Quiz,Reeder,Mason Reeder,Science,Grade 1,2025-26,Lesson  Assessments,19,4,
+8282887686,Unit 7 Lesson 5 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,17,4,
+8284281648,Unit 7 Benchmark Test: Living Things,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,21,10,SCI.1
+8287502207,Module 7 Week 1 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,20,2,
+8292007827,Module 14 Test,4th Period,"GAINS Admin, Steven Burney",Math,Grade 6,2025-26,Lesson  Assessments,18,20,"MA.5,MA.6"
+8292007847,Module 14 Test,5th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,21,20,"MA.5,MA.6"
+8292824903,Zoom In!: Weekly Assessment: Week 1,Bennet,Elizabeth Bennet,ELA,Grade K,2025-26,Lesson  Assessments,22,15,ELA.K
+8292824934,Zoom In!: Weekly Assessment: Week 1,Watkins,Heather Watkins,ELA,Grade K,2025-26,Lesson  Assessments,20,15,ELA.K
+8292962635,M7W1 vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8293064486,M7W1 Vocabulary Quiz,Vaughn,"Robin Small, Mary Vaughn",ELA,Grade 3,2025-26,Lesson  Assessments,20,4,
+8293171753,Module 7 Week 1 Vocabulary Quiz,Agostino,Gabriela Agostino,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8293643260,Module 7 Week 1 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8294794366,M7W2 vocab quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8294921513,Final-West and Southwest Regions States and Capitals,Vaughn,Mary Vaughn,Social Studies,Grade 3,2025-26,Lesson  Assessments,22,2,
+8298693160,Module 7 Week 2 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,18,2,
+8300846062,Chapter 20,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,21,9,MA.K
+8310896090,Final-West and Southwest Regions States and Capitals,Small,Robin Small,Social Studies,Grade 3,2025-26,Lesson  Assessments,21,2,
+8312819238,Zoom In!: Weekly Assessment: Week 2,Bennet,Elizabeth Bennet,ELA,Grade K,2025-26,Lesson  Assessments,20,16,"ELA.K,ELA.K12"
+8312831605,Zoom In!: Weekly Assessment: Week 2,Watkins,Heather Watkins,ELA,Grade K,2025-26,Lesson  Assessments,21,16,"ELA.K,ELA.K12"
+8317180423,M7W3 Vocab quiz,Rivera,Jannette Rivera,ELA,Grade 5,2025-26,Lesson  Assessments,15,1,
+8318959140,Module 7 Week 2 Vocabulary Quiz,Farrell,Carissa Farrell,ELA,Grade 2,2025-26,Lesson  Assessments,19,2,
+8318979330,M7W2 vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,19,1,
+8319114247,M7W2 Vocabulary Quiz,Vaughn,Mary Vaughn,ELA,Grade 3,2025-26,Lesson  Assessments,21,1,
+8319331982,"Weekly Math Quiz #1 (Conversion, Fractions, Volume, Triangles, Quadrilaterals)",Rivera,Jannette Rivera,Math,Grade 5,2025-26,Lesson  Assessments,19,10,
+8324893965,Money Test,Bennet,Elizabeth Bennet,Math,Grade K,2025-26,Lesson  Assessments,23,12,
+8325089229,FSSA Practice Test p. 79-88 (4th grade book),Rivera,Jannette Rivera,Science,Grade 5,2025-26,Lesson  Assessments,19,40,
+8325105142,"Weekly Math Quiz #2 (adding and subtracting mixed numbers, adding and subtracting decimals, and division of fractions)",Rivera,Jannette Rivera,Math,Grade 5,2025-26,Lesson  Assessments,19,10,
+8325159404,Zoom In!: Weekly Assessment: Week 3,Bennet,Elizabeth Bennet,ELA,Grade K,2025-26,Lesson  Assessments,23,15,"ELA.K,ELA.K12"
+8325159886,Zoom In!: Weekly Assessment: Week 3,Watkins,Heather Watkins,ELA,Grade K,2025-26,Lesson  Assessments,21,15,"ELA.K,ELA.K12"
+8325375519,Money Test,Watkins,Heather Watkins,Math,Grade K,2025-26,Lesson  Assessments,20,12,
+8325672466,Module 15 Test,4th Period,"GAINS Admin, Steven Burney",Math,Grade 6,2025-26,Lesson  Assessments,17,25,"MA.5,MA.6"
+8325672509,Module 15 Test,5th Period,Steven Burney,Math,Grade 6,2025-26,Lesson  Assessments,20,25,"MA.5,MA.6"
+8325958880,M7W3 Vocab quiz,Birdwell,Susanna Birdwell,ELA,Grade 5,2025-26,Lesson  Assessments,17,1,
+8325969043,Money Test,Tsakonas,Kathleen Tsakonas,Math,Grade K,2025-26,Lesson  Assessments,23,12,
+8327325520,Spiral Review Test #1,2nd Period,Steven Burney,Math,Grade 7,2025-26,Lesson  Assessments,24,15,"MA.6,MA.7"
+8327381867,M7W3 Vocabulary Quiz,Vaughn,Mary Vaughn,ELA,Grade 3,2025-26,Lesson  Assessments,19,1,
+8327522063,"Weekly Math Quiz #1 (Conversion, Fractions, Volume, Triangles, Quadrilaterals)",Birdwell,Susanna Birdwell,Math,Grade 5,2025-26,Lesson  Assessments,16,10,
+8327905248,Quarter 4 Quiz 1,5th Period,Benjamin Hitzig,History,Grade 7,2025-26,Lesson  Assessments,22,10,
+8334327109,Sc Quiz Week 1 FSA Review,Rivera,Jannette Rivera,Science,Grade 5,2025-26,Lesson  Assessments,19,10,
+8336110460,Module 8 Week 1 Vocabulary Quiz,Lenhart,Elena Lenhart,ELA,Grade 2,2025-26,Lesson  Assessments,20,2,
+8336191844,"Weekly Math Quiz #3 (order of operations, volume, area, perimeter, round decimals, decompose decimals, quadrilaterals, triangle)",Rivera,Jannette Rivera,Math,Grade 5,2025-26,Lesson  Assessments,19,9,
+8336749106,Unit 9 Lesson 1 Quiz,Almendinger,Taylor Almendinger,Science,Grade 1,2025-26,Lesson  Assessments,21,4,
+8336783158,Classwork End of Year Test,Almendinger,Taylor Almendinger,Math,Grade 1,2025-26,Lesson  Assessments,21,12,
+8337780368,Unit 9 Lesson 1 Quiz,Sedlak,Elizabeth Sedlak,Science,Grade 1,2025-26,Lesson  Assessments,18,4,
+8338541701,FSSA Practice Test p. 79-88 (4th grade book),Birdwell,Susanna Birdwell,Science,Grade 5,2025-26,Lesson  Assessments,19,40,

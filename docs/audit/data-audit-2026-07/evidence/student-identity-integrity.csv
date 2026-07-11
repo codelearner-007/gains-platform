@@ -1,0 +1,7 @@
+school,user_uid,user_name,fact_rows,cube_rows,first_date,last_date,sessions,dim_student_name,matches_dim
+Athenian Academy of Technology and the Arts,131794421,Aurora Kahn,2611,2110,2024-08-30,2026-05-13,2024-25;2025-26,Aurora Kahn,t
+Athenian Academy of Technology and the Arts,131794421,Aurora Kendrick,125,114,2024-08-30,2024-10-04,2024-25,Aurora Kahn,f
+Central Florida Preparatory School,131942369,Liza McEneaney,484,338,2025-09-03,2026-05-13,2025-26,Liza McEneaney,t
+Central Florida Preparatory School,131942369,Liza Dottling,37,19,2026-01-15,2026-05-05,2025-26,Liza McEneaney,f
+Athenian Academy of Technology and the Arts,89121754,Emberlyn MacMeeken,4109,2085,2024-09-04,2026-05-08,2024-25;2025-26,Emberlyn Camp,f
+Athenian Academy of Technology and the Arts,89121754,Emberlyn Camp,466,382,2024-09-06,2025-01-17,2024-25,Emberlyn Camp,t

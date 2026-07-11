@@ -1,0 +1,67 @@
+finding_id,item_id,item_name,section_name,subject,grade,reason
+F10-subject-label-typo,8259495227,Topic 3,HS ALG II - 1st,HS Alegra II,Higher-Ed,"dim_subject subject = 'HS Alegra II' [sic, should be Algebra] -> misspelled value in subject slicer school-wide (4 CFP items under this subject)"
+F1-sid-split,8159775714,M4 W1 Heroic Feats: Weekly Assessment: Module 4 Week 1,04 LA - A,ELA,Grade 4,fact 153 rows/17 users under subject_id 17df9be6 (item_name 'M4 W1 Heroic Feats: ... Week 1 12/18' — teacher rename + re-export) vs 9 rows/1 user under clean-name sid 481e3b9d; dim_item points at 481e3b9d but cube_question_summary contains ONLY 17df9be6; cube_user_summary splits 17 vs 1 across two name variants -> canonical report empty/1-student + duplicate slicer entry
+F2-type-split,8140495629,Topic 6: The Constitution Protects Your Rights: Defend All Rights,MS 07 CIV - 5th A,Civics,Grade 7,Civics Gr7 Topic 6 twin: this section (5th A) typed 'topic'; sibling 3rd B typed 'Summative' -> different subject_id -> merged twin report splits in two
+F2-type-split,8140495693,Topic 6: The Constitution Protects Your Rights: Defend All Rights,MS 07 CIV - 3rd B,Civics,Grade 7,Civics Gr7 Topic 6 twin: typed 'Summative' while sibling 5th A is 'topic'; rows came from long-format export batch (section label 'MS 07 Civics MS 07 CIV - 3rd B')
+F3-name-variant-split,8159775714,M4 W1 Heroic Feats: Weekly Assessment: Module 4 Week 1,04 LA - A,ELA,Grade 4,04 LA Wk1 weekly assessment named 'M4 W1 Heroic Feats...' in section A only; sections B/C variant named 'Heroic Feats...' -> different subject_id -> two separate reports for one assessment
+F3-name-variant-split,8159775758,Heroic Feats: Weekly Assessment: Module 4 Week 1,04 LA - C,ELA,Grade 4,04 LA - C Wk1 named 'Heroic Feats...' (no M4 W1 prefix) -> does not merge with section A report
+F3-name-variant-split,8201010981,M4 W2 Heroic Feats: Weekly Assessment: Module 4 Week 2,04 LA - A,ELA,Grade 4,04 LA Wk2 named 'M4 W2 Heroic Feats...' in section A only -> does not merge with B/C variant
+F3-name-variant-split,8201011025,Heroic Feats: Weekly Assessment: Module 4 Week 2,04 LA - B,ELA,Grade 4,04 LA - B Wk2 named 'Heroic Feats...' -> separate report from section A
+F3-name-variant-split,8201011082,Heroic Feats: Weekly Assessment: Module 4 Week 2,04 LA - C,ELA,Grade 4,04 LA - C Wk2 named 'Heroic Feats...' -> separate report from section A
+F4-source-partial,8154778691,Unit 2 Part 1,HS ENG II - 2nd,HS English II,Regular 9–12,"Unit 2 Part 1 HS ENG II - 2nd: only 2 of ~10 section students; staging also has 2 -> source export partial, misleading 2-student report; no Unit 2 Part 2 exists for this section at all"
+F4-source-partial,8159775758,Heroic Feats: Weekly Assessment: Module 4 Week 1,04 LA - C,ELA,Grade 4,Heroic Feats Wk1 04 LA - C: 6 of 13 section students; Module-5 weeklies for same section have 9-10
+F4-source-partial,8198880846,Unit 2 Part 1,MS 08 LA III - 3rd B,ELA,Grade 8,Unit 2 Part 1 MS 08 LA III - 3rd B: only 2 of ~14 section students (Part 2 has 13); staging also 2 -> source export partial
+F4-source-partial,8201011025,Heroic Feats: Weekly Assessment: Module 4 Week 2,04 LA - B,ELA,Grade 4,Heroic Feats Wk2 04 LA - B: 1 student and ALL submission_grade NULL -> blank 1-student report; section has 15 students
+F4-source-partial,8201011082,Heroic Feats: Weekly Assessment: Module 4 Week 2,04 LA - C,ELA,Grade 4,Heroic Feats Wk2 04 LA - C: 1 student of 13 in section
+F5-section-label-format,8140495693,Topic 6: The Constitution Protects Your Rights: Defend All Rights,MS 07 CIV - 3rd B,Civics,Grade 7,section = 'MS 07 Civics MS 07 CIV - 3rd B' long-format variant
+F5-section-label-format,8159775758,Heroic Feats: Weekly Assessment: Module 4 Week 1,04 LA - C,ELA,Grade 4,section = '04 Language Arts 04 LA - C' long-format variant
+F5-section-label-format,8180432402,Chapter 8 Test: More 2-Digit Subtraction,02 MTH - B,Math,Grade 2,section = '02 Math 02 MTH - B' long-format variant
+F5-section-label-format,8200948721,Chapter 8 Test: More 2-Digit Subtraction,02 MTH - A,Math,Grade 2,section = '02 Math 02 MTH - A' long-format variant
+F5-section-label-format,8200948758,Chapter 8 Test: More 2-Digit Subtraction,02 MTH - C,Math,Grade 2,section = '02 Math 02 MTH - C' long-format variant
+F5-section-label-format,8254068371,Waves and Electromagnetic Radiation,MS 08 PHY SC - 4th A,Science,Grade 8,section = 'MS 08 Physical Science MS 08 PHY SC - 4th A' long-format variant
+F5-section-label-format,8258440058,Waves and Electromagnetic Radiation,MS 08 PHY SC - 2nd B,Science,Grade 8,section = 'MS 08 Physical Science MS 08 PHY SC - 2nd B' long-format variant
+F5-section-label-format,8262255858,Chapter 10 Test: Relate Multiplication and Area,03 MTH - A,Math,Grade 3,"fact/dqd/cube section = '03 Math 03 MTH - A' instead of 'Sec 03 MTH - A'; drops from alignment-quality KPI when section filter active (cube_repository.py:1951 exact-match, no dim_section fallback)"
+F5-section-label-format,8262255871,Chapter 10 Test: Relate Multiplication and Area,03 MTH - B,Math,Grade 3,section = '03 Math 03 MTH - B' long-format variant
+F6-wrong-course-section-label,7891742813,Unit 8 Test: Forces and Motion,02 SCI - C,Science,Grade 2,OUTSIDE CHUNK: 02 SCI - C item (Unit 8 Test: Forces and Motion) labeled 'Sec 03 LA - A' in fact
+F6-wrong-course-section-label,7891794271,Unit 8 Test: Classifying Plants and Animals,03 SCI - B,Science,Grade 3,OUTSIDE CHUNK: 03 SCI - B item (Unit 8 Test: Classifying Plants and Animals) labeled 'Sec 04 LA - A' in fact
+F6-wrong-course-section-label,7891846801,Unit 7 Benchmark Test: Working With Electricity,05 SCI - A,Science,Grade 5,OUTSIDE CHUNK: 05 SCI - A science item (Unit 7 Benchmark: Working With Electricity) carries fact section label 'Sec 01 LA - A'; dim_item correct (05 SCI - A); label-only corruption
+F6-wrong-course-section-label,7997342490,Unit 7 Benchmark Test: Working With Electricity,05 SCI - B,Science,Grade 5,OUTSIDE CHUNK: 05 SCI - B item labeled 'Sec 01 LA - B' in fact (1 student)
+F6-wrong-course-section-label,8362776921,Topic 8,HS ALG I - 7th,HS Algebra I,Regular 9–12,OUTSIDE CHUNK: HS ALG I 'Topic 8' 1-student remnant labeled 'Sec HS US HIST - 4th'; fact grade=Higher-Ed contradicts dim_subject grade=Regular 9-12 (latest_export cross-band remnant signature)
+F7-higher-ed-band,8118215773,Topic 4: The Americas (Prehistory?A.D. 1570),HS WH - 5th,HS World History,Higher-Ed,"HS World History under Higher-Ed band while HS English/Geometry/Algebra I sit under Regular 9-12; known possible dual-enrollment, pending CFP confirmation"
+F7-higher-ed-band,8162249855,Mid-Year Test,HS ENG II H - 2nd,HS Honors English II,Higher-Ed,HS Honors English II under Higher-Ed band
+F7-higher-ed-band,8162251651,Mid year test,HS ENG III H - 4th,HS Honors English III,Higher-Ed,HS Honors English III under Higher-Ed band
+F7-higher-ed-band,8162253672,Mid-Year Test,HS ENG IV H - 1st,HS Honors English IV,Higher-Ed,HS Honors English IV under Higher-Ed band
+F7-higher-ed-band,8195472161,Unit 2 Part 1,HS ENG III H - 4th,HS Honors English III,Higher-Ed,HS Honors English III under Higher-Ed band
+F7-higher-ed-band,8195472186,Unit 2 Part 2,HS ENG III H - 4th,HS Honors English III,Higher-Ed,HS Honors English III under Higher-Ed band
+F7-higher-ed-band,8199772451,Unit 2 Pat 1,HS ENG IV H - 1st,HS Honors English IV,Higher-Ed,HS Honors English IV under Higher-Ed band
+F7-higher-ed-band,8199772510,Unit 2 Part 2,HS ENG IV H - 1st,HS Honors English IV,Higher-Ed,HS Honors English IV under Higher-Ed band
+F7-higher-ed-band,8203499258,Investigation Assessment 2: Forces,HS PHYS - 3rd,HS Physics,Higher-Ed,HS Physics under Higher-Ed band
+F7-higher-ed-band,8216302399,Topic 3 Assessment A,HS ALG I H - 7th,HS Honors Algebra I,Higher-Ed,HS Honors Algebra I under Higher-Ed band
+F7-higher-ed-band,8228272353,Topic 5: The Renaissance and Reformation (1300?1650),HS WH - 5th,HS World History,Higher-Ed,HS World History under Higher-Ed band
+F7-higher-ed-band,8247281686,Topic 5: World War I and the 1920s,HS US HIST - 4th,HS United States History,Higher-Ed,HS United States History under Higher-Ed band
+F7-higher-ed-band,8249955742,Investigation Assessments 3: Gravitational Forces,HS PHYS - 3rd,HS Physics,Higher-Ed,HS Physics under Higher-Ed band
+F7-higher-ed-band,8259446640,Topic 3,HS ALG II H - 1st,HS Honors Algebra II,Higher-Ed,HS Honors Algebra II under Higher-Ed band
+F7-higher-ed-band,8259495227,Topic 3,HS ALG II - 1st,HS Alegra II,Higher-Ed,HS Alegra II [sic] under Higher-Ed band
+F7-higher-ed-band,8261346599,Topic 2,HS ECON - 6th-Spring,HS Economics,Higher-Ed,HS Economics under Higher-Ed band
+F8-naming,8118215773,Topic 4: The Americas (Prehistory?A.D. 1570),HS WH - 5th,HS World History,Higher-Ed,mojibake: 'Prehistory?A.D. 1570' (en-dash corrupted to ?)
+F8-naming,8162251651,Mid year test,HS ENG III H - 4th,HS Honors English III,Higher-Ed,item_name casing 'Mid year test' vs 'Mid-Year Test' everywhere else
+F8-naming,8195374562,Unit 2 Pat 1,HS ENG IV - 1st,HS English IV,Regular 9–12,item_name typo 'Unit 2 Pat 1' (should be Part)
+F8-naming,8199772451,Unit 2 Pat 1,HS ENG IV H - 1st,HS Honors English IV,Higher-Ed,item_name typo 'Unit 2 Pat 1' (should be Part)
+F8-naming,8200877215,"Module 5 Assessment: Now You See It, Now You Dont",01 LA - A,ELA,Grade 1,"missing apostrophe: 'Now You See It, Now You Dont'"
+F8-naming,8200877284,"Module 5 Assessment: Now You See It, Now You Dont",01 LA - B,ELA,Grade 1,"missing apostrophe: 'Now You See It, Now You Dont'"
+F8-naming,8200877359,"Module 5 Assessment: Now You See It, Now You Dont",01 LA - C,ELA,Grade 1,"missing apostrophe: 'Now You See It, Now You Dont'"
+F8-naming,8211876460,"Module 5 Assessment: Now You See It, Now You Dont",01 LA - D,ELA,Grade 1,"missing apostrophe: 'Now You See It, Now You Dont'"
+F8-naming,8228272353,Topic 5: The Renaissance and Reformation (1300?1650),HS WH - 5th,HS World History,Higher-Ed,mojibake: '(1300?1650)' (en-dash corrupted to ?)
+F8-naming,8249955742,Investigation Assessments 3: Gravitational Forces,HS PHYS - 3rd,HS Physics,Higher-Ed,plural drift: 'Investigation Assessments 3' vs sibling 'Investigation Assessment 2'
+F8-naming,8262300500,Celebrate America: Module 6 Assesment,01 LA - A,ELA,Grade 1,item_name typo 'Module 6 Assesment'
+F8-naming,8262300560,Celebrate America: Module 6 Assesment,01 LA - B,ELA,Grade 1,item_name typo 'Module 6 Assesment'
+F8-naming,8262300586,Celebrate America: Module 6 Assesment,01 LA - C,ELA,Grade 1,item_name typo 'Module 6 Assesment'
+F8-naming,8262300618,Celebrate America: Module 6 Assesment,01 LA - D,ELA,Grade 1,item_name typo 'Module 6 Assesment'
+F9-standards-gap,8161436131,Mid-Year Test,HS ENG IV - 1st,HS English IV,Regular 9–12,Mid-Year Test HS ENG IV: 1 question unmapped
+F9-standards-gap,8161442182,Mid-Year Test,MS 08 LA III - 3rd B,ELA,Grade 8,Mid-Year Test MS 08 LA III - 3rd B: 1 question unmapped
+F9-standards-gap,8161442468,Mid-Year Test,MS 08 LA III - 2nd A,ELA,Grade 8,Mid-Year Test MS 08 LA III - 2nd A: 1 question unmapped
+F9-standards-gap,8162249855,Mid-Year Test,HS ENG II H - 2nd,HS Honors English II,Higher-Ed,Mid-Year Test HS ENG II H: 1 question unmapped
+F9-standards-gap,8162253672,Mid-Year Test,HS ENG IV H - 1st,HS Honors English IV,Higher-Ed,Mid-Year Test HS ENG IV H: 1 question unmapped
+F9-standards-gap,8203499258,Investigation Assessment 2: Forces,HS PHYS - 3rd,HS Physics,Higher-Ed,"HS Physics Investigation Assessment 2: Forces: 15 questions, ZERO standards mapped -> invisible in standards/strand reports"
+F9-standards-gap,8247281686,Topic 5: World War I and the 1920s,HS US HIST - 4th,HS United States History,Higher-Ed,HS US Hist Topic 5: 1 question unmapped (870/895 rows)
+F9-standards-gap,8261346599,Topic 2,HS ECON - 6th-Spring,HS Economics,Higher-Ed,HS Economics Topic 2: 23 of 35 questions unmapped (144/351 fact rows have standards)

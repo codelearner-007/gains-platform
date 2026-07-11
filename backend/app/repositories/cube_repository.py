@@ -212,7 +212,7 @@ class CubeRepository:
                 WHERE item_id IN (SELECT item_id FROM items)
                   AND points_possible IS NOT NULL
                   AND points_possible > 0
-                ORDER BY user_uid, question_id, position_number, identifier NULLS LAST
+                ORDER BY user_uid, question_id, position_number, submission DESC NULLS LAST, identifier NULLS LAST
             ),
             per_user_q AS (
                 SELECT qq.question_no, fd.user_uid,
@@ -526,7 +526,7 @@ class CubeRepository:
                 WHERE item_id IN (SELECT item_id FROM items)
                   AND points_possible IS NOT NULL
                   AND points_possible > 0
-                ORDER BY user_uid, question_id, position_number, identifier NULLS LAST
+                ORDER BY user_uid, question_id, position_number, submission DESC NULLS LAST, identifier NULLS LAST
             ),
             per_user_q AS (
                 SELECT qq.question_no, fd.user_uid,
@@ -1669,7 +1669,7 @@ class CubeRepository:
                 COUNT(DISTINCT sq.identifier)                      AS num_standards,
                 COUNT(DISTINCT sq.ukey)                            AS num_questions,
                 COUNT(DISTINCT sq.item_id)                         AS num_assessments,
-                AVG(COALESCE(qa.grade_average, 0))                 AS grade_average,
+                AVG(qa.grade_average)                              AS grade_average,
                 COALESCE(ss.subjects, ARRAY[]::text[])             AS subjects
             FROM strand_q sq
             LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
@@ -1774,7 +1774,7 @@ class CubeRepository:
                 )                                                  AS grades,
                 COUNT(DISTINCT sq.ukey)                            AS num_questions,
                 COUNT(DISTINCT sq.item_id)                         AS num_assessments,
-                AVG(COALESCE(qa.grade_average, 0))                 AS grade_average,
+                AVG(qa.grade_average)                              AS grade_average,
                 MAX(sq.last_change_date_time)                      AS last_change_date_time
             FROM std_q sq
             LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
@@ -1983,7 +1983,9 @@ class CubeRepository:
 
         Joins ``dim_question_data`` to ``dim_item`` for the item_name +
         item_type display fields. ``subject`` / ``grade`` come from
-        ``dim_question_data`` (already overridden / normalised at staging).
+        ``dim_subject`` (the slicer's override-label source) via
+        ``dim_item.subject_id``, falling back to the ``dim_question_data``
+        base label only when the item has no dim_subject row.
         """
         # Collapse to one row per (item, question) first (bool_or over the
         # question's rows), THEN count per item. This is identical to the prior
@@ -2017,12 +2019,20 @@ class CubeRepository:
                 pi.item_id,
                 COALESCE(di.item_name, '') AS item_name,
                 di.item_type,
-                pi.subject,
-                pi.grade,
+                -- subject/grade come from dim_subject (the slicer's override-label
+                -- source) via dim_item.subject_id; dqd carries only the base label
+                -- and structurally cannot hold subject_course_overrides, so
+                -- MAX(dqd.subject) mislabels course-override subjects. Fall back to
+                -- the dqd value only when the item has no dim_item/dim_subject row.
+                COALESCE(dsub.subject, pi.subject) AS subject,
+                COALESCE(dsub.grade, pi.grade)     AS grade,
                 pi.qs_total::int          AS questions_total,
                 pi.qs_aligned::int        AS questions_with_alignment
             FROM per_item pi
             LEFT JOIN dim_item di USING (item_id)
+            LEFT JOIN dim_subject dsub
+                   ON dsub.school_id = di.school_id
+                  AND dsub.subject_id = di.subject_id
             ORDER BY pi.qs_aligned, di.item_name
             """
         )
@@ -2314,7 +2324,7 @@ class CubeRepository:
                   AND fss.points_possible IS NOT NULL
                   AND fss.points_possible > 0
                 ORDER BY fss.user_uid, fss.item_id, fss.question_id,
-                         fss.position_number, fss.standard NULLS LAST
+                         fss.position_number, fss.submission DESC NULLS LAST, fss.standard NULLS LAST
             ),
             joined AS (
                 SELECT

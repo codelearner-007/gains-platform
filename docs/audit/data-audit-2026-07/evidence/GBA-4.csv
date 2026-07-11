@@ -1,0 +1,17 @@
+school,item_id,item_name,dqd_subjects,dqd_grades,dsub_subject,dsub_grade,fact_subjects,fact_grades,cube_subjects,cube_grades,origin
+Athenian Academy of Technology and the Arts,7334633943,"Now You See It, Now You Don't: Weekly Assessment: Week 2",ELA,Grade 1|Grade K,ELA,Grade 1,ELA,Grade 1,ELA,Grade 1,source_multilabel
+Athenian Academy of Technology and the Arts,7696812668,Unit 3 Lesson 3 Quiz,Science|Social Studies,Grade 1,Science,Grade 1,Science,Grade 1,Science,Grade 1,source_multilabel
+Athenian Academy of Technology and the Arts,7701493741,Unit 3 Lesson 3 Quiz,Science|Social Studies,Grade 1,Science,Grade 1,Science,Grade 1,Science,Grade 1,source_multilabel
+Athenian Academy of Technology and the Arts,7789287431,M7W2 Vocabulary Quiz,ELA|Math,Grade 3,ELA,Grade 3,ELA,Grade 3,ELA,Grade 3,source_multilabel
+Central Florida Preparatory School,8368439603,Topic 9: Civil Rights and Reform in the 1960s (1945–1968),ELA|HS United States History,Higher-Ed,HS United States History,Higher-Ed,HS United States History,Higher-Ed,ELA,Higher-Ed,pipeline_override_residue
+Central Florida Preparatory School,8216302399,Topic 3 Assessment A,HS Honors Algebra I|Math,Higher-Ed,HS Honors Algebra I,Higher-Ed,HS Honors Algebra I,Higher-Ed,ELA,Grade 1,source_multilabel
+Crestwell School,7929054690,What Makes Us Who We Are?: Weekly Assessment: Week 2,ELA|Reading,Grade 4,Reading,Grade 4,Reading,Grade 4,ELA|Reading,Grade 4,pipeline_override_residue
+Crestwell School,7929054711,Module Assessment: What Makes Us Who We Are?,ELA|Reading,Grade 4,Reading,Grade 4,Reading,Grade 4,ELA|Reading,Grade 4,pipeline_override_residue
+Crestwell School,8030067964,Module Assessment: Come to Your Senses,ELA|Reading,Grade 4,Reading,Grade 4,Reading,Grade 4,ELA|Reading,Grade 4,pipeline_override_residue
+Crestwell School,8030068539,Come to Your Senses: Weekly Assessment: Week 1,ELA|Reading,Grade 4,Reading,Grade 4,Reading,Grade 4,ELA,Grade 4,pipeline_override_residue
+Crestwell School,8030068554,Module Assessment: Come to Your Senses,ELA|Reading,Grade 4,Reading,Grade 4,Reading,Grade 4,ELA|Reading,Grade 4,pipeline_override_residue
+Crestwell School,8043769075,Come to Your Senses: Weekly Assessment: Week 2,ELA|Reading,Grade 4,Reading,Grade 4,Reading,Grade 4,ELA,Grade 4,pipeline_override_residue
+Crestwell School,8043771169,Come to Your Senses: Weekly Assessment: Week 2,ELA|Reading,Grade 4,Reading,Grade 4,Reading,Grade 4,ELA,Grade 4,pipeline_override_residue
+Crestwell School,8067707756,Let Freedom Ring!: Weekly Assessment: Week 2,ELA|Reading,Grade 3,Reading,Grade 3,Reading,Grade 3,ELA,Grade 3,pipeline_override_residue
+Crestwell School,8076248252,Module Assessment: Natural Disasters,ELA|Reading,Grade 5,Reading,Grade 5,Reading,Grade 5,ELA|Reading,Grade 5,pipeline_override_residue
+Crestwell School,8076251173,Module Assessment: Natural Disasters,ELA|Reading,Grade 5,Reading,Grade 5,Reading,Grade 5,ELA|Reading,Grade 5,pipeline_override_residue

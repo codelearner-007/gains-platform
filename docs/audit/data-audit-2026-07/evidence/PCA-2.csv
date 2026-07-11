@@ -1,0 +1,38 @@
+school,item_id,item_name,dim_subject,dim_asmt_type,dim_grade,fact_subject,fact_asmt_type,fact_grade,fact_rows_under_dim_bucket,fact_rows_under_fact_bucket,dim_items_under_fact_bucket,symptom
+Athenian Academy of Technology and the Arts,7334678220,Everyone Has a Story: Weekly Assessment: Week 2,ELA,Lesson  Assessments,Grade 2,ELA,Assessments,Grade 2,0,342,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7334739781,Module Assessment: Use Your Words - 10/21/24,ELA,Unit-Chap  Assessments,Grade 3,ELA,Lesson  Assessments,Grade 3,46,414,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7334740354,Teamwork: Weekly Assessment: Week 1,ELA,Assessments,Grade 3,ELA,Lesson  Assessments,Grade 3,0,300,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7334764745,Art Everywhere: Weekly Assessment: Week 1,ELA,Assessments,Grade 4,ELA,Lesson  Assessments,Grade 4,0,374,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7337889366,Project Earth: Weekly Assessment: Week 1,ELA,Assessments,Grade 5,ELA,Lesson  Assessments,Grade 5,0,324,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7337899008,Happy Healthy Me: Weekly Assessment: Week 3,ELA,Lesson  Assessments,Grade K,ELA,Assessments,Grade K,0,394,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7338364921,Unit 8 Benchmark Test: Living Things and  Their Parents,Science,Unit-Chap  Assessments,Grade 1,Science,Lesson  Assessments,Grade 1,13,208,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7338364925,Unit 9 Benchmark Test: Plant and Animal Needs,Science,Unit-Chap  Assessments,Grade 1,Science,Lesson  Assessments,Grade 1,10,170,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7338364983,Unit 4 Benchmark Test: Earth?s Resources,Science,Assessments,Grade 1,Science,Lesson  Assessments,Grade 1,0,209,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7338394693,Unit 4 Benchmark Test: Weather,Science,Unit-Chap  Assessments,Grade 2,Science,Lesson  Assessments,Grade 2,0,342,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7338394737,Unit 9 Benchmark Test: The Human Body,Science,Assessments,Grade 2,Science,Lesson  Assessments,Grade 2,0,280,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7466000203,Unit 4 Benchmark Test: Day and Night,Science,Assessments,Grade K,Science,Lesson  Assessments,Grade K,20,400,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7496090393,Chapter 11,Math,Assessments,Grade 3,Math,Lesson  Assessments,Grade 3,0,505,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7594902377,Chapter 12,Math,Assessments,Grade 5,Math,Lesson  Assessments,Grade 5,0,656,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7661450418,Chapter 9,Math,Assessments,Grade 1,Math,Lesson  Assessments,Grade 1,0,425,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7661452061,Chapter 14,Math,Assessments,Grade 1,Math,Lesson  Assessments,Grade 1,323,19,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7676516420,Quarter 3 Quiz #1,Civics,Lesson  Assessments,Grade 8,Civics,Assessments,Grade 8,5,75,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7687741861,Chapter 12,Math,Lesson  Assessments,Grade K,Math,Assessments,Grade K,380,9,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7687967795,M5W1 Vocab quiz,ELA,Assessments,Grade 5,ELA,Lesson  Assessments,Grade 5,0,152,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7789244025,Quarter 4 Quiz 2,History,Assessments,Grade 7,History,Lesson  Assessments,Grade 7,5,135,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7789275406,M7W2 vocab quiz,ELA,Assessments,Grade 5,ELA,Lesson  Assessments,Grade 5,0,198,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7789352689,Tricksters and Tall Tales: Weekly Assessment: Week 2,ELA,Assessments,Grade 4,ELA,Lesson  Assessments,Grade 4,0,420,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7789371643,"Above, Below, and Beyond: Weekly Assessment: Week 2",ELA,Assessments,Grade 5,ELA,Lesson  Assessments,Grade 5,0,378,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7789640645,Chapter 16 Temperature and Time,Math,Assessments,Grade 4,Math,Lesson  Assessments,Grade 4,0,504,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7797146594,Inspired by Nature Unit Test,ELA,Lesson Assessments,Grade 7,ELA,Lesson  Assessments,Grade 7,1508,52,0,EMPTY_REPORT
+Athenian Academy of Technology and the Arts,7334633906,"Now You See It, Now You Don't: Weekly Assessment: Week 1",ELA,Lesson  Assessments,Grade 1,ELA,Assessments,Grade 1,0,342,1,PARTIAL_SECTION_LOSS
+Athenian Academy of Technology and the Arts,7334677961,Module Assessment: Once Upon a Time,ELA,Assessments,Grade 2,ELA,Lesson  Assessments,Grade 2,48,256,1,PARTIAL_SECTION_LOSS
+Athenian Academy of Technology and the Arts,7334741824,Module Assessment: Stories on Stage,ELA,Assessments,Grade 3,ELA,Lesson  Assessments,Grade 3,22,396,1,PARTIAL_SECTION_LOSS
+Athenian Academy of Technology and the Arts,7661454577,Chapter 9,Math,Lesson  Assessments,Grade 2,Math,Assessments,Grade 2,0,627,1,PARTIAL_SECTION_LOSS
+Athenian Academy of Technology and the Arts,7661455143,Chapter 9,Math,Lesson  Assessments,Grade 2,Math,Assessments,Grade 2,66,396,1,PARTIAL_SECTION_LOSS
+Athenian Academy of Technology and the Arts,8112140343,Chapter 16 Part 1,Math,Lesson  Assessments,Grade K,Math,Lesson  Assessments,Grade K,0,352,2,PARTIAL_SECTION_LOSS
+Athenian Academy of Technology and the Arts,8112622324,Chapter 16.1,Math,Lesson  Assessments,Grade K,Math,Lesson  Assessments,Grade K,368,16,1,PARTIAL_SECTION_LOSS
+Central Florida Preparatory School,8159775714,M4 W1 Heroic Feats: Weekly Assessment: Module 4 Week 1,ELA,Summative,Grade 4,ELA,Summative,Grade 4,9,153,0,EMPTY_REPORT
+Central Florida Preparatory School,8330846316,Marvels of Nature: Mod 6 Weekly Assessment: Week 1,ELA,Summative,Grade 4,ELA,Summative,Grade 4,0,119,0,EMPTY_REPORT
+Central Florida Preparatory School,8362776921,Topic 8,HS Algebra I,topic,Regular 9–12,HS Algebra I,topic,Higher-Ed,539,33,0,EMPTY_REPORT
+Crestwell School,7929054690,What Makes Us Who We Are?: Weekly Assessment: Week 2,Reading,Weekly Test,Grade 4,Reading,Summative,Grade 4,30,140,0,EMPTY_REPORT
+Crestwell School,7610639442,Chapter 1 Test: Counting and Number Sense,Math,Summative,Grade 1,Math,Chap Test,Grade 1,15,9,1,PARTIAL_SECTION_LOSS

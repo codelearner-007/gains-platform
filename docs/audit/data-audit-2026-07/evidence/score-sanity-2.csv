@@ -1,0 +1,19 @@
+school,school_id,item_id,item_name,question_id,points_received,points_possible,pattern,rows,students,example_student,all_fname_null
+Athenian Academy of Technology and the Arts,019eb11c-410a-7ffb-86e6-a0294c669670,7334677882,Module Assessment: Meet in the Middle,2017859297,2.0000,1.0000,recv_gt_poss,2,2,Ella Burkhardt,t
+Athenian Academy of Technology and the Arts,019eb11c-410a-7ffb-86e6-a0294c669670,7699024272,5.2 Spelling Test,2112099028,1.0000,0.0000,poss=0_pt_on_0pt_q,7,7,Athena Gavallas,t
+Athenian Academy of Technology and the Arts,019eb11c-410a-7ffb-86e6-a0294c669670,7699024272,5.2 Spelling Test,2112099029,1.0000,0.0000,poss=0_pt_on_0pt_q,10,10,Athena Gavallas,t
+Athenian Academy of Technology and the Arts,019eb11c-410a-7ffb-86e6-a0294c669670,7699040156,5.2 Spelling Test,2112103896,1.0000,0.0000,poss=0_pt_on_0pt_q,6,6,Avery Smoltz,t
+Athenian Academy of Technology and the Arts,019eb11c-410a-7ffb-86e6-a0294c669670,7699040156,5.2 Spelling Test,2112103897,1.0000,0.0000,poss=0_pt_on_0pt_q,4,4,Amari Smith,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8117821720,Topic 2: Cells and Cell Systems,2211957534,4.0000,1.0000,recv_gt_poss,10,2,John Kingsford,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8117821464,Topic 2 Energy in the Atmosphere and Ocean,2211957460,3.0000,1.0000,recv_gt_poss,3,1,Devin Bush,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8117821784,Forces and Motion,2211957555,2.0000,1.0000,recv_gt_poss,3,1,David Cabrera,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8117821784,Forces and Motion,2211957560,2.0000,1.0000,recv_gt_poss,6,2,Christian Mautner,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8117821864,Forces and Motion,2211957574,2.0000,1.0000,recv_gt_poss,1,1,Rosalia MejiaBiebl,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8117821864,Forces and Motion,2211957575,2.0000,1.0000,recv_gt_poss,6,2,Gabriela Charles,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8341726127,Topic 8: The Industrial Revolution (1750?1914),2265107056,1.0000,0.0000,poss=0_pt_on_0pt_q,2,2,Jamie Schulte,t
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,8341726127,Topic 8: The Industrial Revolution (1750?1914),2265107062,1.0000,0.0000,poss=0_pt_on_0pt_q,3,3,Jack Allen III,t
+Crestwell School,019eb11c-413c-7ed9-872e-0fe5e9a947b6,8007341041,Chapter 2 Test: Addition and Subtraction Strategies,2187640994,66.0000,1.0000,recv_gt_poss,3,1,Alexandra Garcia,t
+Crestwell School,019eb11c-413c-7ed9-872e-0fe5e9a947b6,8007341041,Chapter 2 Test: Addition and Subtraction Strategies,2187640998,11.0000,1.0000,recv_gt_poss,4,1,Amelia Malena,t
+Crestwell School,019eb11c-413c-7ed9-872e-0fe5e9a947b6,8076251173,Module Assessment: Natural Disasters,2202521213,11.0000,1.0000,recv_gt_poss,1,1,Mia Richard,t
+Crestwell School,019eb11c-413c-7ed9-872e-0fe5e9a947b6,8251538317,Chapter 13 Test: Add and Subtract Decimals,2248283464,2.0000,1.0000,recv_gt_poss,1,1,Liesl Wallace,t
+Crestwell School,019eb11c-413c-7ed9-872e-0fe5e9a947b6,7968013359,"Chapter 8 Test: Count, Represent, and Compare Numbers Through 20",2176754041,1.0000,0.0000,poss=0_pt_on_0pt_q,2,1,Jonathan Beck,t

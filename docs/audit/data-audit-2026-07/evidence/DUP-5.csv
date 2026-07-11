@@ -1,0 +1,4 @@
+school,school_id,fact_rows,fact_with_file,stg_student_rows,stg_parseable_ts,rows_pruned_by_latest_export,conflicting_score_cells
+Athenian Academy of Technology and the Arts,019eb11c-410a-7ffb-86e6-a0294c669670,1294185,0,1867614,1867614,827404,0
+Central Florida Preparatory School,019eb11c-413b-7a66-a7d8-a18f14736ede,241653,0,472650,472650,259249,0
+Crestwell School,019eb11c-413c-7ed9-872e-0fe5e9a947b6,111150,0,182301,182301,81296,0
