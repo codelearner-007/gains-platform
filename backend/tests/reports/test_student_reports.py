@@ -44,10 +44,14 @@ STUDENTS = {
 SCHOOL_CLASS_AVG = 71.7  # mean of per-student latest-attempt overall %, n=421
 ARTHUR = "116903200"
 ARTHUR_SUBJECTS = {  # (subject, grade) → pct
-    ("Algebra", "Grade 8"): 91.7,
+    # 2026-07 misfiling fix: CFP "Topic 1" (item 7964065626) was filed
+    # Math/Grade 7 but is a Pre-Algebra topic (100% MA.8 standards; siblings
+    # Topics 2-7 are Algebra/Grade 8). item_label_overrides now relabels it to
+    # Algebra/Grade 8, so Arthur's bogus 5th "Math/Grade 7" subject is gone and
+    # his Algebra now includes Topic 1 (91.7 -> 83.8, Topic 1 scored ~49%).
+    ("Algebra", "Grade 8"): 83.8,
     ("ELA", "Grade 8"): 84.4,
     ("History", "Grade 8"): 98.9,
-    ("Math", "Grade 7"): 49.1,
     ("Science", "Grade 8"): 93.3,
 }
 
@@ -111,7 +115,7 @@ class TestGoldenStudentReport:
         await scope(db, CFP)
         report = await StudentService(db).build_student_report(ARTHUR, SESSION)
         got = {(s.subject, s.grade): s.pct for s in report.subjects}
-        assert len(report.subjects) == 5
+        assert len(report.subjects) == 4  # was 5 pre-misfiling-fix (Topic 1 as Math)
         for key, expected in ARTHUR_SUBJECTS.items():
             assert key in got, f"missing subject {key}"
             assert approx(got[key], expected, tol=0.15), (
@@ -166,7 +170,7 @@ class TestBrowse:
         report = await StudentService(db).build_student_report(ARTHUR, SESSION)
         assert approx(row.overall_pct, report.overall.pct, tol=0.05)
         assert approx(row.overall_pct, 90.9, tol=0.15)
-        assert row.n_subjects == 5
+        assert row.n_subjects == 4  # was 5 pre-misfiling-fix (Topic 1 relabelled Math->Algebra)
         assert row.mastery.total == (
             row.mastery.green + row.mastery.yellow + row.mastery.pink
         )
@@ -229,9 +233,12 @@ class TestCrossGradeMerge:
         # transparency: the mis-filed assessment is still shown under ELA
         assert any("Through an Animal" in a.name for a in ela.assessments)
 
-    async def test_arthur_still_five_distinct_subjects(self, db: AsyncSession):
-        # A student whose subjects are each a single grade is unaffected.
+    async def test_arthur_four_distinct_subjects(self, db: AsyncSession):
+        # Arthur's subjects are each a single grade (no cross-grade merge).
+        # Was 5 before the 2026-07 misfiling fix: CFP "Topic 1" was filed
+        # Math/Grade 7 (a bogus 5th subject) but is a Pre-Algebra topic now
+        # correctly grouped under Algebra/Grade 8 with Topics 2-7 -> 4 subjects.
         await scope(db, CFP)
         report = await StudentService(db).build_student_report(ARTHUR, SESSION)
-        assert report.overall.n_subjects == 5
-        assert len({s.subject for s in report.subjects}) == 5
+        assert report.overall.n_subjects == 4
+        assert len({s.subject for s in report.subjects}) == 4

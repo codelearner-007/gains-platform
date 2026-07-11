@@ -1,0 +1,43 @@
+school_id,item_id,item_name,students,fact_rows,staging_subject,fact_subject,staging_grade,fact_grade
+019eb11c-410a-7ffb-86e6-a0294c669670,7615828993,12/04 8.4 Homework,22,132,Math,Math,Grade 3,Grade 4
+019eb11c-410a-7ffb-86e6-a0294c669670,7615829935,12/05 8.4 Homework,21,147,Math,Math,Grade 3,Grade 4
+019eb11c-410a-7ffb-86e6-a0294c669670,7624644120,12/09 8.6 Homework,19,133,Math,Math,Grade 3,Grade 4
+019eb11c-410a-7ffb-86e6-a0294c669670,7613842590,12/5 Reading Classwork,19,57,ELA,ELA,Grade 3,Grade 4
+019eb11c-410a-7ffb-86e6-a0294c669670,7625528258,12/9 Reading Classwork,18,90,ELA,ELA,Grade 3,Grade 4
+019eb11c-410a-7ffb-86e6-a0294c669670,7637896011,Adding and Subtracting Money - 12/16/24,17,136,Math,Math,Grade 2,Grade 3
+019eb11c-410a-7ffb-86e6-a0294c669670,7687678128,Chapter 16,20,719,ELA,Math,Grade 2,Grade 2
+019eb11c-410a-7ffb-86e6-a0294c669670,7687663925,Chapter 16,18,658,ELA,Math,Grade 2,Grade 2
+019eb11c-410a-7ffb-86e6-a0294c669670,7789640645,Chapter 16 Temperature and Time,21,504,ELA,Math,Grade 3,Grade 4
+019eb11c-410a-7ffb-86e6-a0294c669670,7702561239,Chapter 18,19,361,ELA,Math,Grade 2,Grade K
+019eb11c-410a-7ffb-86e6-a0294c669670,7702555934,Chapter 18,20,618,ELA,Math,Grade 3,Grade 5
+019eb11c-410a-7ffb-86e6-a0294c669670,7893373621,Chapter 2,20,674,ELA,Math,Grade 3,Grade 1
+019eb11c-410a-7ffb-86e6-a0294c669670,8359960427,Chapter 9 Test,27,1685,Algebra,Algebra,Grade 6,Grade 8
+019eb11c-410a-7ffb-86e6-a0294c669670,8346484076,Classwork End of Year Test,17,475,Math,Math,Grade 6,Grade 1
+019eb11c-410a-7ffb-86e6-a0294c669670,7623891071,CW-Cold Read: Roberto Clemente,19,114,ELA,ELA,Grade 2,Grade 3
+019eb11c-410a-7ffb-86e6-a0294c669670,7617762025,HW 12/3 8.1,30,311,Math,Math,Grade 5,Grade 6
+019eb11c-410a-7ffb-86e6-a0294c669670,7619625033,HW 12/4 7.2 - 7.3,28,1167,Math,Math,Grade 5,Grade 7
+019eb11c-410a-7ffb-86e6-a0294c669670,7619615379,HW 12/4 8.2,31,512,Math,Math,Grade 5,Grade 6
+019eb11c-410a-7ffb-86e6-a0294c669670,7623314096,HW 12/6,28,1270,Math,Math,Grade 5,Grade 7
+019eb11c-410a-7ffb-86e6-a0294c669670,7598715892,M4W2 Vocabulary Quiz,18,162,ELA,ELA,Grade 4,Grade 5
+019eb11c-410a-7ffb-86e6-a0294c669670,7620225345,M4W2  Vocabulary Quiz,19,285,ELA,ELA,Grade 2,Grade 3
+019eb11c-410a-7ffb-86e6-a0294c669670,7334679341,Meet in the Middle: Weekly Assessment: Week 1,16,223,ELA,ELA,Grade 3,Grade 2
+019eb11c-410a-7ffb-86e6-a0294c669670,7338206131,Module 8 Test,30,570,ELA,Math,Grade 7,Grade 7
+019eb11c-410a-7ffb-86e6-a0294c669670,8336110460,Module 8 Week 1 Vocabulary Quiz,20,320,ELA,ELA,Grade 4,Grade 2
+019eb11c-410a-7ffb-86e6-a0294c669670,7625255317,Science CW FSSA book matter #1,19,171,Science,Science,Grade 4,Grade 5
+019eb11c-410a-7ffb-86e6-a0294c669670,7625334305,Science CW FSSA book matter #1,19,171,Science,Science,Grade 4,Grade 5
+019eb11c-410a-7ffb-86e6-a0294c669670,7628056550,science CW FSSA book  matter #2,20,80,Science,Science,Grade 4,Grade 5
+019eb11c-410a-7ffb-86e6-a0294c669670,7892346412,Through an Animal?s Eyes Unit Test,39,2145,ELA,ELA,Grade 6,Grade 8
+019eb11c-410a-7ffb-86e6-a0294c669670,7338320727,Unit 3 Test,31,4154,ELA,History,Grade 7,Grade 7
+019eb11c-410a-7ffb-86e6-a0294c669670,7338033968,Unit 5 Test,18,1242,Civics,Civics,Grade 5,Grade 8
+019eb11c-413b-7a66-a7d8-a18f14736ede,7806926683,Home Sweet Habitat: Weekly Assessment: Week 1,13,191,ELA,ELA,Grade 3,Grade 2
+019eb11c-413b-7a66-a7d8-a18f14736ede,7780237817,Home Sweet Habitat: Weekly Assessment: Week 3,14,131,ELA,ELA,Grade 3,Grade 2
+019eb11c-413b-7a66-a7d8-a18f14736ede,7816901887,Home Sweet Habitat: Weekly Assessment: Week 3,13,203,ELA,ELA,Grade 3,Grade 2
+019eb11c-413b-7a66-a7d8-a18f14736ede,7823076023,Home Sweet Habitat: Weekly Assessment: Week 3,13,167,ELA,ELA,Grade 3,Grade 2
+019eb11c-413b-7a66-a7d8-a18f14736ede,7961339860,Living Things in the Biosphere,18,341,ELA,Science,Grade 7,Grade 7
+019eb11c-413b-7a66-a7d8-a18f14736ede,8216302399,Topic 3 Assessment A,3,72,HS Honors Algebra I,HS Honors Algebra I,Grade 1,Higher-Ed
+019eb11c-413b-7a66-a7d8-a18f14736ede,7891846801,Unit 7 Benchmark Test: Working With Electricity,19,418,ELA,Science,Grade 1,Grade 5
+019eb11c-413b-7a66-a7d8-a18f14736ede,7997342490,Unit 7 Benchmark Test: Working With Electricity,20,432,ELA,Science,Grade 1,Grade 5
+019eb11c-413b-7a66-a7d8-a18f14736ede,7891794271,Unit 8 Test: Classifying Plants and Animals,17,340,ELA,Science,Grade 4,Grade 3
+019eb11c-413b-7a66-a7d8-a18f14736ede,7891742813,Unit 8 Test: Forces and Motion,17,306,ELA,Science,Grade 2,Grade 2
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,7935427775,Chapter 17 Test: Classify Two-Dimensional Quadrilaterals and Identify Line Symmetry,13,279,Math,Math,Grade 2,Grade 3
+019eb11c-413c-7ed9-872e-0fe5e9a947b6,8235331733,Make a Difference: Weekly Assessment: Week 2,14,168,Reading,Reading,Grade 2,Grade 3

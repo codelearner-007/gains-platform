@@ -55,9 +55,11 @@ SELECT
   NULLIF(TRIM(rqd.standards_val), ''),
   NULLIF(TRIM(rqd.session), ''),
   NULLIF(TRIM(rqd.assessment_type), ''),
-  COALESCE(so.subject_override, NULLIF(TRIM(rqd.subject), '')) AS subject,
+  -- item_label_overrides (per-assessment misfiling correction) wins, so
+  -- dim_question_data labels stay consistent with the fact subject_id bucket.
+  COALESCE(ilo.subject_override, so.subject_override, NULLIF(TRIM(rqd.subject), '')) AS subject,
   -- Grade remap also applies here (notebook 985 — Grade 9-12 -> Regular 9–12)
-  COALESCE(go.grade_override, NULLIF(TRIM(rqd.grade), '')) AS grade,
+  COALESCE(ilo.grade_override, go.grade_override, NULLIF(TRIM(rqd.grade), '')) AS grade,
   NULLIF(TRIM(rqd.section), ''),
   NULLIF(TRIM(rqd.file_name), ''),
   NULLIF(TRIM(rqd.question_no), '')
@@ -73,6 +75,10 @@ JOIN item_school ism
   ON ism.item_id = NULLIF(TRIM(rqd.item_id), '')
 JOIN schools s
   ON s.school_id = ism.school_id
+-- Override 0 (highest precedence): per-assessment misfiling correction.
+LEFT JOIN item_label_overrides ilo
+  ON ilo.school_id = s.school_id
+ AND ilo.item_id   = NULLIF(TRIM(rqd.item_id), '')
 LEFT JOIN subject_overrides so
   ON so.school_id     = s.school_id
  AND so.grade         = rqd.grade

@@ -62,12 +62,14 @@ SELECT
   NULLIF(TRIM(rss.session), ''),
   NULLIF(TRIM(rss.assessment_type), ''),
   -- Override resolution order (notebook semantics):
-  --   subject_course_overrides wins (regex match on course_name)
+  --   item_label_overrides wins (per-assessment misfiling correction, 2026-07)
+  --   else subject_course_overrides (regex match on course_name)
   --   else subject_overrides     (exact match on grade + subject)
   --   else raw subject
-  COALESCE(sco.subject_override, so.subject_override, NULLIF(TRIM(rss.subject), '')) AS subject,
-  -- Override 3: grade remap (notebook 985 — Grade 9-12 -> Regular 9–12)
-  COALESCE(go.grade_override, NULLIF(TRIM(rss.grade), '')) AS grade,
+  COALESCE(ilo.subject_override, sco.subject_override, so.subject_override, NULLIF(TRIM(rss.subject), '')) AS subject,
+  -- Override 3: grade — per-item misfiling correction wins, then grade remap
+  -- (notebook 985 — Grade 9-12 -> Regular 9–12)
+  COALESCE(ilo.grade_override, go.grade_override, NULLIF(TRIM(rss.grade), '')) AS grade,
   NULLIF(TRIM(rss.section), ''),
   NULLIF(TRIM(rss.file_name), '')
 FROM raw_student_submission rss
@@ -77,6 +79,11 @@ FROM raw_student_submission rss
 -- stamped raw.school_id stays only as the raw idempotency key.
 JOIN schools s
   ON s.schoology_school_id = NULLIF(TRIM(rss.user_school_id), '')
+-- Override 0 (highest precedence): per-assessment misfiling correction. Keyed on
+-- (school_id, item_id); each Schoology per-section copy is its own item_id.
+LEFT JOIN item_label_overrides ilo
+  ON ilo.school_id = s.school_id
+ AND ilo.item_id   = NULLIF(TRIM(rss.item_id), '')
 LEFT JOIN subject_overrides so
   ON so.school_id     = s.school_id
  AND so.grade         = rss.grade

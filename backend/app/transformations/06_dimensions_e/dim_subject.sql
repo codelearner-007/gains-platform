@@ -14,6 +14,12 @@
 --                          if Grade='Grade 7' AND Subject='History' then 'US History'
 --                          else Subject
 
+-- TRUNCATE first (not just ON CONFLICT upsert): a relabel/misfiling fix changes
+-- subject_id (the hash of the labels), so an upsert-only build would leave the
+-- OLD subject_id row behind as a 0-fact phantom card. dim_subject is a pure
+-- DISTINCT projection of staging, so a full rebuild is safe and idempotent.
+TRUNCATE TABLE dim_subject;
+
 INSERT INTO dim_subject (
   subject_id, school_id, school_id_csv, subject, assessment_type, grade,
   session, item_name, grade_sort, show_history_subject, grade_no
