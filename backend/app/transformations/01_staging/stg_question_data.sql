@@ -39,7 +39,9 @@ INSERT INTO stg_question_data (
 SELECT
   s.school_id,
   NULLIF(TRIM(rqd.item_id), ''),
-  NULLIF(TRIM(rqd.item_name), ''),
+  -- item_name override wins (collapses name-variant twins) — keep dqd consistent
+  -- with the fact subject_id.
+  COALESCE(ilo.item_name_override, NULLIF(TRIM(rqd.item_name), '')),
   NULLIF(TRIM(rqd.question_id), ''),
   NULLIF(TRIM(rqd.associated_question_id), ''),
   rqd.total_points,

@@ -37,3 +37,16 @@ WHERE NOT EXISTS (
   SELECT 1 FROM fact_student_submission f
   WHERE f.school_id = ds.school_id AND f.subject_id = ds.subject_id
 );
+
+-- (3) Canonicalize instructor identity (2026-07 audit, DG-4): 'Sitara Shamsheer'
+-- and 'Sitara Qalander' are the same person (co-teaching the same Crestwell
+-- classes; Qalander is the current/dominant name). Merge the maiden-name spelling
+-- into the current one in the comma-joined section_instructors strings so the
+-- teacher filter and by-teacher reports show one identity.
+UPDATE dim_item
+SET section_instructors = regexp_replace(section_instructors, 'Sitara Shamsheer', 'Sitara Qalander', 'g')
+WHERE section_instructors LIKE '%Sitara Shamsheer%';
+
+UPDATE dim_section
+SET section_instructors = regexp_replace(section_instructors, 'Sitara Shamsheer', 'Sitara Qalander', 'g')
+WHERE section_instructors LIKE '%Sitara Shamsheer%';

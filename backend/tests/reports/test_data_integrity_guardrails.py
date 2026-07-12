@@ -110,6 +110,46 @@ async def test_g2_no_junk_numeric_standards(db: AsyncSession):
     assert n == 0, f"{n} junk numeric standard codes remain"
 
 
+async def test_g2_no_multilabel_fact_slots(db: AsyncSession):
+    """No (user,item,question,position) fact slot carries >1 grade/subject/session
+    (F-C2 tripwire, per advisory): the latest_export prune must keep exactly one
+    export vintage per physical response slot. A regression here = cross-label
+    duplicate exports leaking through, which would double-count and make slicer
+    membership non-deterministic."""
+    n = await _scalar(
+        db,
+        """
+        SELECT count(*) FROM (
+          SELECT school_id, user_uid, item_id, question_id, position_number
+          FROM fact_student_submission
+          GROUP BY 1,2,3,4,5
+          HAVING count(DISTINCT grade) > 1 OR count(DISTINCT subject) > 1
+              OR count(DISTINCT session) > 1
+        ) x
+        """,
+    )
+    assert n == 0, f"{n} fact slots carry >1 label (cross-label export dupes leaked through)"
+
+
+async def test_g2_dqd_one_ukey_per_question(db: AsyncSession):
+    """dim_question_data has one ukey vintage per physical question slot
+    (school, question, position, sub_question) — the F-C3 latest-export dedup.
+    >1 means stale label/answer vintages survived and the incorrect-choice cube
+    would fan out (doubled distractor counts). NOTE the grain includes
+    sub_question: a multi-part question legitimately has one ukey per part."""
+    n = await _scalar(
+        db,
+        """
+        SELECT count(*) FROM (
+          SELECT school_id, question_id, position_number, COALESCE(sub_question, '')
+          FROM dim_question_data
+          GROUP BY 1,2,3,4 HAVING count(DISTINCT ukey) > 1
+        ) x
+        """,
+    )
+    assert n == 0, f"{n} question slots have >1 ukey vintage in dqd (stale vintage survived)"
+
+
 async def test_g5_all_cubes_rls_enabled(db: AsyncSession):
     """Every cube_* table has RLS enabled with a tenant policy (no cross-tenant
     read leak; guards F-B1 recurrence)."""

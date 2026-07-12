@@ -43,7 +43,9 @@ SELECT
   COALESCE(tp.primary_teacher, NULLIF(TRIM(rss.section_instructors), '')) AS section_instructors,
   NULLIF(TRIM(rss.item_type), ''),
   NULLIF(TRIM(rss.item_id), ''),
-  NULLIF(TRIM(rss.item_name), ''),
+  -- item_name: per-item name override wins (collapses name-variant twins, e.g.
+  -- 'Chapter 16.1' vs 'Chapter 16 Part 1', or a stray date suffix), else raw.
+  COALESCE(ilo.item_name_override, NULLIF(TRIM(rss.item_name), '')),
   rss.first_access,
   rss.latest_attempt,
   rss.total_time,
@@ -117,4 +119,11 @@ LEFT JOIN teacher_pair_overrides tp
 -- "remove grade level" / "No grade level" — an explicit instruction to discard
 -- these non-instructional rows (no override maps them to a real subject/grade).
 WHERE NULLIF(TRIM(rss.grade), '')   IS DISTINCT FROM 'remove grade level'
-  AND NULLIF(TRIM(rss.subject), '') IS DISTINCT FROM 'No grade level';
+  AND NULLIF(TRIM(rss.subject), '') IS DISTINCT FROM 'No grade level'
+  -- Drop confirmed internal STAFF/DEMO test accounts (2026-07 audit) so they
+  -- never enter staging/dims/facts/cubes.
+  AND NOT EXISTS (
+    SELECT 1 FROM student_exclusions se
+    WHERE se.school_id = s.school_id
+      AND se.user_uid  = NULLIF(TRIM(rss.user_uid), '')
+  );
