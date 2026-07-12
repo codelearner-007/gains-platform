@@ -89,6 +89,11 @@ TRANSFORMATIONS_ORDER: list[tuple[str, str]] = [
     # dim_strand. INSERT ... ON CONFLICT (user_id_ques_id_stand) DO UPDATE.
     ("07_facts/fact_student_submission.sql",   "facts"),
 
+    # Post-fact reconciliation (F-C1): point dim_item.subject_id at the bucket
+    # fact settled on (dissolves orphan cards) and drop 0-fact dim_subject
+    # phantoms. Must run AFTER fact, BEFORE hash/cubes.
+    ("07_facts/dim_reconcile.sql",             "facts"),
+
     # phase 8 — pseudonymisation tables (notebook §7 build_pseudomyzed_tables,
     # lines 1295-1320). Each TRUNCATE+INSERT.
     # dim_section_hash depends on dim_section.
