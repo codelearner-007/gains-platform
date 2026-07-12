@@ -129,6 +129,24 @@ async def test_g5_all_cubes_rls_enabled(db: AsyncSession):
     assert not bad, f"cubes without RLS+policy: {bad}"
 
 
+def test_g1_retake_read_paths_have_submission_desc():
+    """The three cube_repository fact_dedup CTEs must tie-break on submission DESC
+    so retake students get the latest attempt (guards F-A1/A2). A regression that
+    drops the tie-break would re-introduce non-deterministic mixed-attempt scores.
+    """
+    import re
+    from pathlib import Path
+
+    src = Path(__file__).resolve().parents[2] / "app" / "repositories" / "cube_repository.py"
+    text_src = src.read_text(encoding="utf-8")
+    # Each fact_dedup CTE ends with an ORDER BY … <keys>; every one must carry a
+    # submission-DESC tie-break.
+    dedup_blocks = re.findall(r"fact_dedup AS \((.*?)\n\s*\),", text_src, re.DOTALL)
+    assert len(dedup_blocks) >= 3, f"expected >=3 fact_dedup CTEs, found {len(dedup_blocks)}"
+    missing = [i for i, b in enumerate(dedup_blocks) if "submission DESC" not in b]
+    assert not missing, f"fact_dedup CTE(s) {missing} missing 'submission DESC' tie-break"
+
+
 async def test_g5_no_backup_grants_to_anon(db: AsyncSession):
     """No *_bak / fix* table grants SELECT to anon/authenticated (PII lockdown)."""
     n = await _scalar(

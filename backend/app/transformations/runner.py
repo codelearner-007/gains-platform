@@ -268,6 +268,7 @@ async def run_all(
     """
     base = _base_dir()
     results: dict[str, int] = {}
+    failed_cubes: list[str] = []  # G4: track isolate_cubes failures to fail loudly
 
     for relpath, tag in TRANSFORMATIONS_ORDER:
         if only_tag is not None and tag != only_tag:
@@ -292,6 +293,7 @@ async def run_all(
                     model_name, tag, e,
                 )
                 results[model_name] = 0
+                failed_cubes.append(model_name)  # G4: do not exit clean on a stale cube
                 continue
         else:
             last_rowcount = await _exec_statements(session, statements)
@@ -316,6 +318,15 @@ async def run_all(
                     continue
                 sql = (base / relpath).read_text(encoding="utf-8")
                 await _exec_statements(session, _split_sql_statements(sql))
+
+    # G4: a skipped cube leaves stale report data — never let the run look green.
+    if failed_cubes:
+        banner = " !! ".join(failed_cubes)
+        logger.error(
+            "transformations.STALE_CUBES the following cubes FAILED and are STALE: %s",
+            banner,
+        )
+        raise RuntimeError(f"STALE CUBES (not rebuilt): {banner}")
 
     return results
 
