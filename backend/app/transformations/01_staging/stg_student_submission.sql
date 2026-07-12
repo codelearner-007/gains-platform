@@ -60,7 +60,11 @@ SELECT
   rss.points_received,
   rss.points_possible,
   NULLIF(TRIM(rss.session), ''),
-  NULLIF(TRIM(rss.assessment_type), ''),
+  -- assessment_type: item override wins (twin-merge to dominant type), else
+  -- whitespace-normalized raw (F-F1: collapses 'Lesson  Assessments' double-space
+  -- + other stray whitespace so slicer variants don't fragment reports).
+  COALESCE(ilo.assessment_type_override,
+           NULLIF(regexp_replace(btrim(rss.assessment_type), '\s+', ' ', 'g'), '')),
   -- Override resolution order (notebook semantics):
   --   item_label_overrides wins (per-assessment misfiling correction, 2026-07)
   --   else subject_course_overrides (regex match on course_name)

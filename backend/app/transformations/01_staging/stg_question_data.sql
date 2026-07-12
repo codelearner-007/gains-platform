@@ -54,7 +54,10 @@ SELECT
   rqd.average_points_earned,
   NULLIF(TRIM(rqd.standards_val), ''),
   NULLIF(TRIM(rqd.session), ''),
-  NULLIF(TRIM(rqd.assessment_type), ''),
+  -- assessment_type: item override wins (twin-merge), else whitespace-normalized
+  -- raw (F-F1) — keep dim_question_data consistent with the fact subject_id.
+  COALESCE(ilo.assessment_type_override,
+           NULLIF(regexp_replace(btrim(rqd.assessment_type), '\s+', ' ', 'g'), '')),
   -- item_label_overrides (per-assessment misfiling correction) wins, so
   -- dim_question_data labels stay consistent with the fact subject_id bucket.
   COALESCE(ilo.subject_override, so.subject_override, NULLIF(TRIM(rqd.subject), '')) AS subject,

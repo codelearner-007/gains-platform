@@ -20,6 +20,13 @@
 -- DISTINCT ON (school_id, qkey) ORDER BY identifier NULLS LAST so the row
 -- with a non-NULL identifier wins on collision.
 
+-- TRUNCATE first (F-C3): qkey embeds session/type/subject/grade/item_name, so a
+-- relabel or assessment_type normalization mints a NEW qkey while the old-qkey
+-- row (ON CONFLICT keys on md5(qkey)) is never matched and would PERSIST as a
+-- duplicate question row -> distractor/IAD/standard joins double-count. dqd is a
+-- pure projection of staging, so a full rebuild is safe and idempotent.
+TRUNCATE TABLE dim_question_data;
+
 INSERT INTO dim_question_data (
   qkey, school_id, ukey, question, position_number, item_id, item_name,
   standards, question_id, question_no, least_points_earned,

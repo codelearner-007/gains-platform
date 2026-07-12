@@ -15,5 +15,6 @@ INSERT INTO fact_row_exclusions (school_id, item_id, subject, grade, reason, sou
 VALUES
   ((SELECT school_id FROM schools WHERE name='Central Florida Preparatory School'), '8180432402', 'ELA', 'Regular 9–12', 'spurious HS-ENG folder duplicate of Grade-2 Math test (43/45 student overlap, same section_nid)', 'audit-2026-07'),
   ((SELECT school_id FROM schools WHERE name='Central Florida Preparatory School'), '8200948721', 'ELA', 'Regular 9–12', 'spurious HS-ENG folder duplicate of Grade-2 Math test (43/45 student overlap, same section_nid)', 'audit-2026-07'),
-  ((SELECT school_id FROM schools WHERE name='Central Florida Preparatory School'), '8200948758', 'ELA', 'Regular 9–12', 'spurious HS-ENG folder duplicate of Grade-2 Math test (43/45 student overlap, same section_nid)', 'audit-2026-07')
+  ((SELECT school_id FROM schools WHERE name='Central Florida Preparatory School'), '8200948758', 'ELA', 'Regular 9–12', 'spurious HS-ENG folder duplicate of Grade-2 Math test (43/45 student overlap, same section_nid)', 'audit-2026-07'),
+  ((SELECT school_id FROM schools WHERE name='Central Florida Preparatory School'), '8362776921', 'HS Algebra I', 'Higher-Ed', 'Topic 8 cross-band remnant: Algebra test fragment mis-filed in a US History section (1 student, 33 rows)', 'audit-2026-07')
 ON CONFLICT (school_id, item_id, subject, grade) DO NOTHING;

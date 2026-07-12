@@ -53,7 +53,17 @@ class DimRepository:
             """
             SELECT subject_id, subject, grade, session, assessment_type
             FROM dim_subject
-            ORDER BY grade NULLS LAST, subject NULLS LAST
+            -- F-F4: order grades K -> 1..8 -> Regular 9-12 -> Higher-Ed, not
+            -- alphabetically (which put 'Grade K' after 'Grade 8').
+            ORDER BY
+              CASE
+                WHEN grade = 'Grade K' THEN 0
+                WHEN grade ~ '^Grade [0-9]+$' THEN split_part(grade, ' ', 2)::int
+                WHEN grade = 'Regular 9–12' THEN 90
+                WHEN grade = 'Higher-Ed' THEN 100
+                ELSE 999
+              END NULLS LAST,
+              subject NULLS LAST
             """
         )
         result = await self.session.execute(sql)
@@ -64,7 +74,15 @@ class DimRepository:
             """
             SELECT grade_id, grade
             FROM dim_grade
-            ORDER BY grade NULLS LAST
+            -- F-F4: canonical grade order (see list_subjects).
+            ORDER BY
+              CASE
+                WHEN grade = 'Grade K' THEN 0
+                WHEN grade ~ '^Grade [0-9]+$' THEN split_part(grade, ' ', 2)::int
+                WHEN grade = 'Regular 9–12' THEN 90
+                WHEN grade = 'Higher-Ed' THEN 100
+                ELSE 999
+              END NULLS LAST
             """
         )
         result = await self.session.execute(sql)
