@@ -141,6 +141,11 @@ class DimRepository:
                 WHERE section_instructors IS NOT NULL AND section_instructors <> ''
             ) parts
             WHERE btrim(part) <> ''
+              -- F-F3: platform/admin accounts are enrolled as section admins in
+              -- Schoology and leak into the teacher filter. Exclude the clear
+              -- platform account (the observer 'Sitara' identity is gated on
+              -- customer confirmation, DG-4, and is left in for now).
+              AND btrim(part) NOT IN ('GAINS Admin')
             ORDER BY instructor
             """
         )
