@@ -429,6 +429,9 @@ export interface YtdStandardColumn {
   standard_label: string;
   schoology_standard: string;
   unit_names: string;
+  // Distinct-assessment count for variant 3's compact "N assessments" header;
+  // the full unit_names list shows on hover + in the print/PDF export.
+  unit_count: number;
 }
 
 export interface YtdCell {

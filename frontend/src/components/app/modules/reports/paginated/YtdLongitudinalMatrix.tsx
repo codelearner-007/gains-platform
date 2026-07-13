@@ -166,21 +166,39 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
                 <SortableHeader column="tests_taken" label="Tests Taken" title="Tests Taken" description="Count of assessments the student has taken year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
               </th>
             )}
-            {standards.map((s) => (
-              <th
-                key={s.standard_label}
-                colSpan={subCols}
-                className="px-2 py-1 text-center"
-                style={stickyHead}
-              >
-                <div>{s.standard_label}</div>
-                {showUnitNames && s.unit_names && (
-                  <div className="text-[9px] font-normal leading-tight opacity-90">
-                    {s.unit_names}
-                  </div>
-                )}
-              </th>
-            ))}
+            {standards.map((s) => {
+              const hasUnits = showUnitNames && s.unit_count > 0;
+              return (
+                <th
+                  key={s.standard_label}
+                  colSpan={subCols}
+                  className={`px-2 py-1 text-center${hasUnits ? ' cursor-help' : ''}`}
+                  style={stickyHead}
+                  // Full assessment list on hover (screen) — the wall of text is
+                  // collapsed to a count on screen and expanded in print.
+                  title={hasUnits ? s.unit_names : undefined}
+                >
+                  <div>{s.standard_label}</div>
+                  {hasUnits && (
+                    <>
+                      {/* Compact affordance shown everywhere: how many
+                          assessments fed this standard. Keeps the header
+                          readable instead of a wall of text; the full list is
+                          in the hover tooltip and (in print) the row below. */}
+                      <div className="text-[9px] font-normal leading-tight opacity-80">
+                        {s.unit_count} assessment{s.unit_count === 1 ? '' : 's'}
+                      </div>
+                      {/* Full unit names — print/PDF only, so the paginated
+                          export keeps variant 3's per-standard assessment
+                          detail. Hidden on screen (collapsed to the count). */}
+                      <div className="hidden print:block text-[9px] font-normal leading-tight opacity-90">
+                        {s.unit_names}
+                      </div>
+                    </>
+                  )}
+                </th>
+              );
+            })}
             <th rowSpan={2} className="px-2 py-1 align-bottom" style={stickyHead}>
               <SortableHeader column="points_possible" label="Possible Points" title="Possible Points" description="Maximum points obtainable across all standards year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>

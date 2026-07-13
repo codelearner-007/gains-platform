@@ -921,6 +921,7 @@ class ReportService:
         # mastery Score% (SUM(score)/SUM(possible)); ties break alphabetically.
         std_totals: dict[str, list[float]] = {}  # label → [recv, poss]
         unit_names_by_std: dict[str, str] = {}
+        unit_count_by_std: dict[str, int] = {}
         for r in rows:
             label = safe_str(r.get("standard_label"))
             if not label:
@@ -930,6 +931,7 @@ class ReportService:
             agg[1] += to_float(r.get("points_possible"))
             if label not in unit_names_by_std:
                 unit_names_by_std[label] = safe_str(r.get("unit_names"))
+                unit_count_by_std[label] = to_int(r.get("unit_count"))
 
         def _std_score(label: str) -> float:
             recv, poss = std_totals.get(label, [0.0, 0.0])
@@ -941,6 +943,7 @@ class ReportService:
                 standard_label=label,
                 schoology_standard=label,
                 unit_names=unit_names_by_std.get(label, ""),
+                unit_count=unit_count_by_std.get(label, 0),
             )
             for label in ordered_labels
         ]

@@ -2352,7 +2352,8 @@ class CubeRepository:
             units AS (
                 SELECT standard_label,
                        STRING_AGG(DISTINCT item_name, ' / ' ORDER BY item_name)
-                                                        AS unit_names
+                                                        AS unit_names,
+                       COUNT(DISTINCT item_name)        AS unit_count
                 FROM scoped
                 GROUP BY standard_label
             ),
@@ -2377,6 +2378,7 @@ class CubeRepository:
                 uy.user_overall_possible_point,
                 t.tests_taken,
                 u.unit_names,
+                u.unit_count,
                 g.grand_score,
                 g.grand_possible
             FROM cells c

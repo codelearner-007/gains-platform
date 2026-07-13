@@ -288,9 +288,12 @@ class YtdStandardColumn(BaseModel):
 
     standard_label: str
     schoology_standard: str
-    # Newline/' / '-joined assessment names that touched this standard YTD;
-    # rendered under the code in variant 3 only.
+    # ' / '-joined assessment names that touched this standard YTD; shown in
+    # full in variant 3's print/PDF export + the on-hover tooltip.
     unit_names: str = ""
+    # Distinct-assessment count — the compact on-screen affordance for variant 3
+    # ("N assessments") so the header stays readable instead of a wall of text.
+    unit_count: int = 0
 
 
 class YtdCell(BaseModel):
