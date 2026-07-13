@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type {
   YearToDatePerformancePayload,
   YtdCell,
@@ -10,6 +10,7 @@ import type {
 } from '@/lib/reports/types';
 import {
   GRID_LINE,
+  LAYOUT_BORDER,
   PBIX_ACCENT_NAVY,
   PBIX_ACCENT_LIGHT_BLUE,
   GROUP_HEADER_CYAN,
@@ -23,6 +24,8 @@ import {
   useSharedSort,
   type SortDirection,
 } from '@/lib/reports/useTableSort';
+import ScrollableTableContainer from '@/components/app/modules/reports/shared/ScrollableTableContainer';
+import { stickyHeaderStyle } from '@/components/app/modules/reports/shared/tableStyles';
 
 /**
  * Legacy "Longitudinal Report - Year To Date" paginated matrix (PBIX ord
@@ -95,6 +98,23 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
     'asc',
   );
 
+  // Freeze BOTH header rows while the matrix scrolls inside the container. Row 2
+  // sticks just below row 1, so its `top` is the measured height of row 1
+  // (font/zoom-dependent, hence measured not hardcoded). No frozen left columns
+  // (their pixel offsets aren't guaranteed under auto table-layout) — they
+  // scroll horizontally with the body, matching the other per-assessment tables.
+  const row1Ref = useRef<HTMLTableRowElement>(null);
+  const [row1H, setRow1H] = useState(28);
+  useLayoutEffect(() => {
+    const el = row1Ref.current;
+    if (!el) return;
+    const sync = () => setRow1H(el.offsetHeight);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const orderedGroups = useMemo(() => {
     if (sortColumn !== 'instructor') return teacher_groups;
     return sortRowsBy(
@@ -117,24 +137,32 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
     color: REPORT_TEXT_DARK,
     border,
   } as const;
+  // Sticky variants: row 1 pins to the top of the scroll viewport, row 2 pins
+  // just below it (measured row1H). Applied to the CELLS (border-collapse
+  // ignores sticky on <tr>). In print, sticky falls back to static.
+  const stickyHead: CSSProperties = stickyHeaderStyle(headStyle, { top: 0 });
+  const stickySub: CSSProperties = stickyHeaderStyle(subHeadStyle, { top: row1H });
 
   return (
-    <div className="overflow-x-auto bg-white print:overflow-visible">
-      <table className="report-wide-matrix border-collapse text-[11px] text-black">
+    <ScrollableTableContainer
+      className="bg-white border"
+      style={{ borderColor: LAYOUT_BORDER }}
+    >
+      <table className="report-wide-matrix min-w-full border-collapse text-[11px] text-black">
         <thead>
           {/* Row 1: standard codes (span sub-cols) + leading/trailing labels */}
-          <tr>
-            <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={headStyle}>
+          <tr ref={row1Ref}>
+            <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={stickyHead}>
               <SortableHeader column="instructor" label="Classroom Instructors" title="Classroom Instructors" description="Section instructor who taught the student; rows are grouped by this." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} className="text-white" />
             </th>
-            <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={headStyle}>
+            <th rowSpan={2} className="px-2 py-1 text-left align-bottom" style={stickyHead}>
               <SortableHeader column="student" label="Student Name" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} className="text-white" />
             </th>
-            <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
+            <th rowSpan={2} className="px-2 py-1 align-bottom" style={stickyHead}>
               <SortableHeader column="score" label="Score %" title="Score Percent" description="Student's overall year-to-date percent score across all standards." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
             {showTestsTaken && (
-              <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
+              <th rowSpan={2} className="px-2 py-1 align-bottom" style={stickyHead}>
                 <SortableHeader column="tests_taken" label="Tests Taken" title="Tests Taken" description="Count of assessments the student has taken year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
               </th>
             )}
@@ -143,7 +171,7 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
                 key={s.standard_label}
                 colSpan={subCols}
                 className="px-2 py-1 text-center"
-                style={headStyle}
+                style={stickyHead}
               >
                 <div>{s.standard_label}</div>
                 {showUnitNames && s.unit_names && (
@@ -153,10 +181,10 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
                 )}
               </th>
             ))}
-            <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
+            <th rowSpan={2} className="px-2 py-1 align-bottom" style={stickyHead}>
               <SortableHeader column="points_possible" label="Possible Points" title="Possible Points" description="Maximum points obtainable across all standards year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
-            <th rowSpan={2} className="px-2 py-1 align-bottom" style={headStyle}>
+            <th rowSpan={2} className="px-2 py-1 align-bottom" style={stickyHead}>
               <SortableHeader column="points_received" label="# Correct Answers" title="Number of Correct Answers" description="Total points received across all standards year-to-date." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" className="text-white" />
             </th>
           </tr>
@@ -165,15 +193,15 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
             {standards.map((s) =>
               showScore ? (
                 [
-                  <th key={`${s.standard_label}-score`} className="px-2 py-0.5" style={subHeadStyle}>
+                  <th key={`${s.standard_label}-score`} className="px-2 py-0.5" style={stickySub}>
                     Score
                   </th>,
-                  <th key={`${s.standard_label}-pct`} className="px-2 py-0.5" style={subHeadStyle}>
+                  <th key={`${s.standard_label}-pct`} className="px-2 py-0.5" style={stickySub}>
                     %
                   </th>,
                 ]
               ) : (
-                <th key={`${s.standard_label}-pct`} className="px-2 py-0.5" style={subHeadStyle}>
+                <th key={`${s.standard_label}-pct`} className="px-2 py-0.5" style={stickySub}>
                   %
                 </th>
               ),
@@ -255,7 +283,7 @@ export default function YtdLongitudinalMatrix({ payload, variant }: Props) {
           </tr>
         </tbody>
       </table>
-    </div>
+    </ScrollableTableContainer>
   );
 }
 
