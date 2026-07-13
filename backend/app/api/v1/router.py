@@ -15,6 +15,7 @@ from app.api.v1 import (
     roles,
     schools,
     sessions,
+    students,
     user_roles,
     user_schools,
     users,
@@ -40,6 +41,7 @@ api_router.include_router(sessions.router)
 # Phase 5 — Gains pipeline endpoints
 api_router.include_router(assessments.router)
 api_router.include_router(reports.router)
+api_router.include_router(students.router)
 api_router.include_router(dim.router)
 api_router.include_router(schools.router)
 # LTI routes are gated behind LTI_ENABLED (default off). When disabled, no

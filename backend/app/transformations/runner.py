@@ -89,6 +89,11 @@ TRANSFORMATIONS_ORDER: list[tuple[str, str]] = [
     # dim_strand. INSERT ... ON CONFLICT (user_id_ques_id_stand) DO UPDATE.
     ("07_facts/fact_student_submission.sql",   "facts"),
 
+    # Post-fact reconciliation (F-C1): point dim_item.subject_id at the bucket
+    # fact settled on (dissolves orphan cards) and drop 0-fact dim_subject
+    # phantoms. Must run AFTER fact, BEFORE hash/cubes.
+    ("07_facts/dim_reconcile.sql",             "facts"),
+
     # phase 8 — pseudonymisation tables (notebook §7 build_pseudomyzed_tables,
     # lines 1295-1320). Each TRUNCATE+INSERT.
     # dim_section_hash depends on dim_section.
@@ -263,6 +268,7 @@ async def run_all(
     """
     base = _base_dir()
     results: dict[str, int] = {}
+    failed_cubes: list[str] = []  # G4: track isolate_cubes failures to fail loudly
 
     for relpath, tag in TRANSFORMATIONS_ORDER:
         if only_tag is not None and tag != only_tag:
@@ -287,6 +293,7 @@ async def run_all(
                     model_name, tag, e,
                 )
                 results[model_name] = 0
+                failed_cubes.append(model_name)  # G4: do not exit clean on a stale cube
                 continue
         else:
             last_rowcount = await _exec_statements(session, statements)
@@ -311,6 +318,15 @@ async def run_all(
                     continue
                 sql = (base / relpath).read_text(encoding="utf-8")
                 await _exec_statements(session, _split_sql_statements(sql))
+
+    # G4: a skipped cube leaves stale report data — never let the run look green.
+    if failed_cubes:
+        banner = " !! ".join(failed_cubes)
+        logger.error(
+            "transformations.STALE_CUBES the following cubes FAILED and are STALE: %s",
+            banner,
+        )
+        raise RuntimeError(f"STALE CUBES (not rebuilt): {banner}")
 
     return results
 

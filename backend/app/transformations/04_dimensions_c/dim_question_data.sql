@@ -20,6 +20,13 @@
 -- DISTINCT ON (school_id, qkey) ORDER BY identifier NULLS LAST so the row
 -- with a non-NULL identifier wins on collision.
 
+-- TRUNCATE first (F-C3): qkey embeds session/type/subject/grade/item_name, so a
+-- relabel or assessment_type normalization mints a NEW qkey while the old-qkey
+-- row (ON CONFLICT keys on md5(qkey)) is never matched and would PERSIST as a
+-- duplicate question row -> distractor/IAD/standard joins double-count. dqd is a
+-- pure projection of staging, so a full rebuild is safe and idempotent.
+TRUNCATE TABLE dim_question_data;
+
 INSERT INTO dim_question_data (
   qkey, school_id, ukey, question, position_number, item_id, item_name,
   standards, question_id, question_no, least_points_earned,
@@ -63,9 +70,37 @@ qd_filtered AS (
     assessment_type,
     subject,
     grade,
-    section
+    section,
+    file_name
   FROM qd_with_school
   WHERE question_id IS NOT NULL
+),
+qd_latest AS (
+  -- LATEST-EXPORT-WINS (F-C3 durable dedup, mirrors the fact's latest_export).
+  -- The Question-Data backup accumulates every re-export of an assessment; when
+  -- a teacher edits a question or fixes an answer key, a LATER export supersedes
+  -- the earlier one. Keep only the newest export's row per physical question
+  -- slot so QRA/QSR/IAD show the current question text + correct answer (not a
+  -- stale vintage) and joins do not fan out. export_ts is parsed from the dated
+  -- export filename (...-YYYY-MM-DD-HHMMSS.csv); rows with no parseable date are
+  -- kept in full (no ordering available). Recency, NOT "richest content", is the
+  -- correct rule — a content tiebreak would enshrine the pre-correction answer.
+  SELECT * FROM (
+    SELECT q.*,
+      to_timestamp(
+        substring(q.file_name FROM '(\d{4}-\d{2}-\d{2}-\d{6})'),
+        'YYYY-MM-DD-HH24MISS'
+      ) AS export_ts,
+      MAX(to_timestamp(
+        substring(q.file_name FROM '(\d{4}-\d{2}-\d{2}-\d{6})'),
+        'YYYY-MM-DD-HH24MISS'
+      )) OVER (
+        PARTITION BY q.school_id, q.item_id, q.question_id,
+                     q.position_number, q.sub_question
+      ) AS max_export_ts
+    FROM qd_filtered q
+  ) w
+  WHERE w.max_export_ts IS NULL OR w.export_ts = w.max_export_ts
 ),
 qd_with_standard AS (
   -- Exact-equality identifier match — notebook used Spark's substring
@@ -90,7 +125,7 @@ qd_with_standard AS (
     q.*,
     ds.identifier         AS standard_identifier,
     ds.schoology_standard AS matched_schoology_standard
-  FROM qd_filtered q
+  FROM qd_latest q
   LEFT JOIN dim_standard ds
     ON ds.schoology_standard IS NOT NULL
    AND q.standards_val IS NOT NULL

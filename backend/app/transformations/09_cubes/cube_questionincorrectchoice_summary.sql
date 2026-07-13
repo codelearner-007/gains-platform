@@ -34,7 +34,17 @@ WITH joined AS (
     f.points_received,
     qd.ukey
   FROM fact_student_submission f
-  LEFT JOIN dim_question_data qd
+  -- Collapse dim_question_data to ONE ukey per (school, question, position)
+  -- before the join. dqd can carry multiple label vintages per question; a raw
+  -- join fans every fact row out once per vintage -> doubled distractor/student
+  -- counts (2026-07 audit: was live on ~281 assessments). Mirrors the
+  -- DISTINCT ON pattern the sibling cubes already use.
+  LEFT JOIN (
+    SELECT DISTINCT ON (school_id, question_id, position_number)
+           school_id, question_id, position_number, ukey
+    FROM dim_question_data
+    ORDER BY school_id, question_id, position_number, ukey
+  ) qd
     ON qd.school_id       = f.school_id
    AND qd.question_id     = f.question_id
    AND COALESCE(qd.position_number, '__NULL__')

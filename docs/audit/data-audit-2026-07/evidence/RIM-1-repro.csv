@@ -1,0 +1,23 @@
+school,slicer_subject,fact_rows_pp_gt0,dqd_rows_buggy_filter,dqd_rows_via_dim_subject,base_dqd_labels,ytd_std_cols_buggy,ytd_std_cols_correct,verdict
+Central Florida Preparatory School,Algebra,2882,170,170,Algebra,20,20,base_subject_ok
+Central Florida Preparatory School,Civics,11453,556,536,Civics,58,51,base_subject_ok
+Central Florida Preparatory School,ELA,71944,5189,4418,ELA,231,148,base_subject_ok
+Central Florida Preparatory School,History,12917,1112,719,Civics|History,169,114,base_subject_ok
+Central Florida Preparatory School,Math,62535,4440,3869,Math,245,159,base_subject_ok
+Central Florida Preparatory School,Science,55136,3558,3308,Science,214,207,base_subject_ok
+Central Florida Preparatory School,HS Alegra II,901,0,96,Math,0,30,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Algebra I,3718,0,220,Math,0,35,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Economics,2296,0,245,History,0,29,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS English I,2402,0,124,ELA,0,19,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS English II,775,0,107,ELA,0,17,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS English III,565,0,59,ELA,0,19,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS English IV,402,0,134,ELA,0,20,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Geometry,2013,0,163,Math,0,23,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Honors Algebra II,161,0,45,Math,0,15,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Honors English II,588,0,84,ELA,0,22,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Honors English III,309,0,103,ELA,0,20,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Honors English IV,630,0,105,ELA,0,20,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Physics,3772,0,250,Science,0,7,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS World History,2290,0,168,History,0,26,COMPLETE_LOSS_single_Other_col
+Central Florida Preparatory School,HS Honors Algebra I,120,24,71,HS Honors Algebra I|Math,6,13,PARTIAL_stray_coverage
+Central Florida Preparatory School,HS United States History,3785,154,209,ELA|HS United States History,23,29,PARTIAL_stray_coverage

@@ -1,0 +1,31 @@
+src,subject_id,bak_subject,bak_grade,live_subject,live_grade,fix_kind
+fix3_bak_dim_subject,3b2f28cb38edac6904a434fdad61f13830159bfd6197afad1ab69ce1872871e6,ELA,Grade 7,Math,Grade 7,relabel
+fix3_bak_dim_subject,712b284ee4d783f28b8288e22d8b2fbf06bc22958f920698e9705a5c044a1ea9,ELA,Grade 2,,,relabel
+fix3_bak_dim_subject,86fe88b8428b4a572b7740b9dc7b722cee71201188bcf36a974fa24fe2126778,ELA,Grade 7,History,Grade 7,relabel
+fix3_bak_dim_subject,c9c2d7ea91d505b2de51fc1561835d5aa6c6f5750e0e77193fa74e51596899d5,Math,Grade 2,Math,Grade 2,relabel
+fix_bak_dim_subject,0b272930324d47a487221ed83991827afa3423c907e63302122acdc41a31bfb4,Math,Grade 5,Math,Grade 7,relabel
+fix_bak_dim_subject,3b7375f1dabe84ec9a1ee5c828a9c6d3ff6a3ce55f2fa02eced287aaf1d9e42f,Math,Grade 5,Math,Grade 6,relabel
+fix_bak_dim_subject,6a367ed5a5b633d49d34f4e8abdeade73f3472cee398402754cde0936675f3b2,Science,Grade 4,Science,Grade 5,relabel
+fix_bak_dim_subject,7111c90535fc1f07e4eab1bf3bebca5a4a66b2fa9e5c2cfb0b0816b40c5a6679,Science,Grade 4,Science,Grade 5,relabel
+fix_bak_dim_subject,71cb9bb29c8672f939932122e1ab3a036f9f3e9b274f3064831bacb16d654644,ELA,Grade 2,ELA,Grade 3,relabel
+fix_bak_dim_subject,89b096203bf633ebc91fa6d91afa41d8fb0d2498b9b8a416108d7d7ac372fa20,ELA,Grade 3,ELA,Grade 2,relabel
+fix_bak_dim_subject,b6cbf2e533c301383b5ebba65ca878a88954b0d2b2e4ceea833893f153b3416f,Math,Grade 5,Math,Grade 7,relabel
+fix_bak_dim_subject,cd435c56b025db3bfc596798c9a8fb6ef8aeb781897d458dd35d1201fe7e14ff,Math,Grade 5,Math,Grade 6,relabel
+fix_bak_dim_subject,e16cd5bdce504cb4073d410b2089d0e091cc5f598c5abaf25934b9d8b2c228da,Math,Grade 3,Math,Grade 4,relabel
+mrg_bak_dim_subject,10c2d31991c5405ce8b7c857d4c557f468765fc05fb7a12591a7b6268046c876,ELA,Grade 2,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,27aa30fd019932f7444692363539d0c2333d8fb5be34bddcca6e59bcb5a0431e,ELA,Grade 4,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,386e522dbcbadf165567ad4a76daec2adbf8342795065067e4c639b094412abf,ELA,Grade 4,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,444f30efcce21d5743e68fe3b4b0d4ab8ba60e221fdd048befc8b1438e3549ae,ELA,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,5f9da398894f7e5436bec90daf65aac33bfe4ffcf8a6e6a58cb1d73500fdcaad,ELA,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,761ccd209b5e294d6d5e35a8498ece0d62cac0ff4bb349e669127a6556c5bd4d,ELA,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,8d09f64792084dbd63d01b6e090c8448fdca27813af839ce179a6c2782f6c0ff,ELA,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,9208d4bd314ba55a8288e84d81d0cc8de027e6d9b329f1871ac1640796c4ec83,Math,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,93dca55fc1a0fa8988d5f87ce091a098ab0c02fc0df3bc4ec9e01ee180e965ea,ELA,Grade 1,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,9715a10dbf80dae8d94ae01e200df982236ada98bcd79115529f2f5e3d4bc399,Math,Grade 2,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,b8c7f0c9cbb0332b714b3009a7b6ce5fa0c9092d0ce4b832abcc04e8910f8b2e,ELA,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,d96da99c4a88cdc32e83e27b6038260321c0233f6f6ca41f5b3cc6fabefcaa14,ELA,Grade 4,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,dd601c67ccb4221a6562645e816292d3cd461a0c3a49af42c5446b8052242682,Math,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,df6c0856658a84abee3dced09e1e891e3c24630d4f2433dc5242e2ee425e37f8,ELA,Grade 2,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,ea792c51ab8c497ae42b0b95fe74e9b5fadac0efc40a17bef76240595411392b,Math,Grade 6,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,ff14856b47873b9004816d81a15c1eaaeeda5ece624b3821426e632b00a983d9,ELA,Grade 3,(DELETED),(DELETED),twin-merge
+mrg_bak_dim_subject,ff238994c7055067dda58c0c1c16b6f9d0b55941a24adad310734a3e63068cd2,ELA,Grade 3,(DELETED),(DELETED),twin-merge

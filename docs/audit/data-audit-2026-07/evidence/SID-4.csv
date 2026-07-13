@@ -1,0 +1,3 @@
+source,check_description,offending_uid_count
+dim_student,uid appears in >1 school (would fan out the uid-only join at student_repository.py:181),0
+fact_student_submission,user_uid appears in >1 school (cross-tenant uid collision surface),0

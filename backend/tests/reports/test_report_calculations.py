@@ -37,9 +37,14 @@ from app.services.report_service import ReportService
 ATHENIAN = "019eb11c-410a-7ffb-86e6-a0294c669670"
 CFP = "019eb11c-413b-7a66-a7d8-a18f14736ede"
 
-WEEK2 = "28b31cfda8d02c9b5d15a0efcc3c497a15ee103b573a27e8829551ad91027295"
+# subject_id = uuid_6(school, subject, assessment_type, grade, session, item_name).
+# WEEK2/SINGLE hashes changed in the 2026-07 F-F1 assessment_type whitespace
+# normalization ('Lesson  Assessments' -> 'Lesson Assessments'); pure relabel,
+# underlying data (and every golden number below) unchanged. CH11 was 'Summative'
+# (no whitespace), so its hash is unchanged.
+WEEK2 = "f5af3bbab13a24183dd6b184846285958e80fd22fae5e0f7df2f432bc2def3ff"
 CH11 = "338a466ecab81d90b0110977af13a54304ef0f6efea1815d8525e16896f4a840"
-SINGLE = "00cc81b6c649340659be1ed67ae00198ad51d9c645551a41ec3f86fc76d08b21"
+SINGLE = "b66f9cc7240c8a81c6e58e70bcf05cc77fd8bc572f1d3d77de4d0f797966fcde"
 
 SUBJECT_SCHOOL = {WEEK2: ATHENIAN, CH11: CFP, SINGLE: ATHENIAN}
 
@@ -399,6 +404,7 @@ class TestIadSddYtd:
         p = await ReportService(db).build_year_to_date_performance(
             YTDFilters(
                 session="2025-26",
+                # F-F1 normalized 'Lesson  Assessments' (double space) -> single.
                 category="Lesson Assessments",
                 subject="ELA",
                 grade="Grade 2",

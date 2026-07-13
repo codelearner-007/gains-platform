@@ -1,0 +1,6 @@
+school_name,item_id,item_name,dup_slots,dup_qnos,sections_in_cube,atypes,source_export_vintages,dup_mechanism
+Athenian Academy of Technology and the Arts,8344562580,Grade 3 FAST Practice- ELA,7,"10,16,17,21,25,27,7",1,1,2,true_collision_same_number
+Athenian Academy of Technology and the Arts,8346388108,Grade 3 FAST Practice- ELA,7,"10,13,15,21,26,27,7",1,1,2,true_collision_same_number
+Athenian Academy of Technology and the Arts,7687719992,Chapter 10,5,"2,4,5,7,8",2,2,2,renumber_across_vintage
+Athenian Academy of Technology and the Arts,7802005513,7.2 Grammar Review,2,"4,5",1,1,2,true_collision_same_number
+Central Florida Preparatory School,8018791881,Chapter 1 Test: Understand Multiplication and Division of Whole Numbers,2,"2,3",1,1,0,true_collision_same_number

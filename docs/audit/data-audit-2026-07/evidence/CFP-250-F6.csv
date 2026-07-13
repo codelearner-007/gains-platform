@@ -1,0 +1,8 @@
+section_nid,fact_course_name,item_id,item_name,fact_section_label,canonical_section_label,fact_subject,fact_grade,fact_rows,fact_users,dim_item_section,dim_subject,dim_grade,grade_flag,pattern
+7881419106,02 Science,7891742813,Unit 8 Test: Forces and Motion,03 LA - A,02 SCI - C,Science,Grade 2,306,17,02 SCI - C,Science,Grade 2,"",CROSS_COURSE_LABEL
+7881419128,03 Science,7891794271,Unit 8 Test: Classifying Plants and Animals,04 LA - A,03 SCI - B,Science,Grade 3,340,17,03 SCI - B,Science,Grade 3,"",CROSS_COURSE_LABEL
+7881419155,05 Science,7891846801,Unit 7 Benchmark Test: Working With Electricity,01 LA - A,05 SCI - A,Science,Grade 5,418,19,05 SCI - A,Science,Grade 5,"",CROSS_COURSE_LABEL
+7902833017,05 Science,7997342490,Unit 7 Benchmark Test: Working With Electricity,01 LA - B,05 SCI - B,Science,Grade 5,22,1,05 SCI - B,Science,Grade 5,"",CROSS_COURSE_LABEL
+7902833017,05 Science,7997342490,Unit 7 Benchmark Test: Working With Electricity,05 SCI - B,05 SCI - B,Science,Grade 5,410,19,05 SCI - B,Science,Grade 5,"",label_variant
+7877376149,HS Algebra I,8362776921,Topic 8,HS ALG I - 7th,HS ALG I - 7th,HS Algebra I,Regular 9–12,539,16,HS ALG I - 7th,HS Algebra I,Regular 9–12,"",label_variant
+7877376149,HS Algebra I,8362776921,Topic 8,HS US HIST - 4th,HS ALG I - 7th,HS Algebra I,Higher-Ed,33,1,HS ALG I - 7th,HS Algebra I,Regular 9–12,GRADE_BAND_CONTRADICTION,CROSS_COURSE_LABEL

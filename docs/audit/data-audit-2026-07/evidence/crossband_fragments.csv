@@ -1,0 +1,12 @@
+school_name,item_id,item_name,fragment_subject_id,subject,grade,session,split_type,cqso_avg_pct,cqso_phantom_rows
+Athenian Academy of Technology and the Arts,7334741824,Module Assessment: Stories on Stage,38b1323fb136a246b11886fa9eb38bf76ce9a5fef72b13e4f7844d2339fb54d6,ELA,Grade 3,2024-25,same_grade_section_split,73.5,21
+Athenian Academy of Technology and the Arts,7338364921,Unit 8 Benchmark Test: Living Things and  Their Parents,500303dd95526a32edea285f5b7278f8f4098b2fc9f68aec85c8885b0efe464b,Science,Grade 1,2024-25,same_grade_section_split,85.4,10
+Athenian Academy of Technology and the Arts,7338364925,Unit 9 Benchmark Test: Plant and Animal Needs,d70ec618c64f6c3fb27d730c8c28cd50630d9e7a01912b180b3c7f6937467889,Science,Grade 1,2024-25,same_grade_section_split,81.2,10
+Athenian Academy of Technology and the Arts,7466000203,Unit 4 Benchmark Test: Day and Night,18a9945c03055c9334650354abe8e95476a18cc7d5f3b564ebbefca39a88d689,Science,Grade K,2024-25,same_grade_section_split,87.3,10
+Athenian Academy of Technology and the Arts,7661452061,Chapter 14,85e6602009435ef89f61b7b384216b352a250b69d159a2b4b2002dada6759a49,Math,Grade 1,2024-25,same_grade_section_split,83.3,18
+Athenian Academy of Technology and the Arts,7676516420,Quarter 3 Quiz #1,3ac336230d41080fbc91d6f489db19b3c90f3c42ac3fbcf27fcf98c13efce56d,Civics,Grade 8,2024-25,same_grade_section_split,100.0,5
+Athenian Academy of Technology and the Arts,7789244025,Quarter 4 Quiz 2,921195d373bc6d957b4b62a985cc532901d1a11f4111aa1785dbec79dbe392d3,History,Grade 7,2024-25,same_grade_section_split,60.0,5
+Athenian Academy of Technology and the Arts,7797146594,Inspired by Nature Unit Test,bd098359ce0318bb3a177b93aae2f20935f7c869530443b2c511cabb80569846,ELA,Grade 7,2024-25,same_grade_section_split,51.9,40
+Athenian Academy of Technology and the Arts,8112622324,Chapter 16.1,2ec8dd053a2a6894b084a8044cd69548be940d75be645b4d022070121f3e7655,Math,Grade K,2025-26,same_grade_section_split,33.3,12
+Central Florida Preparatory School,8159775714,M4 W1 Heroic Feats: Weekly Assessment: Module 4 Week 1,481e3b9dc0cf7016dc89e4c93b0c5ca205d19a3b3778cac052e2033e74f757da,ELA,Grade 4,2025-26,same_grade_section_split,0.0,9
+Central Florida Preparatory School,8362776921,Topic 8,38fa194a54c74486c22b4a1780e7e842c68aaa132a5237641c20f03eef8ab063,HS Algebra I,Higher-Ed,2025-26,CROSS_BAND,0.0,18

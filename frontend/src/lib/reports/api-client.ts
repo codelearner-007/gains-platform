@@ -17,10 +17,12 @@ import type {
   SectionRow,
   SessionRow,
   StandardSummaryFilters,
+  PerStudentReportPayload,
   StandardSummaryPayload,
   StandardsDeepDivePayload,
   StrandSummaryFilters,
   StrandSummaryPayload,
+  StudentBrowsePage,
   SubjectRow,
   YearToDatePerformancePayload,
 } from './types';
@@ -184,6 +186,40 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<DashboardStrandRowsPage>),
 
+  /** One server-paginated page of the dashboard "By Students" roster. Shares
+   *  the By-Assessment filter set; pivots to one summary row per student. */
+  studentsBrowse: (
+    filters: AssessmentFilters | undefined,
+    schoolId: string | undefined,
+    opts: AssessmentSummaryQuery,
+  ) =>
+    fetch(
+      `/api/v1/students/browse${buildQuery({
+        ...filters,
+        school_id: schoolId,
+        q: opts.q,
+        sort: opts.sort,
+        dir: opts.dir,
+        limit: opts.limit != null ? String(opts.limit) : undefined,
+        offset: opts.offset != null ? String(opts.offset) : undefined,
+      })}`,
+      { credentials: 'include' },
+    ).then(handleResponse<StudentBrowsePage>),
+
+  /** Full multi-subject report for one student (canonical latest-attempt grain). */
+  studentReport: (
+    uid: string,
+    session: string | undefined,
+    schoolId: string | undefined,
+  ) =>
+    fetch(
+      `/api/v1/students/${encodeURIComponent(uid)}/report${buildQuery({
+        session,
+        school_id: schoolId,
+      })}`,
+      { credentials: 'include' },
+    ).then(handleResponse<PerStudentReportPayload>),
+
   sessions: (schoolId?: string) =>
     fetch(`/api/v1/dim/sessions${buildQuery({ school_id: schoolId })}`, {
       credentials: 'include',
@@ -267,6 +303,20 @@ export const reportsKeys = {
       schoolId ?? null,
       { q: opts?.q ?? '', sort: opts?.sort ?? 'date', dir: opts?.dir ?? 'desc' },
     ] as const,
+  studentsBrowse: (
+    filters?: AssessmentFilters,
+    schoolId?: string,
+    opts?: { q?: string; sort?: string; dir?: string },
+  ) =>
+    [
+      ...reportsKeys.all,
+      'students-browse',
+      filters ?? {},
+      schoolId ?? null,
+      { q: opts?.q ?? '', sort: opts?.sort ?? 'name', dir: opts?.dir ?? 'asc' },
+    ] as const,
+  studentReport: (uid: string, session?: string, schoolId?: string) =>
+    [...reportsKeys.all, 'student-report', uid, session ?? null, schoolId ?? null] as const,
   sessions: (schoolId?: string) =>
     [...reportsKeys.all, 'dim', 'sessions', schoolId ?? null] as const,
   assessmentTypes: (schoolId?: string) =>

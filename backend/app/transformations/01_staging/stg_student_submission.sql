@@ -43,7 +43,9 @@ SELECT
   COALESCE(tp.primary_teacher, NULLIF(TRIM(rss.section_instructors), '')) AS section_instructors,
   NULLIF(TRIM(rss.item_type), ''),
   NULLIF(TRIM(rss.item_id), ''),
-  NULLIF(TRIM(rss.item_name), ''),
+  -- item_name: per-item name override wins (collapses name-variant twins, e.g.
+  -- 'Chapter 16.1' vs 'Chapter 16 Part 1', or a stray date suffix), else raw.
+  COALESCE(ilo.item_name_override, NULLIF(TRIM(rss.item_name), '')),
   rss.first_access,
   rss.latest_attempt,
   rss.total_time,
@@ -60,14 +62,20 @@ SELECT
   rss.points_received,
   rss.points_possible,
   NULLIF(TRIM(rss.session), ''),
-  NULLIF(TRIM(rss.assessment_type), ''),
+  -- assessment_type: item override wins (twin-merge to dominant type), else
+  -- whitespace-normalized raw (F-F1: collapses 'Lesson  Assessments' double-space
+  -- + other stray whitespace so slicer variants don't fragment reports).
+  COALESCE(ilo.assessment_type_override,
+           NULLIF(regexp_replace(btrim(rss.assessment_type), '\s+', ' ', 'g'), '')),
   -- Override resolution order (notebook semantics):
-  --   subject_course_overrides wins (regex match on course_name)
+  --   item_label_overrides wins (per-assessment misfiling correction, 2026-07)
+  --   else subject_course_overrides (regex match on course_name)
   --   else subject_overrides     (exact match on grade + subject)
   --   else raw subject
-  COALESCE(sco.subject_override, so.subject_override, NULLIF(TRIM(rss.subject), '')) AS subject,
-  -- Override 3: grade remap (notebook 985 — Grade 9-12 -> Regular 9–12)
-  COALESCE(go.grade_override, NULLIF(TRIM(rss.grade), '')) AS grade,
+  COALESCE(ilo.subject_override, sco.subject_override, so.subject_override, NULLIF(TRIM(rss.subject), '')) AS subject,
+  -- Override 3: grade — per-item misfiling correction wins, then grade remap
+  -- (notebook 985 — Grade 9-12 -> Regular 9–12)
+  COALESCE(ilo.grade_override, go.grade_override, NULLIF(TRIM(rss.grade), '')) AS grade,
   NULLIF(TRIM(rss.section), ''),
   NULLIF(TRIM(rss.file_name), '')
 FROM raw_student_submission rss
@@ -77,6 +85,11 @@ FROM raw_student_submission rss
 -- stamped raw.school_id stays only as the raw idempotency key.
 JOIN schools s
   ON s.schoology_school_id = NULLIF(TRIM(rss.user_school_id), '')
+-- Override 0 (highest precedence): per-assessment misfiling correction. Keyed on
+-- (school_id, item_id); each Schoology per-section copy is its own item_id.
+LEFT JOIN item_label_overrides ilo
+  ON ilo.school_id = s.school_id
+ AND ilo.item_id   = NULLIF(TRIM(rss.item_id), '')
 LEFT JOIN subject_overrides so
   ON so.school_id     = s.school_id
  AND so.grade         = rss.grade
@@ -106,4 +119,11 @@ LEFT JOIN teacher_pair_overrides tp
 -- "remove grade level" / "No grade level" — an explicit instruction to discard
 -- these non-instructional rows (no override maps them to a real subject/grade).
 WHERE NULLIF(TRIM(rss.grade), '')   IS DISTINCT FROM 'remove grade level'
-  AND NULLIF(TRIM(rss.subject), '') IS DISTINCT FROM 'No grade level';
+  AND NULLIF(TRIM(rss.subject), '') IS DISTINCT FROM 'No grade level'
+  -- Drop confirmed internal STAFF/DEMO test accounts (2026-07 audit) so they
+  -- never enter staging/dims/facts/cubes.
+  AND NOT EXISTS (
+    SELECT 1 FROM student_exclusions se
+    WHERE se.school_id = s.school_id
+      AND se.user_uid  = NULLIF(TRIM(rss.user_uid), '')
+  );

@@ -419,7 +419,12 @@ def _make_row(
     return {
         # Hardcoded by legacy — not in IMS payload.
         "Cognitive_Complexity_Rating": "",
-        # CFDocument-level URI (all standards in a framework share one).
+        # CFDocument-level URI (all standards in a framework share one) — this
+        # is the raw IMS/CASE JSON API, kept legacy-faithful in the seed. It is
+        # NOT a human web page; run `resolve_cpalms_links.py` after loading to
+        # rewrite dim_standard.direct_link to the CPALMS standard page
+        # (…/PreviewStandard/Preview/{id}). Reports suppress any leftover JSON
+        # link (see students/bands.ts `standardHref`).
         "Direct_Link": str(document_uri),
         "Grader": grader,
         "Identifier": identifier,

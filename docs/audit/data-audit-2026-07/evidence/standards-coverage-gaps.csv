@@ -1,0 +1,730 @@
+issue_class,school,session,item_id,item_name,standard_code,identifier,detail,n_rows
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,SOC.8.SS.8.A.3.12,,description shown in cube_question_summary_overall: Examine the influences of George Washington's presidency in the formation of the new nation.,16
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,MA.912.AR.9.1,,description shown in cube_question_summary_overall: Solve and graph mathematical and real-world problems that are modeled with piecewise functions. Interpret key features a,13
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,SOC.8.SS.8.A.3.15,,"description shown in cube_question_summary_overall: Examine this time period (1763-1815) from the perspective of historically under-represented groups (e.g., children, inde",11
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,MA.2.NSO.2,,"description shown in cube_question_summary_overall: Identify the number that is ten more, ten less, one hundred more and one hundred less than a given three-digit number.",8
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,SOC.6.SS.6.W.3.14,,description shown in cube_question_summary_overall: Analyze the cultural impact the ancient Phoenicians had on the Mediterranean world with regard to colonization (Carthage,8
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,SOC.8.SS.8.A.3.10,,description shown in cube_question_summary_overall: Explain the consequences of the French and Indian War in British policies for the American colonies from 1763 - 1774.,7
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,MA.912.AR.1.1,,description shown in cube_question_summary_overall: <p>Identify and interpret parts of an equation or expression that represent a quantity in terms of a mathematical or rea,7
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,MA.5.NSO.2,,"description shown in cube_question_summary_overall: Divide multi-digit whole numbers, up to five digits by two digits, including using a standard algorithm with procedural ",4
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,MA.5.GR.3,,description shown in cube_question_summary_overall: Find the volume of a right rectangular prism with whole-number side lengths using a visual model and a formula.,2
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,SOC.6.SS.6.W.3.10,,description shown in cube_question_summary_overall: Analyze the cultural impact the ancient Phoenicians had on the Mediterranean world with regard to colonization (Carthage,2
+cube_conflicting_description,Athenian Academy of Technology and the Arts,,,,MA.3.AR.3,,"description shown in cube_question_summary_overall: Determine and explain whether a whole number from 1 to 1,000 is even or odd.",1
+cube_conflicting_description,Central Florida Preparatory School,,,,MA.912.AR.9.1,,"description shown in cube_question_summary_overall: <p>Given a mathematical or real-world context, write and solve a system of two-variable linear equations algebraically o",16
+cube_conflicting_description,Central Florida Preparatory School,,,,SOC.6.SS.6.W.3.14,,"description shown in cube_question_summary_overall: Describe the key achievements and contributions of Roman civilization. 
+",14
+cube_conflicting_description,Central Florida Preparatory School,,,,SOC.8.SS.8.A.3.10,,"description shown in cube_question_summary_overall: Examine the course and consequences of the Constitutional Convention (e.g., New Jersey Plan, Virginia Plan, Great Compro",4
+cube_conflicting_description,Central Florida Preparatory School,,,,MA.5.NSO.2,,"description shown in cube_question_summary_overall: Add and subtract multi-digit numbers with decimals to the thousandths, including using a standard algorithm with procedu",3
+cube_conflicting_description,Central Florida Preparatory School,,,,MA.912.AR.1.1,,"description shown in cube_question_summary_overall: Solve mathematical and real-world problems involving addition, subtraction, multiplication or division of rational algeb",2
+cube_conflicting_description,Central Florida Preparatory School,,,,SOC.8.SS.8.A.3.12,,description shown in cube_question_summary_overall: Explain the consequences of the French and Indian War in British policies for the American colonies from 1763 - 1774.,2
+cube_conflicting_description,Central Florida Preparatory School,,,,SOC.6.SS.6.W.3.10,,"description shown in cube_question_summary_overall: Describe the government of the Roman Republic and its contribution to the development of democratic principles (i.e., se",2
+cube_conflicting_description,Central Florida Preparatory School,,,,MA.3.AR.3,,description shown in cube_question_summary_overall: Determine whether a whole number from 1 to 144 is a multiple of a given one-digit number.,1
+cube_conflicting_description,Central Florida Preparatory School,,,,SOC.8.SS.8.A.3.15,,description shown in cube_question_summary_overall: Explain the consequences of the French and Indian War in British policies for the American colonies from 1763 - 1774.,1
+cube_conflicting_description,Crestwell School,,,,MA.5.NSO.2,,"description shown in cube_question_summary_overall: Add and subtract multi-digit numbers with decimals to the thousandths, including using a standard algorithm with procedu",3
+cube_conflicting_description,Crestwell School,,,,MA.2.NSO.2,,"description shown in cube_question_summary_overall: Add two whole numbers with sums up to 100 with procedural reliability. Subtract a whole number from a whole number, each",3
+cube_conflicting_description,Crestwell School,,,,MA.3.AR.3,,description shown in cube_question_summary_overall: Determine whether a whole number from 1 to 144 is a multiple of a given one-digit number.,2
+cube_conflicting_description,Crestwell School,,,,MA.5.GR.3,,"description shown in cube_question_summary_overall: Solve real-world problems involving the volume of right rectangular prisms, including problems with an unknown edge leng",1
+dim_standard_ambiguous_code,,,,,MA.1.GR.1,3bac2b67-8bad-44d5-bb62-d37ecb91f432 ; 3bad2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Compose and decompose two- and three-dimensional figures. Fi <VS> Given a real-world object, identify parts that are modeled b",1940
+dim_standard_ambiguous_code,,,,,SOC.6.SS.6.W.3.14,c2a1b207-8bad-43d4-bb62-d37ecb91f432 ; c371b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Analyze the cultural impact the ancient Phoenicians had on t <VS> Describe the key achievements and contributions of Roman civ,1837
+dim_standard_ambiguous_code,,,,,SOC.6.SS.6.W.3.12,c2a1b207-8bad-43d4-bb62-d37ecb91f432 ; c351b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Analyze the cultural impact the ancient Phoenicians had on t <VS> Explain the causes for the growth and longevity of the Roman,1832
+dim_standard_ambiguous_code,,,,,SOC.6.SS.6.W.3.13,c2a1b207-8bad-43d4-bb62-d37ecb91f432 ; c361b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Analyze the cultural impact the ancient Phoenicians had on t <VS> Identify key figures and the basic beliefs of early Christia,1770
+dim_standard_ambiguous_code,,,,,MA.6.AR.2,3c4a2b67-8bad-44d5-bb62-d37ecb91f432 ; 3c4d2b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Determine the unknown decimal or fraction in an equation inv <VS> Given an equation or inequality and a specified set of integ,1530
+dim_standard_ambiguous_code,,,,,MA.912.AR.3.1,3cd52b67-8bad-44d5-bb62-d37ecb91f432 ; 3cdd2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Given a mathematical or real-world context, graph the soluti <VS> <p>Given a mathematical or real-world context, write and sol",1515
+dim_standard_ambiguous_code,,,,,SOC.6.SS.6.W.3.10,c2a1b207-8bad-43d4-bb62-d37ecb91f432 ; c331b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Analyze the cultural impact the ancient Phoenicians had on t <VS> Describe the government of the Roman Republic and its contri,1430
+dim_standard_ambiguous_code,,,,,MA.5.GR.1,3c2e2b67-8bad-44d5-bb62-d37ecb91f432 ; 3c2f2b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Classify triangles or quadrilaterals into different categori <VS> Identify and classify three-dimensional figures into categor,1192
+dim_standard_ambiguous_code,,,,,MA.6.DP.1,3c592b67-8bad-44d5-bb62-d37ecb91f432 ; 3c5c2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Given a histogram or line plot within a real-world context,  <VS> Recognize and formulate a statistical question that would ge",1139
+dim_standard_ambiguous_code,,,,,MA.1.NSO.2,3b9d2b67-8bad-44d5-bb62-d37ecb91f432 ; 3b9e2b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Explore subtraction of a one-digit number from a two-digit n <VS> Explore the addition of a two-digit number and a one-digit n,1110
+dim_standard_ambiguous_code,,,,,MA.912.AR.9.1,3cf62b67-8bad-44d5-bb62-d37ecb91f432 ; 3cfe2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: <p>Given a mathematical or real-world context, write and sol <VS> Solve and graph mathematical and real-world problems that ar",1003
+dim_standard_ambiguous_code,,,,,MA.7.GR.1,3c712b67-8bad-44d5-bb62-d37ecb91f432 ; 3c732b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Explore and apply a formula to find the area of a circle to  <VS> Solve mathematical or real-world problems involving the area,893
+dim_standard_ambiguous_code,,,,,MA.912.AR.1.1,3cc32b67-8bad-44d5-bb62-d37ecb91f432 ; 3ccb2b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: <p>Identify and interpret parts of an equation or expression <VS> Solve mathematical and real-world problems involving additio,883
+dim_standard_ambiguous_code,,,,,SOC.8.SS.8.A.3.15,cbd1b207-8bad-43d4-bb62-d37ecb91f432 ; ccb1b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Examine this time period (1763-1815) from the perspective of <VS> Explain the consequences of the French and Indian War in Bri,742
+dim_standard_ambiguous_code,,,,,SOC.8.SS.8.A.3.12,cbd1b207-8bad-43d4-bb62-d37ecb91f432 ; cc81b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Examine the influences of George Washington's presidency in  <VS> Explain the consequences of the French and Indian War in Bri,622
+dim_standard_ambiguous_code,,,,,SS.7.CG.3.10,3eed2b67-8bad-44d5-bb62-d37ecb91f432 ; 3ef62b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Identify sources and types of law. <VS> <p>Analyze the advantages of the United States&rsquo; consti,617
+dim_standard_ambiguous_code,,,,,MA.5.NSO.2,3c1a2b67-8bad-44d5-bb62-d37ecb91f432 ; 3c1b2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Add and subtract multi-digit numbers with decimals to the th <VS> Divide multi-digit whole numbers, up to five digits by two d",607
+dim_standard_ambiguous_code,,,,,MA.2.NSO.2,3bb52b67-8bad-44d5-bb62-d37ecb91f432 ; 3bb62b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Add two whole numbers with sums up to 100 with procedural re <VS> Identify the number that is ten more, ten less, one hundred ",599
+dim_standard_ambiguous_code,,,,,MA.4.NSO.2,3bf42b67-8bad-44d5-bb62-d37ecb91f432 ; 3bf52b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: <p>Divide a whole number up to four digits by a one-digit wh <VS> <p>Multiply two whole numbers, each up to two digits, includ",572
+dim_standard_ambiguous_code,,,,,MA.7.DP.2,3c7d2b67-8bad-44d5-bb62-d37ecb91f432 ; 3c802b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Determine the sample space for a simple experiment. <VS> Use a simulation of a simple experiment to find experimental,540
+dim_standard_ambiguous_code,,,,,SCI.8.SC.8.E.5.10,7231b207-8bad-43d4-bb62-d37ecb91f432 ; 72c1b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Assess how technology is essential to science for such purpo <VS> Recognize that there are enormous distances between objects ,540
+dim_standard_ambiguous_code,,,,,SS.7.CG.2.10,3ee32b67-8bad-44d5-bb62-d37ecb91f432 ; 3eec2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Define the term &ldquo;citizen,&rdquo; and explain the const <VS> <p>Explain the process for citizens to address a state or lo",477
+dim_standard_ambiguous_code,,,,,SS.7.CG.3.1,3eed2b67-8bad-44d5-bb62-d37ecb91f432 ; 3ef92b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Explain government obligations to its citizens and the servi <VS> <p>Analyze the advantages of the United States&rsquo; consti,469
+dim_standard_ambiguous_code,,,,,MA.3.AR.3,3bdd2b67-8bad-44d5-bb62-d37ecb91f432 ; 3bde2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Determine and explain whether a whole number from 1 to 1,000 <VS> Determine whether a whole number from 1 to 144 is a multiple",356
+dim_standard_ambiguous_code,,,,,SOC.8.SS.8.A.4.10,ccd1b207-8bad-43d4-bb62-d37ecb91f432 ; cd61b207-8bad-43d4-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Analyze the impact of technological advancements on the agri <VS> Examine the causes, course and consequences of United States",320
+dim_standard_ambiguous_code,,,,,MA.5.GR.3,3c322b67-8bad-44d5-bb62-d37ecb91f432 ; 3c332b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Find the volume of a right rectangular prism with whole-numb <VS> Solve real-world problems involving the volume of right rect,244
+dim_standard_ambiguous_code,,,,,SOC.8.SS.8.A.3.10,cbd1b207-8bad-43d4-bb62-d37ecb91f432 ; cc61b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Examine the course and consequences of the Constitutional Co <VS> Explain the consequences of the French and Indian War in Bri,227
+dim_standard_ambiguous_code,,,,,SS.7.CG.3.15,3eed2b67-8bad-44d5-bb62-d37ecb91f432 ; 3efb2b67-8bad-44d5-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Balance a lightweight object on a paddle/racket while moving <VS> <p>Analyze the advantages of the United States&rsquo; consti,223
+dim_standard_ambiguous_code,,,,,MA.4.GR.1,3c0c2b67-8bad-44d5-bb62-d37ecb91f432 ; 3c0d2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: <p>Estimate angle measures. Using a protractor, measure angl <VS> <p>Informally explore angles as an attribute of two-dimensio",195
+dim_standard_ambiguous_code,,,,,MA.5.NSO.1,3c162b67-8bad-44d5-bb62-d37ecb91f432 ; 3c172b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Compose and decompose multi-digit numbers with decimals to t <VS> Plot, order and compare multi-digit numbers with decimals up",154
+dim_standard_ambiguous_code,,,,,SS.7.CG.1.10,3ed82b67-8bad-44d5-bb62-d37ecb91f432 ; 3ee12b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Compare the viewpoints of the Federalists and the Anti-Feder <VS> <p>Analyze the influences of ancient Greece, ancient Rome an",128
+dim_standard_ambiguous_code,,,,,MA.7.AR.4,3c6c2b67-8bad-44d5-bb62-d37ecb91f432 ; 3c6e2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Determine the constant of proportionality within a mathemati <VS> Given any representation of a proportional relationship, tra",116
+dim_standard_ambiguous_code,,,,,SS.912.FL.1.3,1596c457-8bad-45d5-bb62-d37ecb91f432 ; 216a2b67-8bad-44d4-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Evaluate ways people can make more informed education, job,  <VS> Explain that loss aversion implies that losses brought about",18
+dim_standard_ambiguous_code,,,,,SS.912.FL.2.4,159cb457-8bad-45d5-bb62-d37ecb91f432 ; 21722b67-8bad-44d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Analyze the reasons why the wage or salary paid to workers i <VS> Describe ways that consumers may be influenced by how the pr,9
+dim_standard_ambiguous_code,,,,,SS.912.FL.2.1,159a4457-8bad-45d5-bb62-d37ecb91f432 ; 216f2b67-8bad-44d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Compare consumer decisions as they are influenced by the pri <VS> Describe how people choose jobs or careers for which they ar,9
+dim_standard_ambiguous_code,,,,,MA.912.AR.1,3cc52b67-8bad-44d5-bb62-d37ecb91f432 ; 3d012b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: <p>Add, subtract and multiply polynomial expressions with ra <VS> Recognize and apply the formula for the sum of a finite arit",0
+dim_standard_ambiguous_code,,,,,MA.912.AR.9.10,3cf62b67-8bad-44d5-bb62-d37ecb91f432 ; 3cfe2b67-8bad-44d5-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: <p>Given a mathematical or real-world context, write and sol <VS> Solve and graph mathematical and real-world problems that ar",0
+dim_standard_ambiguous_code,,,,,0.4,6711b207-8bad-43d4-bb62-d37ecb91f432 ; 6941b207-8bad-43d4-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Demonstrate that light can be reflected, refracted, and abso <VS> Describe how moving water and air are sources of energy and ",0
+dim_standard_ambiguous_code,,,,,0.3,20b82b67-8bad-44d4-bb62-d37ecb91f432 ; 6c71b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Identify degree requirements for psychologists and psycholog <VS> Investigate and explain that an electrically-charged object ,0
+dim_standard_ambiguous_code,,,,,0.2,1b162b67-8bad-44d4-bb62-d37ecb91f432 ; 1b182b67-8bad-44d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Sequence multiple tasks to complete activities by establishi <VS> Sequence two or more tasks to complete activities.,0
+dim_standard_ambiguous_code,,,,,0.11,21052b67-8bad-44d4-bb62-d37ecb91f432 ; 7821b207-8bad-43d4-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Examine societal treatment of people with disabilities, and  <VS> Explain and compare nuclear reactions (radioactive decay, fi",0
+dim_standard_ambiguous_code,,,,,0.1,6181b207-8bad-43d4-bb62-d37ecb91f432 ; 6a41b207-8bad-43d4-bb62-d37ecb91f432,"code maps to 2 identifiers with 2 distinct descriptions: Investigate and explain the relationships among current, vol <VS> Observe that things that make sound vibrate.",0
+dim_standard_ambiguous_code,,,,,0.8,20622b67-8bad-44d4-bb62-d37ecb91f432 ; 7801b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Discuss the psychological research on gender and how the rol <VS> Explain entropy's role in determining the efficiency of proc,0
+dim_standard_ambiguous_code,,,,,0.5,20ba2b67-8bad-44d4-bb62-d37ecb91f432 ; 7491b207-8bad-43d4-bb62-d37ecb91f432,code maps to 2 identifiers with 2 distinct descriptions: Discuss ways in which psychological science addresses domest <VS> Relate temperature to the average molecular kinetic energy.,0
+dim_standard_exact_duplicate_row,,,,,SS.8.C.1.3,SS.8.C.1.3,"identical (identifier, schoology_standard) row appears 2x",2
+dim_standard_exact_duplicate_row,,,,,SOC.8.SS.8.C.1.1,SOC.8.SS.8.C.1.1,"identical (identifier, schoology_standard) row appears 2x",2
+dim_standard_exact_duplicate_row,,,,,SS.8.C.1.4,SS.8.C.1.4,"identical (identifier, schoology_standard) row appears 2x",2
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338323384,"Unit: 2 Mesopotamia, Egypt, and Kush",,,History / Grade 6 — 14 of 43 questions mapped,29
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7827154345,5/5 POP QUIZ,,,Math / Grade 6 — 4 of 10 questions mapped,6
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338033712,Unit 1 Test,,,Civics / Grade 8 — 37 of 40 questions mapped,3
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338068319,Unit 3 Benchmark Test: The Solar System,,,Science / Grade 8 — 38 of 40 questions mapped,2
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338323360,Unit 1: Early Humans and Societies,,,History / Grade 6 — 38 of 40 questions mapped,2
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7750464573,3/6 POP Quiz Module 11,,,Math / Grade 7 — 4 of 6 questions mapped,2
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338462490,"Unit 4 Benchmark Test: Weather, Climate, and the Water Cycle",,,Science / Grade 5 — 18 of 20 questions mapped,2
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338058191,Beginning of Year Science Benchmark,,,Science / Grade 7 — 29 of 30 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7628391502,HW 12/10 Spiral Review,,,Math / Grade 5 — 12 of 13 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7628347421,HW 12/10 Spiral Review,,,Math / Grade 5 — 8 of 9 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338073886,End of Year Science Benchmark,,,Science / Grade 8 — 20 of 21 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7623891071,CW-Cold Read: Roberto Clemente,,,ELA / Grade 3 — 4 of 5 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338051147,Unit 1 Benchmark Test: Nature of Science,,,Science / Grade 6 — 34 of 35 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7334633224,Tell Me a Story: Weekly Assessment: Week 1,,,ELA / Grade 1 — 17 of 18 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7626433775,HW 12/9 Spiral Review,,,Math / Grade 5 — 11 of 12 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7623214656,Classwork Cold Read: Roberto Clemente,,,ELA / Grade 3 — 4 of 5 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7622572438,Classwork Cold Read: Roberto Clemente,,,ELA / Grade 3 — 4 of 5 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7334635860,Tell Me a Story: Weekly Assessment: Week 1,,,ELA / Grade 1 — 17 of 18 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7334634386,Tell Me a Story: Weekly Assessment: Week 1,,,ELA / Grade 1 — 17 of 18 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2024-25,7338068352,Unit 6 Benchmark Test: Matter,,,Science / Grade 8 — 49 of 50 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8264918425,Quiz 3,,,History / Grade 7 — 4 of 19 questions mapped,15
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8264944793,World History Quiz 4,,,History / Grade 6 — 8 of 20 questions mapped,12
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8214117785,Module 10 Mid-Chapter Quiz,,,Math / Grade 6 — 2 of 12 questions mapped,10
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8214008832,Module 10 Mid-Chapter Quiz,,,Math / Grade 6 — 2 of 12 questions mapped,10
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8357154937,Time,,,Math / Grade K — 1 of 10 questions mapped,9
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8356554433,Time,,,Math / Grade K — 1 of 10 questions mapped,9
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8357183954,Time,,,Math / Grade K — 1 of 10 questions mapped,9
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8292824903,Zoom In!: Weekly Assessment: Week 1,,,ELA / Grade K — 10 of 15 questions mapped,5
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892345769,Zoom In!: Weekly Assessment: Week 1,,,ELA / Grade K — 10 of 15 questions mapped,5
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8292824934,Zoom In!: Weekly Assessment: Week 1,,,ELA / Grade K — 10 of 15 questions mapped,5
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8226200628,Module 9 Quiz,,,Math / Grade 7 — 5 of 10 questions mapped,5
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8350431547,Grade 3 FAST Practice Math,,,Math / Grade 3 — 34 of 35 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892338211,Project Earth: Weekly Assessment: Week 2,,,ELA / Grade 5 — 19 of 20 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892338206,Wild West: Weekly Assessment: Week 1,,,ELA / Grade 5 — 14 of 15 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892338198,What a Story: Weekly Assessment: Week 3,,,ELA / Grade 5 — 13 of 14 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892338214,Art for Everyone: Weekly Assessment: Week 1,,,ELA / Grade 5 — 14 of 15 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892338196,What a Story: Weekly Assessment: Week 2,,,ELA / Grade 5 — 19 of 20 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892335823,Module Assessment: Come to Your Senses,,,ELA / Grade 4 — 19 of 20 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892348238,Take Control Unit Test,,,ELA / Grade 7 — 39 of 40 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892348532,The Fight for Freedom Unit Test,,,ELA / Grade 8 — 40 of 41 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892356629,Unit 5 Benchmark Test: Motion,,,Science / Grade 6 — 34 of 35 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7892360956,Unit 1: Early Humans and Societies,,,History / Grade 6 — 39 of 40 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7893398185,Chapter 7,,,Math / Grade 2 — 19 of 20 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7893398199,Chapter 17,,,Math / Grade 2 — 19 of 20 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,7982710129,Unit 1 Benchmark Test: Nature of Science,,,Science / Grade 6 — 34 of 35 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8226238606,Adding 3 Numbers,,,Math / Grade K — 14 of 15 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8074119422,Chapters 7 & 8 Part 1,,,Math / Grade K — 13 of 14 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8074718690,Chapters 7 & 8 Part 1,,,Math / Grade K — 13 of 14 questions mapped,1
+item_partial_mapping,Athenian Academy of Technology and the Arts,2025-26,8075178372,Chapters 7 & 8 Part 1,,,Math / Grade K — 13 of 14 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2024-25,7796962804,Home Sweet Habitat: Weekly Assessment: Week 1,,,ELA / Grade 2 — 8 of 13 questions mapped,5
+item_partial_mapping,Central Florida Preparatory School,2024-25,7816901887,Home Sweet Habitat: Weekly Assessment: Week 3,,,ELA / Grade 3 — 9 of 14 questions mapped,5
+item_partial_mapping,Central Florida Preparatory School,2024-25,7807260114,Home Sweet Habitat: Weekly Assessment: Week 2,,,ELA / Grade 2 — 9 of 14 questions mapped,5
+item_partial_mapping,Central Florida Preparatory School,2024-25,7806926683,Home Sweet Habitat: Weekly Assessment: Week 1,,,ELA / Grade 2 — 12 of 13 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8261346599,Topic 2,,,History / Higher-Ed — 12 of 35 questions mapped,23
+item_partial_mapping,Central Florida Preparatory School,2025-26,8273818985,Topic 6: New Global Connections (1415?1796),,,History / Higher-Ed — 9 of 20 questions mapped,11
+item_partial_mapping,Central Florida Preparatory School,2025-26,8331697612,Topic 10: The United States and the World: Make Decisions,,,Civics / Grade 7 — 17 of 20 questions mapped,3
+item_partial_mapping,Central Florida Preparatory School,2025-26,8331695850,Topic 10: The United States and the World: Make Decisions,,,Civics / Grade 7 — 17 of 20 questions mapped,3
+item_partial_mapping,Central Florida Preparatory School,2025-26,8330395855,Topic 5,,,Math / Higher-Ed — 20 of 22 questions mapped,2
+item_partial_mapping,Central Florida Preparatory School,2025-26,8376239390,Chapter 14 Test: Compare Fractions and Identify Equivalent Fractions,,,Math / Grade 3 — 11 of 12 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8376239379,Chapter 14 Test: Compare Fractions and Identify Equivalent Fractions,,,Math / Grade 3 — 11 of 12 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8341726127,Topic 8: The Industrial Revolution (1750?1914),,,History / Higher-Ed — 19 of 20 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8161436131,Mid-Year Test,,,ELA / Regular 9–12 — 44 of 45 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8334685138,Topic 4,,,History / Higher-Ed — 34 of 35 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8247281686,Topic 5: World War I and the 1920s,,,HS United States History / Higher-Ed — 19 of 20 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8101189630,Chapter 5 Test: Divide by 1-Digit Numbers,,,Math / Grade 4 — 11 of 12 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8162249855,Mid-Year Test,,,ELA / Higher-Ed — 44 of 45 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,7964160815,Unit 1 Part 1,,,ELA / Regular 9–12 — 30 of 31 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,7964150311,Unit 1 Part 1,,,ELA / Regular 9–12 — 27 of 28 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8161442182,Mid-Year Test,,,ELA / Grade 8 — 47 of 48 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8161442468,Mid-Year Test,,,ELA / Grade 8 — 47 of 48 questions mapped,1
+item_partial_mapping,Central Florida Preparatory School,2025-26,8162253672,Mid-Year Test,,,ELA / Higher-Ed — 44 of 45 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8068483969,Unit 2: The Universe,,,Science / Grade 7 — 14 of 18 questions mapped,4
+item_partial_mapping,Crestwell School,2025-26,8117882278,"Chapter 7 Test: Factors, Multiples, and Number Patterns",,,Math / Grade 4 — 14 of 15 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8142159065,Chapter 9 Test: 2-Digit Addition and Subtraction,,,Math / Grade 2 — 11 of 12 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8235931624,Chapter 12 Test: Relate Fractions and Decimals,,,Math / Grade 4 — 9 of 10 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8288360977,Module Assessment: Global Guardians,,,Reading / Grade 4 — 20 of 21 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8330141754,Tell a Tale: Weekly Assessment: Week 1,,,Reading / Grade 3 — 9 of 10 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,7926486724,Unit 3 Benchmark Test: Earth's Place in Space,,,Science / Grade 4 — 19 of 20 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8028913841,Module Assessment: Curious About Kindergarten,,,Reading / Grade K — 17 of 18 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8043769075,Come to Your Senses: Weekly Assessment: Week 2,,,ELA / Grade 4 — 9 of 10 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8067680834,Chapter 4 Test: Equal Groups,,,Math / Grade 2 — 7 of 8 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8067681446,Chapter 4 Test: Equal Groups,,,Math / Grade 2 — 7 of 8 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8074093242,Module Assessment: Meet in the Middle,,,Reading / Grade 2 — 16 of 17 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8090003648,Module Assessment: Heroic Feats,,,Reading / Grade 4 — 20 of 21 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8090009094,Module Assessment: Heroic Feats,,,Reading / Grade 4 — 20 of 21 questions mapped,1
+item_partial_mapping,Crestwell School,2025-26,8142059010,Chapter 9 Test: Compare Fractions,,,Math / Grade 4 — 10 of 11 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7338323435,Unit: 6 Islamic and African Civilizations,,,History / Grade 6 — 0 of 45 questions mapped,45
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7799461857,Unit: 7 Empires of Asia and the Americas,,,History / Grade 6 — 0 of 43 questions mapped,43
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7338323403,Unit: 3 Civilization in India and China,,,History / Grade 6 — 0 of 42 questions mapped,42
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7816445122,FAST STAR Reading Practice Assessment,,,ELA / Grade 1 — 0 of 34 questions mapped,34
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7816865852,FAST STAR Reading Practice Assessment,,,ELA / Grade 1 — 0 of 34 questions mapped,34
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7817278792,FAST STAR Reading Practice Assessment,,,ELA / Grade 1 — 0 of 34 questions mapped,34
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7799460644,Slavery and the Wild West Test,,,History / Grade 7 — 0 of 27 questions mapped,27
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7804895854,China and Japan Quest,,,History / Grade 6 — 0 of 20 questions mapped,20
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7815966900,PM3 Practice Test Part 3,,,ELA / Grade 3 — 0 of 18 questions mapped,18
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7807768182,PM3 Practice Test Part 1,,,ELA / Grade 3 — 0 of 18 questions mapped,18
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7807250635,PM3 Practice Test Part 1,,,ELA / Grade 3 — 0 of 18 questions mapped,18
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7800632097,7.2 Grammar Review,,,ELA / Grade 1 — 0 of 15 questions mapped,15
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7802005513,7.2 Grammar Review,,,ELA / Grade 1 — 0 of 15 questions mapped,15
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7623185959,"HW  Ch. 8.10 pgs. 405-406  #1-17 odds, #21, 23, 25 - 12/9/24",,,Math / Grade 3 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7608232113,"HW Ch. 8.9 pgs. 399-400 #1-17 ODD, #21, 23, 25 - 12/5/24",,,Math / Grade 3 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7699024272,5.2 Spelling Test,,,ELA / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7606210127,"Unit 4 Weather- Lesson 1, 2, and 3",,,Science / Grade 2 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7623890633,"HW  Ch. 8.10 pgs. 405-406  #1-17 odds, #21, 23, 25 - 12/9/24",,,Math / Grade 3 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7618539526,"CW Unit 4 Weather- Lesson 1, 2, and 3",,,Science / Grade 2 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7699040156,5.2 Spelling Test,,,ELA / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7615719409,"HW Ch. 8.9 pgs. 399-400 #1-17 ODD, #21, 23, 25 - 12/5/24",,,Math / Grade 3 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7622593450,"HW  Ch. 8.10 pgs. 405-406  #1-17 odds, #21, 23, 25 - 12/9/24",,,Math / Grade 3 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7699016219,5.2 Spelling Test,,,ELA / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7608230744,"HW Ch. 8.3 pgs. 363-364 #1-15 ODD, 19, 21, 23 - 12/4/24",,,Math / Grade 3 — 0 of 11 questions mapped,11
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7615718091,"HW Ch. 8.3 pgs. 363-364 #1-15 ODD, 19, 21, 23 - 12/4/24",,,Math / Grade 3 — 0 of 11 questions mapped,11
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619260641,CW Chapter 8 double digit subtraction,,,Math / Grade 2 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7621172583,CW Chapter 8 double digit subtraction,,,Math / Grade 2 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7618090792,CW Chapter 8 double digit subtraction,,,Math / Grade 2 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7623890689,"HW Ch. 8 Review pgs. 413-417  #1, 2, 4, 5, 9, 10, 11, 12, 13, 17",,,Math / Grade 3 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7616266129,Inherited Traits 'Genius Challenge',,,Algebra / Grade 8 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7612731858,CW - Ch. 8.4  pg. 367 #6-24 even - 12/4/24,,,Math / Grade 3 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7608233480,CW - Ch. 8.4  pg. 367 #6-24 even - 12/4/24,,,Math / Grade 3 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7607478150,Inherited Traits 'Genius Challenge',,,Science / Grade 1 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7630568806,"HW Ch. 8 Review pgs. 413-417  #1, 2, 4, 5, 9, 10, 11, 12, 13, 17",,,Math / Grade 3 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7599209632,Chapter 7 Review,,,Math / Grade 1 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7632298083,math ch 10 chapter review 369-374 selected questions,,,Math / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620506862,CW: Unit 4 Weather- Lesson 4: Severe Weather,,,Science / Grade 2 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619254630,CW - Ch. 8.4  pg. 367 #6-24 even - 12/4/24,,,Math / Grade 3 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620348280,Chapter 7 Review,,,Math / Grade 1 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7613262289,Module 4 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7635463244,Adding and Subtracting Money - 12/16/24,,,Math / Grade 3 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620435745,Module 4 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7622533093,Module 4 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7634120124,Adding and Subtracting Money - 12/16/24,,,Math / Grade 3 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7617762025,HW 12/3 8.1,,,Math / Grade 6 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7637896011,Adding and Subtracting Money - 12/16/24,,,Math / Grade 3 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7627001135,Comparing Numbers Review HW,,,Math / Grade 1 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7626083157,Comparing Numbers Review HW,,,Math / Grade 1 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7624644120,12/09 8.6 Homework,,,Math / Grade 4 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7626956928,12/16: 9.3 Homework,,,Math / Grade 4 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7636719499,12/16: 9.3 Homework,,,Math / Grade 4 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7626085761,Plant Needs 'Genius Challenge',,,Algebra / Grade 8 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7613415036,HW 8.6  pgs. 331-332  #1-8 (skip #3),,,Math / Grade 2 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7613842755,HW 8.6  pgs. 331-332  #1-8 (skip #3),,,Math / Grade 2 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619335553,HW 8.6  pgs. 331-332  #1-8 (skip #3),,,Math / Grade 2 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619248537,12/09 8.6 Homework,,,Math / Grade 4 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7629339215,Plant Needs 'Genius Challenge',,,Science / Grade 1 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619246559,12/04 8.3 Homework,,,Math / Grade 4 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7800631611,7.1 Grammar Review,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7684022828,"Text Dependent questions Module 5, week 1 ""Going Places""",,,ELA / Grade 2 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620225345,M4W2  Vocabulary Quiz,,,ELA / Grade 3 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620500348,M4W2  Vocabulary Quiz,,,ELA / Grade 3 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7684825195,"Module 5, week 1 ""Going Places""",,,ELA / Grade 2 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7615828993,12/04 8.4 Homework,,,Math / Grade 4 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620546384,M4W2  Vocabulary Quiz,,,ELA / Grade 3 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7802004830,7.1 Grammar Review,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7618104257,HW chp 8 review handout,,,Math / Grade 2 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7615829935,12/05 8.4 Homework,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619247715,12/05 8.4 Homework,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619249711,12/11: Chapter 10 Show What you Know,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620320195,HW chp 8 review handout,,,Math / Grade 2 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7621570215,HW chp 8 review handout,,,Math / Grade 2 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7623192088,HW-Cold Read- Healthy Eating,,,ELA / Grade 3 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7623203296,HW-Cold Read-Game On,,,ELA / Grade 3 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7624643503,12/9 Reading Classwork,,,ELA / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7624644556,12/11: Chapter 10 Show What you Know,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7625528258,12/9 Reading Classwork,,,ELA / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7629852835,12/11 ELA Classwork,,,ELA / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7629953167,Math Hw 367-368 odds,,,Math / Grade 5 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7630593377,Math Hw 367-368 odds,,,Math / Grade 5 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7631081618,12/12 9.1 Homework,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7631083592,12/12 CW: Chapter 9 Lesson 1,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7631927148,12/12 9.1 Homework,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7632527587,12/12 CW: Chapter 9 Lesson 1,,,Math / Grade 4 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7635112506,Unit 9 Lesson 3 Braincheck,,,Science / Grade 1 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7635112537,Unit 9 Lesson 3 Braincheck,,,Science / Grade 1 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7635138239,Unit 9 Lesson 3 Braincheck,,,Science / Grade 1 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7663081396,Quarter 3 Quiz 1,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7676516420,Quarter 3 Quiz #1,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688167176,Quarter 3 Quiz 2,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688207641,Quarter 3 Quiz 3,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688267137,Quarter 3 Quiz 2,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7700976328,Quarter 3 Quiz 2,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7712036607,M5W3 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7722437439,Quarter 3 Quiz 3,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7722457831,Quarter 3 Quiz 3,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7730170514,M6W1 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7741094732,Quarter 3 Quiz 5,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7780012616,Civics Quarter 4 Quiz 1,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7780027189,Quarter 4 Quiz #1,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7780051007,World History Quiz #1,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7789244025,Quarter 4 Quiz 2,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7789328061,Civics Quarter 4 Quiz #2,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7789366219,World History Quiz 2,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7732419944,M6W2 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7774723851,Unit 4 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7776099902,Unit 4 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7704744871,Unit 3 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7779974419,Unit 4 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7780048916,M7W1 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7780129205,M7W1 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7782909211,Unit 4 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7787619325,Unit 4 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7703488371,Unit 3 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7701493741,Unit 3 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7701480595,Unit 3 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7696812668,Unit 3 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688854507,Unit 3 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688550954,Unit 3 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7679618307,Unit 3 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7638840268,Unit 9 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7638654239,Unit 9 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7638654235,Unit 9 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7630615206,Unit 9 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7630614956,Unit 9 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7627004387,Unit 9 Lesson 1 Brain Check,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7627003186,Unit 9 Lesson 1 Brain Check,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7626088513,Unit 9 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7626081992,Unit 9 Lesson 1 Brain Check,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7620352378,Unit 8 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7616270135,Unit 8 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7607484223,Unit 8 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7728836817,6.1 Phonics Review,,,ELA / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7728835271,6.1 Phonics Review,,,ELA / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7728835201,6.1 Phonics Review,,,ELA / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7730653296,Unit 6 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7732312078,Unit 6 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7734557500,Unit 6 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7740038195,Unit 6 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7728834109,Unit 6 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7723883476,Unit 6 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7750764297,Unit 4 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7754920337,Unit 4 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7758838392,Unit 4 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7768876930,Unit 4 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7701167366,M5W2 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 3 questions mapped,3
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7615833109,12/5 Reading Classwork,,,ELA / Grade 4 — 0 of 3 questions mapped,3
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7613842590,12/5 Reading Classwork,,,ELA / Grade 4 — 0 of 3 questions mapped,3
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7700671601,Module 5 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551772,Module 7 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7741165556,Module 6 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7625255317,Science CW FSSA book matter #1,,,Science / Grade 5 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7730750812,Module 6 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551773,Module 7 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688548295,Module 5 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7687690534,Module 5 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7680381708,Module 5 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7779651289,Module 7 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7712379157,Module 5 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7664234044,Module 4 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551771,Module 7 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7780024165,Module 7 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551768,Module 6 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7643882891,Module 4 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551767,Module 6 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7730951517,Module 6 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7809597161,Module 8 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7787916956,Module 7 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7787922452,Module 7 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551766,Module 5 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7814550280,Module 8 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7703356116,Module 5 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7814632187,Module 8 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7732615819,Module 6 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551765,Module 5 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7445551763,Module 4 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7625334305,Science CW FSSA book matter #1,,,Science / Grade 4 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7711313738,Vocab Quiz M5W3,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7598715892,M4W2 Vocabulary Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7608209146,Unit 6 Lesson 1 Quiz- What Are Some Heat Sources?,,,Science / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7614077179,CW: 12/06 Lesson 2 Brain Check,,,Science / Grade 4 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619251873,CW: 12/06 Lesson 2 Brain Check,,,Science / Grade 4 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619252507,CW 12/11: Lesson 3 Brain Check,,,Science / Grade 4 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619326000,Unit 6 Lesson 1 Quiz- What Are Some Heat Sources? (12/4/24),,,Science / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7619334752,Unit 6 Lesson 1 Quiz- What Are Some Heat Sources? (12/4/24),,,Science / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7624645716,CW 12/11: Lesson 3 Brain Check,,,Science / Grade 4 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7628056550,science CW FSSA book  matter #2,,,Science / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7662225137,M4W3 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7663238512,M4W3 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7663638907,M4W3  Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7687592490,M5M1Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7687967795,M5W1 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688014588,M5W1 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7688416594,M5M1Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7689301066,M5M1Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7700955268,M5W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7700974490,M5W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7711484463,Vocab Quiz M5W3,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7730571088,M6W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7730573420,M6W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7740778505,M6w2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7740780442,M6w2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7779930840,M7W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7779964861,M7W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7789257999,M7W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7789275406,M7W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7789287431,M7W2 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7789394548,M7W2 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7791596780,Continents and Oceans Quiz,,,Social Studies / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7792092554,M7W3 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7799609422,M7W3 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2024-25,7799623199,M7W3 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8338541701,FSSA Practice Test p. 79-88 (4th grade book),,,Science / Grade 5 — 0 of 40 questions mapped,40
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8325089229,FSSA Practice Test p. 79-88 (4th grade book),,,Science / Grade 5 — 0 of 40 questions mapped,40
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8355502810,FAST STAR Reading Practice Assessment,,,ELA / Grade 1 — 0 of 34 questions mapped,34
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8358359176,FAST STAR Reading Practice Assessment,,,ELA / Grade 1 — 0 of 34 questions mapped,34
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8354911352,FAST STAR Reading Practice Assessment,,,ELA / Grade 1 — 0 of 34 questions mapped,34
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,7892359049,Slavery and the Wild West Test,,,History / Grade 7 — 0 of 27 questions mapped,27
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8082413883,Module 2 HFW Assessment,,,ELA / Grade 1 — 0 of 24 questions mapped,24
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8123321004,Module 3 HFW Quiz,,,ELA / Grade 1 — 0 of 24 questions mapped,24
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8122934647,Module 3 HFW Quiz,,,ELA / Grade 1 — 0 of 24 questions mapped,24
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8083787711,Module 2 HFW Assessment,,,ELA / Grade 1 — 0 of 24 questions mapped,24
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8083788877,Module 2 HFW Assessment,,,ELA / Grade 1 — 0 of 24 questions mapped,24
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8119469338,Module 3 HFW Quiz,,,ELA / Grade 1 — 0 of 24 questions mapped,24
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8033013307,Module 1 HFW Assessment,,,ELA / Grade 1 — 0 of 22 questions mapped,22
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8041801079,Module 1 HFW Assessment,,,ELA / Grade 1 — 0 of 22 questions mapped,22
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8042164659,Module 1 HFW Assessment,,,ELA / Grade 1 — 0 of 22 questions mapped,22
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8368658997,Practice PM3 Test Session 1,,,Math / Grade 3 — 0 of 20 questions mapped,20
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8365066597,Practice PM3 Test Session 1,,,Math / Grade 3 — 0 of 20 questions mapped,20
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8363033309,PM3 Practice Reading/ELA Test Part 1,,,ELA / Grade 3 — 0 of 18 questions mapped,18
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8365847571,PM3 Practice Test Part 1,,,ELA / Grade 3 — 0 of 18 questions mapped,18
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8033012840,Module 1 Grammar Review,,,ELA / Grade 1 — 0 of 15 questions mapped,15
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8083787013,Module 2 Grammar Quiz,,,ELA / Grade 1 — 0 of 15 questions mapped,15
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8082415340,Module 2 Grammar Quiz,,,ELA / Grade 1 — 0 of 15 questions mapped,15
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8083614889,Module 2 Grammar Quiz,,,ELA / Grade 1 — 0 of 15 questions mapped,15
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8042168339,Module 1 Grammar Review,,,ELA / Grade 1 — 0 of 15 questions mapped,15
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8122432424,Module 3 Generative Vocab Quiz,,,ELA / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8346484076,Classwork End of Year Test,,,Math / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8120381772,Module 3 Generative Vocab Quiz,,,ELA / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8325969043,Money Test,,,Math / Grade K — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8325375519,Money Test,,,Math / Grade K — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8324893965,Money Test,,,Math / Grade K — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8119451862,Module 3 Generative Vocab Quiz,,,ELA / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8336783158,Classwork End of Year Test,,,Math / Grade 1 — 0 of 12 questions mapped,12
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8033013036,Module 1 Phonics Review,,,ELA / Grade 1 — 0 of 11 questions mapped,11
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8038833106,Module 1 Phonics Review,,,ELA / Grade 1 — 0 of 11 questions mapped,11
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8034176197,Module 1 Phonics Review,,,ELA / Grade 1 — 0 of 11 questions mapped,11
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8360651191,SC Quiz Week #2 FSA Review,,,Science / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8042166966,Author's Purpose Quiz,,,ELA / Grade 1 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8041798583,Author's Purpose Quiz,,,ELA / Grade 1 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8033012246,Author's Purpose Quiz,,,ELA / Grade 1 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8064311024,Control of Florida Comprehension,,,Social Studies / Grade 4 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8064311725,Control of Florida Comprehension,,,Social Studies / Grade 4 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8065901758,Control of Florida Comprehension,,,Social Studies / Grade 4 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8085353973,The Bill of Rights Quiz,,,History / Grade 7 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8319331982,"Weekly Math Quiz #1 (Conversion, Fractions, Volume, Triangles, Quadrilaterals)",,,Math / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8325105142,"Weekly Math Quiz #2 (adding and subtracting mixed numbers, adding and subtracting decimals, and division of fractions)",,,Math / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8327522063,"Weekly Math Quiz #1 (Conversion, Fractions, Volume, Triangles, Quadrilaterals)",,,Math / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8327905248,Quarter 4 Quiz 1,,,History / Grade 7 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8334327109,Sc Quiz Week 1 FSA Review,,,Science / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8341769546,"Weekly Math Quiz #2 (adding and subtracting mixed numbers, adding and subtracting decimals, and division of fractions)",,,Math / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8344783376,SC Quiz Week #2 FSA Review,,,Science / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8351537358,Sc Quiz Week 1 FSA Review,,,Science / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8257448535,Quiz 2,,,History / Grade 7 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8257435517,Quiz 2,,,Civics / Grade 8 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8133857228,SS Magazine 3 Open Book Assessment,,,Social Studies / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8257424520,World History Quiz 3,,,History / Grade 6 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8352555923,Civics Final Amendments Quiz,,,Civics / Grade 8 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8356534058,"Weekly Math quiz # 5 (volume of composite figures, exponents, interpret remainders, add, subtract, multiply, divide decimals)",,,Math / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8356546341,Science Quiz Week 3 FSSA Review,,,Science / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8368737293,Science Quiz Week 3 FSSA Review,,,Science / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8368732914,"Weekly Math quiz # 5 (volume of composite figures, exponents, interpret remainders, add, subtract, multiply, divide decimals)",,,Math / Grade 5 — 0 of 10 questions mapped,10
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8059962640,M2W2 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8336191844,"Weekly Math Quiz #3 (order of operations, volume, area, perimeter, round decimals, decompose decimals, quadrilaterals, triangle)",,,Math / Grade 5 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8353067732,Quarter 4 Quiz 2,,,History / Grade 7 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8119465522,Module 3 Grammar Quiz,,,ELA / Grade 1 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8120386475,Module 3 Grammar Quiz,,,ELA / Grade 1 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8122571822,Module 3 Grammar Quiz,,,ELA / Grade 1 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8359929652,Civics Supreme Court Cases Quiz,,,Civics / Grade 8 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8351403526,"Weekly Math Quiz #3 (order of operations, volume, area, perimeter, round decimals, decompose decimals, quadrilaterals, triangle)",,,Math / Grade 5 — 0 of 9 questions mapped,9
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8146030084,Module 4 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8344760282,"Weekly Math Quiz #4 (add/subtract fractions with unlike denominators, plot points, identify the rule)",,,Math / Grade 5 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8116143202,M3W3 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8360344233,"Weekly Math Quiz #4 (add/subtract fractions with unlike denominators, plot points, identify the rule)",,,Math / Grade 5 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8085379296,Florida Treaties Comprehension,,,Social Studies / Grade 4 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8149991919,Module 4 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 8 questions mapped,8
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8014033402,9/5 Fort Mose Comprehension,,,Social Studies / Grade 4 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8030611465,Quiz 3,,,Civics / Grade 8 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8073490319,Articles of Confederation open book quiz,,,History / Grade 7 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8370107883,Influential documents quiz,,,Civics / Grade 8 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8352740777,World History Weekly Quiz,,,History / Grade 6 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8370131136,World History Weekly Quiz 3,,,History / Grade 6 — 0 of 7 questions mapped,7
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8070046993,2.3 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8359937643,World History Weekly Quiz 2,,,History / Grade 6 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8070020639,2.3 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8053230186,2.1 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8047229109,2.1 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8046487450,2.1 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8074397284,2.3 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093785079,M3W1 Vocabulary  Quiz,,,ELA / Grade 3 — 0 of 6 questions mapped,6
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8236972720,Quiz 1,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8043748847,Quiz 4,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8126265514,Quiz 2,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8126215170,Quiz 2,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8247514543,World History Quiz 2,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8149807504,Quiz 3,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8030945538,Quiz 3,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8378549549,Final Quiz,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8030688955,Quiz 3,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8055407250,Quiz 5,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8028273316,1.3 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8022422940,1.3 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8076165986,Quiz 6,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8076157136,Quiz 5,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8055343226,Quiz 5,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8019548255,1.3 Vocabulary Quiz,,,ELA / Grade 1 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8002545344,Quiz #1,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8085496323,Quiz 1,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8002533977,Quiz #1,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8002526684,Quiz #1,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016559819,Quiz 2,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8193552811,Quiz 1,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8043741105,Quiz 4,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016572178,Quiz 2,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8126292235,Quiz 2,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8193578592,World History Quiz 1,,,History / Grade 6 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8193592968,U.S. History Quiz 1,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8055258121,Quiz 4,,,Civics / Grade 8 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016821134,U.S. History Quiz 2,,,History / Grade 7 — 0 of 5 questions mapped,5
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8282395267,Unit 7 Lesson 5 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,7983138821,Unit 1 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8002561096,Unit 1 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8002668697,Unit 1 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8004511442,Unit 1 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016577944,Unit 1 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8017008706,Unit 1 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8025973536,Unit 1 Lesson 5 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8026325899,Unit 1 Lesson 5 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8026544743,Unit 1 Lesson 5 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8046439423,Unit 2 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8047224518,Unit 2 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8053233585,Unit 2 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8057432855,Unit 2 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8064290999,Unit 2 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8064482757,Unit 2 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8077435954,Unit 3 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8085438535,Unit 3 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8085622108,Unit 3 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093409216,Unit 3 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093432994,Unit 3 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093638773,Unit 3 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8137414023,Unit 4 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8146497016,Unit 4 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8148036226,Unit 4 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8151217577,Unit 4 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8153309986,Unit 4 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8157479026,Unit 4 Lesson 4 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8177199775,Unit 5 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8183614071,Unit 5 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8189851197,Unit 5 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8211729995,Unit 6 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8218515644,Unit 6 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8225875584,Unit 6 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8260964566,6.1 Phonics Review,,,ELA / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8261612917,6.1 Phonics Review,,,ELA / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8263242066,6.1 Phonics Review,,,ELA / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8263260435,Unit 7 Lesson 2 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8264924074,Unit 7 Lesson 2 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8265031585,Unit 7 Lesson 2 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8275906019,Unit 7 Lesson 5 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8276527893,Unit 7 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8282887686,Unit 7 Lesson 5 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8293064486,M7W1 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8336749106,Unit 9 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8337780368,Unit 9 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8341160826,Unit 9 Lesson 1 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8345033619,Unit 9 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8346485244,Unit 9 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8350374285,Unit 9 Lesson 3 Quiz,,,Science / Grade 1 — 0 of 4 questions mapped,4
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8229069948,"Final Northeast, Southeast, and Midwest Exam",,,Social Studies / Grade 3 — 0 of 3 questions mapped,3
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8229069938,"Final Northeast, Southeast, and Midwest Exam",,,Social Studies / Grade 3 — 0 of 3 questions mapped,3
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8293643260,Module 7 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8293171753,Module 7 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8336110460,Module 8 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8216822379,Module 5 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8294921513,Final-West and Southwest Regions States and Capitals,,,Social Studies / Grade 3 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8287502207,Module 7 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8265249064,Module 6 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8265152991,Module 6 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8348080515,Module 8 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8247747860,Module 5 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8352608363,Module 8 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8246259769,Module 5 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8237253021,Module 5 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8237233326,Module 5 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8226189913,Module 5 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8217188853,Module 5 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8192621580,Module 4 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8190679243,Module 4 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8378655710,Module 8 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8135051604,Module 4 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8130355312,Module 4 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8129915559,Module 4 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8116266523,Module 3 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8110327370,Module 3 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8107847778,Module 3 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8104525784,Module 3 Meet in the Middle Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8104228865,Module 3 Meet in the Middle Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8097502483,Module 3 Meet in the Middle Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093858365,Module 3 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093668904,Module 3 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093612696,Module 3 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8074632081,Module 2 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8068323186,Module 2 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8066821818,Module 2 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8065959699,Module 2 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8065628761,Module 2 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8049469169,Module 2 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8049326463,Module 2 Week 1 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8030780280,Module 1 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8030677985,Module 1 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8019853921,Module 1 Week 3 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016838893,Module 1 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016288394,Module 1 Week 1 Vocabulary,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8005896485,Module 1 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8005770134,Module 1 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8002495741,M1W1 Critical Vocabulary Quiz (8/29),,,ELA / Grade 4 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8002444006,Module 1 Week 1 Vocabulary,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,7986398991,Module 1 Week 1 Vocabulary,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,7961702243,Module 1 Week 1 Vocabulary,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8318959140,Module 7 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8310896090,Final-West and Southwest Regions States and Capitals,,,Social Studies / Grade 3 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8298693160,Module 7 Week 2 Vocabulary Quiz,,,ELA / Grade 2 — 0 of 2 questions mapped,2
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8258565097,M6W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,7998507820,CW - M1W1 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8318979330,M7W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,7973108537,M1W1 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8317180423,M7W3 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8154558077,M4W3 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8192873294,M4W3 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8194198134,M4W3  Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8292962635,M7W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8325958880,M7W3 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8221051747,M5W1 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8226054659,M5W1 Vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8227640787,M5W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8327381867,M7W3 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8279391756,M7W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8273926376,M6w2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8294794366,M7W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8236900913,M5W2 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8237170511,Vocab Quiz M5W3,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8247538581,Vocab Quiz M5W3,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8264968178,M6W1 vocab quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8116071906,M3W3 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8107224032,M3W3 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8104180371,M3W2 Vocab,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8095408985,M3W2 Vocab,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8126575277,M4W1 Vocabulary Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8133006059,M4W1 Vocabulary Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8093554844,M3W1 Vocab,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8086855969,M3W1 Vocab,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8133500452,M4W2 Vocabulary Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8074628569,M2W3 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8065962317,M2W2 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8057645223,M2W3 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8057644154,M2W2 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8055416739,M2W1 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8046218909,M2W1 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8030435267,M1W3 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8019069618,M1W3 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8018787494,M1W3 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016724503,M1W2 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8016562092,M1W2 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8014008298,M1W2 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8150096175,M4W2 Vocabulary Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8319114247,M7W2 Vocabulary Quiz,,,ELA / Grade 3 — 0 of 1 questions mapped,1
+item_zero_mapping,Athenian Academy of Technology and the Arts,2025-26,8000145024,M1W1 Vocab Quiz,,,ELA / Grade 5 — 0 of 1 questions mapped,1
+item_zero_mapping,Central Florida Preparatory School,2025-26,8203499258,Investigation Assessment 2: Forces,,,Science / Higher-Ed — 0 of 15 questions mapped,15
+item_zero_mapping,Central Florida Preparatory School,2025-26,8272404615,Topic 4: Earth's Surface Systems,,,Science / Grade 6 — 0 of 15 questions mapped,15
+item_zero_mapping,Central Florida Preparatory School,2025-26,8272404145,Topic 4: Earth's Surface Systems,,,Science / Grade 6 — 0 of 15 questions mapped,15
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.7.MAFS.7.RP.1.1,15582b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,679
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.K.3.1,MA.K.3.1,dim_standard row exists but description is NULL -> blank description in reports,405
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.9-12.MAFS.912.A-CED.1.2,15b32b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,253
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.7.MAFS.7.G.1.1,15622b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,250
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.9-12.MAFS.912.A-REI.4.10,15bf2b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,209
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.7.MAFS.7.NS.1.3,155d2b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,193
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.9-12.MAFS.912.F-IF.3.9,15ca2b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,156
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.6.MAFS.6.EE.1.1,15462b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,149
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,LA.3.LAFS.3.RI.1.2,167d2b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,116
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,SOC.8.SS.8.C.1.5,SOC.8.SS.8.C.1.5,dim_standard row exists but description is NULL -> blank description in reports,93
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.6.MAFS.6.RP.1.2,153c2b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,81
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,LA.3.LAFS.3.L.3.4.a,17292b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,58
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.9-12.MAFS.912.A-CED.1.3,15b42b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,38
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.9-12.MAFS.912.N-RN.1.1,158c2b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,36
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,SOC.8.SS.8.A.1,SOC.8.SS.8.A.1,dim_standard row exists but description is NULL -> blank description in reports,31
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2024-25,,,MA.9-12.MAFS.912.F-LE.1.2,15d12b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,18
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.6.MAFS.6.SP.1.3,15552b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,456
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.6.MAFS.6.SP.1.1,15532b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,320
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.9-12.MAFS.912.N-Q.1.3,15912b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,162
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.K.3.1,MA.K.3.1,dim_standard row exists but description is NULL -> blank description in reports,132
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.9-12.MAFS.912.F-LE.1.2,15d12b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,103
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.6.MAFS.6.G.1.3,15512b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,74
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.6.MAFS.6.NS.3.8,15452b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,74
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.7.MAFS.7.G.1.1,15622b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,24
+null_description_code_referenced,Athenian Academy of Technology and the Arts,2025-26,,,MA.9-12.MAFS.912.S-ID.1.3,160b2b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,24
+null_description_code_referenced,Central Florida Preparatory School,2024-25,,,LA.2.LAFS.2.RI.1.2,16732b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,17
+null_description_code_referenced,Central Florida Preparatory School,2025-26,,,ELA.5.L.1.2.m,17332b67-8bad-44d4-bb62-d37ecb91f432,dim_standard row exists but description is NULL -> blank description in reports,35
+null_standard_share_summary,Athenian Academy of Technology and the Arts,2024-25,,,,,fact rows with NULL/empty/nan standard: 48393 of 635654 (7.61%),48393
+null_standard_share_summary,Athenian Academy of Technology and the Arts,2025-26,,,,,fact rows with NULL/empty/nan standard: 64239 of 658531 (9.75%),64239
+null_standard_share_summary,Central Florida Preparatory School,2024-25,,,,,fact rows with NULL/empty/nan standard: 254 of 5682 (4.47%),254
+null_standard_share_summary,Central Florida Preparatory School,2025-26,,,,,fact rows with NULL/empty/nan standard: 2481 of 235971 (1.05%),2481
+null_standard_share_summary,Crestwell School,2024-25,,,,,fact rows with NULL/empty/nan standard: 0 of 72 (0.00%),0
+null_standard_share_summary,Crestwell School,2025-26,,,,,fact rows with NULL/empty/nan standard: 556 of 111078 (0.50%),556
+unmatched_code_no_identifier,Athenian Academy of Technology and the Arts,2024-25,7337979059,Chapter 3,MA.5.MACC.5.NBT.1.3.b,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",20
+unmatched_code_no_identifier,Athenian Academy of Technology and the Arts,2024-25,7337978776,Chapter 3,MA.5.MACC.5.NBT.1.3.b,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",20
+unmatched_code_no_identifier,Athenian Academy of Technology and the Arts,2025-26,8356554433,Time,Social Studies,,category label (expected NULL ident),46
+unmatched_code_no_identifier,Athenian Academy of Technology and the Arts,2025-26,8357154937,Time,Social Studies,,category label (expected NULL ident),42
+unmatched_code_no_identifier,Athenian Academy of Technology and the Arts,2025-26,8357183954,Time,Social Studies,,category label (expected NULL ident),40
+unmatched_code_no_identifier,Central Florida Preparatory School,2024-25,7806926683,Home Sweet Habitat: Weekly Assessment: Week 1,LA.2.LA.2.1.7.4,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",39
+unmatched_code_no_identifier,Central Florida Preparatory School,2024-25,7806926683,Home Sweet Habitat: Weekly Assessment: Week 1,LA.2.LA.2.1.6.3,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",14
+unmatched_code_no_identifier,Central Florida Preparatory School,2025-26,8352493441,Unit 4 Part 1,ELA.6.RL.6.4.2,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",52
+unmatched_code_no_identifier,Central Florida Preparatory School,2025-26,8352493877,Unit 4 Part 1,ELA.6.RL.6.4.2,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",48
+unmatched_code_no_identifier,Central Florida Preparatory School,2025-26,8352493441,Unit 4 Part 1,ELA.6.V.3.4,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",28
+unmatched_code_no_identifier,Central Florida Preparatory School,2025-26,8352493877,Unit 4 Part 1,ELA.6.V.3.4,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",26
+unmatched_code_no_identifier,Central Florida Preparatory School,2025-26,8273780092,Topic 6: The Great Depression and the New Deal (1928-1941),SOC.H.PreK-K.1,,"real-looking code missing from dim_standard.schoology_standard -> NULL identifier, invisible in standards reports",17
+unmatched_code_no_identifier,Crestwell School,2025-26,8030068539,Come to Your Senses: Weekly Assessment: Week 1,Conventions,,category label (expected NULL ident),16
+unmatched_code_no_identifier,Crestwell School,2025-26,8030068539,Come to Your Senses: Weekly Assessment: Week 1,Development/organizaion of Ideas,,category label (expected NULL ident),16
+unmatched_code_no_identifier,Crestwell School,2025-26,8043771169,Come to Your Senses: Weekly Assessment: Week 2,Development/organizaion of Ideas,,category label (expected NULL ident),15
+unmatched_code_no_identifier,Crestwell School,2025-26,7929067017,Module Assessment: What Makes Us Who We Are?,Development/organizaion of Ideas,,category label (expected NULL ident),15
+unmatched_code_no_identifier,Crestwell School,2025-26,8043771169,Come to Your Senses: Weekly Assessment: Week 2,Conventions,,category label (expected NULL ident),15
+unmatched_code_no_identifier,Crestwell School,2025-26,7929067017,Module Assessment: What Makes Us Who We Are?,Conventions,,category label (expected NULL ident),15
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.1.GR.1,3bac2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=3 but code last segment=1 — results attributed to wrong benchmark; items=12,1940
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.6.SS.6.W.3.12,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=12 — results attributed to wrong benchmark; items=2,1742
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.6.SS.6.W.3.13,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=13 — results attributed to wrong benchmark; items=2,1675
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.6.SS.6.W.3.14,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=14 — results attributed to wrong benchmark; items=2,1608
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.6.AR.2,3c4a2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=2 — results attributed to wrong benchmark; items=8,1530
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.6.SS.6.W.3.10,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,1340
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.7.GR.1,3c712b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=2 but code last segment=1 — results attributed to wrong benchmark; items=4,893
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.1.NSO.2,3b9d2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=4 but code last segment=2 — results attributed to wrong benchmark; items=12,805
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.8.SS.8.A.3.15,cbd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=15 — results attributed to wrong benchmark; items=1,713
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.8.SS.8.A.3.12,cbd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=12 — results attributed to wrong benchmark; items=3,569
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SS.7.CG.3.10,3eed2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,546
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.7.DP.2,3c7d2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=2 — results attributed to wrong benchmark; items=2,540
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SCI.8.SC.8.E.5.10,7231b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,540
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.4.NSO.2,3bf42b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=3 but code last segment=2 — results attributed to wrong benchmark; items=5,412
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.8.SS.8.A.4.10,ccd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=3,293
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SS.7.CG.2.10,3ee32b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=3,287
+wrong_identifier_pinned,Central Florida Preparatory School,,,,MA.1.NSO.2,3b9d2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=4 but code last segment=2 — results attributed to wrong benchmark; items=4,260
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.5.GR.3,3c322b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=2 but code last segment=3 — results attributed to wrong benchmark; items=4,231
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.6.SS.6.W.3.14,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=14 — results attributed to wrong benchmark; items=4,229
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SS.7.CG.3.15,3eed2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=15 — results attributed to wrong benchmark; items=2,223
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.3.AR.3,3bdd2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=3 — results attributed to wrong benchmark; items=5,204
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SS.7.CG.2.10,3ee32b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,190
+wrong_identifier_pinned,Crestwell School,,,,MA.4.NSO.2,3bf42b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=3 but code last segment=2 — results attributed to wrong benchmark; items=2,160
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.5.NSO.1,3c162b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=3 but code last segment=1 — results attributed to wrong benchmark; items=4,154
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SS.7.CG.1.10,3ed82b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,128
+wrong_identifier_pinned,Crestwell School,,,,MA.3.AR.3,3bdd2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=3 — results attributed to wrong benchmark; items=2,116
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,MA.7.AR.4,3c6c2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=2 but code last segment=4 — results attributed to wrong benchmark; items=2,116
+wrong_identifier_pinned,Athenian Academy of Technology and the Arts,,,,SOC.8.SS.8.A.3.10,cbd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,114
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.8.SS.8.A.3.10,cbd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,113
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.6.SS.6.W.3.13,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=13 — results attributed to wrong benchmark; items=2,95
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.6.SS.6.W.3.10,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,90
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.6.SS.6.W.3.12,c2a1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=12 — results attributed to wrong benchmark; items=4,90
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SS.7.CG.3.10,3eed2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,71
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.8.SS.8.A.3.12,cbd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=12 — results attributed to wrong benchmark; items=2,53
+wrong_identifier_pinned,Crestwell School,,,,MA.1.NSO.2,3b9d2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=4 but code last segment=2 — results attributed to wrong benchmark; items=1,45
+wrong_identifier_pinned,Central Florida Preparatory School,,,,MA.3.AR.3,3bdd2b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=3 — results attributed to wrong benchmark; items=2,36
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.8.SS.8.A.3.15,cbd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=15 — results attributed to wrong benchmark; items=2,29
+wrong_identifier_pinned,Central Florida Preparatory School,,,,SOC.8.SS.8.A.4.10,ccd1b207-8bad-43d4-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=1 but code last segment=10 — results attributed to wrong benchmark; items=2,27
+wrong_identifier_pinned,Crestwell School,,,,MA.5.GR.3,3c322b67-8bad-44d5-bb62-d37ecb91f432,fact pinned identifier w/ standard_new=2 but code last segment=3 — results attributed to wrong benchmark; items=1,13

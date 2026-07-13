@@ -1,0 +1,16 @@
+table_name,rls_enabled,policy_count,has_school_id,classification
+cube_question_summary_overall_by_item,f,0,t,"REPORT-READ-LAYER cube: LIVE cross-tenant leak (RLS off, 0 policies) — all 8 sibling cubes protected"
+ingested_files,f,0,t,admin/ingestion/lti operational table (service_role/get_db) — latent
+ingestion_runs,f,0,t,admin/ingestion/lti operational table (service_role/get_db) — latent
+lti_deployment,f,0,t,admin/ingestion/lti operational table (service_role/get_db) — latent
+stg_question_data,f,0,t,"staging table (pipeline, read via service_role/get_db) — latent"
+stg_student_submission,f,0,t,"staging table (pipeline, read via service_role/get_db) — latent"
+stg_submission_summary,f,0,t,"staging table (pipeline, read via service_role/get_db) — latent"
+stg_user,f,0,t,"staging table (pipeline, read via service_role/get_db) — latent"
+tenant_config_sync_runs,f,0,t,admin/ingestion/lti operational table (service_role/get_db) — latent
+user_sync_runs,f,0,t,admin/ingestion/lti operational table (service_role/get_db) — latent
+dim_standard,f,0,f,"GLOBAL lookup, no school_id — intentional RLS bypass (not a leak)"
+dim_strand,f,0,f,"GLOBAL lookup, no school_id — intentional RLS bypass (not a leak)"
+lti_launch_session,f,0,f,"LTI table, no school_id column — not school-tenant-scoped"
+lti_registration,f,0,f,"LTI table, no school_id column — not school-tenant-scoped"
+lti_user_identity,f,0,f,"LTI table, no school_id column — not school-tenant-scoped"

@@ -126,6 +126,16 @@ WITH base AS (
   -- students only (notebook 1199); per-school role via schools.student_role_id
   JOIN schools sch ON sch.school_id = src.school_id
   WHERE src.user_role_id = sch.student_role_id
+    -- Drop spurious per-(item, label) duplicate exports (2026-07 audit): a
+    -- partial-question copy of the item re-exported under a wrong subject/grade
+    -- folder (same section_nid, so latest-export-wins cannot collapse it).
+    AND NOT EXISTS (
+      SELECT 1 FROM fact_row_exclusions x
+      WHERE x.school_id = src.school_id
+        AND x.item_id   = src.item_id
+        AND x.subject   = src.subject
+        AND x.grade     = src.grade
+    )
 ),
 latest_export AS (
   -- LATEST-EXPORT-WINS (legacy parity, Schoology_py.ipynb build_fact_tables

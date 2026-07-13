@@ -1,0 +1,31 @@
+school_name,src,assessment_type,n_rows,n_subject_ids
+Athenian Academy of Technology and the Arts,dim_subject,Assessments,71,71
+Athenian Academy of Technology and the Arts,dim_subject,Lesson  Assessments,1138,1138
+Athenian Academy of Technology and the Arts,dim_subject,Lesson Assessments,1,1
+Athenian Academy of Technology and the Arts,dim_subject,Test,1,1
+Athenian Academy of Technology and the Arts,dim_subject,Unit-Chap  Assessments,44,44
+Athenian Academy of Technology and the Arts,fact,Assessments,49240,71
+Athenian Academy of Technology and the Arts,fact,Lesson  Assessments,1207153,1138
+Athenian Academy of Technology and the Arts,fact,Lesson Assessments,1508,1
+Athenian Academy of Technology and the Arts,fact,Test,342,1
+Athenian Academy of Technology and the Arts,fact,Unit-Chap  Assessments,35942,44
+Central Florida Preparatory School,dim_subject,Lesson  Assessments,1,1
+Central Florida Preparatory School,dim_subject,Summative,186,186
+Central Florida Preparatory School,dim_subject,topic,102,102
+Central Florida Preparatory School,dim_subject,Unit,56,56
+Central Florida Preparatory School,dim_subject,Unit Test,2,2
+Central Florida Preparatory School,dim_subject,Weekly Test,13,13
+Central Florida Preparatory School,fact,Lesson  Assessments,330,1
+Central Florida Preparatory School,fact,Summative,145005,186
+Central Florida Preparatory School,fact,topic,65917,102
+Central Florida Preparatory School,fact,Unit,25049,56
+Central Florida Preparatory School,fact,Unit Test,556,2
+Central Florida Preparatory School,fact,Weekly Test,4796,13
+Crestwell School,dim_subject,2 sectionsAll Sections,1,1
+Crestwell School,dim_subject,Chap Test,3,3
+Crestwell School,dim_subject,Summative,218,218
+Crestwell School,dim_subject,Weekly Test,1,1
+Crestwell School,fact,2 sectionsAll Sections,45,1
+Crestwell School,fact,Chap Test,794,3
+Crestwell School,fact,Summative,110281,218
+Crestwell School,fact,Weekly Test,30,1
