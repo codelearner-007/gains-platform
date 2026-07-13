@@ -161,11 +161,14 @@ _HTML_TAG_RE = re.compile(r"<(?!https?://)[^>]+>")
 def _strip_html(s: Optional[str]) -> str:
     if not s:
         return ""
-    # Strip tags, then decode entities so the plain text reads cleanly
-    # (e.g. "x&nbsp;&gt;&nbsp;a" -> "x > a") — legacy's cleaned descriptions
-    # are entity-free. `<https://…>` image placeholders are preserved by the
-    # tag regex and carry no entities, so unescape leaves them intact.
-    return _html.unescape(_HTML_TAG_RE.sub("", s)).strip()
+    # Decode entities FIRST, then strip tags, so entity-escaped markup
+    # (e.g. "&lt;b&gt;x&lt;/b&gt;") is resurrected to real tags and then
+    # removed — never rendered live. Decoding after stripping would leave
+    # those tags intact (a latent XSS/format landmine). Legacy's cleaned
+    # descriptions are entity-free plain text; `<https://…>` image
+    # placeholders carry no entities, so unescape leaves them untouched and
+    # the tag regex's URL-scheme lookahead still preserves them.
+    return _HTML_TAG_RE.sub("", _html.unescape(s)).strip()
 
 
 def _format_pct(v: float) -> str:
@@ -873,8 +876,12 @@ class ReportService:
         assessment_type[, section]) scope. Per the legacy RDL:
 
         * per-standard **Score** cell = ``SUM(score)/SUM(possible)`` (``n/N``);
-        * per-standard **%** cell = ``SUM(score)/user_possible_point`` — the
-          per-student YEAR denominator ("contribution to year", small values);
+        * per-standard **%** cell = mastery ``SUM(score)/SUM(possible)`` for
+          that (student, standard) — the same received/possible ratio the
+          per-standard subtotals and grand totals use, so a cell, its column
+          subtotal and the grand total all sit on one 0–100 % mastery scale
+          (the legacy fully-populated RDL renders these as mastery, banded at
+          70/80 %);
         * student **Score %** = mastery ``SUM(score)/SUM(possible)``;
         * **Possible Points** column = ``MAX(user_overall_possible_point)``;
         * **# Correct Answers** column = ``SUM(score)``;
@@ -951,7 +958,6 @@ class ReportService:
                     "user_name": safe_str(r.get("user_name")),
                     # per-student constants (identical on every one of the
                     # student's rows).
-                    "user_possible_point": to_float(r.get("user_possible_point")),
                     "user_overall_possible_point": to_float(
                         r.get("user_overall_possible_point")
                     ),
@@ -978,16 +984,16 @@ class ReportService:
             students_list: list[YtdStudentRow] = []
             t_std: dict[str, list[float]] = {}
             for uid, s in teachers[teacher].items():
-                upp = s["user_possible_point"]        # per-standard "%" denominator
                 s_recv = sum(v[0] for v in s["cells"].values())
                 s_poss = sum(v[1] for v in s["cells"].values())
                 cells = {
                     label: YtdCell(
                         points_received=round(v[0], 4),
                         points_possible=round(v[1], 4),
-                        # per-standard "%" = contribution to the student's YEAR
-                        # possible total (legacy Textbox30 = Sum(Score)/UserYear).
-                        score_pct=round(v[0] / upp, 6) if upp > 0 else 0.0,
+                        # per-standard "%" = mastery received/possible for that
+                        # (student, standard) — same scale as the subtotal and
+                        # grand-total Score% this cell sits under.
+                        score_pct=_pct(v[0], v[1]),
                     )
                     for label, v in s["cells"].items()
                 }
@@ -1010,7 +1016,10 @@ class ReportService:
                     g = grand_std.setdefault(label, [0.0, 0.0])
                     g[0] += v[0]
                     g[1] += v[1]
-            students_list.sort(key=lambda x: x.score_pct)
+            # Legacy orders students ASCENDING by mastery Score%; break ties on
+            # name then uid so row order is fully deterministic across identical
+            # requests/exports.
+            students_list.sort(key=lambda x: (x.score_pct, x.user_name, x.user_uid))
             t_recv = sum(v[0] for v in t_std.values())
             t_poss = sum(v[1] for v in t_std.values())
             teacher_groups.append(
@@ -1078,7 +1087,6 @@ class ReportService:
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
         )
 
         standards: list[StandardSummaryRollupRow] = []
@@ -1103,7 +1111,6 @@ class ReportService:
                     subject=safe_str(row.get("subject")),
                     grades=_coerce_str_list(row.get("grades")),
                     num_questions=to_int(row.get("num_questions")),
-                    num_assessments=to_int(row.get("num_assessments")),
                     grade_average=round(grade_avg, 6),
                     grade_average_pct=_format_pct(grade_avg),
                     last_change_date_time=(
@@ -1135,21 +1142,18 @@ class ReportService:
                 subject=filters.subject,
                 grade=filters.grade,
                 category=filters.category,
-                section=filters.section,
             )
             total_questions_cqso = await self.cube.get_school_total_questions(
                 session_filter=filters.session,
                 subject=filters.subject,
                 grade=filters.grade,
                 category=filters.category,
-                section=filters.section,
             )
             grade_average = await self.cube.get_school_overall_grade_average(
                 session_filter=filters.session,
                 subject=filters.subject,
                 grade=filters.grade,
                 category=filters.category,
-                section=filters.section,
             )
         kpis = StandardSummaryKpis(
             total_standards=total_standards,
@@ -1166,7 +1170,6 @@ class ReportService:
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
         )
         data_quality = AlignmentDataQuality(
             alignment_status=_classify_alignment(
@@ -1296,7 +1299,6 @@ class ReportService:
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
         )
         strands_rollup: list[StrandSummaryRollupRow] = []
         for row in strand_rows:
@@ -1315,7 +1317,6 @@ class ReportService:
                     strand=strand_name,
                     num_standards=to_int(row.get("num_standards")),
                     num_questions=to_int(row.get("num_questions")),
-                    num_assessments=to_int(row.get("num_assessments")),
                     grade_average=round(grade_avg, 6),
                     grade_average_pct=_format_pct(grade_avg),
                     incorrect_pct=round(max(0.0, 1.0 - grade_avg), 6),
@@ -1328,7 +1329,6 @@ class ReportService:
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
             strand=filters.strand,
         )
         standards_rollup: list[StrandSummaryStandardRow] = [
@@ -1337,7 +1337,6 @@ class ReportService:
                 schoology_standard=safe_str(r.get("schoology_standard")),
                 cluster=safe_str(r.get("cluster")),
                 num_questions=to_int(r.get("num_questions")),
-                num_assessments=to_int(r.get("num_assessments")),
                 grade_average=round(to_float(r.get("grade_average")), 6),
                 grade_average_pct=_format_pct(to_float(r.get("grade_average"))),
             )
@@ -1357,7 +1356,6 @@ class ReportService:
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
         )
         data_quality = AlignmentDataQuality(
             alignment_status=_classify_alignment(

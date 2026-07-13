@@ -35,8 +35,9 @@ import {
  * (verbatim RDL BackgroundColor IIf → exact hexes via qsrPerformanceColor):
  * Student Name / Score% / Tests-Taken and the subtotal/grand Score% band on
  * the student's mastery Score%; each per-standard "%" cell bands on its own
- * value (the "contribution-to-year" ratio); the raw-points helper cells
- * (Score n/N, Possible Points, # Correct) use the neutral legacy grey.
+ * mastery value (received/possible, same scale as the subtotal it sits under);
+ * the raw-points helper cells (Score n/N, Possible Points, # Correct) use the
+ * neutral legacy grey.
  *
  * Variant differences (purely presentational):
  *   • 1 — Tests Taken column + per-standard Score AND %
@@ -318,9 +319,9 @@ function TeacherBlock({
             )}
             {standards.map((s) => {
               const cell = st.cells[s.standard_label];
-              // Per-standard "%" bands on its own (contribution) value; the
-              // Score "n/N" cell uses the neutral legacy grey. No-data → "-",
-              // white (unfilled), per RDL IsNothing(Possible_Points).
+              // Per-standard "%" bands on its own mastery value; the Score
+              // "n/N" cell uses the neutral legacy grey. No-data → "-", white
+              // (unfilled), per RDL IsNothing(Possible_Points).
               const pctBg = cell ? qsrPerformanceColor(cell.score_pct) : undefined;
               if (showScore) {
                 return [

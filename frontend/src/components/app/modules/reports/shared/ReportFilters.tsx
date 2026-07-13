@@ -25,12 +25,20 @@ interface ReportFiltersProps {
    * (card + Clear).
    */
   bare?: boolean;
+  /**
+   * `showSection` renders the Section slicer. The school-wide Standard/Strand
+   * Summary pages read the per-question overall cube, which has no section
+   * grain (section is a class-roster construct), so they hide it rather than
+   * present a slicer that does nothing.
+   */
+  showSection?: boolean;
 }
 
 export default function ReportFilters({
   value,
   onChange,
   bare = false,
+  showSection = true,
 }: ReportFiltersProps) {
   const { schoolId } = useSelectedSchool();
   const sessionsQ = useQuery({
@@ -48,6 +56,7 @@ export default function ReportFilters({
   const sectionsQ = useQuery({
     queryKey: reportsKeys.sections(schoolId ?? undefined),
     queryFn: () => reportsApi.sections(schoolId ?? undefined),
+    enabled: showSection,
   });
 
   function update(field: keyof AssessmentFilters, raw: string) {
@@ -169,28 +178,30 @@ export default function ReportFilters({
         </Select>
       </FilterField>
 
-      <FilterField label="Section">
-        <Select
-          value={value.section ?? ANY}
-          onValueChange={(v) => update('section', v)}
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Any" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY}>Any</SelectItem>
-            {sections.map((s) => {
-              const label =
-                s.section_name ?? s.section_code ?? s.section_nid;
-              return (
-                <SelectItem key={s.section_nid} value={label}>
-                  {label}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </FilterField>
+      {showSection && (
+        <FilterField label="Section">
+          <Select
+            value={value.section ?? ANY}
+            onValueChange={(v) => update('section', v)}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Any" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ANY}>Any</SelectItem>
+              {sections.map((s) => {
+                const label =
+                  s.section_name ?? s.section_code ?? s.section_nid;
+                return (
+                  <SelectItem key={s.section_nid} value={label}>
+                    {label}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </FilterField>
+      )}
 
       {!bare && (
         <Button

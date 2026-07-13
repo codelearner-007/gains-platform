@@ -1627,9 +1627,25 @@ class CubeRepository:
         """
         sql = text(
             f"""
-            WITH strand_agg AS (
+            WITH std_dim AS (
+                -- ONE dim_standard row per code (some codes have alias rows —
+                -- MA.912.* etc). Deduping deterministically, preferring a
+                -- populated strand, stops the code join from fanning out cqso
+                -- rows and inflating AVG(grade_average). Legacy's
+                -- cqso.Standards → dim_standard.Schoology_Standard relationship
+                -- is many-to-one, which this reproduces.
+                SELECT DISTINCT ON (schoology_standard)
+                       schoology_standard, strand
+                FROM dim_standard
+                WHERE schoology_standard IS NOT NULL AND schoology_standard <> ''
+                ORDER BY schoology_standard,
+                         (strand IS NULL OR strand = '') ASC,
+                         identifier
+            ),
+            strand_agg AS (
                 -- One row per Strand from the overall cube (legacy's DAX table),
-                -- joined to dim_standard by the standard CODE. Legacy measures:
+                -- joined to the deduped dim_standard by the standard CODE.
+                -- Legacy measures:
                 --   grade_average = AVERAGE(cqso[Grade_Average])       (flat)
                 --   num_standards = DISTINCTCOUNT(cqso[Standards])     (by code)
                 --   num_questions = DISTINCTCOUNT(cqso[Question_No])
@@ -1643,7 +1659,7 @@ class CubeRepository:
                 JOIN dim_subject dsubj
                   ON dsubj.school_id = cqso.school_id
                  AND dsubj.subject_id = cqso.subject_id
-                JOIN dim_standard ds
+                JOIN std_dim ds
                   ON ds.schoology_standard = cqso.standards
                 WHERE {_CQSO_YTD_FILTER_SQL}
                   AND ds.strand IS NOT NULL AND ds.strand <> ''
@@ -1657,7 +1673,7 @@ class CubeRepository:
                 JOIN dim_subject dsubj
                   ON dsubj.school_id = cqso.school_id
                  AND dsubj.subject_id = cqso.subject_id
-                JOIN dim_standard ds
+                JOIN std_dim ds
                   ON ds.schoology_standard = cqso.standards
                 WHERE {_CQSO_YTD_FILTER_SQL}
                   AND ds.strand IS NOT NULL AND ds.strand <> ''
@@ -1668,7 +1684,6 @@ class CubeRepository:
                 sa.strand                                AS strand,
                 sa.num_standards                         AS num_standards,
                 sa.num_questions                         AS num_questions,
-                0                                        AS num_assessments,
                 sa.grade_average                         AS grade_average,
                 COALESCE(ss.subjects, ARRAY[]::text[])   AS subjects
             FROM strand_agg sa
@@ -1755,7 +1770,6 @@ class CubeRepository:
                 COALESCE(m.subject, '')                           AS subject,
                 a.grades                                          AS grades,
                 a.num_questions                                   AS num_questions,
-                0                                                 AS num_assessments,
                 a.grade_average                                   AS grade_average,
                 m.last_change_date_time                           AS last_change_date_time
             FROM agg a
@@ -2225,7 +2239,7 @@ class CubeRepository:
     # (our ``cube_user_summary``) with all aggregation done in the SSRS tablix
     # cells — NOT a re-derivation from the raw fact table. We mirror that:
     # ``cube_user_summary`` already carries every precomputed year-to-date
-    # column the RDL reads (``user_possible_point``, ``user_overall_possible_point``,
+    # column the RDL reads (``user_overall_possible_point``,
     # ``*_by_overall_year``) and is one clean row per (user, item, question,
     # standard) with NO standard-alias fan-out, so a single scoped GROUP BY is
     # both the parity source and the fast path (kills the 1.6M-row fact scan +
@@ -2250,11 +2264,11 @@ class CubeRepository:
 
         Returns, per (section_instructors, user_uid, standard_label):
         ``points_received`` = SUM(total_score), ``points_possible`` =
-        SUM(total_possible_point); plus the per-student constants
-        ``user_possible_point`` (the per-standard "%" denominator — a
-        contribution-to-year ratio, per the RDL) and
-        ``user_overall_possible_point`` (the "Possible Points" column);
-        ``tests_taken`` = COUNT(DISTINCT item_name) for the student;
+        SUM(total_possible_point) — the per-standard cell renders as mastery
+        received/possible. Plus the per-student constant
+        ``user_overall_possible_point`` (the "Possible Points" column, legacy
+        ``MAX(user_overall_possible_point)``); ``tests_taken`` =
+        COUNT(DISTINCT item_name) for the student;
         ``unit_names`` = the assessments that touched the standard (variant 3
         sub-header); and the scope-constant ``grand_score`` /
         ``grand_possible`` (``*_by_overall_year``) for the year grand-total band.
@@ -2273,7 +2287,6 @@ class CubeRepository:
                     cus.item_name,
                     cus.total_score,
                     cus.total_possible_point,
-                    cus.user_possible_point,
                     cus.user_overall_possible_point,
                     cus.total_score_by_overall_year,
                     cus.total_possible_point_by_overall_year,
@@ -2302,20 +2315,22 @@ class CubeRepository:
                 ) d
             ),
             user_year AS (
-                -- Per-student year denominators, likewise summed across the
-                -- distinct groups the student appears in: user_possible_point
-                -- drives the per-standard "%" (contribution) denominator,
-                -- user_overall_possible_point the "Possible Points" column.
-                -- Single-group scope → the student's one value.
+                -- Per-student "Possible Points" column = legacy
+                -- MAX(user_overall_possible_point). user_overall_possible_point
+                -- is populated per (section, year-group) in the cube, so a
+                -- student spanning >1 section within a year-group has several
+                -- values: collapse them to ONE per (student, year-group) with
+                -- MAX (never SUM — that double-counts sections), then SUM only
+                -- across genuinely distinct year-groups (session/type may be
+                -- left unpinned; the page requires only subject+grade). A
+                -- single-group scope reduces to the legacy single MAX value.
                 SELECT user_uid,
-                       SUM(upp)::float  AS user_possible_point,
                        SUM(uopp)::float AS user_overall_possible_point
                 FROM (
-                    SELECT DISTINCT user_uid, session, subject, grade,
-                           assessment_type,
-                           user_possible_point         AS upp,
-                           user_overall_possible_point AS uopp
+                    SELECT user_uid, session, subject, grade, assessment_type,
+                           MAX(user_overall_possible_point) AS uopp
                     FROM scoped
+                    GROUP BY user_uid, session, subject, grade, assessment_type
                 ) d
                 GROUP BY user_uid
             ),
@@ -2349,7 +2364,6 @@ class CubeRepository:
                 c.standard_label,
                 c.points_received,
                 c.points_possible,
-                uy.user_possible_point,
                 uy.user_overall_possible_point,
                 t.tests_taken,
                 u.unit_names,

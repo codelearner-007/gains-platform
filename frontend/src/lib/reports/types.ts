@@ -440,7 +440,6 @@ export interface StandardSummaryRollupRow {
   subject: string;
   grades: string[];
   num_questions: number;
-  num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
   last_change_date_time: string | null;
@@ -471,7 +470,6 @@ export interface StrandSummaryRollupRow {
   strand: string;
   num_standards: number;
   num_questions: number;
-  num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
   incorrect_pct: number;
@@ -483,7 +481,6 @@ export interface StrandSummaryStandardRow {
   schoology_standard: string;
   cluster: string;
   num_questions: number;
-  num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
 }

@@ -428,13 +428,18 @@ class IncorrectAnswerDetailsPayload(BaseModel):
 
 
 class StandardSummaryFilters(BaseModel):
-    """Echo of the query params applied so the client can re-render chips."""
+    """Echo of the query params applied so the client can re-render chips.
+
+    Scoped by session/subject/grade/assessment_type via dim_subject. There is
+    no ``section`` grain on the overall-cube (cqso) page — section is a
+    class-roster construct not meaningful per standard — so the page carries no
+    Section slicer (legacy parity).
+    """
 
     session: Optional[str] = None
     subject: Optional[str] = None
     grade: Optional[str] = None
     category: Optional[str] = None
-    section: Optional[str] = None
 
 
 class StandardSummaryKpis(BaseModel):
@@ -470,7 +475,6 @@ class StandardSummaryRollupRow(BaseModel):
     subject: str
     grades: List[str] = []
     num_questions: int
-    num_assessments: int
     grade_average: float
     grade_average_pct: str
     last_change_date_time: Optional[str] = None
@@ -495,13 +499,17 @@ class StandardSummaryPayload(BaseModel):
 
 
 class StrandSummaryFilters(BaseModel):
-    """Echo of the query params applied so the client can re-render chips."""
+    """Echo of the query params applied so the client can re-render chips.
+
+    Scoped by session/subject/grade/assessment_type via dim_subject (no
+    ``section`` grain on the per-strand overall-cube page — legacy parity).
+    ``strand`` narrows the within-strand per-standard breakdown.
+    """
 
     session: Optional[str] = None
     subject: Optional[str] = None
     grade: Optional[str] = None
     category: Optional[str] = None
-    section: Optional[str] = None
     strand: Optional[str] = None
 
 
@@ -511,7 +519,6 @@ class StrandSummaryRollupRow(BaseModel):
     strand: str
     num_standards: int
     num_questions: int
-    num_assessments: int
     grade_average: float
     grade_average_pct: str
     incorrect_pct: float
@@ -525,7 +532,6 @@ class StrandSummaryStandardRow(BaseModel):
     schoology_standard: str
     cluster: str
     num_questions: int
-    num_assessments: int
     grade_average: float
     grade_average_pct: str
 

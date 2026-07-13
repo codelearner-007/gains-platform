@@ -678,7 +678,6 @@ def _standard_summary_to_xlsx(payload: StandardSummaryPayload) -> Workbook:
         "Strand",
         "Description",
         "Total Questions",
-        "Assessments",
         "Grade Average %",
         "% Incorrect",
     ]
@@ -690,12 +689,11 @@ def _standard_summary_to_xlsx(payload: StandardSummaryPayload) -> Workbook:
         _txt_cell(ws, r, 3, s.strand)
         _txt_cell(ws, r, 4, _plain(s.description))
         _txt_cell(ws, r, 5, s.num_questions, align=_CENTER)
-        _txt_cell(ws, r, 6, s.num_assessments, align=_CENTER)
-        _pct_cell(ws, r, 7, s.grade_average, fill=_perf_fill(s.grade_average))
-        _pct_cell(ws, r, 8, 1 - s.grade_average)
+        _pct_cell(ws, r, 6, s.grade_average, fill=_perf_fill(s.grade_average))
+        _pct_cell(ws, r, 7, 1 - s.grade_average)
         r += 1
     ws.freeze_panes = "A2"
-    _autosize(ws, {1: 24, 2: 18, 3: 22, 4: 48, 5: 15, 6: 13, 7: 16, 8: 12})
+    _autosize(ws, {1: 24, 2: 18, 3: 22, 4: 48, 5: 15, 6: 16, 7: 12})
     return wb
 
 
@@ -707,7 +705,6 @@ def _strand_summary_to_xlsx(payload: StrandSummaryPayload) -> Workbook:
         "Strand",
         "Standards",
         "Questions",
-        "Assessments",
         "Grade Average %",
         "% Incorrect",
     ]
@@ -717,12 +714,11 @@ def _strand_summary_to_xlsx(payload: StrandSummaryPayload) -> Workbook:
         _txt_cell(ws, r, 1, s.strand)
         _txt_cell(ws, r, 2, s.num_standards, align=_CENTER)
         _txt_cell(ws, r, 3, s.num_questions, align=_CENTER)
-        _txt_cell(ws, r, 4, s.num_assessments, align=_CENTER)
-        _pct_cell(ws, r, 5, s.grade_average, fill=_perf_fill(s.grade_average))
-        _pct_cell(ws, r, 6, s.incorrect_pct)
+        _pct_cell(ws, r, 4, s.grade_average, fill=_perf_fill(s.grade_average))
+        _pct_cell(ws, r, 5, s.incorrect_pct)
         r += 1
     ws.freeze_panes = "A2"
-    _autosize(ws, {1: 32, 2: 12, 3: 12, 4: 13, 5: 16, 6: 12})
+    _autosize(ws, {1: 32, 2: 12, 3: 12, 4: 16, 5: 12})
     return wb
 
 

@@ -112,7 +112,7 @@ export default function StrandSummaryPage() {
       </div>
 
       <div className="mb-2">
-        <ReportFilters value={filters} onChange={setFilters} />
+        <ReportFilters value={filters} onChange={setFilters} showSection={false} />
       </div>
 
       {data.data_quality?.alignment_status === 'missing' && (

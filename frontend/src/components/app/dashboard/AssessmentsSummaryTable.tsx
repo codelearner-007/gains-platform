@@ -472,14 +472,13 @@ function OpenReportMenu({ itemId, itemName }: { itemId: string; itemName: string
 }
 
 // ── Variant B: By Standard (client-side, bounded) ────────────────────────
-type SKey = 'standard' | 'strand' | 'subject' | 'questions' | 'assessments' | 'average';
+type SKey = 'standard' | 'strand' | 'subject' | 'questions' | 'average';
 
 const S_ACCESSORS: Record<SKey, SortAccessor<StandardSummaryRollupRow>> = {
   standard: (r) => (r.cpalms_standard || r.schoology_standard || '').toLowerCase(),
   strand: (r) => (r.strand ?? '').toLowerCase(),
   subject: (r) => (r.subject ?? '').toLowerCase(),
   questions: (r) => r.num_questions,
-  assessments: (r) => r.num_assessments,
   average: (r) => r.grade_average,
 };
 
@@ -513,7 +512,7 @@ function ByStandard({
     accessors: S_ACCESSORS,
     defaultColumn: 'standard',
     defaultDirection: 'asc',
-    initialDirections: { questions: 'desc', assessments: 'desc', average: 'desc' },
+    initialDirections: { questions: 'desc', average: 'desc' },
   });
   const { visibleRows, scrollRef, sentinelRef, hasMore, shown, total } =
     useInfiniteWindow(sortedRows);
@@ -528,13 +527,12 @@ function ByStandard({
               <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
               <Th><SortableHeader column="subject" label="Subject" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
               <Th align="center"><SortableHeader column="questions" label="# Questions" title="Number of Questions" description="Count of distinct questions mapped to this standard across all assessments." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th align="center"><SortableHeader column="assessments" label="# Assessments" title="Number of Assessments" description="Count of distinct assessments with at least one question on this standard." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
               <Th><SortableHeader column="average" label="Grade Average" title="Grade Average" description="Average percent-correct for the standard, with the school-average marker." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
             </tr>
           </thead>
           <tbody>
             {total === 0 ? (
-              <EmptyRow cols={6} label="No standards match the current filters." />
+              <EmptyRow cols={5} label="No standards match the current filters." />
             ) : (
               visibleRows.map((r, i) => (
                 <tr key={`${r.schoology_standard}-${r.subject}-${i}`} className="transition-colors hover:bg-accent/30">
@@ -542,7 +540,6 @@ function ByStandard({
                   <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.strand || '—'}</td>
                   <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.subject || '—'}</td>
                   <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_questions}</td>
-                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_assessments}</td>
                   <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
                     <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
                   </td>
