@@ -7,24 +7,18 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowUpRight,
-  BookOpen,
-  GraduationCap,
-  ListChecks,
-  Percent,
-  Users,
-} from 'lucide-react';
+import { AlertCircle, ArrowUpRight } from 'lucide-react';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
+import { perfTextClass } from '@/lib/reports/colors';
 import { getReportsByGroup } from '@/lib/reports/report-types';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatCard } from '@/components/app/StatCard';
 import { Button } from '@/components/ui/button';
 import DashboardHeader from '@/components/app/dashboard/DashboardHeader';
-import DashboardFilters from '@/components/app/dashboard/DashboardFilters';
+import SearchInput from '@/components/app/dashboard/SearchInput';
+import FilterPopover from '@/components/app/dashboard/FilterPopover';
 import SubjectKpiCards from '@/components/app/dashboard/SubjectKpiCards';
 import GradeChips from '@/components/app/dashboard/GradeChips';
 import AssessmentsSummaryTable, {
@@ -76,7 +70,17 @@ const STUDENT_INITIAL_DIR: Record<StudentSortKey, 'asc' | 'desc'> = {
   subjects: 'desc',
 };
 
-type SummaryMode = 'assessments' | 'students';
+/** The single dashboard view selector — four lenses on the same scoped data.
+ *  Merges the old top "By Assessment / By Student" mode with the panel's
+ *  "By Assessment / By Standard / By Strand" grouping into one control, so
+ *  "Assessment" no longer means two different things. */
+type DashView = 'assessment' | 'student' | 'standard' | 'strand';
+const VIEW_OPTIONS: { value: DashView; label: string }[] = [
+  { value: 'assessment', label: 'Assessments' },
+  { value: 'student', label: 'Students' },
+  { value: 'standard', label: 'Standards' },
+  { value: 'strand', label: 'Strands' },
+];
 
 /** Latest academic year = highest session string (e.g. "2025-26" > "2024-25"). */
 function latestSession(sessions: { session: string | null }[]): string | undefined {
@@ -96,7 +100,7 @@ export function DashboardPage() {
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [strandSort, setStrandSort] = useState<StrandRowSortKey>('date');
   const [strandDir, setStrandDir] = useState<'asc' | 'desc'>('desc');
-  const [mode, setMode] = useState<SummaryMode>('assessments');
+  const [view, setView] = useState<DashView>('assessment');
   const [studentSort, setStudentSort] = useState<StudentSortKey>('name');
   const [studentDir, setStudentDir] = useState<'asc' | 'desc'>('asc');
   const [inited, setInited] = useState(false);
@@ -174,7 +178,7 @@ export function DashboardPage() {
     setDir('desc');
     setStrandSort('date');
     setStrandDir('desc');
-    setMode('assessments');
+    setView('assessment');
     setStudentSort('name');
     setStudentDir('asc');
     setInited(true);
@@ -263,7 +267,7 @@ export function DashboardPage() {
         limit: PAGE_SIZE,
         offset: pageParam,
       }),
-    enabled: inited && mode === 'students',
+    enabled: inited && view === 'student',
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     placeholderData: (prev) => prev,
@@ -340,8 +344,8 @@ export function DashboardPage() {
   );
   const studentTotal = studentsQ.data?.pages[0]?.total ?? 0;
   const studentFetching = studentsQ.isFetching && !studentsQ.isFetchingNextPage;
-  const studentLoading = mode === 'students' && (!inited || studentsQ.isPending);
-  const studentBusy = studentLoading || (mode === 'students' && studentFetching);
+  const studentLoading = view === 'student' && (!inited || studentsQ.isPending);
+  const studentBusy = studentLoading || (view === 'student' && studentFetching);
 
   const headerLoading = !inited || stdQ.isLoading;
   // In-flight (refetch) state — NOT a scroll fetch-more — for the two grids.
@@ -359,7 +363,7 @@ export function DashboardPage() {
   const searchLoading =
     search.trim() !== debouncedSearch ||
     (debouncedSearch.length > 0 &&
-      (mode === 'students' ? studentFetching : asmtFetching || strandFetching));
+      (view === 'student' ? studentFetching : asmtFetching || strandFetching));
 
   const anyError =
     overviewQ.isError ||
@@ -384,25 +388,22 @@ export function DashboardPage() {
   const schoolWideHint = filters.section ? 'school-wide' : undefined;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="mx-auto max-w-7xl space-y-6">
       <DashboardHeader
         schoolName={school?.name ?? null}
         logoUrl={school?.logo_url ?? null}
         currentSession={school?.current_session ?? null}
         loading={headerLoading}
-      />
-
-      <DashboardFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        search={search}
-        onSearchChange={setSearch}
-        searchLoading={searchLoading}
-        resultCount={mode === 'students' ? studentTotal : assessmentTotal}
-        refreshedAt={refreshedAt}
-        onRefresh={handleRefresh}
-        refreshing={refreshing}
-        filtersDisabled={filtersBusy}
+        actions={
+          <FilterPopover
+            filters={filters}
+            onChange={setFilters}
+            refreshedAt={refreshedAt}
+            onRefresh={handleRefresh}
+            refreshing={refreshing}
+            disabled={filtersBusy}
+          />
+        }
       />
 
       {anyError && (
@@ -417,30 +418,36 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Subject KPI cards — hero stat + primary subject filter (legacy slicer). */}
-      <SubjectKpiCards
-        subjects={subjects}
-        selected={filters.subject}
-        onSelect={(subject) => setFilters((f) => ({ ...f, subject }))}
-        loading={subjectsLoading}
-        disabled={filtersBusy}
-      />
+      {/* Subject — primary subject slicer (legacy). Perf colour lives on the %. */}
+      <section className="space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground">Subject</p>
+        <SubjectKpiCards
+          subjects={subjects}
+          selected={filters.subject}
+          onSelect={(subject) => setFilters((f) => ({ ...f, subject }))}
+          loading={subjectsLoading}
+          disabled={filtersBusy}
+        />
+      </section>
 
-      {/* Grade chips — primary grade filter (legacy slicer). */}
-      <GradeChips
-        grades={grades}
-        selected={filters.grade}
-        onSelect={(grade) =>
-          // Changing the grade invalidates the grade-scoped selections, so clear
-          // the subject + section-instructor (a stale subject would point at a
-          // card that no longer exists; a stale grade×instructor combo goes
-          // empty). Academic year + assessment type are grade-independent and
-          // are intentionally preserved.
-          setFilters((f) => ({ ...f, grade, subject: undefined, instructor: undefined }))
-        }
-        loading={!inited || gradesQ.isLoading}
-        disabled={filtersBusy}
-      />
+      {/* Grade — primary grade slicer (legacy). */}
+      <section className="space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground">Grade</p>
+        <GradeChips
+          grades={grades}
+          selected={filters.grade}
+          onSelect={(grade) =>
+            // Changing the grade invalidates the grade-scoped selections, so clear
+            // the subject + section-instructor (a stale subject would point at a
+            // card that no longer exists; a stale grade×instructor combo goes
+            // empty). Academic year + assessment type are grade-independent and
+            // are intentionally preserved.
+            setFilters((f) => ({ ...f, grade, subject: undefined, instructor: undefined }))
+          }
+          loading={!inited || gradesQ.isLoading}
+          disabled={filtersBusy}
+        />
+      </section>
 
       {/* KPI strip (legacy KPI cardVisuals). Total Standards + Assessments are
           counts of the filtered sets and track every filter (incl. section).
@@ -448,92 +455,108 @@ export function DashboardPage() {
           OVERALL cube, which — like legacy PowerBI — has no section grain, so
           they stay school-wide; marked "school-wide" when a section is active. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Total Students" value={kpis?.total_students ?? '—'} hint={schoolWideHint} icon={Users} loading={headerLoading} />
-        <StatCard label="Total Standards" value={kpis?.total_standards ?? '—'} icon={GraduationCap} loading={headerLoading} />
-        <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} hint={schoolWideHint} icon={ListChecks} loading={headerLoading} />
-        {mode === 'students' ? (
-          <StatCard label="Students" value={studentBusy ? '—' : studentTotal} icon={Users} loading={studentBusy} />
-        ) : (
-          <StatCard label="Assessments" value={asmtBusy ? '—' : assessmentTotal} icon={BookOpen} loading={asmtBusy} />
-        )}
-        <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} hint={schoolWideHint} icon={Percent} loading={headerLoading} />
+        <StatCard variant="plain" label="Total students" value={kpis?.total_students ?? '—'} hint={schoolWideHint} loading={headerLoading} />
+        <StatCard variant="plain" label="Total standards" value={kpis?.total_standards ?? '—'} loading={headerLoading} />
+        <StatCard variant="plain" label="Total questions" value={kpis?.total_questions ?? '—'} hint={schoolWideHint} loading={headerLoading} />
+        <StatCard variant="plain" label="Assessments" value={asmtBusy ? '—' : assessmentTotal} loading={asmtBusy} />
+        <StatCard
+          variant="plain"
+          label="Grade average"
+          value={kpis?.grade_average_pct ?? '—'}
+          valueClassName={kpis?.grade_average != null ? perfTextClass(kpis.grade_average) : ''}
+          hint={schoolWideHint}
+          loading={headerLoading}
+        />
       </div>
 
-      {/* By Assessment ⇄ By Student — same filters/search, different query. */}
-      <div className="flex items-center justify-between gap-2">
-        <div
-          role="tablist"
-          aria-label="Summary view"
-          className="inline-flex rounded-md bg-muted/60 p-0.5"
-        >
-          {(['assessments', 'students'] as const).map((m) => {
-            const active = mode === m;
-            return (
-              <button
-                key={m}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setMode(m)}
-                className={`rounded px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                  active
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-foreground/70 hover:bg-background'
-                }`}
-              >
-                {m === 'assessments' ? 'By Assessment' : 'By Student'}
-              </button>
-            );
-          })}
+      {/* Summary — one 4-view selector (resolves the old double "By Assessment")
+          + a row-scoped search, then the table panel. */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-sm font-semibold text-foreground">Summary</h2>
+          <div
+            role="tablist"
+            aria-label="Summary view"
+            className="inline-flex items-center gap-0.5 rounded-lg bg-muted p-0.5"
+          >
+            {VIEW_OPTIONS.map((v) => {
+              const active = view === v.value;
+              return (
+                <button
+                  key={v.value}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setView(v.value)}
+                  className={[
+                    'h-7 rounded-md px-3 text-xs font-medium transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground',
+                  ].join(' ')}
+                >
+                  {v.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="ml-auto min-w-0 basis-full sm:basis-auto">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              loading={searchLoading}
+              resultCount={view === 'student' ? studentTotal : assessmentTotal}
+            />
+          </div>
         </div>
-      </div>
 
-      {mode === 'students' ? (
-        <StudentsSummaryTable
-          schoolId={schoolId ?? undefined}
-          session={filters.session}
-          classAverage={schoolAverage}
-          rows={studentRows}
-          total={studentTotal}
-          hasMore={studentsQ.hasNextPage}
-          isFetchingMore={studentsQ.isFetchingNextPage}
-          onFetchMore={() => void studentsQ.fetchNextPage()}
-          sort={studentSort}
-          dir={studentDir}
-          onSort={onStudentSort}
-          loading={studentLoading}
-        />
-      ) : (
-        <AssessmentsSummaryTable
-          schoolAverage={schoolAverage}
-          assessments={assessmentRows}
-          assessmentTotal={assessmentTotal}
-          assessmentHasMore={asmtQ.hasNextPage}
-          assessmentFetchingMore={asmtQ.isFetchingNextPage}
-          onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
-          assessmentSort={sort}
-          assessmentDir={dir}
-          onAssessmentSort={onSort}
-          assessmentLoading={asmtLoading}
-          strandRows={strandRows}
-          strandTotal={strandTotal}
-          strandHasMore={strandRowsQ.hasNextPage}
-          strandFetchingMore={strandRowsQ.isFetchingNextPage}
-          onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
-          strandSort={strandSort}
-          strandDir={strandDir}
-          onStrandSort={onStrandSort}
-          strandLoading={strandLoading}
-          standards={stdQ.data?.standards ?? []}
-          search={search}
-          loading={stdLoading}
-        />
-      )}
+        {view === 'student' ? (
+          <StudentsSummaryTable
+            schoolId={schoolId ?? undefined}
+            session={filters.session}
+            classAverage={schoolAverage}
+            rows={studentRows}
+            total={studentTotal}
+            hasMore={studentsQ.hasNextPage}
+            isFetchingMore={studentsQ.isFetchingNextPage}
+            onFetchMore={() => void studentsQ.fetchNextPage()}
+            sort={studentSort}
+            dir={studentDir}
+            onSort={onStudentSort}
+            loading={studentLoading}
+          />
+        ) : (
+          <AssessmentsSummaryTable
+            view={view}
+            schoolAverage={schoolAverage}
+            assessments={assessmentRows}
+            assessmentTotal={assessmentTotal}
+            assessmentHasMore={asmtQ.hasNextPage}
+            assessmentFetchingMore={asmtQ.isFetchingNextPage}
+            onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
+            assessmentSort={sort}
+            assessmentDir={dir}
+            onAssessmentSort={onSort}
+            assessmentLoading={asmtLoading}
+            strandRows={strandRows}
+            strandTotal={strandTotal}
+            strandHasMore={strandRowsQ.hasNextPage}
+            strandFetchingMore={strandRowsQ.isFetchingNextPage}
+            onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
+            strandSort={strandSort}
+            strandDir={strandDir}
+            onStrandSort={onStrandSort}
+            strandLoading={strandLoading}
+            standards={stdQ.data?.standards ?? []}
+            search={search}
+            loading={stdLoading}
+          />
+        )}
+      </section>
 
       {/* Program (school-wide) reports — always-visible launcher buttons. */}
       <section className="space-y-2 pt-1">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Program reports
-        </p>
+        <h2 className="text-sm font-semibold text-foreground">Program reports</h2>
         <nav aria-label="Program reports" className="flex flex-wrap gap-2">
           {PROGRAM_REPORTS.map((r) => {
             const Icon = r.icon;
@@ -542,7 +565,7 @@ export function DashboardPage() {
                 key={r.slug}
                 asChild
                 variant="outline"
-                className="group h-11 flex-1 justify-start gap-2 sm:flex-none"
+                className="group h-10 flex-1 justify-start gap-2 sm:flex-none"
               >
                 <Link href={`/app/reports/${r.slug}`} aria-label={`Open ${r.canonicalName}`}>
                   <Icon className="h-4 w-4 text-primary" />

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import type { StudentBrowseRow } from '@/lib/reports/types';
-import { HEADER_BAR_BG, LAYOUT_BORDER, PBIX_ACCENT_LIGHT_BLUE } from '@/lib/reports/colors';
+import { LAYOUT_BORDER } from '@/lib/reports/colors';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   SortableHeader,
@@ -79,8 +79,8 @@ function MasteryMini({ green, yellow, pink }: { green: number; yellow: number; p
 function Th({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'center' | 'right' }) {
   return (
     <th
-      className="border-b px-3 py-2 text-xs font-semibold text-foreground"
-      style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER, textAlign: align }}
+      className="border-b border-border bg-muted px-3 py-2 text-xs font-medium text-muted-foreground"
+      style={{ textAlign: align }}
     >
       {children}
     </th>
@@ -125,15 +125,7 @@ export default function StudentsSummaryTable({
   }, [hasMore, isFetchingMore]);
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card" style={{ borderColor: LAYOUT_BORDER }}>
-      <div
-        className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5"
-        style={{ backgroundColor: HEADER_BAR_BG, borderColor: LAYOUT_BORDER }}
-      >
-        <h2 className="text-sm font-bold text-foreground">Students</h2>
-        <span className="text-[11px] text-muted-foreground">Open a student for their full multi-subject report</span>
-      </div>
-
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       {loading ? (
         <div className="space-y-2 p-4">
           {Array.from({ length: 6 }).map((_, i) => (

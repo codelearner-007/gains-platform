@@ -164,6 +164,18 @@ export function performanceBand(grade: number): PerfBand {
   return PERF_BAND_HIGH;
 }
 
+/**
+ * Dark, WCAG-AA, dark-mode-safe performance tone for a *value* (text), not a
+ * fill. Lets the dashboard signal the traffic light on the number itself
+ * (subject-card %, Grade-Average KPI) so the surrounding card chrome can stay
+ * neutral — the perf colour reads as data, never as decoration.
+ */
+export function perfTextClass(grade: number): string {
+  if (grade < 0.7) return 'text-rose-700 dark:text-rose-400';
+  if (grade < 0.8) return 'text-amber-700 dark:text-amber-400';
+  return 'text-emerald-700 dark:text-emerald-400';
+}
+
 // Cell-background colour for grade-coloured percentage cells (QRA per-question
 // table, strands / standards summary tables). Mirrors PBIX semantics so the
 // pink/yellow/green traffic light is consistent across every report.
