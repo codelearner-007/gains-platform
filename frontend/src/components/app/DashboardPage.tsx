@@ -388,7 +388,12 @@ export function DashboardPage() {
   const schoolWideHint = filters.section ? 'school-wide' : undefined;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="relative isolate mx-auto max-w-7xl space-y-6">
+      {/* Subtle brand wash behind the header — ambient warmth, not chrome. */}
+      <div
+        aria-hidden
+        className="bg-brand-glow pointer-events-none absolute inset-x-0 -top-6 -z-10 h-64"
+      />
       <DashboardHeader
         schoolName={school?.name ?? null}
         logoUrl={school?.logo_url ?? null}

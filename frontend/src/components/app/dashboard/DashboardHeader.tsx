@@ -34,10 +34,13 @@ export default function DashboardHeader({
           <img
             src={logoUrl}
             alt={schoolName ? `${schoolName} logo` : 'School logo'}
-            className="h-10 w-10 shrink-0 rounded-md border border-border bg-card object-contain p-1"
+            className="h-10 w-10 shrink-0 rounded-md border border-border bg-card object-contain p-1 shadow-sm"
           />
         ) : (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-white shadow-sm"
+            style={{ backgroundImage: 'var(--gradient-brand)' }}
+          >
             <GraduationCap className="h-5 w-5" />
           </div>
         )}

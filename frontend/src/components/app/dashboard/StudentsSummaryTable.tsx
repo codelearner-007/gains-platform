@@ -125,7 +125,7 @@ export default function StudentsSummaryTable({
   }, [hasMore, isFetchingMore]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       {loading ? (
         <div className="space-y-2 p-4">
           {Array.from({ length: 6 }).map((_, i) => (

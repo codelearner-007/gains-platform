@@ -132,7 +132,7 @@ export default function AssessmentsSummaryTable({
         : loading;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       {variantLoading ? (
         <div className="space-y-2 p-4">
           {Array.from({ length: 6 }).map((_, i) => (

@@ -35,9 +35,10 @@ export function StatCard({
 }: StatCardProps) {
   if (variant === 'plain') {
     // Value-first, no icon, full sentence-case label — sized so the five
-    // dashboard KPIs never truncate at any breakpoint.
+    // dashboard KPIs never truncate at any breakpoint. Elevated so the strip
+    // reads as surfaces floating on the page, not flat outlines.
     return (
-      <div className="rounded-lg border border-border bg-card px-4 py-3">
+      <div className="rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
         {loading ? (
           <Skeleton className="h-7 w-16" />
         ) : (
