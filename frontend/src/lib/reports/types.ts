@@ -543,7 +543,6 @@ export interface StandardSummaryFilters {
   subject?: string;
   grade?: string;
   category?: string;
-  section?: string;
   school_id?: string;
 }
 
@@ -589,7 +588,6 @@ export interface StrandSummaryFilters {
   subject?: string;
   grade?: string;
   category?: string;
-  section?: string;
   strand?: string;
   school_id?: string;
 }
