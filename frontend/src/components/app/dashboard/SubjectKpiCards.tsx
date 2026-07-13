@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { performanceBand, perfTextClass } from '@/lib/reports/colors';
+import { perfTextClass, perfTintHex } from '@/lib/reports/colors';
 import type { DashboardSubjectCard } from '@/lib/reports/types';
 import HScrollRow from './HScrollRow';
 
@@ -51,14 +51,15 @@ export default function SubjectKpiCards({
     <HScrollRow ariaLabel="Filter by subject" gapClass="gap-3">
       {subjects.map((s) => {
         const isSelected = selected === s.subject;
-        const band = s.grade_average != null ? performanceBand(s.grade_average) : null;
-        // Soft perf-tinted wash rising from the % (the data), fading to the card
-        // surface — a gentle colour identity, not a tint block. Selected cards
-        // trade the wash for the brand glow so the accent stays singular.
+        const tint = s.grade_average != null ? perfTintHex(s.grade_average) : null;
+        // Soft perf-tinted wash rising from the % (the data), in the SAME hue
+        // family as the value — a coherent colour identity, not a tint block.
+        // Selected cards trade the wash for the brand glow so the accent stays
+        // singular.
         const style: CSSProperties = {
           backgroundImage:
-            band && !isSelected
-              ? `linear-gradient(to top, ${band.bg} 0%, ${band.bg} 32%, transparent 88%)`
+            tint && !isSelected
+              ? `linear-gradient(to top, ${tint.wash} 0%, ${tint.edge} 34%, transparent 82%)`
               : undefined,
           boxShadow: isSelected ? 'var(--shadow-glow)' : undefined,
         };
