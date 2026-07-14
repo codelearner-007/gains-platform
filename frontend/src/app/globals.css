@@ -64,6 +64,29 @@
   --gradient-brand: linear-gradient(135deg, oklch(0.62 0.22 273) 0%, oklch(0.65 0.22 305) 100%);
   --gradient-brand-soft:
     radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.62 0.22 273 / 0.10), transparent 70%);
+  /* Auth split-screen brand panel wash (frozen to the prior inline value). */
+  --gradient-auth-panel:
+    radial-gradient(ellipse at top right, oklch(0.62 0.22 273 / 0.30), transparent 55%),
+    radial-gradient(ellipse at bottom left, oklch(0.65 0.22 305 / 0.25), transparent 55%);
+
+  /* ── Pixel-frozen report/dashboard color tokens ─────────────
+     FROZEN to exact pre-tokenization pixels. Do NOT retheme via
+     --success/--warning/--destructive: the perf ramp is a distinct
+     hue family by design (see lib/reports/colors.ts). Emails cannot
+     use these (no CSS vars in email); those stay literal by design. */
+  --perf-low:  oklch(58.6% 0.253 17.585);  /* rose-600   */
+  --perf-mid:  oklch(66.6% 0.179 58.318);  /* amber-600  */
+  --perf-high: oklch(59.6% 0.145 163.225); /* emerald-600 */
+  --perf-low-fill:  #fb7185;  --perf-mid-fill:  #fbbf24;  --perf-high-fill: #34d399;
+  --perf-low-wash:  #ffe4e6;  --perf-low-edge:  #fff1f2;
+  --perf-mid-wash:  #fef3c7;  --perf-mid-edge:  #fffbeb;
+  --perf-high-wash: #d1fae5;  --perf-high-edge: #ecfdf5;
+  --perf-band-high-bg: #E7F8EC; --perf-band-high-accent: #7BE38C; --perf-band-high-fg: #166534;
+  --perf-band-mid-bg:  #FFF8E0; --perf-band-mid-accent:  #FFF066; --perf-band-mid-fg:  #854D0E;
+  --perf-band-low-bg:  #FDEAF1; --perf-band-low-accent:  #FFB3D9; --perf-band-low-fg:  #9F1239;
+  --perf-band-none-bg: #EEF0F3; --perf-band-none-accent: #CBD2DC; --perf-band-none-fg: #5A6472;
+  --report-border:  #B3B3B3;   --databar-track: #EEF1F4;   --databar-marker: #475569;
+  --on-brand: #ffffff;  --on-brand-faint: rgba(255,255,255,0.16);  --on-brand-strong: rgba(255,255,255,0.9);
 }
 
 .dark {
@@ -110,6 +133,11 @@
   --gradient-brand: linear-gradient(135deg, oklch(0.66 0.22 273) 0%, oklch(0.70 0.22 305) 100%);
   --gradient-brand-soft:
     radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.74 0.16 273 / 0.18), transparent 70%);
+
+  /* Perf-text tokens shift to the 400 shades in dark (see :root block). */
+  --perf-low:  oklch(71.2% 0.194 13.428);  /* rose-400    */
+  --perf-mid:  oklch(82.8% 0.189 84.429);  /* amber-400   */
+  --perf-high: oklch(76.5% 0.177 163.223); /* emerald-400 */
 }
 
 @theme inline {
@@ -140,6 +168,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* Perf-text ramp + on-brand to utilities (text-perf-low/mid/high, text-on-brand,
+     bg-on-brand). Other perf and report tokens are consumed via inline var(). */
+  --color-perf-low: var(--perf-low);
+  --color-perf-mid: var(--perf-mid);
+  --color-perf-high: var(--perf-high);
+  --color-on-brand: var(--on-brand);
 
   --radius: var(--radius);
   --radius-sm: var(--radius-sm);
@@ -189,6 +224,11 @@
 /* Soft brand glow behind hero headlines. */
 .bg-brand-glow {
   background: var(--gradient-brand-soft);
+}
+
+/* Auth split-screen brand panel wash. */
+.bg-auth-panel {
+  background: var(--gradient-auth-panel);
 }
 
 /* Frosted nav / sticky bars. */

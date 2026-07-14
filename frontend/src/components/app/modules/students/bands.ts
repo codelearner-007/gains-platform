@@ -33,9 +33,20 @@ export const BRAND = {
   hairSoft: '#F0EDE4',
 } as const;
 
-const NEUTRAL_BAND: PerfBand = { bg: '#EEF0F3', accent: '#CBD2DC', fg: '#5A6472' };
+// bandTone's neutral triplet uses CSS var()s frozen to the exact pre-tokenization
+// hexes (--perf-band-none-* in globals.css) — safe because bandTone is only ever
+// read into CSS style objects. bandFill (below) instead feeds SVG fill/stroke
+// presentation attributes, where var() is INVALID, so its neutral arm keeps the
+// literal accent hex.
+const NEUTRAL_BAND: PerfBand = {
+  bg: 'var(--perf-band-none-bg)', // #EEF0F3
+  accent: 'var(--perf-band-none-accent)', // #CBD2DC
+  fg: 'var(--perf-band-none-fg)', // #5A6472
+};
+const NEUTRAL_ACCENT_HEX = '#CBD2DC'; // literal for SVG attribute sinks (bandFill)
 
-/** Solid traffic-light fill for a band (chart fills, chips, heatmap cells). */
+/** Solid traffic-light fill for a band (chart fills, chips, heatmap cells).
+ *  Used in SVG fill/stroke attributes — must return literals, never var(). */
 export function bandFill(band: PerfBandName): string {
   switch (band) {
     case 'green':
@@ -45,7 +56,7 @@ export function bandFill(band: PerfBandName): string {
     case 'pink':
       return PERF_PINK;
     default:
-      return NEUTRAL_BAND.accent;
+      return NEUTRAL_ACCENT_HEX;
   }
 }
 

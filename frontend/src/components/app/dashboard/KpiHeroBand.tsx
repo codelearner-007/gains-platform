@@ -41,22 +41,22 @@ export default function KpiHeroBand({
       <div className="flex flex-col md:flex-row">
         {/* Hero cell — Grade Average on the brand gradient. */}
         <div
-          className="relative flex min-w-[13rem] flex-col justify-between gap-3 p-4 text-white md:w-[26%] md:shrink-0"
+          className="relative flex min-w-[13rem] flex-col justify-between gap-3 p-4 text-on-brand md:w-[26%] md:shrink-0"
           style={{ backgroundImage: 'var(--gradient-brand)' }}
         >
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+            <p className="text-xs font-medium uppercase tracking-wide text-on-brand/70">
               Grade average
             </p>
             {loading ? (
-              <Skeleton className="mt-1.5 h-9 w-24 bg-white/25" />
+              <Skeleton className="mt-1.5 h-9 w-24 bg-on-brand/25" />
             ) : (
               <p className="mt-0.5 text-4xl font-bold leading-none tabular-nums">
                 {gradeAveragePct}
               </p>
             )}
             {schoolWideHint && !loading && (
-              <p className="mt-1 text-[11px] text-white/70">{schoolWideHint}</p>
+              <p className="mt-1 text-[11px] text-on-brand/70">{schoolWideHint}</p>
             )}
           </div>
           {!loading && trend.length > 1 && <Sparkline values={trend} />}
@@ -127,11 +127,11 @@ function Sparkline({ values }: { values: number[] }) {
       preserveAspectRatio="none"
       aria-hidden
     >
-      <polygon points={area} fill="rgba(255,255,255,0.16)" />
+      <polygon points={area} style={{ fill: 'var(--on-brand-faint)' }} />
       <polyline
         points={line}
         fill="none"
-        stroke="rgba(255,255,255,0.9)"
+        style={{ stroke: 'var(--on-brand-strong)' }}
         strokeWidth={1.75}
         strokeLinejoin="round"
         strokeLinecap="round"

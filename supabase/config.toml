@@ -128,9 +128,12 @@ minimum_password_length = 6
 password_requirements = ""
 
 [auth.email]
-# Allow/disallow new user signups via email to your project.
-# Invite-only: disabled. Email confirmations + password resets still work for provisioned users.
-enable_signup = false
+# Master switch for the EMAIL PROVIDER (password login, magic link, password
+# reset, admin invites) -> maps to GOTRUE_EXTERNAL_EMAIL_ENABLED. Setting this
+# false disables ALL email sign-in, not just signup, so it must stay true.
+# Public self-signup is blocked globally by [auth] enable_signup = false above
+# (invite-only, -> GOTRUE_DISABLE_SIGNUP=true); admin invites bypass that block.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
@@ -156,11 +159,11 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.confirmation]
-subject = "Confirm Your Email"
+subject = "Confirm your email for GAINS"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
-subject = "Reset Your Password"
+subject = "Reset your GAINS password"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.invite]
@@ -168,11 +171,11 @@ subject = "You're invited to GAINS"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.email_change]
-subject = "Confirm Email Change"
+subject = "Confirm your new email for GAINS"
 content_path = "./supabase/templates/email_change.html"
 
 [auth.email.template.magic_link]
-subject = "Your Sign-In Link"
+subject = "Your GAINS sign-in link"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.sms]

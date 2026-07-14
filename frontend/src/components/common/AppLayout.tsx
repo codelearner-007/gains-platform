@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, User, Menu, X, LogOut, Key, Shield, Sparkles } from 'lucide-react';
+import { Home, User, Menu, X, LogOut, Key, Shield } from 'lucide-react';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { canSeeAdminEntry } from '@/lib/rbac/access';
 import { Button } from '@/components/ui/button';
 import SchoolSwitcher from '@/components/app/SchoolSwitcher';
+import { BrandWordmark } from '@/components/common/BrandWordmark';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { publicSettings } from '@/lib/core/public-settings';
-
 function getInitials(email: string) {
   const parts = email.split('@')[0].split(/[._-]/);
   return parts.length > 1
@@ -45,8 +44,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const handleChangePassword = () => {
     router.push('/app/user-settings?section=password');
   };
-
-  const productName = publicSettings.NEXT_PUBLIC_PRODUCTNAME;
 
   const navigation = [
     { name: 'Dashboard', href: '/app', icon: Home },
@@ -75,13 +72,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         <div className="h-16 flex items-center justify-between px-5 border-b border-border flex-shrink-0">
-          <Link href="/app" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-foreground text-background flex items-center justify-center">
-              <Sparkles className="h-3.5 w-3.5" />
-            </div>
-            <span className="text-sm font-semibold tracking-tight text-foreground">
-              {productName}
-            </span>
+          <Link href="/app" className="flex items-center" aria-label="GAINS home">
+            <BrandWordmark height={24} priority />
           </Link>
           <Button
             onClick={toggleSidebar}

@@ -38,7 +38,7 @@ export default function DashboardHeader({
           />
         ) : (
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-white shadow-sm"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-on-brand shadow-sm"
             style={{ backgroundImage: 'var(--gradient-brand)' }}
           >
             <GraduationCap className="h-5 w-5" />

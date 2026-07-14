@@ -5,6 +5,9 @@ const rateLimitPattern = /^[0-9]+\/(second|seconds|minute|minutes|hour|hours|day
 
 const serverOnlySchema = z.object({
   PRIVATE_SUPABASE_SERVICE_KEY: z.string(),
+  // Google sign-in credential. Empty/unset means Google is not configured and
+  // the Google button is hidden; this is the source of truth for that gate.
+  SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: z.string().default(''),
   FRONTEND_REDIS_URL: z.string().default(''),
   FRONTEND_REDIS_PREFIX: z.string().default('starter_template'),
   FRONTEND_RATE_LIMIT_AUTH_ME: z.string().regex(rateLimitPattern).default('60/minute'),
@@ -35,6 +38,8 @@ const env = serverEnvSchema.parse({
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NODE_ENV: process.env.NODE_ENV,
   PRIVATE_SUPABASE_SERVICE_KEY: process.env.PRIVATE_SUPABASE_SERVICE_KEY,
+  SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID:
+    process.env.SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID,
   FRONTEND_REDIS_URL: process.env.FRONTEND_REDIS_URL,
   FRONTEND_REDIS_PREFIX: process.env.FRONTEND_REDIS_PREFIX,
   FRONTEND_RATE_LIMIT_AUTH_ME: process.env.FRONTEND_RATE_LIMIT_AUTH_ME,

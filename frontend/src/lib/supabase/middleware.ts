@@ -53,6 +53,23 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
+    // Already signed in? The auth *entry* pages (login / register / forgot /
+    // verify) make no sense — send the user to the app. Deliberately excludes
+    // /auth/2fa, /auth/reset-password, and /auth/accept-invite, which a
+    // signed-in (or mid-flow) user legitimately needs.
+    const AUTH_ENTRY_PREFIXES = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/verify-email']
+    if (
+        user && user.user &&
+        !request.nextUrl.searchParams.has('sessionError') &&
+        AUTH_ENTRY_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+    ) {
+        const url = request.nextUrl.clone()
+        const returnTo = request.nextUrl.searchParams.get('returnTo')
+        url.pathname = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/app'
+        url.search = ''
+        return NextResponse.redirect(url)
+    }
+
     // MFA enforcement for authenticated users accessing protected routes
     if (user && user.user && isProtectedArea) {
         try {
@@ -74,9 +91,12 @@ export async function updateSession(request: NextRequest) {
             });
             // Fail CLOSED: redirect to login when MFA status cannot be determined.
             // This prevents bypassing MFA enforcement via network errors or
-            // unexpected exceptions.
+            // unexpected exceptions. The `sessionError` marker stops the signed-in
+            // auth-entry bounce above from sending this still-authenticated user
+            // back to /app, which would create a redirect loop.
             const url = request.nextUrl.clone()
             url.pathname = '/auth/login'
+            url.searchParams.set('sessionError', '1')
             return NextResponse.redirect(url)
         }
     }

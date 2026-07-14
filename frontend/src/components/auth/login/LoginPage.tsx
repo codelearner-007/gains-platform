@@ -18,7 +18,12 @@ import { cn } from '@/lib/utils';
 
 type EmailMethod = 'password' | 'magic';
 
-export function LoginPage() {
+interface LoginPageProps {
+  /** Whether Google sign-in is configured on the server; gates the SSO block. */
+  googleEnabled: boolean;
+}
+
+export function LoginPage({ googleEnabled }: LoginPageProps) {
   const { login, loading, error } = useAuth();
   const [ssoError, setSSOError] = useState<string | null>(null);
   const [method, setMethod] = useState<EmailMethod>('password');
@@ -46,10 +51,13 @@ export function LoginPage() {
           </div>
         )}
 
-        {/* Primary: Google OAuth — fastest path. */}
-        <SSOButtons onError={setSSOError} next="/app" />
-
-        <AuthMethodsDivider label="or continue with" />
+        {/* Google sign-in, shown only when the credential is configured. */}
+        {googleEnabled && (
+          <>
+            <SSOButtons onError={setSSOError} next="/app" googleEnabled={googleEnabled} />
+            <AuthMethodsDivider label="or continue with" />
+          </>
+        )}
 
         {/* Segmented switch: Password ↔ Magic Link. */}
         <div

@@ -5,38 +5,23 @@ import { Button } from '@/components/ui/button';
 
 export default async function AuthAwareButtons({ variant = 'primary' }: { variant?: string }) {
   const user = await getMe();
-  const isAuthenticated = !!user;
+  const href = user ? '/app' : '/auth/login';
+  const label = user ? 'Go to dashboard' : 'Sign in';
 
   if (variant === 'nav') {
-    return isAuthenticated ? (
+    return (
       <Button asChild size="sm">
-        <Link href="/app">Go to dashboard</Link>
-      </Button>
-    ) : (
-      <Button asChild size="sm">
-        <Link href="/auth/login">Sign in</Link>
+        <Link href={href}>{label}</Link>
       </Button>
     );
   }
 
-  return isAuthenticated ? (
+  return (
     <Button asChild size="xl" className="btn-glow">
-      <Link href="/app">
-        Go to dashboard
+      <Link href={href}>
+        {label}
         <ArrowRight className="ml-1 h-4 w-4" />
       </Link>
     </Button>
-  ) : (
-    <>
-      <Button asChild size="xl" className="btn-glow">
-        <Link href="/auth/login">
-          Sign in
-          <ArrowRight className="ml-1 h-4 w-4" />
-        </Link>
-      </Button>
-      <Button asChild size="xl" variant="outline">
-        <Link href="#features">See what&apos;s included</Link>
-      </Button>
-    </>
   );
 }
