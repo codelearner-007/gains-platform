@@ -71,10 +71,11 @@ export default function SubjectKpiCards({
             disabled={disabled}
             title={s.subject}
             style={style}
+            onClick={() => onSelect(isSelected ? undefined : s.subject)}
             className={[
               'flex min-w-[10.5rem] max-w-[17.5rem] flex-1 flex-col gap-1.5 rounded-lg border bg-card px-4 py-3 text-left transition-all duration-200',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-              'enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-55',
+              'enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-55 enabled:active:scale-[0.98]',
               isSelected
                 ? 'border-primary bg-primary-soft/40 ring-1 ring-primary'
                 : 'border-border shadow-sm enabled:hover:-translate-y-0.5 enabled:hover:shadow-md enabled:hover:border-primary/30',
