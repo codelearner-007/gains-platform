@@ -1,35 +1,33 @@
 import Link from 'next/link';
-import { ArrowLeft, Shield, Key, LayoutDashboard, ScrollText, Sparkles } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Target, TrendingUp, FileText } from 'lucide-react';
 import { Providers } from '@/components/common/Providers';
-import { publicSettings } from '@/lib/core/public-settings';
+import { BrandWordmark } from '@/components/common/BrandWordmark';
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const productName = publicSettings.NEXT_PUBLIC_PRODUCTNAME;
-
   const highlights = [
     {
-      icon: Shield,
-      title: 'Authentication & MFA',
-      description: 'Email/password, SSO, and TOTP multi-factor — wired and ready.',
+      icon: GraduationCap,
+      title: 'Student reports',
+      description: 'A complete picture of every learner, ready to share.',
     },
     {
-      icon: Key,
-      title: 'Role-Based Access Control',
-      description: 'Granular permissions, hierarchical roles, JWT-claim guards.',
+      icon: Target,
+      title: 'Standards mastery',
+      description: 'Know where each class stands on every standard.',
     },
     {
-      icon: LayoutDashboard,
-      title: 'Admin Dashboard',
-      description: 'User management, RBAC, and audit logs from day one.',
+      icon: TrendingUp,
+      title: 'Growth over time',
+      description: 'Progress across the year, not just one test.',
     },
     {
-      icon: ScrollText,
-      title: 'Audit Trail',
-      description: 'Tamper-resistant log of every privileged action.',
+      icon: FileText,
+      title: 'Question insight',
+      description: 'See how every question landed, at a glance.',
     },
   ];
 
@@ -47,12 +45,7 @@ export default function AuthLayout({
 
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <Link href="/" className="flex items-center justify-center gap-2 mb-2">
-            <div className="h-9 w-9 rounded-lg bg-foreground text-background flex items-center justify-center">
-              <Sparkles className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-foreground">
-              {productName}
-            </span>
+            <BrandWordmark height={26} priority />
           </Link>
         </div>
 
@@ -63,23 +56,23 @@ export default function AuthLayout({
 
       {/* Right: brand panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden border-l border-border">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.62_0.22_273_/_0.30),transparent_55%),radial-gradient(ellipse_at_bottom_left,oklch(0.65_0.22_305_/_0.25),transparent_55%)]" />
+        <div className="absolute inset-0 bg-auth-panel" />
         <div className="absolute inset-0 bg-dotgrid opacity-60" />
 
         <div className="relative z-10 w-full flex items-center justify-center p-12">
           <div className="max-w-md space-y-10">
             <div className="space-y-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/40 px-3 py-1 text-xs font-medium text-foreground backdrop-blur">
-                <Sparkles className="h-3 w-3" />
-                Production-grade starter
+                <GraduationCap className="h-3 w-3" />
+                By invitation
               </span>
               <h2 className="text-3xl font-semibold tracking-tight text-foreground leading-tight">
-                Ship your SaaS{' '}
-                <span className="text-gradient-brand">on solid foundations</span>
+                Assessment clarity{' '}
+                <span className="text-gradient-brand">for every classroom.</span>
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Auth, RBAC, an admin panel, and an audit trail — implemented,
-                hardened, and ready to extend.
+                GAINS turns your school&apos;s assessments into clear, trusted
+                reports on students, standards, and growth.
               </p>
             </div>
 
@@ -104,8 +97,16 @@ export default function AuthLayout({
               ))}
             </ul>
 
-            <p className="text-xs text-muted-foreground/80 pt-4 border-t border-border/40">
-              {productName} — Next.js + FastAPI + Supabase
+            <p className="text-xs text-muted-foreground pt-4 border-t border-border/40">
+              GAINS. A product of{' '}
+              <a
+                href="https://edvancelearning.us/"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground hover:text-primary transition-colors"
+              >
+                Edvance Learning
+              </a>
+              .
             </p>
           </div>
         </div>

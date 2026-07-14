@@ -86,7 +86,7 @@ export const authService = {
    * before redirecting, so clients cannot use this for an open-redirect.
    */
   async signInWithOAuth(
-    provider: 'github' | 'google',
+    provider: 'google',
     next: string = '/app',
   ): Promise<void> {
     // Mirror the server-side allowlist (see app/api/auth/callback/route.ts).
