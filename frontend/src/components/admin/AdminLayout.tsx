@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Shield, Users, FileText, LogOut, Key, ArrowLeft, Settings, LayoutGrid, School } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { BrandWordmark } from '@/components/common/BrandWordmark';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { getAccessibleAdminModules } from '@/lib/rbac/access';
@@ -18,8 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { publicSettings } from '@/lib/core/public-settings';
-
 const moduleIcons = {
   rbac: Shield,
   users: Users,
@@ -48,8 +47,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, loading } = useGlobal();
   const { logout } = useAuth();
   const claims = useAdminClaims();
-
-  const productName = publicSettings.NEXT_PUBLIC_PRODUCTNAME;
 
   const navigation = useMemo<NavItem[]>(() => {
     const modules = getAccessibleAdminModules(claims);
@@ -97,17 +94,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           </Button>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center flex-shrink-0">
-              <Shield className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold tracking-tight text-foreground truncate">
-                {productName}
-              </p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Admin
-              </p>
-            </div>
+            <BrandWordmark height={22} priority />
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground border-l border-border pl-2">
+              Admin
+            </span>
           </div>
           <Button
             onClick={toggleSidebar}

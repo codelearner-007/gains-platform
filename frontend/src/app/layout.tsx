@@ -18,10 +18,11 @@ const productName = publicSettings.NEXT_PUBLIC_PRODUCTNAME;
 
 export const metadata: Metadata = {
   title: {
-    default: productName,
-    template: `%s | ${productName}`,
+    default: `${productName} · Assessment analytics for schools`,
+    template: `%s · ${productName}`,
   },
-  description: "A production-ready SaaS starter with authentication, RBAC, admin panel, and audit logs.",
+  description:
+    "GAINS turns your school's assessments into clear reports on students, standards, and growth over time.",
 };
 
 export default function RootLayout({
