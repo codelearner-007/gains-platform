@@ -429,6 +429,9 @@ export interface YtdStandardColumn {
   standard_label: string;
   schoology_standard: string;
   unit_names: string;
+  // Distinct-assessment count for variant 3's compact "N assessments" header;
+  // the full unit_names list shows on hover + in the print/PDF export.
+  unit_count: number;
 }
 
 export interface YtdCell {
@@ -543,7 +546,6 @@ export interface StandardSummaryFilters {
   subject?: string;
   grade?: string;
   category?: string;
-  section?: string;
   school_id?: string;
 }
 
@@ -568,25 +570,17 @@ export interface StandardSummaryRollupRow {
   subject: string;
   grades: string[];
   num_questions: number;
-  num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
   last_change_date_time: string | null;
 }
 
-export interface StandardSummaryStrandCount {
-  strand: string;
-  num_standards: number;
-  num_questions: number;
-  grade_average: number;
-}
-
 export interface StandardSummaryPayload {
   school: YTDSchoolInfo;
   filters_applied: StandardSummaryFilters;
+  // Not rendered on the report (removed for parity); read by the dashboard.
   kpis: StandardSummaryKpis;
   standards: StandardSummaryRollupRow[];
-  strand_counts: StandardSummaryStrandCount[];
   data_quality?: AlignmentDataQuality | null;
 }
 
@@ -597,28 +591,14 @@ export interface StrandSummaryFilters {
   subject?: string;
   grade?: string;
   category?: string;
-  section?: string;
   strand?: string;
   school_id?: string;
-}
-
-export interface StrandSummaryKpis {
-  total_strands: number;
-  total_standards: number;
-  total_questions: number;
-  total_assessments: number;
-  total_students: number;
-  grade_average: number;
-  grade_average_pct: string;
-  worst_strand: string;
-  worst_strand_pct: string;
 }
 
 export interface StrandSummaryRollupRow {
   strand: string;
   num_standards: number;
   num_questions: number;
-  num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
   incorrect_pct: number;
@@ -630,27 +610,15 @@ export interface StrandSummaryStandardRow {
   schoology_standard: string;
   cluster: string;
   num_questions: number;
-  num_assessments: number;
   grade_average: number;
   grade_average_pct: string;
-}
-
-export interface StrandSummaryBandRow {
-  strand: string;
-  num_standards: number;
-  num_questions: number;
-  grade_average: number;
 }
 
 export interface StrandSummaryPayload {
   school: YTDSchoolInfo;
   filters_applied: StrandSummaryFilters;
-  kpis: StrandSummaryKpis;
   strands_rollup: StrandSummaryRollupRow[];
   standards_rollup: StrandSummaryStandardRow[];
-  band_high: StrandSummaryBandRow[];
-  band_mid: StrandSummaryBandRow[];
-  band_low: StrandSummaryBandRow[];
   data_quality?: AlignmentDataQuality | null;
   data_refreshed_at?: string;
 }

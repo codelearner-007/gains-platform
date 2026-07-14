@@ -1627,69 +1627,75 @@ class CubeRepository:
         """
         sql = text(
             f"""
-            WITH scoped_qs AS (
-                SELECT DISTINCT
-                    qs.school_id,
-                    qs.ukey,
-                    qs.identifier,
-                    qs.item_id,
-                    dsub.subject
-                FROM cube_question_summary qs
-                JOIN dim_subject dsub
-                  ON dsub.subject_id = qs.subject_id
-                 AND dsub.school_id = qs.school_id
-                WHERE {_QS_SCHOOL_FILTER_SQL}
+            WITH std_dim AS (
+                -- ONE dim_standard row per code (some codes have alias rows —
+                -- MA.912.* etc). Deduping deterministically, preferring a
+                -- populated strand, stops the code join from fanning out cqso
+                -- rows and inflating AVG(grade_average). Legacy's
+                -- cqso.Standards → dim_standard.Schoology_Standard relationship
+                -- is many-to-one, which this reproduces.
+                SELECT DISTINCT ON (schoology_standard)
+                       schoology_standard, strand
+                FROM dim_standard
+                WHERE schoology_standard IS NOT NULL AND schoology_standard <> ''
+                ORDER BY schoology_standard,
+                         (strand IS NULL OR strand = '') ASC,
+                         identifier
             ),
-            strand_q AS (
-                SELECT DISTINCT
-                    ds.strand,
-                    sq.ukey,
-                    sq.identifier,
-                    sq.item_id,
-                    sq.subject
-                FROM scoped_qs sq
-                JOIN dim_strand ds
-                  ON ds.identifier = sq.identifier
-                WHERE ds.strand IS NOT NULL
-                  AND ds.strand <> ''
-            ),
-            qso_avg AS (
-                SELECT ukey, AVG(grade_average) AS grade_average
-                FROM cube_question_summary_overall
-                GROUP BY ukey
+            strand_agg AS (
+                -- One row per Strand from the overall cube (legacy's DAX table),
+                -- joined to the deduped dim_standard by the standard CODE.
+                -- Legacy measures:
+                --   grade_average = AVERAGE(cqso[Grade_Average])       (flat)
+                --   num_standards = DISTINCTCOUNT(cqso[Standards])     (by code)
+                --   num_questions = DISTINCTCOUNT(cqso[Question_No])
+                -- Scoped via dim_subject (session/subject/grade/assessment_type);
+                -- no section grain on this page.
+                SELECT ds.strand                        AS strand,
+                       COUNT(DISTINCT cqso.standards)    AS num_standards,
+                       COUNT(DISTINCT cqso.question_no)  AS num_questions,
+                       AVG(cqso.grade_average)           AS grade_average
+                FROM cube_question_summary_overall cqso
+                JOIN dim_subject dsubj
+                  ON dsubj.school_id = cqso.school_id
+                 AND dsubj.subject_id = cqso.subject_id
+                JOIN std_dim ds
+                  ON ds.schoology_standard = cqso.standards
+                WHERE {_CQSO_YTD_FILTER_SQL}
+                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND cqso.standards IS NOT NULL AND cqso.standards <> ''
+                GROUP BY ds.strand
             ),
             strand_subjects AS (
-                SELECT strand, ARRAY_AGG(DISTINCT subject ORDER BY subject) AS subjects
-                FROM strand_q
-                WHERE subject IS NOT NULL AND subject <> ''
-                GROUP BY strand
+                SELECT ds.strand AS strand,
+                       ARRAY_AGG(DISTINCT dsubj.subject ORDER BY dsubj.subject) AS subjects
+                FROM cube_question_summary_overall cqso
+                JOIN dim_subject dsubj
+                  ON dsubj.school_id = cqso.school_id
+                 AND dsubj.subject_id = cqso.subject_id
+                JOIN std_dim ds
+                  ON ds.schoology_standard = cqso.standards
+                WHERE {_CQSO_YTD_FILTER_SQL}
+                  AND ds.strand IS NOT NULL AND ds.strand <> ''
+                  AND dsubj.subject IS NOT NULL AND dsubj.subject <> ''
+                GROUP BY ds.strand
             )
             SELECT
-                sq.strand                                          AS strand,
-                COUNT(DISTINCT sq.identifier)                      AS num_standards,
-                COUNT(DISTINCT sq.ukey)                            AS num_questions,
-                COUNT(DISTINCT sq.item_id)                         AS num_assessments,
-                AVG(qa.grade_average)                              AS grade_average,
-                COALESCE(ss.subjects, ARRAY[]::text[])             AS subjects
-            FROM strand_q sq
-            LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
-            LEFT JOIN strand_subjects ss ON ss.strand = sq.strand
-            GROUP BY sq.strand, ss.subjects
-            ORDER BY sq.strand
+                sa.strand                                AS strand,
+                sa.num_standards                         AS num_standards,
+                sa.num_questions                         AS num_questions,
+                sa.grade_average                         AS grade_average,
+                COALESCE(ss.subjects, ARRAY[]::text[])   AS subjects
+            FROM strand_agg sa
+            LEFT JOIN strand_subjects ss ON ss.strand = sa.strand
+            ORDER BY sa.strand
             """
         )
-        # Same RLS-opaque-estimate guard as get_school_standard_rollup: force a
-        # hash join for the qso_avg join so cube_question_summary_overall isn't
-        # re-aggregated per strand row under a Nested Loop. Planner-only; output
-        # identical.
-        await self.session.execute(text("SET LOCAL enable_nestloop = off"))
         result = await self.session.execute(
             sql,
             _school_filter_params(session_filter, subject, grade, category, section),
         )
-        rows = [_row_to_dict(r) for r in result.all()]
-        await self.session.execute(text("RESET enable_nestloop"))
-        return rows
+        return [_row_to_dict(r) for r in result.all()]
 
     async def get_school_standard_rollup(
         self,
@@ -1709,87 +1715,69 @@ class CubeRepository:
         """
         sql = text(
             f"""
-            WITH scoped_qs AS (
-                SELECT DISTINCT
-                    qs.school_id,
-                    qs.ukey,
-                    qs.identifier,
-                    qs.item_id,
-                    dsub.grade
-                FROM cube_question_summary qs
-                JOIN dim_subject dsub
-                  ON dsub.subject_id = qs.subject_id
-                 AND dsub.school_id = qs.school_id
-                WHERE {_QS_SCHOOL_FILTER_SQL}
+            WITH scoped_cqso AS (
+                -- Every overall-cube row in scope (legacy scopes the Standard
+                -- Summary through dim_subject: session/subject/grade/assessment_type;
+                -- there is no section grain on this page). This is the DAX
+                -- table the page's measures read.
+                SELECT cqso.standards        AS schoology_standard,
+                       cqso.question_no      AS question_no,
+                       cqso.grade_average    AS grade_average,
+                       dsubj.grade           AS grade
+                FROM cube_question_summary_overall cqso
+                JOIN dim_subject dsubj
+                  ON dsubj.school_id = cqso.school_id
+                 AND dsubj.subject_id = cqso.subject_id
+                WHERE {_CQSO_YTD_FILTER_SQL}
+                  AND cqso.standards IS NOT NULL AND cqso.standards <> ''
             ),
-            std_q AS (
-                SELECT DISTINCT
-                    iq.ukey,
-                    iq.identifier,
-                    iq.item_id,
-                    iq.grade,
-                    ds.strand,
-                    dst.schoology_standard,
-                    dst.cpalms_standard,
-                    dst.cluster,
-                    dst.cognitive_complexity_rating,
-                    dst.subject AS std_subject,
-                    dst.custom_cleaned_description,
-                    dst.description,
-                    dst.last_change_date_time
-                FROM scoped_qs iq
-                LEFT JOIN dim_strand ds
-                  ON ds.identifier = iq.identifier
-                LEFT JOIN LATERAL (
-                    SELECT schoology_standard, cpalms_standard, cluster,
-                           cognitive_complexity_rating, subject,
-                           custom_cleaned_description, description,
-                           last_change_date_time
-                    FROM dim_standard
-                    WHERE identifier = iq.identifier
-                    LIMIT 1
-                ) dst ON TRUE
-                WHERE COALESCE(NULLIF(dst.schoology_standard, ''), '') <> ''
-                  AND (CAST(:strand AS TEXT) IS NULL OR ds.strand = CAST(:strand AS TEXT))
+            agg AS (
+                -- One row per standard CODE: legacy `Grade_Average_Standard_Measure`
+                -- = AVERAGE(cqso[Grade_Average]) (flat, BLANK when empty) and
+                -- `Total Question` = DISTINCTCOUNT(cqso[Question_No]).
+                SELECT schoology_standard,
+                       COUNT(DISTINCT question_no) AS num_questions,
+                       AVG(grade_average)          AS grade_average,
+                       COALESCE(
+                           array_agg(DISTINCT NULLIF(grade, ''))
+                             FILTER (WHERE NULLIF(grade, '') IS NOT NULL),
+                           ARRAY[]::text[]
+                       )                           AS grades
+                FROM scoped_cqso
+                GROUP BY schoology_standard
             ),
-            qso_avg AS (
-                SELECT ukey, AVG(grade_average) AS grade_average
-                FROM cube_question_summary_overall
-                GROUP BY ukey
+            std_meta AS (
+                -- One dim_standard row per code (dedupe aliases deterministically)
+                -- for the card chrome: strand / cluster / cognitive complexity /
+                -- description / curriculum subject / adopted date.
+                SELECT DISTINCT ON (schoology_standard)
+                    schoology_standard, cpalms_standard, strand, cluster,
+                    cognitive_complexity_rating, subject,
+                    custom_cleaned_description, description, last_change_date_time
+                FROM dim_standard
+                WHERE schoology_standard IS NOT NULL AND schoology_standard <> ''
+                ORDER BY schoology_standard, identifier
             )
             SELECT
-                COALESCE(sq.schoology_standard, '')                AS schoology_standard,
-                COALESCE(NULLIF(sq.cpalms_standard, ''),
-                         sq.schoology_standard, '')                AS cpalms_standard,
-                COALESCE(sq.strand, '')                            AS strand,
-                COALESCE(sq.cluster, '')                           AS cluster,
-                COALESCE(sq.cognitive_complexity_rating, '')       AS cognitive_complexity,
-                COALESCE(NULLIF(sq.custom_cleaned_description, ''),
-                         sq.description, '')                       AS description,
-                COALESCE(sq.std_subject, '')                       AS subject,
-                COALESCE(
-                    array_agg(DISTINCT NULLIF(sq.grade, ''))
-                      FILTER (WHERE NULLIF(sq.grade, '') IS NOT NULL),
-                    ARRAY[]::text[]
-                )                                                  AS grades,
-                COUNT(DISTINCT sq.ukey)                            AS num_questions,
-                COUNT(DISTINCT sq.item_id)                         AS num_assessments,
-                AVG(qa.grade_average)                              AS grade_average,
-                MAX(sq.last_change_date_time)                      AS last_change_date_time
-            FROM std_q sq
-            LEFT JOIN qso_avg qa ON qa.ukey = sq.ukey
-            GROUP BY 1, 2, 3, 4, 5, 6, 7
-            ORDER BY 3 NULLS LAST, 1
+                a.schoology_standard                              AS schoology_standard,
+                COALESCE(NULLIF(m.cpalms_standard, ''),
+                         a.schoology_standard)                    AS cpalms_standard,
+                COALESCE(m.strand, '')                            AS strand,
+                COALESCE(m.cluster, '')                           AS cluster,
+                COALESCE(m.cognitive_complexity_rating, '')       AS cognitive_complexity,
+                COALESCE(NULLIF(m.custom_cleaned_description, ''),
+                         m.description, '')                       AS description,
+                COALESCE(m.subject, '')                           AS subject,
+                a.grades                                          AS grades,
+                a.num_questions                                   AS num_questions,
+                a.grade_average                                   AS grade_average,
+                m.last_change_date_time                           AS last_change_date_time
+            FROM agg a
+            LEFT JOIN std_meta m ON m.schoology_standard = a.schoology_standard
+            WHERE (CAST(:strand AS TEXT) IS NULL OR m.strand = CAST(:strand AS TEXT))
+            ORDER BY m.strand NULLS LAST, a.schoology_standard
             """
         )
-        # Force a hash/merge join for the qso_avg join. Under RLS the
-        # `school_id = current_setting('app.current_school_id')` predicate is
-        # opaque to the planner, so it under-estimates the scoped set at ~1 row
-        # and picks a Nested Loop that RE-AGGREGATES cube_question_summary_overall
-        # once per std_q row (48M join-filter rows → ~30s on a real school). A
-        # hash join computes qso_avg once. Transaction-scoped + reset so sibling
-        # queries are unaffected; output is identical (planner-only change).
-        await self.session.execute(text("SET LOCAL enable_nestloop = off"))
         result = await self.session.execute(
             sql,
             {
@@ -1799,9 +1787,7 @@ class CubeRepository:
                 "strand": strand,
             },
         )
-        rows = [_row_to_dict(r) for r in result.all()]
-        await self.session.execute(text("RESET enable_nestloop"))
-        return rows
+        return [_row_to_dict(r) for r in result.all()]
 
     # ────────────────────────────────────────────────────────────────────
     # Standards-alignment data quality
@@ -2257,230 +2243,156 @@ class CubeRepository:
         return _row_to_dict(row) if row else None
 
     # ────────────────────────────────────────────────────────────────────
-    # YTD Longitudinal paginated matrix (PBIX ord 8 / 9 / 10 rdlVisual).
+    # YTD Longitudinal matrix (PBIX ord 8 / 9 / 10) — cube_user_summary pivot.
     #
-    # The three legacy "Longitudinal Report - Year To Date" paginated reports
-    # (1/2/3) are the SAME matrix parameterised by (Session, Grade, Subject,
-    # Assessment_type, School_ID) — one row per (Classroom Instructor →
-    # Student) and one column-pair per STANDARD assessed YTD, where the cell is
-    # the POINTS earned over points possible (e.g. ``4/7``) summed across every
-    # assessment of that scope, and ``%`` = SUM(received)/SUM(possible).
+    # Legacy is a pure SUMMARIZECOLUMNS projection of ``cube_users_summary``
+    # (our ``cube_user_summary``) with all aggregation done in the SSRS tablix
+    # cells — NOT a re-derivation from the raw fact table. We mirror that:
+    # ``cube_user_summary`` already carries every precomputed year-to-date
+    # column the RDL reads (``user_overall_possible_point``,
+    # ``*_by_overall_year``) and is one clean row per (user, item, question,
+    # standard) with NO standard-alias fan-out, so a single scoped GROUP BY is
+    # both the parity source and the fast path (kills the 1.6M-row fact scan +
+    # DISTINCT-ON dedup + Python fan-in). RLS scopes the tenant via the
+    # ``app.current_school_id`` GUC — no explicit school predicate.
     #
-    # Grain note (alias fan-out): ``fact_student_submission``'s 9-part PK fans
-    # a single (user, question, position) attempt into one row per Schoology
-    # standard alias (e.g. ``AI.MA.912.AR.1.7`` + ``MA.912.AR.1.7``). Summing
-    # the fact directly would double-count those points. We therefore:
-    #   1. resolve ONE canonical Schoology standard per (item, question) via
-    #      the alphabetical-first non-"Other" label in ``dim_question_data``
-    #      (mirrors the committed ``qd_first_standard`` rollup pattern), then
-    #   2. dedupe the fact to one row per (user, item, question, position)
-    #      before summing, so each attempt contributes its points exactly once
-    #      to exactly one standard column.
-    # The column label is ``dim_standard.cpalms_standard`` (falling back to the
-    # canonical Schoology code), matching the bare-code headers in the legacy
-    # PDFs (e.g. ``MA.1.NSO.2.3``). No school_id predicate is needed — RLS
-    # scopes every tenant table via ``app.current_school_id``.
+    # Column identity/header = the RAW ``cus.standards`` value (e.g.
+    # ``ELA.7.C.3.1``), exactly as legacy groups by ``Fields!Standards.Value``
+    # (NOT the shorter ``dim_standard.cpalms_standard``). Blank standards fold
+    # into an "Other" column so per-standard sums still reconcile with the
+    # year grand-total band.
     # ────────────────────────────────────────────────────────────────────
-    async def get_ytd_longitudinal_cells(
+    async def get_ytd_cells_from_cus(
         self,
         session_filter: Optional[str],
         subject: Optional[str],
         grade: Optional[str],
         category: Optional[str],
+        section: Optional[str],
     ) -> List[Dict[str, Any]]:
-        """Long-format (teacher, student, standard) points for the YTD matrix."""
-        sql = text(
-            """
-            WITH qd_first AS (
-                -- One canonical Schoology standard per (item, question):
-                -- alphabetical-first non-"Other" label (collapses aliases).
-                SELECT qd.item_id, qd.question_id,
-                       MIN(qd.standard) FILTER (
-                           WHERE qd.standard IS NOT NULL
-                             AND qd.standard <> ''
-                             AND LOWER(qd.standard) <> 'other'
-                       ) AS canon_std
-                FROM dim_question_data qd
-                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qd.session = CAST(:session_filter AS TEXT))
-                  AND (CAST(:subject AS TEXT) IS NULL OR qd.subject = CAST(:subject AS TEXT))
-                  AND (CAST(:grade AS TEXT) IS NULL OR qd.grade = CAST(:grade AS TEXT))
-                  AND (CAST(:category AS TEXT) IS NULL OR qd.assessment_type = CAST(:category AS TEXT))
-                GROUP BY qd.item_id, qd.question_id
-            ),
-            fact_dedup AS (
-                -- Undo the standard-alias fan-out: one attempt row per
-                -- (user, item, question, position).
-                SELECT DISTINCT ON (
-                           fss.user_uid, fss.item_id, fss.question_id, fss.position_number
-                       )
-                       fss.user_uid, fss.user_name, fss.section_nid, fss.school_id,
-                       fss.item_id, fss.question_id,
-                       fss.points_received, fss.points_possible
-                FROM fact_student_submission fss
-                WHERE (CAST(:session_filter AS TEXT) IS NULL OR fss.session = CAST(:session_filter AS TEXT))
-                  AND (CAST(:subject AS TEXT) IS NULL OR fss.subject = CAST(:subject AS TEXT))
-                  AND (CAST(:grade AS TEXT) IS NULL OR fss.grade = CAST(:grade AS TEXT))
-                  AND (CAST(:category AS TEXT) IS NULL OR fss.assessment_type = CAST(:category AS TEXT))
-                  AND fss.points_possible IS NOT NULL
-                  AND fss.points_possible > 0
-                ORDER BY fss.user_uid, fss.item_id, fss.question_id,
-                         fss.position_number, fss.submission DESC NULLS LAST, fss.standard NULLS LAST
-            ),
-            joined AS (
-                SELECT
-                    fd.user_uid,
-                    fd.user_name,
-                    COALESCE(
-                        NULLIF(dsec.section_instructors, ''),
-                        NULLIF(di_t.section_instructors, ''),
-                        'Unassigned'
-                    )                                       AS section_instructors,
-                    fd.item_id,
-                    qf.canon_std                            AS schoology_standard,
-                    COALESCE(ds.cpalms_standard, qf.canon_std, 'Other')
-                                                            AS standard_label,
-                    fd.points_received,
-                    fd.points_possible
-                FROM fact_dedup fd
-                LEFT JOIN qd_first qf
-                  ON qf.item_id = fd.item_id AND qf.question_id = fd.question_id
-                LEFT JOIN dim_standard ds
-                  ON ds.schoology_standard = qf.canon_std
-                -- Resolve the instructor the SAME way get_assessment_meta and the
-                -- QSR matrix do: join dim_section by item_id (NOT section_nid),
-                -- falling back to dim_item. A section_nid is reused across
-                -- assessments/dates and dim_section keeps only ONE row per
-                -- section_nid, so a section_nid join surfaced a DIFFERENT item's
-                -- (possibly different teacher's) instructor list in the YTD
-                -- longitudinal rows. item_id + dim_item fallback keeps every
-                -- assessment attributed to its own teacher.
-                LEFT JOIN dim_section dsec
-                  ON dsec.item_id    = fd.item_id
-                 AND dsec.school_id  = fd.school_id
-                LEFT JOIN dim_item di_t
-                  ON di_t.item_id    = fd.item_id
-                 AND di_t.school_id  = fd.school_id
-            )
-            SELECT
-                section_instructors,
-                user_uid,
-                user_name,
-                standard_label,
-                MIN(schoology_standard)              AS schoology_standard,
-                SUM(points_received)::float          AS points_received,
-                SUM(points_possible)::float          AS points_possible
-            -- No COUNT(DISTINCT item_id) (was unused) and no ORDER BY (the
-            -- service re-sorts teachers/students by Score%): both forced a
-            -- 549k-row external-merge sort. Without them the GROUP BY is a
-            -- HashAggregate. With the covering ytd_dedup index (INCLUDE
-            -- user_name/section_nid/points) the dedup is an index-only scan.
-            -- ~8s -> ~2s on a full-year school; output unchanged.
-            FROM joined
-            GROUP BY section_instructors, user_uid, user_name, standard_label
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            {
-                "session_filter": session_filter,
-                "subject": subject,
-                "grade": grade,
-                "category": category,
-            },
-        )
-        return [_row_to_dict(r) for r in result.all()]
+        """One-query YTD matrix source: per (instructor, student, standard) cell.
 
-    async def get_ytd_longitudinal_tests_taken(
-        self,
-        session_filter: Optional[str],
-        subject: Optional[str],
-        grade: Optional[str],
-        category: Optional[str],
-    ) -> List[Dict[str, Any]]:
-        """Per-student count of distinct assessments attempted YTD (Tests Taken).
-
-        Reads the precomputed ``cube_user_summary`` (user×item×question grain,
-        carrying session/subject/grade/assessment_type) rather than re-scanning
-        the 1.65M-row ``fact_student_submission``: COUNT(DISTINCT item_id) per
-        user over the same distinct-assessment set is identical (verified
-        symmetric-diff = 0 / sum 28103 = 28103 on prod) but reads ~3x fewer
-        pages. The cube is kept fresh by the transform pipeline; the YTD report
-        path is session-scoped and cube-backed.
+        Returns, per (section_instructors, user_uid, standard_label):
+        ``points_received`` = SUM(total_score), ``points_possible`` =
+        SUM(total_possible_point) — the per-standard cell renders as mastery
+        received/possible. Plus the per-student constant
+        ``user_overall_possible_point`` (the "Possible Points" column, legacy
+        ``MAX(user_overall_possible_point)``); ``tests_taken`` =
+        COUNT(DISTINCT item_name) for the student;
+        ``unit_names`` = the assessments that touched the standard (variant 3
+        sub-header); and the scope-constant ``grand_score`` /
+        ``grand_possible`` (``*_by_overall_year``) for the year grand-total band.
         """
         sql = text(
-            """
-            SELECT user_uid,
-                   COUNT(DISTINCT item_id) AS tests_taken
-            FROM cube_user_summary cus
-            WHERE (CAST(:session_filter AS TEXT) IS NULL OR cus.session = CAST(:session_filter AS TEXT))
-              AND (CAST(:subject AS TEXT) IS NULL OR cus.subject = CAST(:subject AS TEXT))
-              AND (CAST(:grade AS TEXT) IS NULL OR cus.grade = CAST(:grade AS TEXT))
-              AND (CAST(:category AS TEXT) IS NULL OR cus.assessment_type = CAST(:category AS TEXT))
-            GROUP BY user_uid
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            {
-                "session_filter": session_filter,
-                "subject": subject,
-                "grade": grade,
-                "category": category,
-            },
-        )
-        return [_row_to_dict(r) for r in result.all()]
-
-    async def get_ytd_longitudinal_standard_units(
-        self,
-        session_filter: Optional[str],
-        subject: Optional[str],
-        grade: Optional[str],
-        category: Optional[str],
-    ) -> List[Dict[str, Any]]:
-        """Per-standard list of assessment (unit) names — V3 secondary header."""
-        sql = text(
-            """
-            WITH qd_first AS (
-                SELECT qd.item_id, qd.question_id,
-                       MIN(qd.standard) FILTER (
-                           WHERE qd.standard IS NOT NULL
-                             AND qd.standard <> ''
-                             AND LOWER(qd.standard) <> 'other'
-                       ) AS canon_std
-                FROM dim_question_data qd
-                WHERE (CAST(:session_filter AS TEXT) IS NULL OR qd.session = CAST(:session_filter AS TEXT))
-                  AND (CAST(:subject AS TEXT) IS NULL OR qd.subject = CAST(:subject AS TEXT))
-                  AND (CAST(:grade AS TEXT) IS NULL OR qd.grade = CAST(:grade AS TEXT))
-                  AND (CAST(:category AS TEXT) IS NULL OR qd.assessment_type = CAST(:category AS TEXT))
-                GROUP BY qd.item_id, qd.question_id
+            f"""
+            WITH scoped AS (
+                SELECT
+                    COALESCE(NULLIF(cus.section_instructors, ''), 'Unassigned')
+                                                        AS section_instructors,
+                    cus.user_uid,
+                    cus.user_name,
+                    cus.student_name_hash,
+                    COALESCE(NULLIF(cus.standards, ''), 'Other')
+                                                        AS standard_label,
+                    cus.item_name,
+                    cus.total_score,
+                    cus.total_possible_point,
+                    cus.user_overall_possible_point,
+                    cus.total_score_by_overall_year,
+                    cus.total_possible_point_by_overall_year,
+                    cus.session,
+                    cus.subject,
+                    cus.grade,
+                    cus.assessment_type
+                FROM cube_user_summary cus
+                WHERE {_CUS_YTD_FILTER_SQL}
             ),
-            items AS (
-                SELECT DISTINCT fss.item_id, fss.item_name
-                FROM fact_student_submission fss
-                WHERE (CAST(:session_filter AS TEXT) IS NULL OR fss.session = CAST(:session_filter AS TEXT))
-                  AND (CAST(:subject AS TEXT) IS NULL OR fss.subject = CAST(:subject AS TEXT))
-                  AND (CAST(:grade AS TEXT) IS NULL OR fss.grade = CAST(:grade AS TEXT))
-                  AND (CAST(:category AS TEXT) IS NULL OR fss.assessment_type = CAST(:category AS TEXT))
+            grand AS (
+                -- The `*_by_overall_year` columns are precomputed per
+                -- (session, subject, grade, assessment_type) group. When the
+                -- scope spans several groups (session/type left unpinned — the
+                -- page only requires subject+grade) sum ONE value per distinct
+                -- group; MAX would return just the largest group's year total.
+                -- A single-group scope collapses to exactly that group's value
+                -- (legacy parity).
+                SELECT SUM(gs)::float AS grand_score,
+                       SUM(gp)::float AS grand_possible
+                FROM (
+                    SELECT DISTINCT session, subject, grade, assessment_type,
+                           total_score_by_overall_year          AS gs,
+                           total_possible_point_by_overall_year AS gp
+                    FROM scoped
+                ) d
+            ),
+            user_year AS (
+                -- Per-student "Possible Points" column = legacy
+                -- MAX(user_overall_possible_point). user_overall_possible_point
+                -- is populated per (section, year-group) in the cube, so a
+                -- student spanning >1 section within a year-group has several
+                -- values: collapse them to ONE per (student, year-group) with
+                -- MAX (never SUM — that double-counts sections), then SUM only
+                -- across genuinely distinct year-groups (session/type may be
+                -- left unpinned; the page requires only subject+grade). A
+                -- single-group scope reduces to the legacy single MAX value.
+                SELECT user_uid,
+                       SUM(uopp)::float AS user_overall_possible_point
+                FROM (
+                    SELECT user_uid, session, subject, grade, assessment_type,
+                           MAX(user_overall_possible_point) AS uopp
+                    FROM scoped
+                    GROUP BY user_uid, session, subject, grade, assessment_type
+                ) d
+                GROUP BY user_uid
+            ),
+            tests AS (
+                SELECT user_uid, COUNT(DISTINCT item_name) AS tests_taken
+                FROM scoped
+                GROUP BY user_uid
+            ),
+            units AS (
+                SELECT standard_label,
+                       STRING_AGG(DISTINCT item_name, ' / ' ORDER BY item_name)
+                                                        AS unit_names,
+                       COUNT(DISTINCT item_name)        AS unit_count
+                FROM scoped
+                GROUP BY standard_label
+            ),
+            cells AS (
+                SELECT
+                    section_instructors,
+                    user_uid,
+                    MIN(user_name)                          AS user_name,
+                    standard_label,
+                    SUM(total_score)::float                 AS points_received,
+                    SUM(total_possible_point)::float        AS points_possible
+                FROM scoped
+                GROUP BY section_instructors, user_uid, standard_label
             )
             SELECT
-                COALESCE(ds.cpalms_standard, qf.canon_std, 'Other') AS standard_label,
-                STRING_AGG(DISTINCT it.item_name, ' / ' ORDER BY it.item_name)
-                                                                    AS unit_names
-            FROM qd_first qf
-            JOIN items it ON it.item_id = qf.item_id
-            LEFT JOIN dim_standard ds ON ds.schoology_standard = qf.canon_std
-            WHERE qf.canon_std IS NOT NULL
-            GROUP BY COALESCE(ds.cpalms_standard, qf.canon_std, 'Other')
+                c.section_instructors,
+                c.user_uid,
+                c.user_name,
+                c.standard_label,
+                c.points_received,
+                c.points_possible,
+                uy.user_overall_possible_point,
+                t.tests_taken,
+                u.unit_names,
+                u.unit_count,
+                g.grand_score,
+                g.grand_possible
+            FROM cells c
+            JOIN tests t ON t.user_uid = c.user_uid
+            JOIN user_year uy ON uy.user_uid = c.user_uid
+            LEFT JOIN units u ON u.standard_label = c.standard_label
+            CROSS JOIN grand g
             """
         )
         result = await self.session.execute(
             sql,
-            {
-                "session_filter": session_filter,
-                "subject": subject,
-                "grade": grade,
-                "category": category,
-            },
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
         )
         return [_row_to_dict(r) for r in result.all()]
 

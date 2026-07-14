@@ -160,21 +160,13 @@ export default function StandardCard({ std }: StandardCardProps) {
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-[11px] text-neutral-700">
+            {/* Legacy card KPI: "Number of Questions: N" (multiRowCard #0). */}
             <span
               className="inline-flex items-center rounded-full px-2 py-0.5 font-semibold"
               style={{ backgroundColor: NEUTRAL_CHIP_BG }}
             >
-              {std.num_questions} Q
+              Number of Questions: {std.num_questions}
             </span>
-            {std.num_assessments > 0 && (
-              <span
-                className="inline-flex items-center rounded-full px-2 py-0.5 font-semibold"
-                style={{ backgroundColor: NEUTRAL_CHIP_BG }}
-              >
-                {std.num_assessments} assessment
-                {std.num_assessments === 1 ? '' : 's'}
-              </span>
-            )}
           </div>
           <div className="text-[20px] font-bold leading-none text-black">
             {std.grade_average_pct}

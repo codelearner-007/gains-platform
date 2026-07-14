@@ -14,7 +14,7 @@ interface StatCardProps {
 /**
  * Compact KPI card for the app dashboards. Minimal, brand-consistent
  * (primary-soft icon chip + tabular figures), reused by the reports stat
- * strip and the home dashboard so the two read as one design system.
+ * strip and the admin home so the surfaces read as one design system.
  */
 export function StatCard({ label, value, hint, icon: Icon, loading }: StatCardProps) {
   return (

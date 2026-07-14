@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,6 +48,19 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 _XLSX_MEDIA_TYPE = (
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
+
+def _require_ytd_scope(subject: Optional[str], grade: Optional[str]) -> None:
+    """Legacy YTD is parameter-scoped (Subject × Grade). Reject an unscoped
+    request server-side: a whole-school matrix spans every standard column
+    (900+) for every student and would exhaust memory / crash the client. The
+    UI already gates on subject+grade; this enforces the same contract for
+    direct API callers."""
+    if not subject or not grade:
+        raise HTTPException(
+            status_code=422,
+            detail="Year-to-Date Longitudinal requires both 'subject' and 'grade'.",
+        )
 
 
 def _xlsx_response(kind: str, item_name: Optional[str], payload: object) -> StreamingResponse:
@@ -151,10 +164,11 @@ async def year_to_date_performance(
     faithful clone of the three legacy "Longitudinal Report - Year To Date"
     reports (the variant differences are purely client-side rendering). The
     report is one longitudinal unit per (session, grade, subject,
-    assessment_type); ``category`` carries the assessment type. ``section`` is
-    accepted for filter-bar compatibility but not applied at this grain.
-    Requires: reports:read.
+    assessment_type); ``category`` carries the assessment type. ``section``
+    narrows to a class roster (applied via dim_section). Requires subject +
+    grade (parameter-scoped, like legacy). Requires: reports:read.
     """
+    _require_ytd_scope(subject, grade)
     service = ReportService(db)
     return await service.build_year_to_date_performance(
         YTDFilters(
@@ -177,14 +191,16 @@ async def standard_summary(
     category: Optional[str] = None,
     subject: Optional[str] = None,
     grade: Optional[str] = None,
-    section: Optional[str] = None,
+    cards_only: bool = False,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StandardSummaryPayload:
-    """School-wide standards rollup (mirrors PBIX page #14).
+    """Legacy Standard Summary (PBIX page #14): per-cPalms_Standard card grid.
 
-    Aggregates cube_standard_summary across all assessments in the
-    selected scope. All filter params optional; default = whole-school
-    rollup. Requires: reports:read.
+    Per-standard correct% = AVERAGE(cube_question_summary_overall[Grade_Average]),
+    # of questions = DISTINCTCOUNT(cqso[Question_No]), scoped via dim_subject.
+    ``cards_only=true`` is the report page's lean path — it skips the KPI cube
+    reads (incl. the total_students fact scan) that only the dashboard renders.
+    All filter params optional; default = whole-school. Requires: reports:read.
     """
     service = ReportService(db)
     return await service.build_standard_summary(
@@ -193,8 +209,8 @@ async def standard_summary(
             category=category,
             subject=subject,
             grade=grade,
-            section=section,
-        )
+        ),
+        cards_only=cards_only,
     )
 
 
@@ -228,20 +244,16 @@ async def strand_summary(
     category: Optional[str] = None,
     subject: Optional[str] = None,
     grade: Optional[str] = None,
-    section: Optional[str] = None,
     strand: Optional[str] = None,
-    strands_only: bool = False,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StrandSummaryPayload:
-    """School-wide strand rollup (mirrors PBIX page #15).
+    """Legacy Strand Summary (PBIX page #15): per-strand card repeater.
 
-    Aggregates cube_question_summary by strand across all assessments in
-    the selected scope. All filter params optional; default = whole-school
-    rollup. The ``strand`` filter narrows the per-standard drill list
-    when the client cross-filters on a strand selection. ``strands_only=true``
-    is the dashboard's lean path — returns just ``strands_rollup`` (+ bands),
-    skipping the per-standard rollup and school-wide KPI queries it never reads.
-    Requires: reports:read.
+    Per-strand grade_average = AVERAGE(cqso[Grade_Average]); # standards =
+    DISTINCTCOUNT(cqso[Standards]) (by code); # questions =
+    DISTINCTCOUNT(cqso[Question_No]); scoped via dim_subject. The ``strand``
+    param narrows the within-strand per-standard breakdown. All filter params
+    optional; default = whole-school. Requires: reports:read.
     """
     service = ReportService(db)
     return await service.build_strand_summary(
@@ -250,10 +262,8 @@ async def strand_summary(
             category=category,
             subject=subject,
             grade=grade,
-            section=section,
             strand=strand,
         ),
-        strands_only=strands_only,
     )
 
 
@@ -463,6 +473,7 @@ async def ytd_export_xlsx(
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StreamingResponse:
     """XLSX export of the YTD Longitudinal matrix. Requires: reports:read"""
+    _require_ytd_scope(subject, grade)
     payload = await ReportService(db).build_year_to_date_performance(
         YTDFilters(
             session=session,
@@ -487,7 +498,6 @@ async def standard_summary_export_xlsx(
     category: Optional[str] = None,
     subject: Optional[str] = None,
     grade: Optional[str] = None,
-    section: Optional[str] = None,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StreamingResponse:
     """XLSX export of the school-wide Standard Summary. Requires: reports:read"""
@@ -497,7 +507,6 @@ async def standard_summary_export_xlsx(
             category=category,
             subject=subject,
             grade=grade,
-            section=section,
         )
     )
     return _xlsx_response("standard-summary", payload.school.name, payload)
@@ -514,7 +523,6 @@ async def strand_summary_export_xlsx(
     category: Optional[str] = None,
     subject: Optional[str] = None,
     grade: Optional[str] = None,
-    section: Optional[str] = None,
     strand: Optional[str] = None,
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> StreamingResponse:
@@ -525,7 +533,6 @@ async def strand_summary_export_xlsx(
             category=category,
             subject=subject,
             grade=grade,
-            section=section,
             strand=strand,
         )
     )

@@ -288,9 +288,12 @@ class YtdStandardColumn(BaseModel):
 
     standard_label: str
     schoology_standard: str
-    # Newline/' / '-joined assessment names that touched this standard YTD;
-    # rendered under the code in variant 3 only.
+    # ' / '-joined assessment names that touched this standard YTD; shown in
+    # full in variant 3's print/PDF export + the on-hover tooltip.
     unit_names: str = ""
+    # Distinct-assessment count — the compact on-screen affordance for variant 3
+    # ("N assessments") so the header stays readable instead of a wall of text.
+    unit_count: int = 0
 
 
 class YtdCell(BaseModel):
@@ -428,17 +431,24 @@ class IncorrectAnswerDetailsPayload(BaseModel):
 
 
 class StandardSummaryFilters(BaseModel):
-    """Echo of the query params applied so the client can re-render chips."""
+    """Echo of the query params applied so the client can re-render chips.
+
+    Scoped by session/subject/grade/assessment_type via dim_subject. There is
+    no ``section`` grain on the overall-cube (cqso) page — section is a
+    class-roster construct not meaningful per standard — so the page carries no
+    Section slicer (legacy parity).
+    """
 
     session: Optional[str] = None
     subject: Optional[str] = None
     grade: Optional[str] = None
     category: Optional[str] = None
-    section: Optional[str] = None
 
 
 class StandardSummaryKpis(BaseModel):
-    """Five KPI cards rendered at the top of the Standard Summary page."""
+    """School-wide KPI block. NOT rendered on the legacy Standard Summary page
+    (removed from the report for parity) but consumed by the dashboard's stat
+    cards (Total Students / Total Standards / school average)."""
 
     total_standards: int
     total_questions: int
@@ -468,29 +478,23 @@ class StandardSummaryRollupRow(BaseModel):
     subject: str
     grades: List[str] = []
     num_questions: int
-    num_assessments: int
     grade_average: float
     grade_average_pct: str
     last_change_date_time: Optional[str] = None
 
 
-class StandardSummaryStrandCount(BaseModel):
-    """Auxiliary distribution: # of standards per strand for the bar chart."""
-
-    strand: str
-    num_standards: int
-    num_questions: int
-    grade_average: float
-
-
 class StandardSummaryPayload(BaseModel):
-    """School-wide standards rollup (mirrors PBIX page #14)."""
+    """School-wide per-standard card grid (legacy PBIX page #14).
+
+    Legacy renders only a per-standard card repeater — no KPI-card strip,
+    ranked bar, rollup table or by-strand chart (those were non-legacy
+    additions and have been removed for parity).
+    """
 
     school: YTDSchoolInfo
     filters_applied: StandardSummaryFilters
     kpis: StandardSummaryKpis
     standards: List[StandardSummaryRollupRow]
-    strand_counts: List[StandardSummaryStrandCount]
     data_quality: Optional[AlignmentDataQuality] = None
 
 
@@ -498,28 +502,18 @@ class StandardSummaryPayload(BaseModel):
 
 
 class StrandSummaryFilters(BaseModel):
-    """Echo of the query params applied so the client can re-render chips."""
+    """Echo of the query params applied so the client can re-render chips.
+
+    Scoped by session/subject/grade/assessment_type via dim_subject (no
+    ``section`` grain on the per-strand overall-cube page — legacy parity).
+    ``strand`` narrows the within-strand per-standard breakdown.
+    """
 
     session: Optional[str] = None
     subject: Optional[str] = None
     grade: Optional[str] = None
     category: Optional[str] = None
-    section: Optional[str] = None
     strand: Optional[str] = None
-
-
-class StrandSummaryKpis(BaseModel):
-    """Top-of-page KPIs for the Strand Summary."""
-
-    total_strands: int
-    total_standards: int
-    total_questions: int
-    total_assessments: int
-    total_students: int
-    grade_average: float
-    grade_average_pct: str
-    worst_strand: str
-    worst_strand_pct: str
 
 
 class StrandSummaryRollupRow(BaseModel):
@@ -528,7 +522,6 @@ class StrandSummaryRollupRow(BaseModel):
     strand: str
     num_standards: int
     num_questions: int
-    num_assessments: int
     grade_average: float
     grade_average_pct: str
     incorrect_pct: float
@@ -542,31 +535,22 @@ class StrandSummaryStandardRow(BaseModel):
     schoology_standard: str
     cluster: str
     num_questions: int
-    num_assessments: int
     grade_average: float
     grade_average_pct: str
 
 
-class StrandSummaryBandRow(BaseModel):
-    """Band-shaped row for the 100%-stacked-bars panels."""
-
-    strand: str
-    num_standards: int
-    num_questions: int
-    grade_average: float
-
-
 class StrandSummaryPayload(BaseModel):
-    """School-wide strand rollup (mirrors PBIX page #15)."""
+    """Legacy Strand Summary (PBIX page #15): per-strand card repeater.
+
+    Legacy renders only the per-strand tiles + the within-strand per-standard
+    breakdown — no KPI-card strip, treemap, rollup table or band bars (those
+    were non-legacy additions and are removed for parity).
+    """
 
     school: YTDSchoolInfo
     filters_applied: StrandSummaryFilters
-    kpis: StrandSummaryKpis
     strands_rollup: List[StrandSummaryRollupRow]
     standards_rollup: List[StrandSummaryStandardRow]
-    band_high: List[StrandSummaryBandRow]
-    band_mid: List[StrandSummaryBandRow]
-    band_low: List[StrandSummaryBandRow]
     data_quality: Optional[AlignmentDataQuality] = None
     data_refreshed_at: str = ""
 

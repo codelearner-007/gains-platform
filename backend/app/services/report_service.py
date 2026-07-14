@@ -67,11 +67,8 @@ from app.schemas.reports import (
     StandardSummaryKpis,
     StandardSummaryPayload,
     StandardSummaryRollupRow,
-    StandardSummaryStrandCount,
     StandardsDeepDivePayload,
-    StrandSummaryBandRow,
     StrandSummaryFilters,
-    StrandSummaryKpis,
     StrandSummaryPayload,
     StrandSummaryRollupRow,
     StrandSummaryStandardRow,
@@ -164,7 +161,14 @@ _HTML_TAG_RE = re.compile(r"<(?!https?://)[^>]+>")
 def _strip_html(s: Optional[str]) -> str:
     if not s:
         return ""
-    return _HTML_TAG_RE.sub("", s).strip()
+    # Decode entities FIRST, then strip tags, so entity-escaped markup
+    # (e.g. "&lt;b&gt;x&lt;/b&gt;") is resurrected to real tags and then
+    # removed — never rendered live. Decoding after stripping would leave
+    # those tags intact (a latent XSS/format landmine). Legacy's cleaned
+    # descriptions are entity-free plain text; `<https://…>` image
+    # placeholders carry no entities, so unescape leaves them untouched and
+    # the tag regex's URL-scheme lookahead still preserves them.
+    return _HTML_TAG_RE.sub("", _html.unescape(s)).strip()
 
 
 def _format_pct(v: float) -> str:
@@ -865,11 +869,24 @@ class ReportService:
     ) -> YearToDatePerformancePayload:
         """Legacy YTD Longitudinal paginated matrix (PBIX ord 8/9/10).
 
-        Rows are grouped Classroom Instructor → Student; columns are the
-        standards assessed YTD for the (session, grade, subject,
-        assessment_type) scope. Every cell + subtotal + grand total is
-        POINTS-based: Score = SUM(points_received)/SUM(points_possible) at
-        that grain (matching the legacy SSRS PDFs, e.g. grand 36/45 = 80%).
+        Faithful clone of the SSRS matrix, sourced from ``cube_user_summary``
+        (legacy's own ``cube_users_summary``) — one scoped GROUP BY, no fact
+        re-derivation. Rows are grouped Classroom Instructor → Student; columns
+        are the standards assessed YTD for the (session, grade, subject,
+        assessment_type[, section]) scope. Per the legacy RDL:
+
+        * per-standard **Score** cell = ``SUM(score)/SUM(possible)`` (``n/N``);
+        * per-standard **%** cell = mastery ``SUM(score)/SUM(possible)`` for
+          that (student, standard) — the same received/possible ratio the
+          per-standard subtotals and grand totals use, so a cell, its column
+          subtotal and the grand total all sit on one 0–100 % mastery scale
+          (the legacy fully-populated RDL renders these as mastery, banded at
+          70/80 %);
+        * student **Score %** = mastery ``SUM(score)/SUM(possible)``;
+        * **Possible Points** column = ``MAX(user_overall_possible_point)``;
+        * **# Correct Answers** column = ``SUM(score)``;
+        * year grand-total band reads the precomputed ``*_by_overall_year``
+          columns verbatim (not a re-sum of the visible cells).
         """
         f = filters or YTDFilters()
         meta = await self.cube.get_ytd_school_meta(
@@ -879,14 +896,8 @@ class ReportService:
             category=f.category,
             section=f.section,
         ) or {}
-        cell_rows = await self.cube.get_ytd_longitudinal_cells(
-            f.session, f.subject, f.grade, f.category
-        )
-        tests_rows = await self.cube.get_ytd_longitudinal_tests_taken(
-            f.session, f.subject, f.grade, f.category
-        )
-        unit_rows = await self.cube.get_ytd_longitudinal_standard_units(
-            f.session, f.subject, f.grade, f.category
+        rows = await self.cube.get_ytd_cells_from_cus(
+            f.session, f.subject, f.grade, f.category, f.section
         )
 
         school = YTDSchoolInfo(
@@ -897,83 +908,83 @@ class ReportService:
             assessment_types=_coerce_str_list(meta.get("assessment_types")),
         )
 
-        tests_taken_by_user: dict[str, int] = {
-            safe_str(r.get("user_uid")): to_int(r.get("tests_taken"))
-            for r in tests_rows
-        }
-        unit_names_by_std: dict[str, str] = {
-            safe_str(r.get("standard_label")): safe_str(r.get("unit_names"))
-            for r in unit_rows
-        }
+        def _pct(recv: float, poss: float) -> float:
+            return round(recv / poss, 6) if poss > 0 else 0.0
 
-        # ── Standard columns ─────────────────────────────────────────────────
-        # Legacy SSRS orders the standard columns ASCENDING by the standard's
-        # overall Score% (lowest-scoring standard first) — the grand-total
-        # "Score %" row in the legacy PDF reads left→right 48%, 61%, 65%, …,
-        # 96%. Ties break alphabetically by label for determinism.
-        std_meta: dict[str, str] = {}  # label → schoology code
+        # Year grand-total band = the precomputed ``*_by_overall_year`` columns
+        # (constant within a scope); read once off any row.
+        grand_year_recv = to_float(rows[0].get("grand_score")) if rows else 0.0
+        grand_year_poss = to_float(rows[0].get("grand_possible")) if rows else 0.0
+
+        # ── Standard columns ────────────────────────────────────────────────
+        # Legacy orders the standard columns ASCENDING by each standard's overall
+        # mastery Score% (SUM(score)/SUM(possible)); ties break alphabetically.
         std_totals: dict[str, list[float]] = {}  # label → [recv, poss]
-        for r in cell_rows:
+        unit_names_by_std: dict[str, str] = {}
+        unit_count_by_std: dict[str, int] = {}
+        for r in rows:
             label = safe_str(r.get("standard_label"))
             if not label:
                 continue
-            if label not in std_meta:
-                std_meta[label] = safe_str(r.get("schoology_standard")) or label
             agg = std_totals.setdefault(label, [0.0, 0.0])
             agg[0] += to_float(r.get("points_received"))
             agg[1] += to_float(r.get("points_possible"))
+            if label not in unit_names_by_std:
+                unit_names_by_std[label] = safe_str(r.get("unit_names"))
+                unit_count_by_std[label] = to_int(r.get("unit_count"))
 
         def _std_score(label: str) -> float:
             recv, poss = std_totals.get(label, [0.0, 0.0])
-            return round(recv / poss, 6) if poss > 0 else 0.0
+            return _pct(recv, poss)
 
-        ordered_labels = sorted(std_meta, key=lambda lab: (_std_score(lab), lab))
+        ordered_labels = sorted(std_totals, key=lambda lab: (_std_score(lab), lab))
         standards = [
             YtdStandardColumn(
                 standard_label=label,
-                schoology_standard=std_meta[label],
+                schoology_standard=label,
                 unit_names=unit_names_by_std.get(label, ""),
+                unit_count=unit_count_by_std.get(label, 0),
             )
             for label in ordered_labels
         ]
 
-        # ── Teacher → student → (standard) accumulation ─────────────────────
-        # teacher → user_uid → {name, cells: {label: [recv, poss]}}
+        # ── Teacher → student → (standard) pivot ────────────────────────────
+        # Each (teacher, student, standard) is one SQL row → direct assignment.
         teachers: dict[str, dict[str, dict[str, Any]]] = {}
-        for r in cell_rows:
+        for r in rows:
             teacher = safe_str(r.get("section_instructors")) or "Unassigned"
             uid = safe_str(r.get("user_uid"))
             label = safe_str(r.get("standard_label"))
-            recv = to_float(r.get("points_received"))
-            poss = to_float(r.get("points_possible"))
             student = teachers.setdefault(teacher, {}).setdefault(
                 uid,
-                {"user_name": safe_str(r.get("user_name")), "cells": {}},
+                {
+                    "user_name": safe_str(r.get("user_name")),
+                    # per-student constants (identical on every one of the
+                    # student's rows).
+                    "user_overall_possible_point": to_float(
+                        r.get("user_overall_possible_point")
+                    ),
+                    "tests_taken": to_int(r.get("tests_taken")),
+                    "cells": {},
+                },
             )
-            cur = student["cells"].setdefault(label, [0.0, 0.0])
-            cur[0] += recv
-            cur[1] += poss
+            student["cells"][label] = [
+                to_float(r.get("points_received")),
+                to_float(r.get("points_possible")),
+            ]
 
-        def _pct(recv: float, poss: float) -> float:
-            return round(recv / poss, 6) if poss > 0 else 0.0
-
-        teacher_groups: list[YtdTeacherGroup] = []
-        grand_recv = 0.0
-        grand_poss = 0.0
-        grand_std: dict[str, list[float]] = {}
-
-        # Legacy SSRS orders the Classroom Instructor groups ASCENDING by the
-        # teacher's overall Score% (lowest-scoring teacher first) — the legacy
-        # PDF runs 80.9% → 81.8% → 84.7%. Ties break alphabetically by name.
         def _teacher_score(name: str) -> float:
             recv = sum(v[0] for s in teachers[name].values() for v in s["cells"].values())
             poss = sum(v[1] for s in teachers[name].values() for v in s["cells"].values())
-            return round(recv / poss, 6) if poss > 0 else 0.0
+            return _pct(recv, poss)
 
+        teacher_groups: list[YtdTeacherGroup] = []
+        grand_std: dict[str, list[float]] = {}
+
+        # Legacy orders Classroom-Instructor groups ASCENDING by teacher mastery
+        # Score%, students ASCENDING by their mastery Score%.
         for teacher in sorted(teachers, key=lambda t: (_teacher_score(t), t)):
             students_list: list[YtdStudentRow] = []
-            t_recv = 0.0
-            t_poss = 0.0
             t_std: dict[str, list[float]] = {}
             for uid, s in teachers[teacher].items():
                 s_recv = sum(v[0] for v in s["cells"].values())
@@ -982,6 +993,9 @@ class ReportService:
                     label: YtdCell(
                         points_received=round(v[0], 4),
                         points_possible=round(v[1], 4),
+                        # per-standard "%" = mastery received/possible for that
+                        # (student, standard) — same scale as the subtotal and
+                        # grand-total Score% this cell sits under.
                         score_pct=_pct(v[0], v[1]),
                     )
                     for label, v in s["cells"].items()
@@ -990,15 +1004,14 @@ class ReportService:
                     YtdStudentRow(
                         user_uid=uid,
                         user_name=s["user_name"],
-                        score_pct=_pct(s_recv, s_poss),
-                        tests_taken=tests_taken_by_user.get(uid, 0),
-                        points_received=round(s_recv, 4),
-                        points_possible=round(s_poss, 4),
+                        score_pct=_pct(s_recv, s_poss),          # mastery
+                        tests_taken=s["tests_taken"],
+                        points_received=round(s_recv, 4),        # # Correct Answers
+                        # "Possible Points" column = Max(user_overall_possible_point).
+                        points_possible=round(s["user_overall_possible_point"], 4),
                         cells=cells,
                     )
                 )
-                t_recv += s_recv
-                t_poss += s_poss
                 for label, v in s["cells"].items():
                     agg = t_std.setdefault(label, [0.0, 0.0])
                     agg[0] += v[0]
@@ -1006,8 +1019,12 @@ class ReportService:
                     g = grand_std.setdefault(label, [0.0, 0.0])
                     g[0] += v[0]
                     g[1] += v[1]
-            # Legacy sorts students ascending by overall Score %.
-            students_list.sort(key=lambda x: x.score_pct)
+            # Legacy orders students ASCENDING by mastery Score%; break ties on
+            # name then uid so row order is fully deterministic across identical
+            # requests/exports.
+            students_list.sort(key=lambda x: (x.score_pct, x.user_name, x.user_uid))
+            t_recv = sum(v[0] for v in t_std.values())
+            t_poss = sum(v[1] for v in t_std.values())
             teacher_groups.append(
                 YtdTeacherGroup(
                     section_instructor=teacher,
@@ -1017,24 +1034,22 @@ class ReportService:
                         label: YtdStandardTotal(
                             points_received=round(v[0], 4),
                             points_possible=round(v[1], 4),
-                            score_pct=_pct(v[0], v[1]),
+                            score_pct=_pct(v[0], v[1]),   # subtotal Score% = mastery
                         )
                         for label, v in t_std.items()
                     },
                 )
             )
-            grand_recv += t_recv
-            grand_poss += t_poss
 
         grand_total = YtdGrandTotal(
-            points_received=round(grand_recv, 4),
-            points_possible=round(grand_poss, 4),
-            score_pct=_pct(grand_recv, grand_poss),
+            points_received=round(grand_year_recv, 4),        # Score_By_OverallYear
+            points_possible=round(grand_year_poss, 4),        # Possible_By_OverallYear
+            score_pct=_pct(grand_year_recv, grand_year_poss),
             standard_totals={
                 label: YtdStandardTotal(
                     points_received=round(v[0], 4),
                     points_possible=round(v[1], 4),
-                    score_pct=_pct(v[0], v[1]),
+                    score_pct=_pct(v[0], v[1]),   # per-standard grand = mastery
                 )
                 for label, v in grand_std.items()
             },
@@ -1055,51 +1070,50 @@ class ReportService:
     # Standard Summary (school-wide, per-cPalms_Standard grain)
     # ────────────────────────────────────────────────────────────────────
     async def build_standard_summary(
-        self, filters: StandardSummaryFilters
+        self, filters: StandardSummaryFilters, cards_only: bool = False
     ) -> StandardSummaryPayload:
+        """Legacy Standard Summary (PBIX ord 14): one card per cPalms_Standard.
+
+        Faithful to the legacy page — a per-standard card grid (navy code badge,
+        subject/grade tag, strand/cluster/cognitive-complexity, "Number of
+        Questions", cleaned description, mini correct/incorrect bar, adopted
+        date). The legacy page carries NO KPI-card strip, ranked bar, rollup
+        table or by-strand chart — those were non-legacy and are removed from
+        the report. The ``kpis`` block is still returned (the dashboard's stat
+        cards consume it) but is not rendered on this page. Per-standard
+        correct% = AVERAGE(cube_question_summary_overall[Grade_Average]) and
+        # of questions = DISTINCTCOUNT(cqso[Question_No]) (from the rollup query).
+        """
         meta = await self.cube.get_school_wide_meta() or {}
         rows = await self.cube.get_school_standard_rollup(
             session_filter=filters.session,
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
-        )
-        total_students = await self.cube.get_school_total_students(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
         )
 
         standards: list[StandardSummaryRollupRow] = []
-        strand_counts_acc: dict[str, dict[str, Any]] = {}
         at_target = 0
         for row in rows:
             schoology = safe_str(row.get("schoology_standard"))
             if not schoology:
                 continue
             grade_avg = to_float(row.get("grade_average"))
-            num_q = to_int(row.get("num_questions"))
-            num_a = to_int(row.get("num_assessments"))
-            strand = _decode_html(safe_str(row.get("strand")))
-            description = _strip_html(safe_str(row.get("description")))
+            if grade_avg >= _BAND_HIGH_THRESHOLD:
+                at_target += 1
             last_change = row.get("last_change_date_time")
-            grades_list = _coerce_str_list(row.get("grades"))
             standards.append(
                 StandardSummaryRollupRow(
                     schoology_standard=schoology,
                     cpalms_standard=safe_str(row.get("cpalms_standard"))
                     or schoology,
-                    strand=strand,
+                    strand=_decode_html(safe_str(row.get("strand"))),
                     cluster=safe_str(row.get("cluster")),
                     cognitive_complexity=safe_str(row.get("cognitive_complexity")),
-                    description=description,
+                    description=_strip_html(safe_str(row.get("description"))),
                     subject=safe_str(row.get("subject")),
-                    grades=grades_list,
-                    num_questions=num_q,
-                    num_assessments=num_a,
+                    grades=_coerce_str_list(row.get("grades")),
+                    num_questions=to_int(row.get("num_questions")),
                     grade_average=round(grade_avg, 6),
                     grade_average_pct=_format_pct(grade_avg),
                     last_change_date_time=(
@@ -1107,60 +1121,43 @@ class ReportService:
                     ),
                 )
             )
-            if grade_avg >= _BAND_HIGH_THRESHOLD:
-                at_target += 1
-            bucket = strand_counts_acc.setdefault(
-                strand,
-                {
-                    "strand": strand,
-                    "num_standards": 0,
-                    "num_questions": 0,
-                    "grade_sum": 0.0,
-                    "rows": 0,
-                },
-            )
-            bucket["num_standards"] += 1
-            bucket["num_questions"] += num_q
-            bucket["grade_sum"] += grade_avg
-            bucket["rows"] += 1
 
+        school = YTDSchoolInfo(
+            name=safe_str(meta.get("name")),
+            logo_url=meta.get("logo_url") or None,
+            current_session=safe_str(meta.get("current_session")),
+        )
+
+        # KPI block — NOT rendered on the legacy report page (removed for
+        # parity), but the dashboard's stat cards read it (Total Students /
+        # Total Standards / school average). Sequential reads (AsyncSession
+        # is not safe for concurrent statements on the same connection).
         total_standards = len(standards)
         at_target_pct = at_target / total_standards if total_standards else 0.0
-
-        strand_counts = sorted(
-            (
-                StandardSummaryStrandCount(
-                    strand=b["strand"],
-                    num_standards=int(b["num_standards"]),
-                    num_questions=int(b["num_questions"]),
-                    grade_average=round(b["grade_sum"] / b["rows"], 6)
-                    if b["rows"]
-                    else 0.0,
-                )
-                for b in strand_counts_acc.values()
-                if b["strand"]
-            ),
-            key=lambda r: r.num_standards,
-            reverse=True,
-        )
-
-        # Sequential — AsyncSession is not safe for concurrent statements
-        # on the same connection.
-        total_questions_cqso = await self.cube.get_school_total_questions(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
-        )
-        grade_average = await self.cube.get_school_overall_grade_average(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
-        )
-
+        # The report page (cards_only) never renders these; skip the three
+        # cube reads — chiefly the total_students fact scan (~2.5s).
+        total_students = 0
+        total_questions_cqso = 0
+        grade_average = 0.0
+        if not cards_only:
+            total_students = await self.cube.get_school_total_students(
+                session_filter=filters.session,
+                subject=filters.subject,
+                grade=filters.grade,
+                category=filters.category,
+            )
+            total_questions_cqso = await self.cube.get_school_total_questions(
+                session_filter=filters.session,
+                subject=filters.subject,
+                grade=filters.grade,
+                category=filters.category,
+            )
+            grade_average = await self.cube.get_school_overall_grade_average(
+                session_filter=filters.session,
+                subject=filters.subject,
+                grade=filters.grade,
+                category=filters.category,
+            )
         kpis = StandardSummaryKpis(
             total_standards=total_standards,
             total_questions=total_questions_cqso,
@@ -1171,18 +1168,11 @@ class ReportService:
             grade_average_pct=_format_pct(grade_average),
         )
 
-        school = YTDSchoolInfo(
-            name=safe_str(meta.get("name")),
-            logo_url=meta.get("logo_url") or None,
-            current_session=safe_str(meta.get("current_session")),
-        )
-
         quality = await self.cube.get_school_alignment_quality(
             session_filter=filters.session,
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
         )
         data_quality = AlignmentDataQuality(
             alignment_status=_classify_alignment(
@@ -1200,7 +1190,6 @@ class ReportService:
             filters_applied=filters,
             kpis=kpis,
             standards=standards,
-            strand_counts=strand_counts,
             data_quality=data_quality,
         )
 
@@ -1294,16 +1283,18 @@ class ReportService:
         )
 
     async def build_strand_summary(
-        self, filters: StrandSummaryFilters, strands_only: bool = False
+        self, filters: StrandSummaryFilters
     ) -> StrandSummaryPayload:
-        """Build the Strand Summary payload.
+        """Legacy Strand Summary (PBIX ord 15): one tile per Strand.
 
-        ``strands_only`` is the dashboard's lean path: it consumes ONLY
-        ``strands_rollup``, so we skip the per-standard rollup (a full, expensive
-        ``get_school_standard_rollup`` that the dashboard already pays for via
-        Standard Summary) plus the school-wide KPI / alignment / refresh queries
-        the dashboard never reads — 9 round-trips collapse to 2. The Strand
-        Summary report page calls without the flag (full payload, unchanged).
+        A per-strand card repeater — strand banner, "# Questions"/"# Standards"
+        text echoes, a within-strand correct%-per-standard chart, and the
+        Adopted/Revised date footer. The legacy page carries NO KPI-card strip,
+        treemap, rollup table or band bars (those were non-legacy additions and
+        are removed for parity). Per-strand grade_average =
+        AVERAGE(cqso[Grade_Average]) (flat); # standards =
+        DISTINCTCOUNT(cqso[Standards]) (by code); # questions =
+        DISTINCTCOUNT(cqso[Question_No]).
         """
         meta = await self.cube.get_school_wide_meta() or {}
         strand_rows = await self.cube.get_school_strand_rollup(
@@ -1311,20 +1302,13 @@ class ReportService:
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
         )
-
         strands_rollup: list[StrandSummaryRollupRow] = []
-        band_high: list[StrandSummaryBandRow] = []
-        band_mid: list[StrandSummaryBandRow] = []
-        band_low: list[StrandSummaryBandRow] = []
-        worst_strand = ""
-        worst_grade = 1.5  # any value beats this on the first iteration
         for row in strand_rows:
             strand_name = _decode_html(safe_str(row.get("strand")))
+            if not strand_name:
+                continue
             grade_avg = to_float(row.get("grade_average"))
-            num_questions = to_int(row.get("num_questions"))
-            num_standards = to_int(row.get("num_standards"))
             subjects_raw = row.get("subjects")
             subjects = [
                 _decode_html(safe_str(s))
@@ -1334,64 +1318,13 @@ class ReportService:
             strands_rollup.append(
                 StrandSummaryRollupRow(
                     strand=strand_name,
-                    num_standards=num_standards,
-                    num_questions=num_questions,
-                    num_assessments=to_int(row.get("num_assessments")),
+                    num_standards=to_int(row.get("num_standards")),
+                    num_questions=to_int(row.get("num_questions")),
                     grade_average=round(grade_avg, 6),
                     grade_average_pct=_format_pct(grade_avg),
                     incorrect_pct=round(max(0.0, 1.0 - grade_avg), 6),
                     subjects=subjects,
                 )
-            )
-            band_row = StrandSummaryBandRow(
-                strand=strand_name,
-                num_standards=num_standards,
-                num_questions=num_questions,
-                grade_average=round(grade_avg, 6),
-            )
-            if grade_avg >= _BAND_HIGH_THRESHOLD:
-                band_high.append(band_row)
-            elif grade_avg >= _BAND_MID_THRESHOLD:
-                band_mid.append(band_row)
-            else:
-                band_low.append(band_row)
-            if num_questions > 0 and grade_avg < worst_grade:
-                worst_grade = grade_avg
-                worst_strand = strand_name
-
-        total_strands = len(strands_rollup)
-        total_standards = sum(s.num_standards for s in strands_rollup)
-
-        school = YTDSchoolInfo(
-            name=safe_str(meta.get("name")),
-            logo_url=meta.get("logo_url") or None,
-            current_session=safe_str(meta.get("current_session")),
-        )
-
-        # Dashboard lean path: only strands_rollup is consumed, so skip the
-        # per-standard rollup + the school-wide KPI / alignment / refresh queries.
-        if strands_only:
-            return StrandSummaryPayload(
-                school=school,
-                filters_applied=filters,
-                kpis=StrandSummaryKpis(
-                    total_strands=total_strands,
-                    total_standards=total_standards,
-                    total_questions=0,
-                    total_assessments=0,
-                    total_students=0,
-                    grade_average=0.0,
-                    grade_average_pct=_format_pct(0.0),
-                    worst_strand=worst_strand,
-                    worst_strand_pct=_format_pct(worst_grade) if worst_strand else "—",
-                ),
-                strands_rollup=strands_rollup,
-                standards_rollup=[],
-                band_high=band_high,
-                band_mid=band_mid,
-                band_low=band_low,
-                data_quality=None,
-                data_refreshed_at="",
             )
 
         std_rows = await self.cube.get_school_standard_rollup(
@@ -1399,7 +1332,6 @@ class ReportService:
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
             strand=filters.strand,
         )
         standards_rollup: list[StrandSummaryStandardRow] = [
@@ -1408,7 +1340,6 @@ class ReportService:
                 schoology_standard=safe_str(r.get("schoology_standard")),
                 cluster=safe_str(r.get("cluster")),
                 num_questions=to_int(r.get("num_questions")),
-                num_assessments=to_int(r.get("num_assessments")),
                 grade_average=round(to_float(r.get("grade_average")), 6),
                 grade_average_pct=_format_pct(to_float(r.get("grade_average"))),
             )
@@ -1416,61 +1347,18 @@ class ReportService:
             if safe_str(r.get("schoology_standard"))
         ]
 
-        total_students = await self.cube.get_school_total_students(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
+        school = YTDSchoolInfo(
+            name=safe_str(meta.get("name")),
+            logo_url=meta.get("logo_url") or None,
+            current_session=safe_str(meta.get("current_session")),
         )
-        # Mirrors PBIX `Total Question = DISTINCTCOUNT(cqso[Question_No])` so
-        # the KPI agrees across YTD / Standard / Strand Summary.
-        total_questions = await self.cube.get_school_total_questions(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
-        )
-        total_assessments = await self.cube.get_school_total_assessments(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
-        )
-        # Mirrors PBIX `Grade_Average_Standard_Measure = AVERAGE(cqso[Grade_Average])`
-        # rather than mean-of-per-strand-means (which would weight strands equally).
-        grade_average = await self.cube.get_school_overall_grade_average(
-            session_filter=filters.session,
-            subject=filters.subject,
-            grade=filters.grade,
-            category=filters.category,
-            section=filters.section,
-        )
-
-        kpis = StrandSummaryKpis(
-            total_strands=total_strands,
-            total_standards=total_standards,
-            total_questions=total_questions,
-            total_assessments=total_assessments,
-            total_students=total_students,
-            grade_average=round(grade_average, 6),
-            grade_average_pct=_format_pct(grade_average),
-            worst_strand=worst_strand,
-            worst_strand_pct=_format_pct(worst_grade) if worst_strand else "—",
-        )
-
-        data_refreshed_at = (
-            await self.cube.get_school_data_refreshed_at()
-        ) or ""
+        data_refreshed_at = (await self.cube.get_school_data_refreshed_at()) or ""
 
         quality = await self.cube.get_school_alignment_quality(
             session_filter=filters.session,
             subject=filters.subject,
             grade=filters.grade,
             category=filters.category,
-            section=filters.section,
         )
         data_quality = AlignmentDataQuality(
             alignment_status=_classify_alignment(
@@ -1486,12 +1374,8 @@ class ReportService:
         return StrandSummaryPayload(
             school=school,
             filters_applied=filters,
-            kpis=kpis,
             strands_rollup=strands_rollup,
             standards_rollup=standards_rollup,
-            band_high=band_high,
-            band_mid=band_mid,
-            band_low=band_low,
             data_quality=data_quality,
             data_refreshed_at=data_refreshed_at,
         )

@@ -2,7 +2,7 @@ import {
   DATA_BAR_MARKER,
   DATA_BAR_TRACK,
   LAYOUT_BORDER,
-  performanceColor,
+  perfFillHex,
 } from '@/lib/reports/colors';
 import { formatPercent } from '@/lib/reports/format';
 
@@ -23,7 +23,7 @@ interface GradeAverageBarProps {
  * Grade Average` inline-SVG measure.
  *
  *   • fill width  = value (0..1), capped at 100%
- *   • fill color  = performanceColor(value)  (<70% pink / 70-80% yellow / ≥80% green)
+ *   • fill color  = perfFillHex(value)  (modern rose / amber / emerald traffic light)
  *   • dashed line = the school-wide average (marker), for at-a-glance context
  *   • right label = the exact % (text, so meaning never relies on color alone)
  */
@@ -53,7 +53,7 @@ export default function GradeAverageBar({ value, marker }: GradeAverageBarProps)
       >
         <div
           className="absolute inset-y-0 left-0 rounded-sm"
-          style={{ width: `${pct * 100}%`, backgroundColor: performanceColor(value) }}
+          style={{ width: `${pct * 100}%`, backgroundColor: perfFillHex(value) }}
         />
         {markerPct !== null && (
           <div

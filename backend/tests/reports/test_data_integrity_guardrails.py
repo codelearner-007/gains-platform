@@ -170,9 +170,13 @@ async def test_g5_all_cubes_rls_enabled(db: AsyncSession):
 
 
 def test_g1_retake_read_paths_have_submission_desc():
-    """The three cube_repository fact_dedup CTEs must tie-break on submission DESC
+    """The cube_repository fact_dedup CTEs must tie-break on submission DESC
     so retake students get the latest attempt (guards F-A1/A2). A regression that
     drops the tie-break would re-introduce non-deterministic mixed-attempt scores.
+
+    Count is >=2 since the YTD longitudinal read moved from a fact re-derivation
+    to a cube_user_summary pivot (no fact_dedup); the remaining fact-based read
+    paths must still carry the tie-break.
     """
     import re
     from pathlib import Path
@@ -182,7 +186,7 @@ def test_g1_retake_read_paths_have_submission_desc():
     # Each fact_dedup CTE ends with an ORDER BY … <keys>; every one must carry a
     # submission-DESC tie-break.
     dedup_blocks = re.findall(r"fact_dedup AS \((.*?)\n\s*\),", text_src, re.DOTALL)
-    assert len(dedup_blocks) >= 3, f"expected >=3 fact_dedup CTEs, found {len(dedup_blocks)}"
+    assert len(dedup_blocks) >= 2, f"expected >=2 fact_dedup CTEs, found {len(dedup_blocks)}"
     missing = [i for i, b in enumerate(dedup_blocks) if "submission DESC" not in b]
     assert not missing, f"fact_dedup CTE(s) {missing} missing 'submission DESC' tie-break"
 

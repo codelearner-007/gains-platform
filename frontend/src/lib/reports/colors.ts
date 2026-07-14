@@ -164,6 +164,43 @@ export function performanceBand(grade: number): PerfBand {
   return PERF_BAND_HIGH;
 }
 
+/**
+ * Dark, WCAG-AA, dark-mode-safe performance tone for a *value* (text), not a
+ * fill. Lets the dashboard signal the traffic light on the number itself
+ * (subject-card %, Grade-Average KPI) so the surrounding card chrome can stay
+ * neutral — the perf colour reads as data, never as decoration.
+ */
+export function perfTextClass(grade: number): string {
+  if (grade < 0.7) return 'text-rose-600 dark:text-rose-400';
+  if (grade < 0.8) return 'text-amber-600 dark:text-amber-400';
+  return 'text-emerald-600 dark:text-emerald-400';
+}
+
+/**
+ * Soft, MODERN perf-tint hexes (Tailwind rose/amber/emerald ~100/200) for a
+ * subject-card wash — drawn from the SAME hue family as ``perfTextClass`` so the
+ * value and its tint read as one coherent colour, not the legacy PowerBI
+ * pastels (which clash with the modern brand). ``[wash, edge]`` = the solid
+ * bottom stop and the mid fade stop of the gradient.
+ */
+export function perfTintHex(grade: number): { wash: string; edge: string } {
+  if (grade < 0.7) return { wash: '#ffe4e6', edge: '#fff1f2' };   // rose-100 / 50
+  if (grade < 0.8) return { wash: '#fef3c7', edge: '#fffbeb' };   // amber-100 / 50
+  return { wash: '#d1fae5', edge: '#ecfdf5' };                    // emerald-100 / 50
+}
+
+/**
+ * Modern perf-bar fill (Tailwind rose/amber/emerald ~400) for the DASHBOARD
+ * data bars — same hue family as ``perfTextClass`` / ``perfTintHex`` so the
+ * bars, washes and values all read as one traffic light. (The report PDFs keep
+ * the legacy ``performanceColor`` pastels for parity; this is dashboard-only.)
+ */
+export function perfFillHex(grade: number): string {
+  if (grade < 0.7) return '#fb7185';   // rose-400
+  if (grade < 0.8) return '#fbbf24';   // amber-400
+  return '#34d399';                    // emerald-400
+}
+
 // Cell-background colour for grade-coloured percentage cells (QRA per-question
 // table, strands / standards summary tables). Mirrors PBIX semantics so the
 // pink/yellow/green traffic light is consistent across every report.

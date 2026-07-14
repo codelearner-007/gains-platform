@@ -52,9 +52,16 @@ export default function YearToDatePerformancePage() {
     [filters, schoolId],
   );
 
+  // Legacy YTD is always parameter-scoped (Grade × Subject × …) and paginated;
+  // the whole-school unbounded matrix (hundreds of standard columns × every
+  // student) is neither a legacy view nor renderable. Require Subject + Grade
+  // before fetching/rendering — mirrors the legacy RDL's required parameters.
+  const scoped = Boolean(filters.subject && filters.grade);
+
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: reportsKeys.ytd(queryFilters),
     queryFn: () => reportsApi.ytd(queryFilters),
+    enabled: Boolean(schoolId) && scoped,
   });
 
   return (
@@ -77,7 +84,9 @@ export default function YearToDatePerformancePage() {
         <VariantTabs active={variant} />
       </div>
 
-      {isLoading ? (
+      {!scoped ? (
+        <ScopePrompt />
+      ) : isLoading ? (
         <LoadingState label="Loading year-to-date longitudinal…" />
       ) : isError ? (
         <ErrorState
@@ -94,12 +103,11 @@ export default function YearToDatePerformancePage() {
               schoolName={data.school.name || undefined}
               title="Longitudinal Report - Year To Date"
               subtitle="Student Performance by Standards"
-              meta={[
+              meta={buildYtdMeta(
                 data.assessment_type,
-                [data.subject, data.grade].filter(Boolean).join(' - '),
-              ]
-                .filter(Boolean)
-                .join(' | ')}
+                data.subject,
+                data.grade,
+              )}
               variant="dense"
             />
           </div>
@@ -114,6 +122,40 @@ export default function YearToDatePerformancePage() {
         </>
       )}
     </ReportCanvas>
+  );
+}
+
+// Legacy header-band SWITCH (RDL, identical in all 3 variants): Grade 6 / 7
+// History are relabeled to World / US History under a "Lesson Assessments"
+// type; every other scope renders "{assessment_type} | {subject} - {grade}".
+function buildYtdMeta(
+  assessmentType: string,
+  subject: string,
+  grade: string,
+): string {
+  const isHistory = subject === 'History';
+  const type =
+    isHistory && (grade === 'Grade 6' || grade === 'Grade 7')
+      ? 'Lesson Assessments'
+      : assessmentType;
+  const subj =
+    isHistory && grade === 'Grade 6'
+      ? 'World History'
+      : isHistory && grade === 'Grade 7'
+        ? 'US History'
+        : subject;
+  return [type, [subj, grade].filter(Boolean).join(' - ')]
+    .filter(Boolean)
+    .join(' | ');
+}
+
+function ScopePrompt() {
+  return (
+    <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+      Select a <span className="font-medium">Subject</span> and{' '}
+      <span className="font-medium">Grade</span> above to view the year-to-date
+      longitudinal matrix.
+    </div>
   );
 }
 

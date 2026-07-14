@@ -18,16 +18,15 @@ import ReportTypeSwitcher from '@/components/app/modules/reports/shared/ReportTy
 import ExportMenu from '@/components/app/modules/reports/shared/ExportMenu';
 import { buildXlsxUrl } from '@/lib/reports/export-xlsx';
 import { getReportBySlug } from '@/lib/reports/report-types';
-import KpiStrip from '@/components/app/modules/reports/std-summary/KpiStrip';
 import StandardCard from '@/components/app/modules/reports/std-summary/StandardCard';
-import StandardsTable from '@/components/app/modules/reports/std-summary/StandardsTable';
-import StandardsBarChart from '@/components/app/modules/reports/std-summary/StandardsBarChart';
-import StandardsByStrandChart from '@/components/app/modules/reports/std-summary/StandardsByStrandChart';
 import AlignmentEmptyState from '@/components/app/modules/reports/shared/AlignmentEmptyState';
-import ReportAdditionalInsights from '@/components/app/modules/reports/shared/ReportAdditionalInsights';
 
 const REPORT_NAME = getReportBySlug('standard-summary').canonicalName;
 
+// Legacy PBIX page #14 is a per-(subject × standard) card template — one card
+// per cPalms_Standard. It carries NO KPI-card strip, ranked bar, rollup table,
+// or by-strand chart (those were non-legacy additions and are intentionally
+// removed for parity). The card + the school filter bar are all that render.
 export default function StandardSummaryPage() {
   const { filters, setFilters } = useSummaryFilters<StandardSummaryFilters>({
     basePath: '/app/reports/standard-summary',
@@ -40,8 +39,11 @@ export default function StandardSummaryPage() {
   );
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: reportsKeys.standardSummary(queryFilters),
-    queryFn: () => reportsApi.standardSummary(queryFilters),
+    // cardsOnly: the report renders only the card grid, so skip the KPI cube
+    // reads (incl. the total_students fact scan) — the dashboard fetches the
+    // full KPI block separately.
+    queryKey: reportsKeys.standardSummary(queryFilters, true),
+    queryFn: () => reportsApi.standardSummary(queryFilters, true),
   });
 
   if (isLoading) return <LoadingState label="Loading standard summary…" />;
@@ -57,9 +59,10 @@ export default function StandardSummaryPage() {
   }
   if (!data) return null;
 
+  const count = data.standards.length;
   const subtitle = data.school.current_session
-    ? `Academic year ${data.school.current_session} • ${data.kpis.total_standards} standards across ${data.strand_counts.length} strands`
-    : `${data.kpis.total_standards} standards across ${data.strand_counts.length} strands`;
+    ? `Academic year ${data.school.current_session} • ${count} standards`
+    : `${count} standards`;
 
   return (
     <ReportCanvas>
@@ -89,11 +92,7 @@ export default function StandardSummaryPage() {
       </div>
 
       <div className="mb-2">
-        <ReportFilters value={filters} onChange={setFilters} />
-      </div>
-
-      <div className="mb-2" style={{ minHeight: 100 }}>
-        <KpiStrip kpis={data.kpis} />
+        <ReportFilters value={filters} onChange={setFilters} showSection={false} />
       </div>
 
       {data.data_quality?.alignment_status === 'missing' && (
@@ -104,34 +103,20 @@ export default function StandardSummaryPage() {
         />
       )}
 
-      <div className="mb-2">
-        <StandardsBarChart rows={data.standards} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        {count === 0 ? (
+          <div className="col-span-full bg-white border border-border rounded p-6 text-center text-sm text-muted-foreground">
+            No standards match the current filters.
+          </div>
+        ) : (
+          data.standards.map((std, idx) => (
+            <StandardCard
+              key={`${std.schoology_standard}-${std.strand}-${idx}`}
+              std={std}
+            />
+          ))
+        )}
       </div>
-
-      <div className="mb-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-          {data.standards.length === 0 ? (
-            <div className="col-span-full bg-white border border-border rounded p-6 text-center text-sm text-muted-foreground">
-              No standards match the current filters.
-            </div>
-          ) : (
-            data.standards.map((std, idx) => (
-              <StandardCard
-                key={`${std.schoology_standard}-${std.schoology_standard}-${std.strand}-${idx}`}
-                std={std}
-              />
-            ))
-          )}
-        </div>
-      </div>
-
-      <div>
-        <StandardsTable standards={data.standards} />
-      </div>
-
-      <ReportAdditionalInsights>
-        <StandardsByStrandChart rows={data.strand_counts} />
-      </ReportAdditionalInsights>
     </ReportCanvas>
   );
 }

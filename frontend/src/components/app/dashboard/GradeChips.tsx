@@ -1,7 +1,6 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import HScrollRow from './HScrollRow';
 
 interface GradeChipsProps {
   grades: string[];
@@ -13,10 +12,11 @@ interface GradeChipsProps {
 }
 
 /**
- * Single-select grade pills — the dashboard's other primary front filter
- * (legacy grade slicer). Laid out as an even-width grid that fills the row and
- * reflows responsively, so the grades stay evenly spaced and aligned. Click a
- * chip to scope to that grade, click the selected chip again to clear.
+ * Single-select grade filter — the dashboard's other primary front slicer
+ * (legacy grade slicer). One connected segmented control on a muted track
+ * (not a crowd of pills), so it reads as a single control. Full grade labels
+ * never truncate; the track scrolls horizontally when it overflows. Click a
+ * segment to scope to that grade, click the selected one again to clear.
  */
 export default function GradeChips({
   grades,
@@ -26,18 +26,16 @@ export default function GradeChips({
   disabled,
 }: GradeChipsProps) {
   if (loading) {
-    return (
-      <div className="flex gap-2 overflow-hidden px-0.5 py-3">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <Skeleton key={i} className="h-9 w-24 shrink-0 rounded-full" />
-        ))}
-      </div>
-    );
+    return <Skeleton className="h-9 w-full max-w-xl rounded-lg" />;
   }
   if (grades.length === 0) return null;
 
   return (
-    <HScrollRow ariaLabel="Filter by grade" gapClass="gap-2">
+    <div
+      role="group"
+      aria-label="Filter by grade"
+      className="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg bg-muted p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       {grades.map((g) => {
         const isSelected = selected === g;
         return (
@@ -48,18 +46,18 @@ export default function GradeChips({
             disabled={disabled}
             onClick={() => onSelect(isSelected ? undefined : g)}
             className={[
-              'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+              'h-8 shrink-0 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               'enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-55',
               isSelected
-                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                : 'border-border bg-card text-foreground enabled:hover:border-primary/40 enabled:hover:bg-accent/40',
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground enabled:hover:bg-background/70 enabled:hover:text-foreground',
             ].join(' ')}
           >
             {g}
           </button>
         );
       })}
-    </HScrollRow>
+    </div>
   );
 }

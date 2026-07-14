@@ -3,28 +3,23 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  keepPreviousData,
   useInfiniteQuery,
+  useIsFetching,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowUpRight,
-  BookOpen,
-  GraduationCap,
-  ListChecks,
-  Percent,
-  Users,
-} from 'lucide-react';
+import { AlertCircle, ArrowUpRight } from 'lucide-react';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import { getReportsByGroup } from '@/lib/reports/report-types';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { useDebounce } from '@/hooks/useDebounce';
-import { StatCard } from '@/components/app/StatCard';
 import { Button } from '@/components/ui/button';
 import DashboardHeader from '@/components/app/dashboard/DashboardHeader';
-import DashboardFilters from '@/components/app/dashboard/DashboardFilters';
+import SearchInput from '@/components/app/dashboard/SearchInput';
+import FilterPopover from '@/components/app/dashboard/FilterPopover';
+import KpiHeroBand from '@/components/app/dashboard/KpiHeroBand';
 import SubjectKpiCards from '@/components/app/dashboard/SubjectKpiCards';
 import GradeChips from '@/components/app/dashboard/GradeChips';
 import AssessmentsSummaryTable, {
@@ -76,7 +71,17 @@ const STUDENT_INITIAL_DIR: Record<StudentSortKey, 'asc' | 'desc'> = {
   subjects: 'desc',
 };
 
-type SummaryMode = 'assessments' | 'students';
+/** The single dashboard view selector — four lenses on the same scoped data.
+ *  Merges the old top "By Assessment / By Student" mode with the panel's
+ *  "By Assessment / By Standard / By Strand" grouping into one control, so
+ *  "Assessment" no longer means two different things. */
+type DashView = 'assessment' | 'student' | 'standard' | 'strand';
+const VIEW_OPTIONS: { value: DashView; label: string }[] = [
+  { value: 'assessment', label: 'Assessments' },
+  { value: 'student', label: 'Students' },
+  { value: 'standard', label: 'Standards' },
+  { value: 'strand', label: 'Strands' },
+];
 
 /** Latest academic year = highest session string (e.g. "2025-26" > "2024-25"). */
 function latestSession(sessions: { session: string | null }[]): string | undefined {
@@ -96,10 +101,14 @@ export function DashboardPage() {
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [strandSort, setStrandSort] = useState<StrandRowSortKey>('date');
   const [strandDir, setStrandDir] = useState<'asc' | 'desc'>('desc');
-  const [mode, setMode] = useState<SummaryMode>('assessments');
+  const [view, setView] = useState<DashView>('assessment');
   const [studentSort, setStudentSort] = useState<StudentSortKey>('name');
   const [studentDir, setStudentDir] = useState<'asc' | 'desc'>('asc');
   const [inited, setInited] = useState(false);
+  // Gate the subject-scoped queries until the first-subject default has been
+  // applied, so each fires exactly ONCE with the final {session, grade, subject}
+  // instead of 2–3× as the staged defaults land.
+  const [defaultsReady, setDefaultsReady] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const initedSchool = useRef<string | null>(null);
   // Default-select runs once per school: first available grade, then the first
@@ -145,12 +154,14 @@ export function DashboardPage() {
   const sessionsQ = useQuery({
     queryKey: reportsKeys.sessions(schoolId ?? undefined),
     queryFn: () => reportsApi.sessions(schoolId ?? undefined),
+    staleTime: 5 * 60_000, // dims change only on a pipeline refresh
   });
 
   // Grades feed the front grade chips.
   const gradesQ = useQuery({
     queryKey: reportsKeys.grades(schoolId ?? undefined),
     queryFn: () => reportsApi.grades(schoolId ?? undefined),
+    staleTime: 5 * 60_000,
   });
 
   // Default the scope to the latest academic year, once per school; reset all
@@ -161,24 +172,37 @@ export function DashboardPage() {
     // user action — running before that would init on the null id and then
     // re-reset (clobbering early user state + double-fetching) once it lands.
     if (schoolLoading) return;
-    const list = sessionsQ.data;
-    if (!list) return;
+    // Wait for BOTH cheap dims (they load in parallel) so we can apply the
+    // year + first-grade default in ONE setFilters — the subject-scoped queries
+    // then fire once with {session, grade} instead of once per staged default.
+    if (!sessionsQ.data || !gradesQ.data) return;
     const sid = schoolId ?? null;
     if (initedSchool.current === sid && inited) return;
     initedSchool.current = sid;
-    autoDefault.current = { grade: false, subject: false };
-    const latest = latestSession(list);
-    setFilters(latest ? { session: latest } : {});
+    autoDefault.current = { grade: true, subject: false };
+    setDefaultsReady(false);
+    const latest = latestSession(sessionsQ.data);
+    const firstGrade = Array.from(
+      new Set(
+        (gradesQ.data ?? [])
+          .map((g) => g.grade)
+          .filter((g): g is string => !!g),
+      ),
+    )[0];
+    setFilters({
+      ...(latest ? { session: latest } : {}),
+      ...(firstGrade ? { grade: firstGrade } : {}),
+    });
     setSearch('');
     setSort('date');
     setDir('desc');
     setStrandSort('date');
     setStrandDir('desc');
-    setMode('assessments');
+    setView('assessment');
     setStudentSort('name');
     setStudentDir('asc');
     setInited(true);
-  }, [sessionsQ.data, schoolId, inited, schoolLoading]);
+  }, [sessionsQ.data, gradesQ.data, schoolId, inited, schoolLoading]);
 
   const summaryFilters = { ...filters, school_id: schoolId ?? undefined };
   // Subject cards + their %s scope by year/type/grade, NOT by the selected
@@ -195,6 +219,7 @@ export function DashboardPage() {
     queryKey: reportsKeys.dashboardOverview(overviewFilters),
     queryFn: () => reportsApi.dashboardOverview(overviewFilters),
     enabled: inited,
+    placeholderData: keepPreviousData,
   });
 
   // standard-summary: header (name/logo/session) + KPI strip + school-wide
@@ -202,7 +227,8 @@ export function DashboardPage() {
   const stdQ = useQuery({
     queryKey: reportsKeys.standardSummary(summaryFilters),
     queryFn: () => reportsApi.standardSummary(summaryFilters),
-    enabled: inited,
+    enabled: inited && defaultsReady,
+    placeholderData: keepPreviousData,
   });
 
   // By Assessment — server-paginated (unbounded set).
@@ -220,7 +246,7 @@ export function DashboardPage() {
         limit: PAGE_SIZE,
         offset: pageParam,
       }),
-    enabled: inited,
+    enabled: inited && defaultsReady,
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     placeholderData: (prev) => prev,
@@ -241,7 +267,8 @@ export function DashboardPage() {
         limit: PAGE_SIZE,
         offset: pageParam,
       }),
-    enabled: inited,
+    // Strand grid renders only inside the Strands view — defer it off first paint.
+    enabled: inited && defaultsReady && view === 'strand',
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     placeholderData: (prev) => prev,
@@ -263,7 +290,7 @@ export function DashboardPage() {
         limit: PAGE_SIZE,
         offset: pageParam,
       }),
-    enabled: inited && mode === 'students',
+    enabled: inited && defaultsReady && view === 'student',
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     placeholderData: (prev) => prev,
@@ -295,40 +322,47 @@ export function DashboardPage() {
     [gradesQ.data],
   );
 
-  // Default selection (once per school): pick the first available grade, then —
-  // after the grade-scoped subject cards load — the first subject for that
-  // grade. Staged because the cards (overviewQ) are grade-scoped, so the chosen
-  // subject must come from the grade-scoped list to actually highlight a card.
-  // Skips cleanly when a school has no grades/subjects, and is ref-gated so it
-  // never fights a user deselect.
+  // Subject default (once per school): after the grade-scoped subject cards
+  // load, pick the first subject for the grade so a concrete card is highlighted
+  // — the subject must come from the grade-scoped list. Grade + year were
+  // already defaulted in the init effect. `defaultsReady` flips true on EVERY
+  // exit path (subject picked, no subjects, or overview error) so the
+  // subject-scoped queries never deadlock; ref-gated so it never fights a
+  // user deselect.
   useEffect(() => {
-    if (!inited) return;
-    if (!autoDefault.current.grade && gradesQ.data) {
-      autoDefault.current.grade = true;
-      if (grades.length > 0) {
-        setFilters((f) => (f.grade ? f : { ...f, grade: grades[0] }));
-        return; // let the grade-scoped overview load before picking a subject
-      }
-    }
-    if (
-      autoDefault.current.grade &&
-      !autoDefault.current.subject &&
-      overviewQ.data &&
-      !overviewQ.isFetching
-    ) {
+    if (!inited || autoDefault.current.subject) return;
+    if (overviewQ.isError) {
       autoDefault.current.subject = true;
-      const subs = overviewQ.data.subjects;
-      if (subs.length > 0) {
-        setFilters((f) => (f.subject ? f : { ...f, subject: subs[0].subject }));
-      }
+      setDefaultsReady(true);
+      return;
     }
-  }, [inited, gradesQ.data, grades, overviewQ.data, overviewQ.isFetching]);
+    if (!overviewQ.data || overviewQ.isFetching) return;
+    autoDefault.current.subject = true;
+    const subs = overviewQ.data.subjects;
+    if (subs.length > 0) {
+      setFilters((f) => (f.subject ? f : { ...f, subject: subs[0].subject }));
+    }
+    setDefaultsReady(true);
+  }, [inited, overviewQ.data, overviewQ.isFetching, overviewQ.isError]);
 
   const assessmentRows = useMemo(
     () => asmtQ.data?.pages.flatMap((p) => p.rows) ?? [],
     [asmtQ.data],
   );
   const assessmentTotal = asmtQ.data?.pages[0]?.total ?? 0;
+  // Chronological per-assessment grade averages for the hero sparkline (from the
+  // already-loaded rows — no extra request).
+  const gradeTrend = useMemo(
+    () =>
+      assessmentRows
+        .filter((r) => typeof r.grade_average === 'number' && r.assessment_date)
+        .slice()
+        .sort((a, b) =>
+          (a.assessment_date ?? '') < (b.assessment_date ?? '') ? -1 : 1,
+        )
+        .map((r) => r.grade_average as number),
+    [assessmentRows],
+  );
   const strandRows = useMemo(
     () => strandRowsQ.data?.pages.flatMap((p) => p.rows) ?? [],
     [strandRowsQ.data],
@@ -340,17 +374,14 @@ export function DashboardPage() {
   );
   const studentTotal = studentsQ.data?.pages[0]?.total ?? 0;
   const studentFetching = studentsQ.isFetching && !studentsQ.isFetchingNextPage;
-  const studentLoading = mode === 'students' && (!inited || studentsQ.isPending);
-  const studentBusy = studentLoading || (mode === 'students' && studentFetching);
+  const studentLoading = view === 'student' && (!inited || studentsQ.isPending);
 
   const headerLoading = !inited || stdQ.isLoading;
   // In-flight (refetch) state — NOT a scroll fetch-more — for the two grids.
   const asmtFetching = asmtQ.isFetching && !asmtQ.isFetchingNextPage;
   const strandFetching = strandRowsQ.isFetching && !strandRowsQ.isFetchingNextPage;
   const asmtLoading = !inited || asmtQ.isPending;
-  const asmtBusy = asmtLoading || asmtFetching;
-  const strandLoading = !inited || strandRowsQ.isPending;
-  const stdLoading = !inited || stdQ.isLoading;
+  const strandLoading = view === 'strand' && (!inited || strandRowsQ.isPending);
   const subjectsLoading = !inited || overviewQ.isLoading;
   // Search spinner: while the debounce is settling OR the server query for the
   // (debounced) term is in flight — but ONLY when a search term is active, so
@@ -359,7 +390,7 @@ export function DashboardPage() {
   const searchLoading =
     search.trim() !== debouncedSearch ||
     (debouncedSearch.length > 0 &&
-      (mode === 'students' ? studentFetching : asmtFetching || strandFetching));
+      (view === 'student' ? studentFetching : asmtFetching || strandFetching));
 
   const anyError =
     overviewQ.isError ||
@@ -368,41 +399,55 @@ export function DashboardPage() {
     strandRowsQ.isError ||
     studentsQ.isError;
 
-  // Lock the click-filters (subject cards, grade chips, popover) while ANY
-  // filter-dependent query is refetching, so rapid clicks can't interleave
-  // requests or mix filters. Scroll fetch-more and the debounced search are
-  // intentionally excluded (the search box stays typeable).
-  const filtersBusy =
+  // "Data is streaming in" — ANY filter-dependent query refetching. Drives the
+  // subtle dim of the CONTENT while a filter change loads; it does NOT lock the
+  // filter controls (selection is client state and flips instantly, and
+  // keepPreviousData makes stale-response interleaving safe — last click wins).
+  const dataStreaming =
     overviewQ.isFetching ||
     stdQ.isFetching ||
     asmtFetching ||
     strandFetching ||
     studentFetching;
 
+  // Single "something is loading" signal for the top progress bar.
+  const anyFetching = useIsFetching({ queryKey: reportsKeys.all }) > 0;
+
   // KPIs are computed at the per-question OVERALL grain (no section), so they
   // stay school-wide; flag that only when a section narrows the tables.
   const schoolWideHint = filters.section ? 'school-wide' : undefined;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4">
+    <div className="relative isolate mx-auto max-w-7xl space-y-6">
+      {/* Subtle brand wash behind the header — ambient warmth, not chrome. */}
+      <div
+        aria-hidden
+        className="bg-brand-glow pointer-events-none absolute inset-x-0 -top-6 -z-10 h-64"
+      />
+      {/* Single "data is streaming" signal — a thin brand bar; never blocks.
+          suppressHydrationWarning: the class derives from client-only
+          useIsFetching (0 during SSR), so a first-paint mismatch is expected. */}
+      <div
+        aria-hidden
+        suppressHydrationWarning
+        className={`pointer-events-none absolute inset-x-0 -top-1 z-20 h-0.5 origin-left rounded-full bg-primary transition-opacity duration-300 ${
+          anyFetching ? 'animate-pulse opacity-90' : 'opacity-0'
+        }`}
+      />
       <DashboardHeader
         schoolName={school?.name ?? null}
         logoUrl={school?.logo_url ?? null}
         currentSession={school?.current_session ?? null}
         loading={headerLoading}
-      />
-
-      <DashboardFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        search={search}
-        onSearchChange={setSearch}
-        searchLoading={searchLoading}
-        resultCount={mode === 'students' ? studentTotal : assessmentTotal}
-        refreshedAt={refreshedAt}
-        onRefresh={handleRefresh}
-        refreshing={refreshing}
-        filtersDisabled={filtersBusy}
+        actions={
+          <FilterPopover
+            filters={filters}
+            onChange={setFilters}
+            refreshedAt={refreshedAt}
+            onRefresh={handleRefresh}
+            refreshing={refreshing}
+          />
+        }
       />
 
       {anyError && (
@@ -417,123 +462,146 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Subject KPI cards — hero stat + primary subject filter (legacy slicer). */}
-      <SubjectKpiCards
-        subjects={subjects}
-        selected={filters.subject}
-        onSelect={(subject) => setFilters((f) => ({ ...f, subject }))}
-        loading={subjectsLoading}
-        disabled={filtersBusy}
+      {/* Subject — primary subject slicer (legacy). Perf colour lives on the %. */}
+      <section className="space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground">Subject</p>
+        <SubjectKpiCards
+          subjects={subjects}
+          selected={filters.subject}
+          onSelect={(subject) => setFilters((f) => ({ ...f, subject }))}
+          loading={subjectsLoading}
+        />
+      </section>
+
+      {/* Grade — primary grade slicer (legacy). */}
+      <section className="space-y-1.5">
+        <p className="text-xs font-medium text-muted-foreground">Grade</p>
+        <GradeChips
+          grades={grades}
+          selected={filters.grade}
+          onSelect={(grade) =>
+            // Changing the grade invalidates the grade-scoped selections, so clear
+            // the subject + section-instructor (a stale subject would point at a
+            // card that no longer exists; a stale grade×instructor combo goes
+            // empty). Academic year + assessment type are grade-independent and
+            // are intentionally preserved.
+            setFilters((f) => ({ ...f, grade, subject: undefined, instructor: undefined }))
+          }
+          loading={!inited || gradesQ.isLoading}
+        />
+      </section>
+
+      {/* KPI hero band (legacy KPI cardVisuals). Grade Average is the focal
+          brand-gradient cell (with a year-trend sparkline); the four counts sit
+          beside it. Total Students / Questions / Grade Average come from the
+          per-question OVERALL cube, which — like legacy PowerBI — has no section
+          grain, so they stay school-wide; marked "school-wide" when a section
+          is active. */}
+      <KpiHeroBand
+        gradeAveragePct={kpis?.grade_average_pct ?? '—'}
+        totalStudents={kpis?.total_students ?? '—'}
+        totalStandards={kpis?.total_standards ?? '—'}
+        totalQuestions={kpis?.total_questions ?? '—'}
+        totalAssessments={assessmentTotal}
+        trend={gradeTrend}
+        loading={headerLoading}
+        schoolWideHint={schoolWideHint}
       />
 
-      {/* Grade chips — primary grade filter (legacy slicer). */}
-      <GradeChips
-        grades={grades}
-        selected={filters.grade}
-        onSelect={(grade) =>
-          // Changing the grade invalidates the grade-scoped selections, so clear
-          // the subject + section-instructor (a stale subject would point at a
-          // card that no longer exists; a stale grade×instructor combo goes
-          // empty). Academic year + assessment type are grade-independent and
-          // are intentionally preserved.
-          setFilters((f) => ({ ...f, grade, subject: undefined, instructor: undefined }))
-        }
-        loading={!inited || gradesQ.isLoading}
-        disabled={filtersBusy}
-      />
-
-      {/* KPI strip (legacy KPI cardVisuals). Total Standards + Assessments are
-          counts of the filtered sets and track every filter (incl. section).
-          Total Students / Questions / Grade Average come from the per-question
-          OVERALL cube, which — like legacy PowerBI — has no section grain, so
-          they stay school-wide; marked "school-wide" when a section is active. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Total Students" value={kpis?.total_students ?? '—'} hint={schoolWideHint} icon={Users} loading={headerLoading} />
-        <StatCard label="Total Standards" value={kpis?.total_standards ?? '—'} icon={GraduationCap} loading={headerLoading} />
-        <StatCard label="Total Questions" value={kpis?.total_questions ?? '—'} hint={schoolWideHint} icon={ListChecks} loading={headerLoading} />
-        {mode === 'students' ? (
-          <StatCard label="Students" value={studentBusy ? '—' : studentTotal} icon={Users} loading={studentBusy} />
-        ) : (
-          <StatCard label="Assessments" value={asmtBusy ? '—' : assessmentTotal} icon={BookOpen} loading={asmtBusy} />
-        )}
-        <StatCard label="Grade Average" value={kpis?.grade_average_pct ?? '—'} hint={schoolWideHint} icon={Percent} loading={headerLoading} />
-      </div>
-
-      {/* By Assessment ⇄ By Student — same filters/search, different query. */}
-      <div className="flex items-center justify-between gap-2">
-        <div
-          role="tablist"
-          aria-label="Summary view"
-          className="inline-flex rounded-md bg-muted/60 p-0.5"
-        >
-          {(['assessments', 'students'] as const).map((m) => {
-            const active = mode === m;
-            return (
-              <button
-                key={m}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setMode(m)}
-                className={`rounded px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                  active
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-foreground/70 hover:bg-background'
-                }`}
-              >
-                {m === 'assessments' ? 'By Assessment' : 'By Student'}
-              </button>
-            );
-          })}
+      {/* Summary — one 4-view selector (resolves the old double "By Assessment")
+          + a row-scoped search, then the table panel. */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-sm font-semibold text-foreground">Summary</h2>
+          <div
+            role="tablist"
+            aria-label="Summary view"
+            className="inline-flex items-center gap-0.5 rounded-lg bg-muted p-0.5"
+          >
+            {VIEW_OPTIONS.map((v) => {
+              const active = view === v.value;
+              return (
+                <button
+                  key={v.value}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setView(v.value)}
+                  className={[
+                    'h-7 rounded-md px-3 text-xs font-medium transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground',
+                  ].join(' ')}
+                >
+                  {v.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="ml-auto min-w-0 basis-full sm:basis-auto">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              loading={searchLoading}
+              resultCount={view === 'student' ? studentTotal : assessmentTotal}
+            />
+          </div>
         </div>
-      </div>
 
-      {mode === 'students' ? (
-        <StudentsSummaryTable
-          schoolId={schoolId ?? undefined}
-          session={filters.session}
-          classAverage={schoolAverage}
-          rows={studentRows}
-          total={studentTotal}
-          hasMore={studentsQ.hasNextPage}
-          isFetchingMore={studentsQ.isFetchingNextPage}
-          onFetchMore={() => void studentsQ.fetchNextPage()}
-          sort={studentSort}
-          dir={studentDir}
-          onSort={onStudentSort}
-          loading={studentLoading}
-        />
-      ) : (
-        <AssessmentsSummaryTable
-          schoolAverage={schoolAverage}
-          assessments={assessmentRows}
-          assessmentTotal={assessmentTotal}
-          assessmentHasMore={asmtQ.hasNextPage}
-          assessmentFetchingMore={asmtQ.isFetchingNextPage}
-          onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
-          assessmentSort={sort}
-          assessmentDir={dir}
-          onAssessmentSort={onSort}
-          assessmentLoading={asmtLoading}
-          strandRows={strandRows}
-          strandTotal={strandTotal}
-          strandHasMore={strandRowsQ.hasNextPage}
-          strandFetchingMore={strandRowsQ.isFetchingNextPage}
-          onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
-          strandSort={strandSort}
-          strandDir={strandDir}
-          onStrandSort={onStrandSort}
-          strandLoading={strandLoading}
-          standards={stdQ.data?.standards ?? []}
-          search={search}
-          loading={stdLoading}
-        />
-      )}
+        {/* Content persists (keepPreviousData) and dims while a filter change
+            streams in — never blanks to skeletons after first load. */}
+        <div
+          className={`transition-opacity duration-200 ${dataStreaming ? 'opacity-60' : ''}`}
+        >
+        {view === 'student' ? (
+          <StudentsSummaryTable
+            schoolId={schoolId ?? undefined}
+            session={filters.session}
+            classAverage={schoolAverage}
+            rows={studentRows}
+            total={studentTotal}
+            hasMore={studentsQ.hasNextPage}
+            isFetchingMore={studentsQ.isFetchingNextPage}
+            onFetchMore={() => void studentsQ.fetchNextPage()}
+            sort={studentSort}
+            dir={studentDir}
+            onSort={onStudentSort}
+            loading={studentLoading}
+          />
+        ) : (
+          <AssessmentsSummaryTable
+            view={view}
+            schoolAverage={schoolAverage}
+            assessments={assessmentRows}
+            assessmentTotal={assessmentTotal}
+            assessmentHasMore={asmtQ.hasNextPage}
+            assessmentFetchingMore={asmtQ.isFetchingNextPage}
+            onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
+            assessmentSort={sort}
+            assessmentDir={dir}
+            onAssessmentSort={onSort}
+            assessmentLoading={asmtLoading}
+            strandRows={strandRows}
+            strandTotal={strandTotal}
+            strandHasMore={strandRowsQ.hasNextPage}
+            strandFetchingMore={strandRowsQ.isFetchingNextPage}
+            onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
+            strandSort={strandSort}
+            strandDir={strandDir}
+            onStrandSort={onStrandSort}
+            strandLoading={strandLoading}
+            standards={stdQ.data?.standards ?? []}
+            search={search}
+            loading={headerLoading}
+          />
+        )}
+        </div>
+      </section>
 
       {/* Program (school-wide) reports — always-visible launcher buttons. */}
       <section className="space-y-2 pt-1">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Program reports
-        </p>
+        <h2 className="text-sm font-semibold text-foreground">Program reports</h2>
         <nav aria-label="Program reports" className="flex flex-wrap gap-2">
           {PROGRAM_REPORTS.map((r) => {
             const Icon = r.icon;
@@ -542,7 +610,7 @@ export function DashboardPage() {
                 key={r.slug}
                 asChild
                 variant="outline"
-                className="group h-11 flex-1 justify-start gap-2 sm:flex-none"
+                className="group h-10 flex-1 justify-start gap-2 sm:flex-none"
               >
                 <Link href={`/app/reports/${r.slug}`} aria-label={`Open ${r.canonicalName}`}>
                   <Icon className="h-4 w-4 text-primary" />

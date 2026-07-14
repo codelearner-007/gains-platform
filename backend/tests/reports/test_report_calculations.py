@@ -396,8 +396,8 @@ class TestIadSddYtd:
         assert approx(c31.grade_average, 0.8611, 2e-3)
 
     async def test_ytd_builds_with_data(self, db: AsyncSession):
-        """YTD Longitudinal builds a non-empty matrix for a real filter combo and
-        the grand-total points are internally consistent (correct ≤ possible)."""
+        """YTD Longitudinal: pinned matrix shape + grand totals for a real scope
+        (Athenian / 2025-26 / ELA / Grade 2 / Lesson Assessments)."""
         from app.schemas.reports import YTDFilters
 
         await scope(db, ATHENIAN)
@@ -410,9 +410,36 @@ class TestIadSddYtd:
                 grade="Grade 2",
             )
         )
-        assert len(p.standards) > 0, "YTD returned no standard columns"
-        assert len(p.teacher_groups) > 0, "YTD returned no teacher rows"
+        # Pinned shape.
+        assert len(p.standards) == 18
+        assert len(p.teacher_groups) == 3
+        n_students = sum(len(g.students) for g in p.teacher_groups)
+        assert n_students == 60
+
+        # Grand-total band = the precomputed *_by_overall_year columns.
         gt = p.grand_total
         assert gt.points_possible > 0
         assert 0 <= gt.points_received <= gt.points_possible
-        assert approx(gt.score_pct, gt.points_received / gt.points_possible, 1e-3)
+        assert approx(gt.score_pct, 0.8657, 2e-3)
+        # Pinned per-standard grand subtotal = mastery SUM(score)/SUM(possible).
+        assert approx(gt.standard_totals["ELA.2.C.3.1"].score_pct, 0.7411, 2e-3)
+
+        # Every per-standard CELL % is mastery received/possible — NOT a
+        # contribution-to-year ratio (guards the C1 regression: a contribution
+        # cell would divide by user_possible_point and read a few percent).
+        for g in p.teacher_groups:
+            for st in g.students:
+                for cell in st.cells.values():
+                    if cell.points_possible > 0:
+                        assert approx(
+                            cell.score_pct,
+                            cell.points_received / cell.points_possible,
+                            1e-6,
+                        )
+        # Subtotals and grand per-standard % are on the same mastery scale.
+        for g in p.teacher_groups:
+            for label, sub in g.standard_subtotals.items():
+                if sub.points_possible > 0:
+                    assert approx(
+                        sub.score_pct, sub.points_received / sub.points_possible, 1e-6
+                    )

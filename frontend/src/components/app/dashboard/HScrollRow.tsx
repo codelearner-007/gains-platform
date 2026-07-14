@@ -93,7 +93,7 @@ export default function HScrollRow({
         ref={ref}
         role="group"
         aria-label={ariaLabel}
-        className={`flex ${gapClass} overflow-x-auto px-0.5 py-3 motion-safe:scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${overflow ? '' : 'justify-center'}`}
+        className={`flex ${gapClass} overflow-x-auto px-0.5 py-1 motion-safe:scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
       >
         {children}
       </div>

@@ -9,11 +9,7 @@ import type {
   StandardSummaryRollupRow,
 } from '@/lib/reports/types';
 import { getReportsByGroup, buildHref } from '@/lib/reports/report-types';
-import {
-  HEADER_BAR_BG,
-  LAYOUT_BORDER,
-  PBIX_ACCENT_LIGHT_BLUE,
-} from '@/lib/reports/colors';
+import { LAYOUT_BORDER } from '@/lib/reports/colors';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -55,12 +51,6 @@ export type StrandRowSortKey =
   | 'questions'
   | 'average'
   | 'date';
-
-const VIEWS: { value: SummaryView; label: string }[] = [
-  { value: 'assessment', label: 'By Assessment' },
-  { value: 'standard', label: 'By Standard' },
-  { value: 'strand', label: 'By Strand' },
-];
 
 const PAGE_SIZE = 25; // client window step for the bounded std/strand variants
 
@@ -104,6 +94,9 @@ interface Props {
   /** Client filter for the By-Standard rollup (assessment + strand use server q). */
   search: string;
   loading: boolean; // By-Standard initial load
+
+  /** Which variant to render — owned by the dashboard's single view selector. */
+  view: SummaryView;
 }
 
 export default function AssessmentsSummaryTable({
@@ -129,8 +122,8 @@ export default function AssessmentsSummaryTable({
   standards,
   search,
   loading,
+  view,
 }: Props) {
-  const [view, setView] = useState<SummaryView>('assessment');
   const variantLoading =
     view === 'assessment'
       ? assessmentLoading
@@ -139,41 +132,7 @@ export default function AssessmentsSummaryTable({
         : loading;
 
   return (
-    <div
-      className="overflow-hidden rounded-lg border bg-card"
-      style={{ borderColor: LAYOUT_BORDER }}
-    >
-      <div
-        className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5"
-        style={{ backgroundColor: HEADER_BAR_BG, borderColor: LAYOUT_BORDER }}
-      >
-        <h2 className="text-sm font-bold text-foreground">Assessments Summary</h2>
-        <div
-          role="tablist"
-          aria-label="Assessments Summary view"
-          className="inline-flex items-center gap-1 rounded-md bg-background/60 p-0.5"
-        >
-          {VIEWS.map((v) => {
-            const active = view === v.value;
-            return (
-              <button
-                key={v.value}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setView(v.value)}
-                className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-                  active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground/70 hover:bg-background'
-                }`}
-              >
-                {v.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       {variantLoading ? (
         <div className="space-y-2 p-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -221,8 +180,8 @@ function Th({
 }) {
   return (
     <th
-      className="border-b px-3 py-2 text-xs font-semibold text-foreground"
-      style={{ backgroundColor: PBIX_ACCENT_LIGHT_BLUE, borderColor: LAYOUT_BORDER, textAlign: align }}
+      className="border-b border-border bg-muted px-3 py-2 text-xs font-medium text-muted-foreground"
+      style={{ textAlign: align }}
     >
       {children}
     </th>
@@ -472,14 +431,13 @@ function OpenReportMenu({ itemId, itemName }: { itemId: string; itemName: string
 }
 
 // ── Variant B: By Standard (client-side, bounded) ────────────────────────
-type SKey = 'standard' | 'strand' | 'subject' | 'questions' | 'assessments' | 'average';
+type SKey = 'standard' | 'strand' | 'subject' | 'questions' | 'average';
 
 const S_ACCESSORS: Record<SKey, SortAccessor<StandardSummaryRollupRow>> = {
   standard: (r) => (r.cpalms_standard || r.schoology_standard || '').toLowerCase(),
   strand: (r) => (r.strand ?? '').toLowerCase(),
   subject: (r) => (r.subject ?? '').toLowerCase(),
   questions: (r) => r.num_questions,
-  assessments: (r) => r.num_assessments,
   average: (r) => r.grade_average,
 };
 
@@ -513,7 +471,7 @@ function ByStandard({
     accessors: S_ACCESSORS,
     defaultColumn: 'standard',
     defaultDirection: 'asc',
-    initialDirections: { questions: 'desc', assessments: 'desc', average: 'desc' },
+    initialDirections: { questions: 'desc', average: 'desc' },
   });
   const { visibleRows, scrollRef, sentinelRef, hasMore, shown, total } =
     useInfiniteWindow(sortedRows);
@@ -528,13 +486,12 @@ function ByStandard({
               <Th><SortableHeader column="strand" label="Strand" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
               <Th><SortableHeader column="subject" label="Subject" sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
               <Th align="center"><SortableHeader column="questions" label="# Questions" title="Number of Questions" description="Count of distinct questions mapped to this standard across all assessments." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
-              <Th align="center"><SortableHeader column="assessments" label="# Assessments" title="Number of Assessments" description="Count of distinct assessments with at least one question on this standard." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} align="center" /></Th>
               <Th><SortableHeader column="average" label="Grade Average" title="Grade Average" description="Average percent-correct for the standard, with the school-average marker." sortColumn={sortColumn} sortDirection={sortDirection} onClick={onHeaderClick} /></Th>
             </tr>
           </thead>
           <tbody>
             {total === 0 ? (
-              <EmptyRow cols={6} label="No standards match the current filters." />
+              <EmptyRow cols={5} label="No standards match the current filters." />
             ) : (
               visibleRows.map((r, i) => (
                 <tr key={`${r.schoology_standard}-${r.subject}-${i}`} className="transition-colors hover:bg-accent/30">
@@ -542,7 +499,6 @@ function ByStandard({
                   <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.strand || '—'}</td>
                   <td className={TD} style={{ borderColor: LAYOUT_BORDER }}>{r.subject || '—'}</td>
                   <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_questions}</td>
-                  <td className={`${TD} text-center tabular-nums`} style={{ borderColor: LAYOUT_BORDER }}>{r.num_assessments}</td>
                   <td className={`${TD} min-w-[200px]`} style={{ borderColor: LAYOUT_BORDER }}>
                     <GradeAverageBar value={r.grade_average} marker={schoolAverage} />
                   </td>

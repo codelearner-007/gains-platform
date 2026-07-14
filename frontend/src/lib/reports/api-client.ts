@@ -88,19 +88,22 @@ export const reportsApi = {
       { credentials: 'include' },
     ).then(handleResponse<YearToDatePerformancePayload>),
 
-  standardSummary: (filters?: StandardSummaryFilters) =>
-    fetch(`/api/v1/reports/standard-summary${buildQuery(filters)}`, {
-      credentials: 'include',
-    }).then(handleResponse<StandardSummaryPayload>),
-
-  strandSummary: (filters?: StrandSummaryFilters, strandsOnly?: boolean) =>
+  // ``cardsOnly`` skips the KPI cube reads (incl. the total_students fact
+  // scan) — the report page renders only the card grid, so it passes true;
+  // the dashboard omits it to get the full KPI block for its stat cards.
+  standardSummary: (filters?: StandardSummaryFilters, cardsOnly?: boolean) =>
     fetch(
-      `/api/v1/reports/strand-summary${buildQuery({
+      `/api/v1/reports/standard-summary${buildQuery({
         ...filters,
-        strands_only: strandsOnly ? 'true' : undefined,
+        cards_only: cardsOnly ? 'true' : undefined,
       })}`,
       { credentials: 'include' },
-    ).then(handleResponse<StrandSummaryPayload>),
+    ).then(handleResponse<StandardSummaryPayload>),
+
+  strandSummary: (filters?: StrandSummaryFilters) =>
+    fetch(`/api/v1/reports/strand-summary${buildQuery(filters)}`, {
+      credentials: 'include',
+    }).then(handleResponse<StrandSummaryPayload>),
 
   alignmentDataQuality: () =>
     fetch('/api/v1/reports/data-quality/standards-alignment', {
@@ -267,10 +270,10 @@ export const reportsKeys = {
     [...reportsKeys.all, 'qra-by-teacher', itemId, schoolId ?? null] as const,
   qraByStandardTeacher: (itemId: string, schoolId?: string) =>
     [...reportsKeys.all, 'qra-by-std-teacher', itemId, schoolId ?? null] as const,
-  standardSummary: (filters?: StandardSummaryFilters) =>
-    [...reportsKeys.all, 'standardSummary', filters ?? {}] as const,
-  strandSummary: (filters?: StrandSummaryFilters, strandsOnly?: boolean) =>
-    [...reportsKeys.all, 'strandSummary', filters ?? {}, strandsOnly ?? false] as const,
+  standardSummary: (filters?: StandardSummaryFilters, cardsOnly?: boolean) =>
+    [...reportsKeys.all, 'standardSummary', filters ?? {}, cardsOnly ?? false] as const,
+  strandSummary: (filters?: StrandSummaryFilters) =>
+    [...reportsKeys.all, 'strandSummary', filters ?? {}] as const,
   dashboardOverview: (
     filters?: Pick<AssessmentFilters, 'session' | 'category' | 'grade' | 'school_id'>,
   ) => [...reportsKeys.all, 'dashboard-overview', filters ?? {}] as const,

@@ -1,7 +1,8 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { performanceBand } from '@/lib/reports/colors';
+import { perfTextClass, perfTintHex } from '@/lib/reports/colors';
 import type { DashboardSubjectCard } from '@/lib/reports/types';
 import HScrollRow from './HScrollRow';
 
@@ -15,13 +16,12 @@ interface SubjectKpiCardsProps {
 }
 
 /**
- * Subject KPI cards — the dashboard's hero stat and primary subject filter
- * (legacy PowerBI subject slicer). Each card is fully tinted by its
- * performance band (green ≥80 / amber 70–80 / rose <70) with a matching accent
- * border and WCAG-AA dark text, so the traffic-light reads at a glance without
- * relying on a tiny dot. Single-select: click a card to scope the dashboard to
- * that subject, click the selected card again to clear. The cards lay out in an
- * even wrapping row that fills the width and reflows on smaller screens.
+ * Subject filter cards — the dashboard's primary subject slicer (legacy PowerBI
+ * subject slicer). Elevated white cards with a soft performance-tinted wash
+ * rising behind the % (colour reads as data, tied to the metric — never a hard
+ * border or block). Selection reads through the single indigo accent: brand
+ * ring + soft wash + brand glow. Single-select: click to scope the dashboard,
+ * click the selected card again to clear.
  */
 export default function SubjectKpiCards({
   subjects,
@@ -32,9 +32,9 @@ export default function SubjectKpiCards({
 }: SubjectKpiCardsProps) {
   if (loading) {
     return (
-      <div className="flex gap-3 overflow-hidden px-0.5 py-3">
+      <div className="flex gap-3 overflow-hidden px-0.5 py-1">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-[78px] min-w-[150px] max-w-[360px] flex-1 rounded-xl" />
+          <Skeleton key={i} className="h-[84px] min-w-[10.5rem] max-w-[17.5rem] flex-1 rounded-lg" />
         ))}
       </div>
     );
@@ -51,30 +51,45 @@ export default function SubjectKpiCards({
     <HScrollRow ariaLabel="Filter by subject" gapClass="gap-3">
       {subjects.map((s) => {
         const isSelected = selected === s.subject;
-        const band = s.grade_average != null ? performanceBand(s.grade_average) : null;
+        const tint = s.grade_average != null ? perfTintHex(s.grade_average) : null;
+        // Soft perf-tinted wash rising from the % (the data), in the SAME hue
+        // family as the value — a coherent colour identity, not a tint block.
+        // Selected cards trade the wash for the brand glow so the accent stays
+        // singular.
+        const style: CSSProperties = {
+          backgroundImage:
+            tint && !isSelected
+              ? `linear-gradient(to top, ${tint.wash} 0%, ${tint.edge} 34%, transparent 82%)`
+              : undefined,
+          boxShadow: isSelected ? 'var(--shadow-glow)' : undefined,
+        };
         return (
           <button
             key={s.subject}
             type="button"
             aria-pressed={isSelected}
             disabled={disabled}
+            title={s.subject}
+            style={style}
             onClick={() => onSelect(isSelected ? undefined : s.subject)}
-            style={
-              band
-                ? { backgroundColor: band.bg, borderColor: band.accent, color: band.fg }
-                : undefined
-            }
             className={[
-              'flex min-w-[150px] max-w-[360px] flex-1 flex-col gap-1 rounded-xl border-2 px-4 py-3 text-left transition-all duration-200',
+              'flex min-w-[10.5rem] max-w-[17.5rem] flex-1 flex-col gap-1.5 rounded-lg border bg-card px-4 py-3 text-left transition-all duration-200',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-              'disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none',
-              'enabled:cursor-pointer motion-safe:enabled:hover:-translate-y-0.5',
-              band ? '' : 'border-border bg-card text-foreground',
-              isSelected ? 'shadow-md ring-2 ring-ring ring-offset-1' : 'shadow-sm enabled:hover:shadow-md',
+              'enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-55 enabled:active:scale-[0.98]',
+              isSelected
+                ? 'border-primary bg-primary-soft/40 ring-1 ring-primary'
+                : 'border-border shadow-sm enabled:hover:-translate-y-0.5 enabled:hover:shadow-md enabled:hover:border-primary/30',
             ].join(' ')}
           >
-            <span className="truncate text-sm font-semibold">{s.subject}</span>
-            <span className="text-[1.75rem] font-bold leading-none tabular-nums">
+            <span className="line-clamp-2 min-h-[2.25rem] text-sm font-medium leading-snug text-foreground">
+              {s.subject}
+            </span>
+            <span
+              className={[
+                'text-2xl font-semibold leading-none tabular-nums',
+                s.grade_average != null ? perfTextClass(s.grade_average) : 'text-foreground',
+              ].join(' ')}
+            >
               {s.grade_average_pct}
             </span>
           </button>

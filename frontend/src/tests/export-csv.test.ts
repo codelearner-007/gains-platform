@@ -395,7 +395,6 @@ describe('Standard Summary flattener (one row per standard)', () => {
         strand: 'Algebraic Reasoning',
         description: 'Solve <b>linear</b> equations',
         num_questions: 4,
-        num_assessments: 2,
         grade_average: 0.82,
       },
     ],
@@ -407,8 +406,8 @@ describe('Standard Summary flattener (one row per standard)', () => {
     expect(rows[1][0]).toBe('MA.912.AR.3.1');
     expect(rows[1][3]).toBe('Solve linear equations');
     expect(rows[1][4]).toBe('4');
-    expect(rows[1][6]).toBe('82.0%');
-    expect(rows[1][7]).toBe('18.0%');
+    expect(rows[1][5]).toBe('82.0%');
+    expect(rows[1][6]).toBe('18.0%');
   });
 });
 
@@ -419,7 +418,6 @@ describe('Strand Summary flattener (one row per strand)', () => {
         strand: 'Algebraic Reasoning',
         num_standards: 3,
         num_questions: 12,
-        num_assessments: 4,
         grade_average: 0.7,
         incorrect_pct: 0.3,
       },
@@ -432,7 +430,6 @@ describe('Strand Summary flattener (one row per strand)', () => {
       'Algebraic Reasoning',
       '3',
       '12',
-      '4',
       '70.0%',
       '30.0%',
     ]);

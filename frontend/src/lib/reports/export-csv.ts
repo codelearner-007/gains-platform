@@ -366,7 +366,6 @@ function standardSummaryToCsv(p: StandardSummaryPayload): string {
     'Strand',
     'Description',
     'Total Questions',
-    'Assessments',
     'Grade Average %',
     '% Incorrect',
   ];
@@ -378,7 +377,6 @@ function standardSummaryToCsv(p: StandardSummaryPayload): string {
       s.strand,
       htmlToPlainText(s.description),
       num(s.num_questions),
-      num(s.num_assessments),
       pct(s.grade_average),
       pct(1 - s.grade_average),
     ]);
@@ -392,7 +390,6 @@ function strandSummaryToCsv(p: StrandSummaryPayload): string {
     'Strand',
     'Standards',
     'Questions',
-    'Assessments',
     'Grade Average %',
     '% Incorrect',
   ];
@@ -402,7 +399,6 @@ function strandSummaryToCsv(p: StrandSummaryPayload): string {
       s.strand,
       num(s.num_standards),
       num(s.num_questions),
-      num(s.num_assessments),
       pct(s.grade_average),
       pct(s.incorrect_pct),
     ]);
