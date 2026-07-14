@@ -28,7 +28,7 @@ export const IAD_GREEN = '#00ff44'; // correct cell fill
 // grep-replace inline hex literals across components.
 export const KPI_CARD_BG = '#B8DBFF'; // PBIX-style KPI tile background
 export const HEADER_BAR_BG = '#B8DBFF'; // section header bars (same hue, different role)
-export const LAYOUT_BORDER = '#B3B3B3'; // standard report border
+export const LAYOUT_BORDER = 'var(--report-border)'; // standard report border (#B3B3B3)
 export const INCORRECT_GREY = '#CCCCCC'; // grey fill used in incorrect-bar series
 export const GRID_LINE = '#E5E5E5'; // table grid lines / cell borders
 
@@ -42,8 +42,8 @@ export const GROUP_HEADER_CYAN = '#D6F1EF'; // Teacher / Standard group band
 
 // Dashboard grade-average data bar (GradeAverageBar): neutral track + the
 // dashed school-average reference marker.
-export const DATA_BAR_TRACK = '#EEF1F4';
-export const DATA_BAR_MARKER = '#475569';
+export const DATA_BAR_TRACK = 'var(--databar-track)'; // #EEF1F4
+export const DATA_BAR_MARKER = 'var(--databar-marker)'; // #475569
 
 // ── Question Summary Report (QSR) exact legacy fills ────────────────────────
 // Verbatim from the rendered legacy SSRS PDFs (e.g. "Unit 6 Test- Heat Sources
@@ -148,9 +148,11 @@ export function performanceColor(grade: number): string {
 // background, the PERF traffic-light hue as the card border/accent, and a
 // WCAG-AA dark text tone (≥4.5:1 on the tint). Three-band semantics match
 // performanceColor() so the cards read the same traffic light as the data bars.
-export const PERF_BAND_HIGH = { bg: '#E7F8EC', accent: PERF_GREEN, fg: '#166534' }; // ≥80%
-export const PERF_BAND_MID = { bg: '#FFF8E0', accent: PERF_YELLOW, fg: '#854D0E' }; // 70–80%
-export const PERF_BAND_LOW = { bg: '#FDEAF1', accent: PERF_PINK, fg: '#9F1239' }; // <70%
+// Values are CSS var()s frozen to the exact pre-tokenization hexes (see the
+// --perf-band-* block in globals.css). Consumed only in CSS style objects.
+export const PERF_BAND_HIGH = { bg: 'var(--perf-band-high-bg)', accent: 'var(--perf-band-high-accent)', fg: 'var(--perf-band-high-fg)' }; // ≥80% (#E7F8EC / #7BE38C / #166534)
+export const PERF_BAND_MID = { bg: 'var(--perf-band-mid-bg)', accent: 'var(--perf-band-mid-accent)', fg: 'var(--perf-band-mid-fg)' }; // 70–80% (#FFF8E0 / #FFF066 / #854D0E)
+export const PERF_BAND_LOW = { bg: 'var(--perf-band-low-bg)', accent: 'var(--perf-band-low-accent)', fg: 'var(--perf-band-low-fg)' }; // <70% (#FDEAF1 / #FFB3D9 / #9F1239)
 
 export interface PerfBand {
   bg: string;
@@ -171,9 +173,12 @@ export function performanceBand(grade: number): PerfBand {
  * neutral — the perf colour reads as data, never as decoration.
  */
 export function perfTextClass(grade: number): string {
-  if (grade < 0.7) return 'text-rose-600 dark:text-rose-400';
-  if (grade < 0.8) return 'text-amber-600 dark:text-amber-400';
-  return 'text-emerald-600 dark:text-emerald-400';
+  // text-perf-* resolve to rose/amber/emerald-600 in light and -400 in dark
+  // (via --perf-* in globals.css) — identical pixels to the former literal
+  // `text-rose-600 dark:text-rose-400` classes.
+  if (grade < 0.7) return 'text-perf-low';
+  if (grade < 0.8) return 'text-perf-mid';
+  return 'text-perf-high';
 }
 
 /**
@@ -181,12 +186,14 @@ export function perfTextClass(grade: number): string {
  * subject-card wash — drawn from the SAME hue family as ``perfTextClass`` so the
  * value and its tint read as one coherent colour, not the legacy PowerBI
  * pastels (which clash with the modern brand). ``[wash, edge]`` = the solid
- * bottom stop and the mid fade stop of the gradient.
+ * bottom stop and the mid fade stop of the gradient. Values are CSS var()s
+ * frozen to the exact pre-tokenization hexes (--perf-*-wash/edge in globals.css);
+ * consumed only inside a CSS `linear-gradient()` style object.
  */
 export function perfTintHex(grade: number): { wash: string; edge: string } {
-  if (grade < 0.7) return { wash: '#ffe4e6', edge: '#fff1f2' };   // rose-100 / 50
-  if (grade < 0.8) return { wash: '#fef3c7', edge: '#fffbeb' };   // amber-100 / 50
-  return { wash: '#d1fae5', edge: '#ecfdf5' };                    // emerald-100 / 50
+  if (grade < 0.7) return { wash: 'var(--perf-low-wash)', edge: 'var(--perf-low-edge)' };    // rose-100 / 50
+  if (grade < 0.8) return { wash: 'var(--perf-mid-wash)', edge: 'var(--perf-mid-edge)' };    // amber-100 / 50
+  return { wash: 'var(--perf-high-wash)', edge: 'var(--perf-high-edge)' };                   // emerald-100 / 50
 }
 
 /**
@@ -194,11 +201,13 @@ export function perfTintHex(grade: number): { wash: string; edge: string } {
  * data bars — same hue family as ``perfTextClass`` / ``perfTintHex`` so the
  * bars, washes and values all read as one traffic light. (The report PDFs keep
  * the legacy ``performanceColor`` pastels for parity; this is dashboard-only.)
+ * Returns a CSS var() frozen to the exact pre-tokenization hex (--perf-*-fill in
+ * globals.css); consumed only in a CSS `backgroundColor` style object.
  */
 export function perfFillHex(grade: number): string {
-  if (grade < 0.7) return '#fb7185';   // rose-400
-  if (grade < 0.8) return '#fbbf24';   // amber-400
-  return '#34d399';                    // emerald-400
+  if (grade < 0.7) return 'var(--perf-low-fill)';   // rose-400 (#fb7185)
+  if (grade < 0.8) return 'var(--perf-mid-fill)';   // amber-400 (#fbbf24)
+  return 'var(--perf-high-fill)';                    // emerald-400 (#34d399)
 }
 
 // Cell-background colour for grade-coloured percentage cells (QRA per-question
