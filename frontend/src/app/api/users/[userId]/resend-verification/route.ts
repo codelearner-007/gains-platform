@@ -19,20 +19,18 @@ export async function POST(
       return NextResponse.json({ error: 'User email not found' }, { status: 404 });
     }
 
-    // Re-issue the INVITATION (not a passwordless magic link). This action is
-    // only offered for invited-but-not-yet-accepted users (!email_confirmed_at),
-    // so the correct behaviour is to resend the invite, whose link routes through
-    // /auth/accept-invite and forces the user to set a password. A magic link
-    // would instead log them straight into /app with no password set, bypassing
-    // onboarding. `generateLink` (not `inviteUserByEmail`) is used because the
-    // user already exists; with SMTP configured it also dispatches the email.
-    const { error } = await auth.adminClient.auth.admin.generateLink({
-      type: 'invite',
-      email: targetUserData.user.email,
-      options: {
-        redirectTo: `${publicSettings.NEXT_PUBLIC_SITE_URL}/auth/accept-invite`,
-      },
-    });
+    // Re-send the INVITATION (not a passwordless magic link). This action is only
+    // offered for invited-but-not-yet-accepted users (!email_confirmed_at), so the
+    // correct behaviour is to resend the invite, whose link routes through
+    // /auth/accept-invite and forces the user to set a password. A magic link would
+    // instead log them straight into /app with no password set, bypassing onboarding.
+    // `inviteUserByEmail` is used (NOT `generateLink`): generateLink only returns a
+    // link and never dispatches an email, so it silently sends nothing —
+    // inviteUserByEmail actually sends via SMTP and re-invites an existing pending user.
+    const { error } = await auth.adminClient.auth.admin.inviteUserByEmail(
+      targetUserData.user.email,
+      { redirectTo: `${publicSettings.NEXT_PUBLIC_SITE_URL}/auth/accept-invite` },
+    );
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

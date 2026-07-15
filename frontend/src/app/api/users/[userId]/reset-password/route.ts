@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revokeAllUserSessions } from '@/lib/supabase/serverAdminClient';
 import { authorizeAdminAction } from '@/lib/utils/admin-auth';
 import { recordAuditLog } from '@/lib/utils/audit-log';
+import { publicSettings } from '@/lib/core/public-settings';
 
 export async function POST(
   request: NextRequest,
@@ -19,10 +20,13 @@ export async function POST(
       return NextResponse.json({ error: 'User email not found' }, { status: 404 });
     }
 
-    const { error } = await auth.adminClient.auth.admin.generateLink({
-      type: 'recovery',
-      email: targetUserData.user.email,
-    });
+    // Send a password-reset email. `resetPasswordForEmail` actually DISPATCHES the
+    // recovery email via SMTP; `admin.generateLink` only returns a link without
+    // sending, so it silently delivered nothing.
+    const { error } = await auth.adminClient.auth.resetPasswordForEmail(
+      targetUserData.user.email,
+      { redirectTo: `${publicSettings.NEXT_PUBLIC_SITE_URL}/auth/reset-password` },
+    );
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
