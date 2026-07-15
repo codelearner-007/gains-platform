@@ -57,7 +57,7 @@ export async function updateSession(request: NextRequest) {
     // verify) make no sense — send the user to the app. Deliberately excludes
     // /auth/2fa, /auth/reset-password, and /auth/accept-invite, which a
     // signed-in (or mid-flow) user legitimately needs.
-    const AUTH_ENTRY_PREFIXES = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/verify-email']
+    const AUTH_ENTRY_PREFIXES = ['/auth/login', '/auth/forgot-password']
     if (
         user && user.user &&
         !request.nextUrl.searchParams.has('sessionError') &&

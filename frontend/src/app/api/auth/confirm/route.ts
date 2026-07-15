@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createSSRClient } from '@/lib/supabase/server';
 
 const ALLOWED_TYPES = [
-  'signup',
   'invite',
   'magiclink',
   'recovery',
