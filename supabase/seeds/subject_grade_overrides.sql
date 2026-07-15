@@ -419,7 +419,7 @@ FROM (VALUES
   ('HS English III','HS English III'),
   ('HS English IV','HS English IV'),
   ('HS English II','HS English II'),
-  ('HS Algebra II','HS Alegra II'),
+  ('HS Algebra II','HS Algebra II'),
   ('HS Economics','HS Economics'),
   ('HS English I','HS English I'),
   ('HS Algebra I','HS Algebra I'),
@@ -428,7 +428,10 @@ FROM (VALUES
   ('HS Biology','HS Biology')
 ) AS v(rx, ovr)
 CROSS JOIN (SELECT school_id FROM public.schools WHERE schoology_building_id = '554425139') s
-ON CONFLICT (school_id, course_name_match_regex) DO NOTHING;
+-- DO UPDATE (not DO NOTHING) so re-seeding CONVERGES an already-seeded DB — e.g.
+-- the 2026-07 'HS Alegra II'->'HS Algebra II' typo fix self-heals on reset.
+ON CONFLICT (school_id, course_name_match_regex) DO UPDATE
+  SET subject_override = EXCLUDED.subject_override;
 
 
 -- =============================================================================
@@ -483,11 +486,14 @@ FROM (VALUES
   (ARRAY['6 - Grade 6','Grade 6'], 'Grade 6'),
   (ARRAY['7 - Grade 7','Grade 7'], 'Grade 7'),
   (ARRAY['8 - Grade 8','Grade 8'], 'Grade 8'),
-  (ARRAY['9 - Grade 9','Grade 9','10 - Grade 10','Grade 10','11 - Grade 11','Grade 11','12 - Grade 12','Grade 12'], 'Regular 9–12'),
-  (ARRAY['Higher-Ed'], 'Higher-Ed')
+  (ARRAY['9 - Grade 9','Grade 9','10 - Grade 10','Grade 10','11 - Grade 11','Grade 11','12 - Grade 12','Grade 12','Regular 9-12'], 'Regular 9–12'),
+  (ARRAY['Higher-Ed','Higher Ed'], 'Higher-Ed')
 ) AS v(gm, go)
 CROSS JOIN (SELECT school_id FROM public.schools WHERE schoology_building_id = '554425139') s
-ON CONFLICT (school_id, grade_override) DO NOTHING;
+-- DO UPDATE so re-seeding CONVERGES the grade_match arrays (else the 2026-07
+-- folder band-name variants 'Higher Ed'/'Regular 9-12' never append on a seeded DB).
+ON CONFLICT (school_id, grade_override) DO UPDATE
+  SET grade_match = EXCLUDED.grade_match;
 
 -- ---- SOUTHPREP (K-8) — not in prod, no-ops ----
 INSERT INTO public.school_grade_overrides (school_id, grade_match, grade_override)

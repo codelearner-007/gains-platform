@@ -41,7 +41,9 @@ STUDENTS = {
     "116907520": ("Bruno Rodriguez", 73.3),
     "124292876": ("Theodore Allen", 67.8),
 }
-SCHOOL_CLASS_AVG = 71.7  # mean of per-student latest-attempt overall %, n=421
+SCHOOL_CLASS_AVG = 71.6  # mean of per-student latest-attempt overall %, n=421
+# (was 71.7 pre-2026-07-15 CFP HS Summative ingest; same 421 students, their
+#  overalls now include the added HS assessments → school mean shifted 0.1)
 ARTHUR = "116903200"
 ARTHUR_SUBJECTS = {  # (subject, grade) → pct
     # 2026-07 misfiling fix: CFP "Topic 1" (item 7964065626) was filed

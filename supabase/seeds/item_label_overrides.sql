@@ -96,3 +96,58 @@ ON CONFLICT (school_id, item_id) DO UPDATE
   SET subject_override=EXCLUDED.subject_override, grade_override=EXCLUDED.grade_override,
       assessment_type_override=EXCLUDED.assessment_type_override, item_name_override=EXCLUDED.item_name_override,
       reason=EXCLUDED.reason, source=EXCLUDED.source;
+
+
+-- =============================================================================
+-- CFP HS Summative ingest (2026-07-15): 22 new HS assessments + 8 overlap
+-- refreshes + move HS Algebra II (5 items) to 9-12. Per-item subject/grade/
+-- assessment_type overrides pin each item to its HS tab (highest precedence,
+-- applied on both stg_student_submission and stg_question_data). See Fatima
+-- "Helper file for Higher Ed and 9-12.xlsx". source tag = reversal key.
+-- NOTE: HS United States Government uses the clean legacy label (xlsx wrote
+-- "...Government History", a smear from the adjacent US History row) — pending
+-- Fatima confirm.
+-- =============================================================================
+
+INSERT INTO item_label_overrides
+  (school_id, item_id, subject_override, grade_override, assessment_type_override, reason, source)
+VALUES
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','7964009902','HS Algebra II','Regular 9–12','topic','CFP HS Higher-Ed ''HS Algebra II'' -> tab HS Algebra II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','7964013071','HS Geometry','Regular 9–12','topic','CFP HS Regular 9-12 ''HS Geometry'' -> tab HS Geometry / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','7964150311','HS English I','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English I'' -> tab HS English I / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','7964150370','HS English I','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English I'' -> tab HS English I / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','7964160815','HS English II','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English II'' -> tab HS English II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8003600221','HS United States Government','Higher-Ed','topic','CFP HS Higher Ed ''HS United States Government'' -> tab HS United States Government / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8043003750','HS United States Government','Higher-Ed','topic','CFP HS Higher Ed ''HS United States Government'' -> tab HS United States Government / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8057554193','HS Honors English IV','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors  English IV'' -> tab HS Honors English IV / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8057554211','HS Honors English IV','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors  English IV'' -> tab HS Honors English IV / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8060417532','HS Honors English II','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors English II'' -> tab HS Honors English II / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8060417534','HS Honors English II','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors English II'' -> tab HS Honors English II / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8060417744','HS Honors English III','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors English III'' -> tab HS Honors English III / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8060417745','HS Honors English III','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors English III'' -> tab HS Honors English III / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8089937013','HS Algebra II','Regular 9–12','topic','CFP HS Higher-Ed ''HS Algebra II (existing)'' -> tab HS Algebra II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8118215771','HS World History','Higher-Ed','topic','CFP HS Higher Ed ''HS World History'' -> tab HS World History / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8122144608','HS Honors Algebra I','Higher-Ed','topic','CFP HS Higher-Ed ''HS Honors Algebra I'' -> tab HS Honors Algebra I / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8149513037','HS Honors Algebra II','Higher-Ed','topic','CFP HS Higher-Ed ''HS Honors Algebra II'' -> tab HS Honors Algebra II / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8161434258','HS English I','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English I'' -> tab HS English I / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8161434561','HS English II','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English II'' -> tab HS English II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8161435184','HS English III','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English III'' -> tab HS English III / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8161450391','HS United States Government','Higher-Ed','topic','CFP HS Higher Ed ''HS United States Government'' -> tab HS United States Government / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8161453390','HS United States History','Higher-Ed','topic','CFP HS Higher Ed ''HS United States History'' -> tab HS United States History / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8161455554','HS World History','Higher-Ed','topic','CFP HS Higher Ed ''HS World History'' -> tab HS World History / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8162249855','HS Honors English II','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors English II'' -> tab HS Honors English II / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8259495227','HS Algebra II','Regular 9–12','topic','CFP HS Higher-Ed ''HS Algebra II (existing)'' -> tab HS Algebra II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8286339438','HS Algebra II','Regular 9–12','topic','CFP HS Higher-Ed ''HS Algebra II (existing)'' -> tab HS Algebra II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8323376256','HS English II','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English II'' -> tab HS English II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8326782298','HS English I','Regular 9–12','Unit','CFP HS Regular 9-12 ''HS English I'' -> tab HS English I / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8330395855','HS Algebra II','Regular 9–12','topic','CFP HS Higher-Ed ''HS Algebra II (existing)'' -> tab HS Algebra II / Regular 9–12 (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8339413167','HS Honors English II','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors English II'' -> tab HS Honors English II / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8339413189','HS Honors English II','Higher-Ed','Unit','CFP HS Higher-Ed ''HS Honors English II'' -> tab HS Honors English II / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8371118316','HS Economics','Higher-Ed','topic','CFP HS Higher Ed ''HS Economics'' -> tab HS Economics / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8373207020','HS United States History','Higher-Ed','topic','CFP HS Higher Ed ''HS United States History'' -> tab HS United States History / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07'),
+  ('019eb11c-413b-7a66-a7d8-a18f14736ede','8374107131','HS World History','Higher-Ed','topic','CFP HS Higher Ed ''HS World History'' -> tab HS World History / Higher-Ed (Fatima Higher-Ed+9-12 xlsx)','cfp-hs-summative-2026-07')
+ON CONFLICT (school_id, item_id) DO UPDATE SET
+  subject_override=EXCLUDED.subject_override,
+  grade_override=EXCLUDED.grade_override,
+  assessment_type_override=EXCLUDED.assessment_type_override,
+  reason=EXCLUDED.reason, source=EXCLUDED.source;
