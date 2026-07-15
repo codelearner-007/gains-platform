@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdminAction } from '@/lib/utils/admin-auth';
 import { recordAuditLog } from '@/lib/utils/audit-log';
+import { publicSettings } from '@/lib/core/public-settings';
 
 export async function POST(
   request: NextRequest,
@@ -18,9 +19,19 @@ export async function POST(
       return NextResponse.json({ error: 'User email not found' }, { status: 404 });
     }
 
+    // Re-issue the INVITATION (not a passwordless magic link). This action is
+    // only offered for invited-but-not-yet-accepted users (!email_confirmed_at),
+    // so the correct behaviour is to resend the invite, whose link routes through
+    // /auth/accept-invite and forces the user to set a password. A magic link
+    // would instead log them straight into /app with no password set, bypassing
+    // onboarding. `generateLink` (not `inviteUserByEmail`) is used because the
+    // user already exists; with SMTP configured it also dispatches the email.
     const { error } = await auth.adminClient.auth.admin.generateLink({
-      type: 'magiclink',
+      type: 'invite',
       email: targetUserData.user.email,
+      options: {
+        redirectTo: `${publicSettings.NEXT_PUBLIC_SITE_URL}/auth/accept-invite`,
+      },
     });
 
     if (error) {
@@ -30,16 +41,16 @@ export async function POST(
     await recordAuditLog(request, {
       actorUserId: auth.actorUserId,
       module: 'users',
-      action: 'verification_resent',
+      action: 'invitation_resent',
       resourceId: auth.userId,
       details: { email: targetUserData.user.email },
     });
 
-    return NextResponse.json({ message: 'Verification email sent successfully' });
+    return NextResponse.json({ message: 'Invitation resent successfully' });
   } catch (error) {
-    console.error('Resend verification error:', error);
+    console.error('Resend invitation error:', error);
     return NextResponse.json(
-      { error: 'Failed to resend verification email' },
+      { error: 'Failed to resend invitation' },
       { status: 500 }
     );
   }
