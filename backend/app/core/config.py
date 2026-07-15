@@ -89,12 +89,14 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def apply_redis_defaults_and_validate(self) -> "Settings":
-        is_production = self.ENVIRONMENT.lower() == "production"
-
+        # Redis is opt-in. Default the toggles OFF when unset so a missing
+        # REDIS_URL degrades to in-memory rate limiting instead of crash-looping
+        # the app at import. Enabling a feature without a URL is still an explicit
+        # misconfiguration and fails fast below.
         if self.REDIS_ENABLE_RATE_LIMIT_STORAGE is None:
-            self.REDIS_ENABLE_RATE_LIMIT_STORAGE = is_production
+            self.REDIS_ENABLE_RATE_LIMIT_STORAGE = False
         if self.REDIS_ENABLE_SHARE_SESSIONS is None:
-            self.REDIS_ENABLE_SHARE_SESSIONS = is_production
+            self.REDIS_ENABLE_SHARE_SESSIONS = False
 
         if (self.REDIS_ENABLE_RATE_LIMIT_STORAGE or self.REDIS_ENABLE_SHARE_SESSIONS) and not self.REDIS_URL:
             raise ValueError("REDIS_URL is required when Redis features are enabled")
