@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
-import { Sun, Moon, Monitor, Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -20,7 +18,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { profileService } from '@/lib/services/profile.service';
-import { cn } from '@/lib/utils';
 
 const COMMON_TIMEZONES = [
   { value: 'UTC', label: 'UTC' },
@@ -38,7 +35,6 @@ const COMMON_TIMEZONES = [
 ];
 
 export function PreferencesSection() {
-  const { theme, setTheme } = useTheme();
   const [timezone, setTimezone] = useState<string>('UTC');
   const [loading, setLoading] = useState(true);
   const [savingTimezone, setSavingTimezone] = useState(false);
@@ -82,38 +78,6 @@ export function PreferencesSection() {
 
   return (
     <div className="space-y-6">
-      {/* Theme */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Theme</CardTitle>
-          <CardDescription>Choose your preferred appearance</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            {[
-              { value: 'light', label: 'Light', icon: Sun },
-              { value: 'dark', label: 'Dark', icon: Moon },
-              { value: 'system', label: 'System', icon: Monitor },
-            ].map((option) => (
-              <Button
-                key={option.value}
-                variant="outline"
-                size="sm"
-                onClick={() => setTheme(option.value)}
-                className={cn(
-                  'gap-2 flex-1',
-                  theme === option.value && 'border-primary bg-primary/5 text-primary'
-                )}
-              >
-                <option.icon className="h-4 w-4" />
-                {option.label}
-                {theme === option.value && <Check className="h-3 w-3 ml-auto" />}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Timezone */}
       <Card className="border-border/50 shadow-sm">
         <CardHeader className="pb-3">

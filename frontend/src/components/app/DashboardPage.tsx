@@ -424,16 +424,19 @@ export function DashboardPage() {
         aria-hidden
         className="bg-brand-glow pointer-events-none absolute inset-x-0 -top-6 -z-10 h-64"
       />
-      {/* Single "data is streaming" signal — a thin brand bar; never blocks.
-          suppressHydrationWarning: the class derives from client-only
+      {/* "Data is streaming" indicator — a slim indeterminate bar (a brand
+          segment sweeping a faint track); never blocks interaction.
+          suppressHydrationWarning: visibility derives from client-only
           useIsFetching (0 during SSR), so a first-paint mismatch is expected. */}
       <div
         aria-hidden
         suppressHydrationWarning
-        className={`pointer-events-none absolute inset-x-0 -top-1 z-20 h-0.5 origin-left rounded-full bg-primary transition-opacity duration-300 ${
-          anyFetching ? 'animate-pulse opacity-90' : 'opacity-0'
+        className={`pointer-events-none absolute inset-x-0 -top-1 z-20 h-0.5 overflow-hidden rounded-full bg-primary/10 transition-opacity duration-300 ${
+          anyFetching ? 'opacity-100' : 'opacity-0'
         }`}
-      />
+      >
+        <span className="loadbar-bar absolute inset-y-0 w-2/5 rounded-full bg-primary" />
+      </div>
       <DashboardHeader
         schoolName={school?.name ?? null}
         logoUrl={school?.logo_url ?? null}
@@ -497,16 +500,18 @@ export function DashboardPage() {
           per-question OVERALL cube, which — like legacy PowerBI — has no section
           grain, so they stay school-wide; marked "school-wide" when a section
           is active. */}
-      <KpiHeroBand
-        gradeAveragePct={kpis?.grade_average_pct ?? '—'}
-        totalStudents={kpis?.total_students ?? '—'}
-        totalStandards={kpis?.total_standards ?? '—'}
-        totalQuestions={kpis?.total_questions ?? '—'}
-        totalAssessments={assessmentTotal}
-        trend={gradeTrend}
-        loading={headerLoading}
-        schoolWideHint={schoolWideHint}
-      />
+      <div className={`transition-opacity duration-200 ${dataStreaming ? 'opacity-60' : ''}`}>
+        <KpiHeroBand
+          gradeAveragePct={kpis?.grade_average_pct ?? '—'}
+          totalStudents={kpis?.total_students ?? '—'}
+          totalStandards={kpis?.total_standards ?? '—'}
+          totalQuestions={kpis?.total_questions ?? '—'}
+          totalAssessments={assessmentTotal}
+          trend={gradeTrend}
+          loading={headerLoading}
+          schoolWideHint={schoolWideHint}
+        />
+      </div>
 
       {/* Summary — one 4-view selector (resolves the old double "By Assessment")
           + a row-scoped search, then the table panel. */}

@@ -4,7 +4,6 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Shield, Users, FileText, LogOut, Key, ArrowLeft, Settings, LayoutGrid, School } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { BrandWordmark } from '@/components/common/BrandWordmark';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -138,9 +137,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="px-3 pb-2 flex items-center justify-end">
-          <ThemeToggle />
-        </div>
         <div className="border-t border-border p-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild disabled={loading}>

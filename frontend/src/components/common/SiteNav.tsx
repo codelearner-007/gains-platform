@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import AuthAwareButtons from '@/components/common/AuthAwareButtons';
 import { BrandWordmark } from '@/components/common/BrandWordmark';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export function SiteNav() {
   return (
@@ -12,7 +11,6 @@ export function SiteNav() {
             <BrandWordmark height={26} priority />
           </Link>
           <div className="flex items-center gap-3 sm:gap-4">
-            <ThemeToggle />
             <AuthAwareButtons variant="nav" />
           </div>
         </div>

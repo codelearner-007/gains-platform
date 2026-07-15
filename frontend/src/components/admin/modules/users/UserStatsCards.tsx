@@ -48,13 +48,13 @@ function StatsGrid({ stats }: { stats: UserStats }) {
         label="Total Users"
       />
       <AdminStatTile
-        icon={<UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+        icon={<UserCheck className="h-5 w-5 text-emerald-600" />}
         iconBgClass="bg-emerald-500/10"
         value={stats.active_users}
         label="Active Users"
       />
       <AdminStatTile
-        icon={<ShieldCheck className="h-5 w-5 text-sky-600 dark:text-sky-400" />}
+        icon={<ShieldCheck className="h-5 w-5 text-sky-600" />}
         iconBgClass="bg-sky-500/10"
         value={stats.verified_users}
         label="Verified"
