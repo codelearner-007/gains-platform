@@ -173,9 +173,8 @@ export function performanceBand(grade: number): PerfBand {
  * neutral — the perf colour reads as data, never as decoration.
  */
 export function perfTextClass(grade: number): string {
-  // text-perf-* resolve to rose/amber/emerald-600 in light and -400 in dark
-  // (via --perf-* in globals.css) — identical pixels to the former literal
-  // `text-rose-600 dark:text-rose-400` classes.
+  // text-perf-* resolve to rose/amber/emerald-600 via --perf-* in globals.css
+  // (the dashboard/report perf ramp).
   if (grade < 0.7) return 'text-perf-low';
   if (grade < 0.8) return 'text-perf-mid';
   return 'text-perf-high';

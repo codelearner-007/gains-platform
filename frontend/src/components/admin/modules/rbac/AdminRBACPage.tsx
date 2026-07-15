@@ -337,7 +337,7 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
                 </p>
               </div>
               {isSuperAdminRole && (
-                <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 font-medium">
+                <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/20 font-medium">
                   Read-Only System Role
                 </Badge>
               )}

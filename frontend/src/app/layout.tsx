@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
 import CookieConsent from "@/components/common/Cookies";
@@ -32,17 +31,15 @@ export default function RootLayout({
 }>) {
   const gaID = publicSettings.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
-    <body className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={inter.variable}>
+    <body className={inter.className}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
       >
         Skip to main content
       </a>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        {children}
-      </ThemeProvider>
+      {children}
       <ToastMount />
       <Analytics />
       <CookieConsent />

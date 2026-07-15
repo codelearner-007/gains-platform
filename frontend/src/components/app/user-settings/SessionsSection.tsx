@@ -115,7 +115,7 @@ export function SessionsSection() {
     <div className="space-y-4">
       <Alert className="border-amber-500/30 bg-amber-500/5">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
-        <AlertDescription className="text-amber-700 dark:text-amber-400">
+        <AlertDescription className="text-amber-700">
           Revoked sessions may take up to 60 minutes to fully terminate due to token expiry.
         </AlertDescription>
       </Alert>
