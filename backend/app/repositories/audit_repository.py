@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import distinct, func, select
+from sqlalchemy import String, distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
@@ -24,6 +24,7 @@ class AuditRepository(BaseRepository[AuditLog]):
         user_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        q: Optional[str] = None,
     ):
         if module:
             query = query.where(AuditLog.module == module)
@@ -35,6 +36,15 @@ class AuditRepository(BaseRepository[AuditLog]):
             query = query.where(AuditLog.created_at >= start_date)
         if end_date:
             query = query.where(AuditLog.created_at <= end_date)
+        if q:
+            pattern = f"%{q}%"
+            query = query.where(
+                or_(
+                    AuditLog.action.ilike(pattern),
+                    AuditLog.resource_id.ilike(pattern),
+                    func.cast(AuditLog.details, String).ilike(pattern),
+                )
+            )
         return query
 
     async def count_filtered(
@@ -44,10 +54,11 @@ class AuditRepository(BaseRepository[AuditLog]):
         user_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        q: Optional[str] = None,
     ) -> int:
         query = self._apply_filters(
             select(func.count()).select_from(AuditLog),
-            module, action, user_id, start_date, end_date,
+            module, action, user_id, start_date, end_date, q,
         )
         result = await self.session.execute(query)
         return result.scalar() or 0
@@ -61,10 +72,11 @@ class AuditRepository(BaseRepository[AuditLog]):
         user_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        q: Optional[str] = None,
     ) -> List[AuditLog]:
         query = self._apply_filters(
             select(AuditLog),
-            module, action, user_id, start_date, end_date,
+            module, action, user_id, start_date, end_date, q,
         )
         query = query.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset)
         result = await self.session.execute(query)
@@ -74,6 +86,26 @@ class AuditRepository(BaseRepository[AuditLog]):
         query = select(distinct(AuditLog.module)).order_by(AuditLog.module)
         result = await self.session.execute(query)
         return list(result.scalars().all())
+
+    async def list_distinct_actions(self) -> List[str]:
+        query = select(distinct(AuditLog.action)).order_by(AuditLog.action)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def emails_for_user_ids(self, user_ids: List[str]) -> dict[str, str]:
+        """Bulk-map user_id → email from auth.users (for actor display)."""
+        if not user_ids:
+            return {}
+        from sqlalchemy import text
+
+        rows = await self.session.execute(
+            text(
+                "SELECT id::text AS id, email FROM auth.users "
+                "WHERE id::text = ANY(:ids)"
+            ),
+            {"ids": list(user_ids)},
+        )
+        return {r.id: r.email for r in rows.all()}
 
     async def create_log(
         self,

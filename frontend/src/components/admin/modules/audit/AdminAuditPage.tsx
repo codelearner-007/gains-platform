@@ -1,440 +1,444 @@
 'use client';
 
-/**
- * Admin Audit Logs Page
- *
- * Professional audit trail with advanced filtering using calendar range picker
- */
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
-import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Filter } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Search,
+  Filter,
+  Calendar as CalendarIcon,
+  Download,
+  Ban,
+  CheckCircle2,
+  Activity,
+} from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/useDebounce';
+import {
+  humanizeAudit,
+  auditSeverity,
+  type AuditSeverity,
+} from '@/lib/audit/humanize';
 import {
   listAuditLogs,
   listAuditModules,
+  listAuditActions,
   type AuditLog,
   type AuditLogFilters,
 } from '@/lib/services/audit.service';
 
+const SEVERITY_STYLE: Record<AuditSeverity, string> = {
+  create: 'bg-success/15 text-success',
+  update: 'bg-muted text-muted-foreground',
+  delete: 'bg-destructive/10 text-destructive',
+  neutral: 'bg-muted text-muted-foreground',
+};
+
+function SeverityIcon({ action }: { action: string }) {
+  const sev = auditSeverity(action);
+  const Icon = sev === 'delete' ? Ban : sev === 'create' ? CheckCircle2 : Activity;
+  return (
+    <div
+      className={cn(
+        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+        SEVERITY_STYLE[sev],
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </div>
+  );
+}
+
 export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [modules, setModules] = useState<string[]>([]);
+  const [actions, setActions] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [filters, setFilters] = useState<AuditLogFilters>({
-    page: 1,
-    page_size: 50,
-  });
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 300);
+  const [filters, setFilters] = useState<AuditLogFilters>({ page: 1, page_size: 50 });
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [loadingModules, setLoadingModules] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-  // Load modules for filter dropdown
   useEffect(() => {
-    async function loadModules() {
-      try {
-        setLoadingModules(true);
-        const data = await listAuditModules();
-        setModules(data);
-      } catch (err) {
-        console.error('Failed to load modules:', err);
-      } finally {
-        setLoadingModules(false);
-      }
-    }
-
-    loadModules();
+    listAuditModules().then(setModules).catch(() => {});
+    listAuditActions().then(setActions).catch(() => {});
   }, []);
 
-  // Load logs when filters change
   useEffect(() => {
-    async function loadLogs() {
+    setFilters((prev) => ({ ...prev, q: debouncedSearch || undefined, page: 1 }));
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    async function load() {
       try {
         setLoading(true);
         setError(null);
-
-        const response = await listAuditLogs(filters);
-
-        setLogs(response.items);
-        setTotalPages(response.total_pages);
-        setTotal(response.total);
+        const res = await listAuditLogs(filters);
+        setLogs(res.items);
+        setTotalPages(res.total_pages);
+        setTotal(res.total);
       } catch (err) {
-        console.error('Error loading audit logs:', err);
         setError(err instanceof Error ? err.message : 'Failed to load audit logs');
-        toast('Failed to load audit logs', {
-          description: 'Please try again.',
-        });
       } finally {
         setLoading(false);
       }
     }
-
-    loadLogs();
+    load();
   }, [filters]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    }).format(date);
-  };
+  const setFilter = useCallback(
+    (key: keyof AuditLogFilters, value: string | undefined) => {
+      setFilters((prev) => ({
+        ...prev,
+        [key]: value === 'all' || value === '' ? undefined : value,
+        page: 1,
+      }));
+    },
+    [],
+  );
 
-  const formatUserId = (userId: string | null) => {
-    if (!userId) return 'System';
-    return userId.slice(0, 8);
-  };
-
-  const handleDateRangeChange = (range: DateRange | undefined) => {
+  const handleDateRange = (range: DateRange | undefined) => {
     setDateRange(range);
-
-    // Update filters with new date range
-    const newFilters: AuditLogFilters = {
-      ...filters,
-      page: 1, // Reset to first page
-    };
-
-    if (range?.from) {
-      newFilters.start_date = range.from.toISOString();
-    } else {
-      delete newFilters.start_date;
-    }
-
-    if (range?.to) {
-      // Set to end of day
-      const endOfDay = new Date(range.to);
-      endOfDay.setHours(23, 59, 59, 999);
-      newFilters.end_date = endOfDay.toISOString();
-    } else {
-      delete newFilters.end_date;
-    }
-
-    setFilters(newFilters);
-  };
-
-  const handleModuleChange = (value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      module: value === 'all' ? undefined : value,
-      page: 1,
-    }));
-  };
-
-  const handleRemoveFilter = (key: keyof AuditLogFilters) => {
-    if (key === 'start_date' || key === 'end_date') {
-      // Clear entire date range
-      setDateRange(undefined);
-      setFilters((prev) => {
-        const newFilters = { ...prev };
-        delete newFilters.start_date;
-        delete newFilters.end_date;
-        return { ...newFilters, page: 1 };
-      });
-    } else {
-      setFilters((prev) => {
-        const newFilters = { ...prev };
-        delete newFilters[key];
-        return { ...newFilters, page: 1 };
-      });
-    }
-  };
-
-  const handleClearAllFilters = () => {
-    setDateRange(undefined);
-    setFilters({
-      page: 1,
-      page_size: filters.page_size,
+    setFilters((prev) => {
+      const next = { ...prev, page: 1 };
+      if (range?.from) next.start_date = range.from.toISOString();
+      else delete next.start_date;
+      if (range?.to) {
+        const end = new Date(range.to);
+        end.setHours(23, 59, 59, 999);
+        next.end_date = end.toISOString();
+      } else delete next.end_date;
+      return next;
     });
   };
 
-  const activeFilters = Object.entries(filters).filter(
-    ([key, value]) =>
-      value !== undefined &&
-      key !== 'page' &&
-      key !== 'page_size' &&
-      value !== ''
-  );
+  const clearAll = () => {
+    setDateRange(undefined);
+    setSearchInput('');
+    setFilters({ page: 1, page_size: filters.page_size });
+  };
 
-  const hasActiveFilters = activeFilters.length > 0;
+  const menuCount = [filters.module, filters.action].filter(Boolean).length;
+
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const res = await listAuditLogs({ ...filters, page: 1, page_size: 1000 });
+      const header = [
+        'timestamp',
+        'actor',
+        'action',
+        'module',
+        'resource_id',
+        'ip_address',
+        'summary',
+        'details',
+      ];
+      const rows = res.items.map((l) => [
+        l.created_at,
+        l.actor_email ?? l.user_id ?? 'system',
+        l.action,
+        l.module,
+        l.resource_id ?? '',
+        l.ip_address ?? '',
+        humanizeAudit(l),
+        l.details ? JSON.stringify(l.details) : '',
+      ]);
+      const csv = [header, ...rows]
+        .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-logs-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${res.items.length} rows`);
+    } catch {
+      toast.error('Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px]">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Track all system actions and security events
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            A human-readable trail of every administrative action.
+          </p>
+        </div>
+        <Button variant="outline" onClick={exportCsv} disabled={exporting || loading}>
+          <Download className="h-4 w-4 mr-2" />
+          {exporting ? 'Exporting…' : 'Export CSV'}
+        </Button>
       </div>
 
-      {/* Filters */}
-      <Card className="border-border shadow-sm">
-        <CardContent className="pt-6">
-          <div className="space-y-5">
-            {/* Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Date Range Picker */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Date Range</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !dateRange && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateRange?.from ? (
-                        dateRange.to ? (
-                          <>
-                            {format(dateRange.from, 'LLL dd, y')} -{' '}
-                            {format(dateRange.to, 'LLL dd, y')}
-                          </>
-                        ) : (
-                          format(dateRange.from, 'LLL dd, y')
-                        )
-                      ) : (
-                        <span>Pick a date range</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={dateRange?.from}
-                      selected={dateRange}
-                      onSelect={handleDateRangeChange}
-                      numberOfMonths={2}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search actions, details…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Search audit logs"
+          />
+        </div>
 
-              {/* Module Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="module" className="text-sm font-medium">
-                  Module
-                </Label>
-                <Select
-                  value={filters.module || 'all'}
-                  onValueChange={handleModuleChange}
-                  disabled={loadingModules}
-                >
-                  <SelectTrigger id="module">
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder="All Modules" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Modules</SelectItem>
-                    {modules.map((module) => (
-                      <SelectItem key={module} value={module}>
-                        {module}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filters
+              {menuCount > 0 && (
+                <Badge className="ml-1 h-5 min-w-5 justify-center rounded-full bg-primary px-1.5 text-primary-foreground tabular-nums">
+                  {menuCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-72 space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Module</Label>
+              <Select
+                value={filters.module || 'all'}
+                onValueChange={(v) => setFilter('module', v)}
+              >
+                <SelectTrigger aria-label="Filter by module">
+                  <SelectValue placeholder="All modules" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All modules</SelectItem>
+                  {modules.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Active Filters */}
-            {hasActiveFilters && (
-              <div className="flex items-center gap-3 pt-2 border-t border-border">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Active Filters:
-                </span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {activeFilters.map(([key, value]) => {
-                    let displayValue = String(value);
-                    let displayKey = key;
-
-                    // Skip end_date if both dates exist (we show it with start_date as a range)
-                    if (key === 'end_date' && dateRange?.from && dateRange?.to) {
-                      return null;
-                    }
-
-                    // Format display names
-                    if (key === 'start_date' && dateRange?.from && dateRange?.to) {
-                      displayValue = `${format(dateRange.from, 'MMM d, yyyy')} - ${format(dateRange.to, 'MMM d, yyyy')}`;
-                      displayKey = 'Date Range';
-                    } else if (key === 'start_date') {
-                      displayValue = format(new Date(value as string), 'MMM d, yyyy');
-                      displayKey = 'From';
-                    } else if (key === 'end_date') {
-                      displayValue = format(new Date(value as string), 'MMM d, yyyy');
-                      displayKey = 'To';
-                    } else if (key === 'module') {
-                      displayKey = 'Module';
-                    }
-
-                    return (
-                      <Badge
-                        key={key}
-                        variant="secondary"
-                        className="gap-2 pl-3 pr-2 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-                      >
-                        <span className="text-xs font-medium">
-                          {displayKey}: {displayValue}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveFilter(key as keyof AuditLogFilters)}
-                          className="h-5 w-5 hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                          aria-label={`Remove ${key} filter`}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    );
-                  })}
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">|</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearAllFilters}
-                      className="h-7 px-2 text-xs font-medium hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      Clear All
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Action</Label>
+              <Select
+                value={filters.action || 'all'}
+                onValueChange={(v) => setFilter('action', v)}
+              >
+                <SelectTrigger aria-label="Filter by action">
+                  <SelectValue placeholder="All actions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All actions</SelectItem>
+                  {actions.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {a.replace(/_/g, ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {(menuCount > 0 || filters.start_date) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-muted-foreground"
+                onClick={clearAll}
+              >
+                Clear all filters
+              </Button>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </PopoverContent>
+        </Popover>
 
-      {/* Audit Logs Table */}
+        {/* Date range — top-level (not nested, to keep Radix useId stable) */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn('gap-2 font-normal', !dateRange && 'text-muted-foreground')}
+            >
+              <CalendarIcon className="h-4 w-4" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, 'LLL d')} – {format(dateRange.to, 'LLL d, y')}
+                  </>
+                ) : (
+                  format(dateRange.from, 'LLL d, y')
+                )
+              ) : (
+                <span>Any time</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={handleDateRange}
+              numberOfMonths={1}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Feed */}
       <Card className="border-border shadow-sm">
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 space-y-4">
+            <div className="p-6 space-y-3">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-12 rounded bg-muted animate-pulse" />
+                <div key={i} className="h-14 rounded bg-muted animate-pulse" />
               ))}
             </div>
           ) : error ? (
-            <div className="p-8 text-center">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
+            <div className="p-8 text-center text-sm text-destructive">{error}</div>
           ) : logs.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="text-sm font-medium text-muted-foreground">No audit logs found</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                No audit events found
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {hasActiveFilters
-                  ? 'Try adjusting your filters'
-                  : 'No events have been recorded yet'}
+                Try adjusting your filters.
               </p>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/40">
-                      <TableHead className="font-semibold">Timestamp</TableHead>
-                      <TableHead className="font-semibold">Module</TableHead>
-                      <TableHead className="font-semibold">Action</TableHead>
-                      <TableHead className="font-semibold">User</TableHead>
-                      <TableHead className="font-semibold">Resource</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs.map((log) => (
-                      <TableRow key={log.id} className="hover:bg-muted/30">
-                        <TableCell className="text-sm text-muted-foreground font-mono">
-                          {formatDate(log.created_at)}
-                        </TableCell>
-                        <TableCell>
+              <ul className="divide-y divide-border">
+                {logs.map((log) => {
+                  const isOpen = expanded === log.id;
+                  return (
+                    <Fragment key={log.id}>
+                      <li>
+                        <button
+                          className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-muted/30"
+                          onClick={() => setExpanded(isOpen ? null : log.id)}
+                          aria-expanded={isOpen}
+                        >
+                          <SeverityIcon action={log.action} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-foreground">
+                              {humanizeAudit(log)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(log.created_at), 'MMM d, yyyy · h:mm:ss a')}
+                            </p>
+                          </div>
                           <Badge
                             variant="secondary"
-                            className="bg-primary/10 text-primary border-primary/20 font-medium"
+                            className="hidden sm:inline-flex bg-muted text-muted-foreground font-normal"
                           >
                             {log.module}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium text-sm">{log.action}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground font-mono">
-                          {formatUserId(log.user_id)}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {log.resource_id ? (
-                            <code className="bg-muted px-2 py-1 rounded text-xs">
-                              {log.resource_id.slice(0, 12)}
-                            </code>
-                          ) : (
-                            <span className="text-muted-foreground/60">—</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                          <ChevronDown
+                            className={cn(
+                              'h-4 w-4 text-muted-foreground transition-transform',
+                              isOpen && 'rotate-180',
+                            )}
+                          />
+                        </button>
+                        {isOpen && (
+                          <div className="border-t border-border bg-muted/20 px-5 py-3 pl-16">
+                            <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+                              <DetailRow label="Action" value={log.action} mono />
+                              <DetailRow
+                                label="Actor"
+                                value={log.actor_email ?? log.user_id ?? 'system'}
+                              />
+                              {log.resource_id && (
+                                <DetailRow label="Resource" value={log.resource_id} mono />
+                              )}
+                              {log.ip_address && (
+                                <DetailRow label="IP" value={log.ip_address} mono />
+                              )}
+                              {log.user_agent && (
+                                <DetailRow label="User agent" value={log.user_agent} />
+                              )}
+                            </dl>
+                            {log.details && Object.keys(log.details).length > 0 && (
+                              <div className="mt-3">
+                                <p className="mb-1 text-xs font-medium text-muted-foreground">
+                                  Details
+                                </p>
+                                <pre className="overflow-x-auto rounded-md border border-border bg-card p-3 text-xs">
+                                  {JSON.stringify(log.details, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    </Fragment>
+                  );
+                })}
+              </ul>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20">
+              <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
                 <div className="text-sm text-muted-foreground">
                   Showing{' '}
                   <span className="font-medium text-foreground">
                     {(filters.page - 1) * filters.page_size + 1}
                   </span>{' '}
-                  to{' '}
+                  –{' '}
                   <span className="font-medium text-foreground">
                     {Math.min(filters.page * filters.page_size, total)}
                   </span>{' '}
-                  of <span className="font-medium text-foreground">{total}</span> events
+                  of <span className="font-medium text-foreground">{total}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setFilters((prev) => ({ ...prev, page: prev.page - 1 }))
+                      setFilters((p) => ({ ...p, page: p.page - 1 }))
                     }
                     disabled={filters.page === 1 || loading}
-                    className="shadow-sm"
                   >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                   </Button>
-                  <span className="text-sm text-muted-foreground px-2">
-                    Page <span className="font-medium text-foreground">{filters.page}</span> of{' '}
+                  <span className="px-2 text-sm text-muted-foreground">
+                    Page{' '}
+                    <span className="font-medium text-foreground">{filters.page}</span>{' '}
+                    of{' '}
                     <span className="font-medium text-foreground">{totalPages}</span>
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
+                      setFilters((p) => ({ ...p, page: p.page + 1 }))
                     }
                     disabled={filters.page >= totalPages || loading}
-                    className="shadow-sm"
                   >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    Next <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>
               </div>
@@ -442,6 +446,25 @@ export default function AdminAuditPage() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex gap-2">
+      <dt className="w-24 shrink-0 text-muted-foreground">{label}</dt>
+      <dd className={cn('min-w-0 break-all text-foreground', mono && 'font-mono text-xs')}>
+        {value}
+      </dd>
     </div>
   );
 }

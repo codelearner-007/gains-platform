@@ -8,10 +8,13 @@ export interface AuditLog {
   id: string;
   created_at: string;
   user_id: string | null;
+  actor_email: string | null;
   action: string;
   module: string;
   resource_id: string | null;
   details: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
 }
 
 export interface PaginatedAuditResponse {
@@ -30,6 +33,7 @@ export interface AuditLogFilters {
   user_id?: string;
   start_date?: string;
   end_date?: string;
+  q?: string;
 }
 
 export async function listAuditLogs(params: AuditLogFilters): Promise<PaginatedAuditResponse> {
@@ -44,4 +48,8 @@ export async function listAuditLogs(params: AuditLogFilters): Promise<PaginatedA
 
 export async function listAuditModules(): Promise<string[]> {
   return apiClient.get<string[]>('/v1/audit/modules');
+}
+
+export async function listAuditActions(): Promise<string[]> {
+  return apiClient.get<string[]>('/v1/audit/actions');
 }
