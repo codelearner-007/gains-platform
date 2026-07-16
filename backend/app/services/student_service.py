@@ -14,6 +14,7 @@ from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import PERF_BAND_HIGH_PCT, PERF_BAND_MID_PCT
 from app.core.exceptions import ResourceNotFoundError
 from app.repositories.cube_repository import CubeRepository
 from app.repositories.student_repository import StudentRepository
@@ -36,8 +37,8 @@ from app.utils.coercion import safe_str, to_int
 # Default roster page size — mirrors the dashboard's By-Assessment grid.
 DEFAULT_BROWSE_PAGE_SIZE = 25
 
-_BAND_HIGH = 80.0
-_BAND_MID = 70.0
+_BAND_HIGH = PERF_BAND_HIGH_PCT
+_BAND_MID = PERF_BAND_MID_PCT
 
 
 def _f(v: Any) -> Optional[float]:

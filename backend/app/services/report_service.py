@@ -24,6 +24,7 @@ from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import PERF_BAND_HIGH, PERF_BAND_MID
 from app.core.exceptions import ResourceNotFoundError
 from app.repositories.cube_repository import CubeRepository
 from app.repositories.dim_repository import DimRepository
@@ -196,8 +197,8 @@ def _format_pct_opt(v: Any) -> str:
 # PBIX-mandated band thresholds (Performance Color* DAX measures): a strand
 # or standard is "at target" at >=80%, "approaching" at 70–80%, and "needs
 # attention" below 70%.
-_BAND_HIGH_THRESHOLD = 0.8
-_BAND_MID_THRESHOLD = 0.7
+_BAND_HIGH_THRESHOLD = PERF_BAND_HIGH
+_BAND_MID_THRESHOLD = PERF_BAND_MID
 
 
 def _decode_html(s: str) -> str:
