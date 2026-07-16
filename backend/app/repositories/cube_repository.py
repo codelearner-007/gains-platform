@@ -1395,29 +1395,6 @@ class CubeRepository:
         row = result.first()
         return _row_to_dict(row) if row else None
 
-    async def get_school_total_assessments(
-        self,
-        session_filter: Optional[str] = None,
-        subject: Optional[str] = None,
-        grade: Optional[str] = None,
-        category: Optional[str] = None,
-        section: Optional[str] = None,
-    ) -> int:
-        """Distinct assessments (item_ids) within the chosen filter scope."""
-        sql = text(
-            f"""
-            SELECT COUNT(DISTINCT cus.item_id) AS total_assessments
-            FROM cube_user_summary cus
-            WHERE {_CUS_YTD_FILTER_SQL}
-            """
-        )
-        result = await self.session.execute(
-            sql,
-            _school_filter_params(session_filter, subject, grade, category, section),
-        )
-        row = result.first()
-        return int(row._mapping["total_assessments"]) if row else 0
-
     async def get_school_overall_grade_average(
         self,
         session_filter: Optional[str] = None,
