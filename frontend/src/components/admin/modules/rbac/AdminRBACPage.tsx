@@ -1,17 +1,44 @@
 'use client';
 
 /**
- * Admin RBAC Page - Professional Permissions Configurator
+ * Admin RBAC Page — roles + permission matrix.
  *
- * Two-column layout with role selection and permission matrix
+ * Left column: role list. System roles (super_admin / user) are pinned; custom
+ * roles are drag-and-drop reorderable to set their hierarchy (senior = higher).
+ * Right column: permission matrix for the selected role.
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  GripVertical,
+  Lock,
+} from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { UserClaims, canEditAdminModule } from '@/lib/rbac/access';
 import { useAdminClaims } from '@/components/admin/AdminClaimsContext';
 import { RoleCreateDialog } from './RoleCreateDialog';
@@ -22,12 +49,23 @@ import {
   listPermissionsGrouped,
   getRolePermissions,
   updateRolePermissions,
+  reorderRoles,
   type RoleResponse,
   type PermissionsGroupedByModule,
 } from '@/lib/services/rbac.service';
 
 interface AdminRBACPageProps {
   claims?: UserClaims;
+}
+
+const SYSTEM_ROLE_NAMES = new Set(['super_admin', 'user']);
+
+function sortRoles(list: RoleResponse[]): RoleResponse[] {
+  return [...list].sort((a, b) =>
+    a.hierarchy_level !== b.hierarchy_level
+      ? b.hierarchy_level - a.hierarchy_level
+      : a.name.localeCompare(b.name),
+  );
 }
 
 export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
@@ -46,10 +84,17 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
   const [loadingPermissions, setLoadingPermissions] = useState(true);
   const [loadingRolePerms, setLoadingRolePerms] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canEdit = canEditAdminModule(effectiveClaims, 'rbac');
   const userHierarchy = effectiveClaims?.hierarchy_level ?? 0;
+  const isSuper = effectiveClaims?.user_role === 'super_admin';
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const loadData = async () => {
     try {
@@ -62,17 +107,11 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
         listPermissionsGrouped(),
       ]);
 
-      const sortedRoles = [...rolesData].sort((a, b) => {
-        if (a.hierarchy_level !== b.hierarchy_level) {
-          return b.hierarchy_level - a.hierarchy_level;
-        }
-        return a.name.localeCompare(b.name);
-      });
-
+      const sortedRoles = sortRoles(rolesData);
       setRoles(sortedRoles);
       setPermissionsByModule(permsData);
       setSelectedRoleId((prev) => prev ?? sortedRoles[0]?.id ?? null);
-      setExpandedModules(new Set(permsData.map(m => m.module)));
+      setExpandedModules(new Set(permsData.map((m) => m.module)));
     } catch (err) {
       console.error('Error loading RBAC data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -95,7 +134,7 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
       try {
         setLoadingRolePerms(true);
         const permissions = await getRolePermissions(roleId);
-        const permIds = new Set(permissions.map(p => p.id));
+        const permIds = new Set(permissions.map((p) => p.id));
         setOriginalPermissionIds(permIds);
         setDraftPermissionIds(new Set(permIds));
       } catch (err) {
@@ -111,12 +150,12 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
 
   const hasChanges =
     originalPermissionIds.size !== draftPermissionIds.size ||
-    Array.from(originalPermissionIds).some(id => !draftPermissionIds.has(id)) ||
-    Array.from(draftPermissionIds).some(id => !originalPermissionIds.has(id));
+    Array.from(originalPermissionIds).some((id) => !draftPermissionIds.has(id)) ||
+    Array.from(draftPermissionIds).some((id) => !originalPermissionIds.has(id));
 
   const togglePermission = (permissionId: string) => {
     if (!canEditSelectedRole) return;
-    setDraftPermissionIds(prev => {
+    setDraftPermissionIds((prev) => {
       const next = new Set(prev);
       if (next.has(permissionId)) next.delete(permissionId);
       else next.add(permissionId);
@@ -126,18 +165,18 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
 
   const toggleModule = (module: PermissionsGroupedByModule) => {
     if (!canEditSelectedRole) return;
-    const modulePermIds = module.permissions.map(p => p.id);
-    setDraftPermissionIds(prev => {
+    const modulePermIds = module.permissions.map((p) => p.id);
+    setDraftPermissionIds((prev) => {
       const next = new Set(prev);
-      const allSelected = modulePermIds.every(id => next.has(id));
-      if (allSelected) modulePermIds.forEach(id => next.delete(id));
-      else modulePermIds.forEach(id => next.add(id));
+      const allSelected = modulePermIds.every((id) => next.has(id));
+      if (allSelected) modulePermIds.forEach((id) => next.delete(id));
+      else modulePermIds.forEach((id) => next.add(id));
       return next;
     });
   };
 
   const toggleModuleExpansion = (moduleName: string) => {
-    setExpandedModules(prev => {
+    setExpandedModules((prev) => {
       const next = new Set(prev);
       if (next.has(moduleName)) next.delete(moduleName);
       else next.add(moduleName);
@@ -147,7 +186,6 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
 
   const handleSave = async () => {
     if (!selectedRoleId || !canEdit) return;
-
     try {
       setSaving(true);
       await updateRolePermissions(selectedRoleId, Array.from(draftPermissionIds));
@@ -163,16 +201,51 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
     }
   };
 
-  const handleReset = () => {
-    setDraftPermissionIds(new Set(originalPermissionIds));
+  const handleReset = () => setDraftPermissionIds(new Set(originalPermissionIds));
+
+  // ── Role hierarchy drag-and-drop ────────────────────────────────────────────
+  const customRoles = roles.filter((r) => !SYSTEM_ROLE_NAMES.has(r.name));
+  const superAdminRole = roles.find((r) => r.name === 'super_admin');
+  const userRole = roles.find((r) => r.name === 'user');
+  // A custom role is draggable only if the actor outranks it.
+  const canReorder =
+    canEdit && customRoles.length > 1 &&
+    customRoles.every((r) => isSuper || r.hierarchy_level < userHierarchy);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = customRoles.findIndex((r) => r.id === active.id);
+    const newIndex = customRoles.findIndex((r) => r.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const newCustom = arrayMove(customRoles, oldIndex, newIndex);
+    // Optimistic reorder (server recomputes the exact levels).
+    setRoles([
+      ...(superAdminRole ? [superAdminRole] : []),
+      ...newCustom,
+      ...(userRole ? [userRole] : []),
+    ]);
+    setReordering(true);
+    try {
+      const updated = await reorderRoles(newCustom.map((r) => r.id));
+      setRoles(sortRoles(updated));
+      toast.success('Role hierarchy updated');
+    } catch (err) {
+      toast.error('Failed to reorder roles', {
+        description: err instanceof Error ? err.message : 'Please try again.',
+      });
+      loadData();
+    } finally {
+      setReordering(false);
+    }
   };
 
-  const selectedRole = roles.find(r => r.id === selectedRoleId);
+  const selectedRole = roles.find((r) => r.id === selectedRoleId);
   const isSuperAdminRole = selectedRole?.name === 'super_admin';
   const isAboveMyHierarchy =
     typeof selectedRole?.hierarchy_level === 'number' &&
     selectedRole.hierarchy_level > userHierarchy;
-
   const canEditSelectedRole = canEdit && !isSuperAdminRole && !isAboveMyHierarchy;
 
   if (error) {
@@ -189,13 +262,25 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
     );
   }
 
+  const roleCardProps = (role: RoleResponse) => ({
+    role,
+    isSelected: role.id === selectedRoleId,
+    canEdit,
+    isAboveHierarchy: role.hierarchy_level > userHierarchy,
+    userHierarchy,
+    onSelect: () => setSelectedRoleId(role.id),
+    onChanged: loadData,
+  });
+
   return (
     <div className="h-full flex flex-col max-w-[1600px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Permissions Configurator</h1>
-          <p className="text-sm text-muted-foreground mt-1">Configure role-based access control permissions</p>
+          <h1 className="text-2xl font-bold text-foreground">Roles &amp; Permissions</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Drag custom roles to set the hierarchy, then configure each role&apos;s permissions.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -219,11 +304,11 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
 
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
-        {/* Left Column - Role Selection */}
+        {/* Left Column - Roles */}
         <div className="lg:col-span-1 space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Select Role
+              Roles {reordering && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
             </h3>
             {canEdit && (
               <Button
@@ -243,88 +328,42 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
                 <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
               ))
             ) : (
-              roles.map((role) => {
-                const isSelected = role.id === selectedRoleId;
-                const isSystemRole = role.name === 'super_admin' || role.name === 'user';
-                const isDefault = role.name === 'user';
-                const isAboveHierarchy = role.hierarchy_level > userHierarchy;
+              <>
+                {superAdminRole && (
+                  <RoleCard {...roleCardProps(superAdminRole)} pinned />
+                )}
 
-                const getDisabledReason = () => {
-                  if (!canEdit) {
-                    return 'You do not have permission to edit roles';
-                  }
-                  if (isAboveHierarchy) {
-                    return `Cannot modify roles above your hierarchy level (${userHierarchy})`;
-                  }
-                  return undefined;
-                };
-
-                return (
-                  <div
-                    key={role.id}
-                    className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-border bg-card hover:border-primary/30'
-                    }`}
-                    onClick={() => setSelectedRoleId(role.id)}
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-base text-foreground truncate">{role.name}</h4>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <Badge
-                          variant={isSelected ? "default" : "secondary"}
-                          className="rounded-full px-2.5 font-medium"
-                        >
-                          {role.hierarchy_level}
-                        </Badge>
-                        <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-0.5">
-                          <RoleEditDialog
-                            role={role}
-                            onSuccess={loadData}
-                            disabled={!canEdit || isAboveHierarchy}
-                            disabledReason={getDisabledReason()}
-                          />
-                          <RoleDeleteDialog
-                            role={role}
-                            onSuccess={loadData}
-                            disabled={!canEdit || isAboveHierarchy}
-                            disabledReason={getDisabledReason()}
-                          />
+                {customRoles.length > 0 &&
+                  (canReorder ? (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={customRoles.map((r) => r.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-3">
+                          {customRoles.map((role) => (
+                            <SortableRoleCard key={role.id} {...roleCardProps(role)} />
+                          ))}
                         </div>
-                      </div>
-                    </div>
+                      </SortableContext>
+                    </DndContext>
+                  ) : (
+                    customRoles.map((role) => (
+                      <RoleCard key={role.id} {...roleCardProps(role)} />
+                    ))
+                  ))}
 
-                    {(isSystemRole || isDefault) && (
-                      <div className="flex items-center gap-2 mb-2">
-                        {isSystemRole && (
-                          <Badge className="text-[10px] uppercase font-semibold bg-primary/10 text-primary border-primary/20">
-                            SYSTEM
-                          </Badge>
-                        )}
-                        {isDefault && (
-                          <Badge className="text-[10px] uppercase font-semibold bg-muted text-muted-foreground border-muted-foreground/20">
-                            DEFAULT
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    {role.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                        {role.description}
-                      </p>
-                    )}
-                  </div>
-                );
-              })
+                {userRole && <RoleCard {...roleCardProps(userRole)} pinned />}
+              </>
             )}
           </div>
         </div>
 
-        {/* Right Column - Permissions Configuration */}
+        {/* Right Column - Permissions */}
         <div className="lg:col-span-2 bg-card rounded-lg border border-border shadow-sm">
           <div className="p-6 border-b border-border bg-muted/20">
             <div className="flex items-start justify-between">
@@ -337,8 +376,8 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
                 </p>
               </div>
               {isSuperAdminRole && (
-                <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/20 font-medium">
-                  Read-Only System Role
+                <Badge className="bg-warning/15 text-warning border-warning/30 font-medium">
+                  Read-only system role
                 </Badge>
               )}
             </div>
@@ -352,8 +391,8 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
             ) : (
               permissionsByModule.map((module) => {
                 const isExpanded = expandedModules.has(module.module);
-                const modulePermIds = module.permissions.map(p => p.id);
-                const allSelected = modulePermIds.every(id => draftPermissionIds.has(id));
+                const modulePermIds = module.permissions.map((p) => p.id);
+                const allSelected = modulePermIds.every((id) => draftPermissionIds.has(id));
 
                 return (
                   <div key={module.module} className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
@@ -371,7 +410,7 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
                         <div className="text-left">
                           <h4 className="font-semibold text-base text-foreground capitalize">{module.module}</h4>
                           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mt-0.5">
-                            MODULE ID: {module.module.replace('_', '-').toUpperCase()}
+                            {module.permissions.length} permission{module.permissions.length === 1 ? '' : 's'}
                           </p>
                         </div>
                       </Button>
@@ -390,29 +429,26 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
 
                     {isExpanded && (
                       <div className="divide-y divide-border">
-                        {module.permissions.map((perm) => {
-                          const checked = draftPermissionIds.has(perm.id);
-                          return (
-                            <div
-                              key={perm.id}
-                              className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
-                            >
-                              <div className="flex-1 pr-4">
-                                <p className="font-medium text-sm text-foreground mb-1">{perm.action}</p>
-                                {perm.description && (
-                                  <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {perm.description}
-                                  </p>
-                                )}
-                              </div>
-                              <Switch
-                                checked={checked}
-                                onCheckedChange={() => togglePermission(perm.id)}
-                                disabled={!canEditSelectedRole}
-                              />
+                        {module.permissions.map((perm) => (
+                          <div
+                            key={perm.id}
+                            className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
+                          >
+                            <div className="flex-1 pr-4">
+                              <p className="font-medium text-sm text-foreground mb-1">{perm.action}</p>
+                              {perm.description && (
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                  {perm.description}
+                                </p>
+                              )}
                             </div>
-                          );
-                        })}
+                            <Switch
+                              checked={draftPermissionIds.has(perm.id)}
+                              onCheckedChange={() => togglePermission(perm.id)}
+                              disabled={!canEditSelectedRole}
+                            />
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -423,7 +459,6 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
         </div>
       </div>
 
-      {/* Create Role Dialog (Controlled) */}
       {createDialogOpen && (
         <RoleCreateDialog
           open={createDialogOpen}
@@ -436,4 +471,145 @@ export default function AdminRBACPage({ claims }: AdminRBACPageProps) {
       )}
     </div>
   );
+}
+
+// ── Role card ────────────────────────────────────────────────────────────────
+interface RoleCardProps {
+  role: RoleResponse;
+  isSelected: boolean;
+  canEdit: boolean;
+  isAboveHierarchy: boolean;
+  userHierarchy: number;
+  onSelect: () => void;
+  onChanged: () => void;
+  /** System role — pinned, not draggable. */
+  pinned?: boolean;
+  /** Drag handle node (custom roles only). */
+  dragHandle?: React.ReactNode;
+  setNodeRef?: (el: HTMLElement | null) => void;
+  style?: React.CSSProperties;
+}
+
+function RoleCard({
+  role,
+  isSelected,
+  canEdit,
+  isAboveHierarchy,
+  userHierarchy,
+  onSelect,
+  onChanged,
+  pinned,
+  dragHandle,
+  setNodeRef,
+  style,
+}: RoleCardProps) {
+  const isSystemRole = SYSTEM_ROLE_NAMES.has(role.name);
+  const isDefault = role.name === 'user';
+
+  const disabledReason = !canEdit
+    ? 'You do not have permission to edit roles'
+    : isAboveHierarchy
+      ? `Cannot modify roles above your hierarchy level (${userHierarchy})`
+      : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex items-stretch gap-1 rounded-lg border-2 transition-all',
+        isSelected
+          ? 'border-primary bg-primary/5 shadow-sm'
+          : 'border-border bg-card hover:border-primary/30',
+      )}
+    >
+      {/* Drag handle / lock rail */}
+      <div className="flex items-center pl-1.5">
+        {dragHandle ?? (
+          <span className="flex h-6 w-6 items-center justify-center text-muted-foreground/40">
+            {isSystemRole ? <Lock className="h-3.5 w-3.5" /> : null}
+          </span>
+        )}
+      </div>
+
+      <div
+        className="flex-1 min-w-0 cursor-pointer p-4 pl-1"
+        onClick={onSelect}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
+      >
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <h4 className="font-semibold text-base text-foreground truncate">{role.name}</h4>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Badge
+              variant={isSelected ? 'default' : 'secondary'}
+              className="rounded-full px-2.5 font-medium tabular-nums"
+              title="Hierarchy level (higher = more senior)"
+            >
+              {role.hierarchy_level}
+            </Badge>
+            <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-0.5">
+              <RoleEditDialog
+                role={role}
+                onSuccess={onChanged}
+                disabled={!canEdit || isAboveHierarchy}
+                disabledReason={disabledReason}
+              />
+              <RoleDeleteDialog
+                role={role}
+                onSuccess={onChanged}
+                disabled={!canEdit || isAboveHierarchy}
+                disabledReason={disabledReason}
+              />
+            </div>
+          </div>
+        </div>
+
+        {(isSystemRole || isDefault) && (
+          <div className="flex items-center gap-2 mb-2">
+            {isSystemRole && (
+              <Badge className="text-[10px] uppercase font-semibold bg-primary/10 text-primary border-primary/20">
+                System
+              </Badge>
+            )}
+            {isDefault && (
+              <Badge className="text-[10px] uppercase font-semibold bg-muted text-muted-foreground border-muted-foreground/20">
+                Default
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {role.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {role.description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SortableRoleCard(props: Omit<RoleCardProps, 'pinned' | 'dragHandle' | 'setNodeRef' | 'style'>) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: props.role.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 20 : undefined,
+  };
+  const handle = (
+    <button
+      type="button"
+      className="flex h-6 w-6 cursor-grab items-center justify-center rounded text-muted-foreground/60 hover:text-foreground active:cursor-grabbing"
+      aria-label={`Drag to reorder ${props.role.name}`}
+      {...attributes}
+      {...listeners}
+    >
+      <GripVertical className="h-4 w-4" />
+    </button>
+  );
+  return <RoleCard {...props} setNodeRef={setNodeRef} style={style} dragHandle={handle} />;
 }

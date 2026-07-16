@@ -87,25 +87,77 @@ class RoleService:
         if existing:
             raise DuplicateResourceError("Role", "name", role_data.name)
 
-        # Hierarchy check: Can't create role with higher/equal hierarchy than own (except super_admin)
+        # New roles arrive with the UI default 0 (below 'user'=100 — a trap).
+        # Seat them in the managed custom band just under the actor so the
+        # drag-and-drop reorder can then position them precisely.
+        level = role_data.hierarchy_level
+        if level <= 100:
+            actor_ceiling = (
+                10000
+                if current_user.user_role == "super_admin"
+                else current_user.hierarchy_level
+            )
+            level = max(200, min(1000, actor_ceiling - 100))
+
+        # Hierarchy check: can't create a role at/above your own level (super_admin
+        # may go up to, but not above, its own level).
         if current_user.user_role != "super_admin":
-            if role_data.hierarchy_level >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role_data.hierarchy_level
-                )
-        else:
-            # Super admin still cannot create roles higher than themselves (defense in depth)
-            if role_data.hierarchy_level > current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role_data.hierarchy_level
-                )
+            if level >= current_user.hierarchy_level:
+                raise HierarchyViolationError(current_user.hierarchy_level, level)
+        elif level > current_user.hierarchy_level:
+            raise HierarchyViolationError(current_user.hierarchy_level, level)
 
         role = Role(
             name=role_data.name,
             description=role_data.description,
-            hierarchy_level=role_data.hierarchy_level,
+            hierarchy_level=level,
         )
         return await self.repository.create(role)
+
+    async def reorder_roles(
+        self, ordered_role_ids: List[str], current_user: CurrentUser
+    ) -> List[Role]:
+        """Reassign gapped ``hierarchy_level`` values from a drag-drop order.
+
+        ``ordered_role_ids`` = custom (non-system) roles, most-senior first. The
+        actor must strictly outrank every listed role. System roles are rejected.
+        Levels are spread evenly inside (200, ceiling) where ceiling is 9900 for
+        a super-admin or ``actor_level - 100`` otherwise — so the result stays
+        below the actor and above ``user`` (100).
+        """
+        roles = await self.repository.list()
+        by_id = {r.id: r for r in roles}
+        is_super = current_user.user_role == "super_admin"
+
+        for role_id in ordered_role_ids:
+            role = by_id.get(role_id)
+            if role is None:
+                raise ResourceNotFoundError("Role", role_id)
+            if role.is_system:
+                raise ValidationError(
+                    "System roles cannot be reordered.", field="ordered_role_ids"
+                )
+            if not is_super and role.hierarchy_level >= current_user.hierarchy_level:
+                raise HierarchyViolationError(
+                    current_user.hierarchy_level, role.hierarchy_level
+                )
+
+        ceiling = 9900 if is_super else current_user.hierarchy_level - 100
+        bottom = 200
+        if ceiling <= bottom:
+            raise ValidationError(
+                "Not enough hierarchy range to reorder roles.",
+                field="ordered_role_ids",
+            )
+
+        n = len(ordered_role_ids)
+        step = max(1, (ceiling - bottom) // (n + 1))
+        updates = {
+            role_id: ceiling - (i + 1) * step
+            for i, role_id in enumerate(ordered_role_ids)
+        }
+        await self.repository.set_hierarchy_levels(updates)
+        return await self.repository.list()
 
     async def update_role(
         self,

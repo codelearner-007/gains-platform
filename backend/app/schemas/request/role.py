@@ -32,3 +32,15 @@ class UpdateRolePermissionsRequest(BaseModel):
     permission_ids: List[str] = Field(
         ..., description="List of permission IDs to assign to the role"
     )
+
+
+class RoleReorderRequest(BaseModel):
+    """Request body for drag-and-drop role reordering.
+
+    ``ordered_role_ids`` is the desired top-to-bottom order of the CUSTOM
+    (non-system) roles — highest authority first. The server recomputes gapped
+    ``hierarchy_level`` values inside the managed band; system roles are never
+    touched.
+    """
+
+    ordered_role_ids: List[str] = Field(..., min_length=1, max_length=200)

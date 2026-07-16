@@ -97,6 +97,19 @@ export async function deleteRole(roleId: string): Promise<void> {
   return apiClient.delete<void>(`/v1/roles/${roleId}`);
 }
 
+/**
+ * Reorder custom (non-system) roles by hierarchy. `orderedRoleIds` is the
+ * desired top-to-bottom order (most senior first); the server recomputes gapped
+ * hierarchy levels and returns the full role list.
+ */
+export async function reorderRoles(
+  orderedRoleIds: string[],
+): Promise<RoleResponse[]> {
+  return apiClient.put<RoleResponse[]>('/v1/roles/reorder', {
+    ordered_role_ids: orderedRoleIds,
+  });
+}
+
 // ============================================================================
 // User Management
 // ============================================================================

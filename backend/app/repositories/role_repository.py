@@ -1,8 +1,8 @@
 """Role repository."""
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -16,6 +16,20 @@ class RoleRepository(BaseRepository[Role]):
 
     def __init__(self, session: AsyncSession):
         super().__init__(Role, session)
+
+    async def set_hierarchy_levels(self, updates: Dict[str, int]) -> None:
+        """Bulk-assign ``hierarchy_level`` to non-system roles (for reorder).
+
+        The ``is_system`` guard is belt-and-suspenders — the DB trigger already
+        blocks changing a system role's hierarchy — so a system id in the map is
+        a silent no-op rather than an error.
+        """
+        for role_id, level in updates.items():
+            await self.session.execute(
+                update(Role)
+                .where(Role.id == role_id, Role.is_system.is_(False))
+                .values(hierarchy_level=level)
+            )
 
     async def get_with_permissions(self, role_id: str) -> Optional[Role]:
         """

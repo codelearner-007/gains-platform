@@ -77,7 +77,8 @@ export function RoleCreateDialog({ onSuccess, open: controlledOpen, onOpenChange
           <DialogHeader>
             <DialogTitle>Create New Role</DialogTitle>
             <DialogDescription>
-              Define a new role. New roles start with hierarchy level 0 by default.
+              Define a new role. It&apos;s added below your own level — drag it in
+              the role list to set its exact hierarchy.
             </DialogDescription>
           </DialogHeader>
 
@@ -94,7 +95,7 @@ export function RoleCreateDialog({ onSuccess, open: controlledOpen, onOpenChange
                 <p className="text-sm text-destructive">{errors.name.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Lowercase with underscores only
+                Lowercase letters, numbers and underscores only
               </p>
             </div>
 
