@@ -23,7 +23,7 @@ from app.schemas.reports import (
     YearToDatePerformancePayload,
     YTDFilters,
 )
-from app.services.report_service import ReportService
+from app.services.reports import ReportService
 
 from ._shared import _require_ytd_scope
 

@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import require_permission
 from app.middleware.rls import get_db_with_rls
 from app.schemas.reports import DashboardOverviewPayload, DashboardStrandRowsPage
-from app.services.report_service import ReportService
+from app.services.reports import ReportService
 
 router = APIRouter()
 

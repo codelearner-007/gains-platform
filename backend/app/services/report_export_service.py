@@ -47,7 +47,7 @@ from app.schemas.reports import (
     StrandSummaryPayload,
     YearToDatePerformancePayload,
 )
-from app.services.report_service import (
+from app.services.reports import (
     _decode_html,
     _strip_html,
 )

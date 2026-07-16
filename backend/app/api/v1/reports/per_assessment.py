@@ -24,7 +24,7 @@ from app.schemas.reports import (
     QuestionSummaryPointsPayload,
     StandardsDeepDivePayload,
 )
-from app.services.report_service import ReportService
+from app.services.reports import ReportService
 
 router = APIRouter()
 

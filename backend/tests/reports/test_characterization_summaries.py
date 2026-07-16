@@ -21,7 +21,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.reports import StandardSummaryFilters, StrandSummaryFilters
-from app.services.report_service import ReportService
+from app.services.reports import ReportService
 
 ATHENIAN = "019eb11c-410a-7ffb-86e6-a0294c669670"
 

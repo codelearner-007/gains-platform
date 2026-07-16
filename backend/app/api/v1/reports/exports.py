@@ -24,7 +24,7 @@ from app.schemas.reports import (
     StrandSummaryFilters,
     YTDFilters,
 )
-from app.services.report_service import ReportService
+from app.services.reports import ReportService
 
 from ._shared import _require_ytd_scope, _xlsx_response
 
