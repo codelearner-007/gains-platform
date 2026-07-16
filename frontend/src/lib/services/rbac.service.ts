@@ -109,6 +109,14 @@ export interface UserRoleResponse {
   created_at: string;
 }
 
+export interface UserSchoolBrief {
+  school_id: string;
+  school_name: string;
+  school_short_name?: string | null;
+  school_role: string;
+  is_primary: boolean;
+}
+
 export interface UserWithRoles {
   id: string;
   email: string;
@@ -119,6 +127,7 @@ export interface UserWithRoles {
   banned_until?: string | null;
   is_banned: boolean;
   roles: UserRoleResponse[];
+  schools?: UserSchoolBrief[];
 }
 
 export interface UserStats {
@@ -136,6 +145,7 @@ export interface UserFilters {
   email_verified?: boolean;
   status?: 'active' | 'banned';
   search?: string;
+  school_id?: string;
 }
 
 export interface PaginatedUsersResponse {

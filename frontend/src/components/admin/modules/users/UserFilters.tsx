@@ -1,9 +1,15 @@
-import { X, Filter, Shield, Mail } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+'use client';
+
+import { X, Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -11,32 +17,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { UserFilters as UserFiltersType, RoleResponse } from '@/lib/services/rbac.service';
+import type {
+  UserFilters as UserFiltersType,
+  RoleResponse,
+} from '@/lib/services/rbac.service';
+import type { School } from '@/lib/services/schools.service';
 
 interface UserFiltersProps {
   filters: UserFiltersType;
   searchQuery: string;
   roles: RoleResponse[];
+  schools: School[];
   loadingRoles: boolean;
   activeFilters: [string, string | number | boolean][];
   hasActiveFilters: boolean;
-  onFilterChange: (key: keyof UserFiltersType, value: string | boolean | undefined) => void;
+  onFilterChange: (
+    key: keyof UserFiltersType,
+    value: string | number | boolean | undefined,
+  ) => void;
   onRemoveFilter: (key: keyof UserFiltersType) => void;
   onClearAllFilters: () => void;
 }
 
-function getFilterDisplay(key: string, value: string | number | boolean): { displayKey: string; displayValue: string } {
+const PAGE_SIZES = [20, 50, 100];
+
+function filterChip(
+  key: string,
+  value: string | number | boolean,
+  schools: School[],
+): { label: string; value: string } {
   switch (key) {
     case 'email_verified':
-      return { displayKey: 'Email', displayValue: value ? 'Verified' : 'Not Verified' };
+      return { label: 'Email', value: value ? 'Verified' : 'Not verified' };
     case 'role':
-      return { displayKey: 'Role', displayValue: String(value) };
+      return { label: 'Role', value: String(value) };
     case 'status':
-      return { displayKey: 'Status', displayValue: value === 'active' ? 'Active' : 'Banned' };
+      return { label: 'Status', value: value === 'active' ? 'Active' : 'Banned' };
     case 'search':
-      return { displayKey: 'Search', displayValue: String(value) };
+      return { label: 'Search', value: String(value) };
+    case 'school_id': {
+      const s = schools.find((x) => x.school_id === value);
+      return { label: 'School', value: s ? s.name : String(value) };
+    }
     default:
-      return { displayKey: key, displayValue: String(value) };
+      return { label: key, value: String(value) };
   }
 }
 
@@ -44,6 +68,7 @@ export function UserFiltersPanel({
   filters,
   searchQuery,
   roles,
+  schools,
   loadingRoles,
   activeFilters,
   hasActiveFilters,
@@ -51,38 +76,50 @@ export function UserFiltersPanel({
   onRemoveFilter,
   onClearAllFilters,
 }: UserFiltersProps) {
-  return (
-    <Card className="border-border shadow-sm">
-      <CardContent className="pt-6">
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Search</Label>
-              <Input
-                placeholder="Search by email..."
-                value={searchQuery}
-                onChange={(e) => onFilterChange('search', e.target.value)}
-                aria-label="Search users by email"
-              />
-            </div>
+  const menuCount = activeFilters.filter(([k]) => k !== 'search').length;
+  const activeSchools = schools.filter((s) => s.is_active);
 
-            {/* Role Filter */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Role</Label>
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search — always visible */}
+        <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search by email…"
+            value={searchQuery}
+            onChange={(e) => onFilterChange('search', e.target.value)}
+            aria-label="Search users by email"
+          />
+        </div>
+
+        {/* Filters — in a menu */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filters
+              {menuCount > 0 && (
+                <Badge className="ml-1 h-5 min-w-5 justify-center rounded-full bg-primary px-1.5 text-primary-foreground tabular-nums">
+                  {menuCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-72 space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Role</Label>
               <Select
                 value={filters.role || 'all'}
-                onValueChange={(value) => onFilterChange('role', value)}
+                onValueChange={(v) => onFilterChange('role', v)}
                 disabled={loadingRoles}
               >
                 <SelectTrigger aria-label="Filter by role">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="All Roles" />
-                  </div>
+                  <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="all">All roles</SelectItem>
                   {roles.map((role) => (
                     <SelectItem key={role.id} value={role.name}>
                       {role.name}
@@ -92,102 +129,135 @@ export function UserFiltersPanel({
               </Select>
             </div>
 
-            {/* Status Filter */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Status</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">School</Label>
               <Select
-                value={filters.status || 'all'}
-                onValueChange={(value) => onFilterChange('status', value)}
+                value={filters.school_id || 'all'}
+                onValueChange={(v) => onFilterChange('school_id', v)}
               >
-                <SelectTrigger aria-label="Filter by status">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="All Status" />
-                  </div>
+                <SelectTrigger aria-label="Filter by school">
+                  <SelectValue placeholder="All schools" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="all">All schools</SelectItem>
+                  {activeSchools.map((s) => (
+                    <SelectItem key={s.school_id} value={s.school_id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Status</Label>
+              <Select
+                value={filters.status || 'all'}
+                onValueChange={(v) => onFilterChange('status', v)}
+              >
+                <SelectTrigger aria-label="Filter by status">
+                  <SelectValue placeholder="All status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="banned">Banned</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Email Verified Filter */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Email Verified</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Email verified</Label>
               <Select
                 value={
-                  filters.email_verified === undefined ? 'all' : String(filters.email_verified)
+                  filters.email_verified === undefined
+                    ? 'all'
+                    : String(filters.email_verified)
                 }
-                onValueChange={(value) =>
+                onValueChange={(v) =>
                   onFilterChange(
                     'email_verified',
-                    value === 'all' ? undefined : value === 'true'
+                    v === 'all' ? undefined : v === 'true',
                   )
                 }
               >
                 <SelectTrigger aria-label="Filter by email verification status">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="All" />
-                  </div>
+                  <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="true">Verified</SelectItem>
-                  <SelectItem value="false">Not Verified</SelectItem>
+                  <SelectItem value="false">Not verified</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          {/* Active Filters */}
-          {hasActiveFilters && (
-            <div className="flex items-center gap-3 pt-2 border-t border-border">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Active Filters:
-              </span>
-              <div className="flex items-center gap-2 flex-wrap">
-                {activeFilters.map(([key, value]) => {
-                  const { displayKey, displayValue } = getFilterDisplay(key, value);
-                  return (
-                    <Badge
-                      key={key}
-                      variant="secondary"
-                      className="gap-2 pl-3 pr-2 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-                    >
-                      <span className="text-xs font-medium">
-                        {displayKey}: {displayValue}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onRemoveFilter(key as keyof UserFiltersType)}
-                        className="h-5 w-5 hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                        aria-label={`Remove ${displayKey} filter`}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  );
-                })}
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">|</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClearAllFilters}
-                    className="h-7 px-2 text-xs font-medium hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    Clear All
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+            {menuCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-muted-foreground"
+                onClick={onClearAllFilters}
+              >
+                Clear all filters
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* Page size */}
+        <Select
+          value={String(filters.page_size)}
+          onValueChange={(v) => onFilterChange('page_size', Number(v))}
+        >
+          <SelectTrigger className="w-[130px]" aria-label="Rows per page">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_SIZES.map((n) => (
+              <SelectItem key={n} value={String(n)}>
+                {n} / page
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Active filter chips */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2">
+          {activeFilters.map(([key, value]) => {
+            const chip = filterChip(key, value, schools);
+            return (
+              <Badge
+                key={key}
+                variant="secondary"
+                className="gap-1.5 border-primary/20 bg-primary/10 py-1 pl-3 pr-1.5 text-primary"
+              >
+                <span className="text-xs font-medium">
+                  {chip.label}: {chip.value}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRemoveFilter(key as keyof UserFiltersType)}
+                  className="rounded-full p-0.5 transition-colors hover:bg-primary/20"
+                  aria-label={`Remove ${chip.label} filter`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            );
+          })}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearAllFilters}
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+          >
+            Clear all
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

@@ -51,6 +51,36 @@ class UserSchoolRepository:
         result = await self.session.execute(sql, {"uid": user_id})
         return [dict(r._mapping) for r in result.all()]
 
+    async def list_by_users(
+        self, user_ids: List[str]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Bulk-fetch memberships for many users, grouped by user_id.
+
+        Mirrors ``UserRoleRepository.list_by_users`` so the admin users list can
+        embed each user's schools without an N+1 per-row lookup.
+        """
+        if not user_ids:
+            return {}
+        sql = text(
+            """
+            SELECT
+                us.user_id::text AS user_id,
+                us.school_id::text AS school_id,
+                us.school_role, us.is_primary,
+                s.name AS school_name, s.short_name AS school_short_name
+            FROM public.user_schools us
+            JOIN public.schools s ON s.school_id = us.school_id
+            WHERE us.user_id::text = ANY(:uids)
+            ORDER BY us.is_primary DESC, s.name
+            """
+        )
+        result = await self.session.execute(sql, {"uids": list(user_ids)})
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        for r in result.all():
+            m = dict(r._mapping)
+            grouped.setdefault(m["user_id"], []).append(m)
+        return grouped
+
     async def get(self, user_id: str, school_id: str) -> Optional[Dict[str, Any]]:
         sql = text(
             f"""

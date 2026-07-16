@@ -39,8 +39,11 @@ class UserRepository:
         email_verified: Optional[bool] = None,
         status: Optional[str] = None,
         search: Optional[str] = None,
+        school_id: Optional[str] = None,
     ) -> int:
-        where_clause, params = self._build_where(role, email_verified, status, search)
+        where_clause, params = self._build_where(
+            role, email_verified, status, search, school_id
+        )
         query = text(f"SELECT COUNT(DISTINCT u.id) FROM auth.users u {where_clause}")
         result = await self.session.execute(query.bindparams(**params))
         return result.scalar() or 0
@@ -53,8 +56,11 @@ class UserRepository:
         email_verified: Optional[bool] = None,
         status: Optional[str] = None,
         search: Optional[str] = None,
+        school_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        where_clause, params = self._build_where(role, email_verified, status, search)
+        where_clause, params = self._build_where(
+            role, email_verified, status, search, school_id
+        )
         query = text(f"""
             SELECT DISTINCT
                 u.id,
@@ -91,6 +97,7 @@ class UserRepository:
         email_verified: Optional[bool],
         status: Optional[str],
         search: Optional[str],
+        school_id: Optional[str] = None,
     ) -> tuple[str, Dict[str, Any]]:
         conditions: List[str] = []
         params: Dict[str, Any] = {}
@@ -119,6 +126,15 @@ class UserRepository:
                 )
             """)
             params["role"] = role
+
+        if school_id:
+            conditions.append("""
+                EXISTS (
+                    SELECT 1 FROM public.user_schools us
+                    WHERE us.user_id = u.id AND us.school_id = CAST(:school_id AS uuid)
+                )
+            """)
+            params["school_id"] = school_id
 
         where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
         return where_clause, params

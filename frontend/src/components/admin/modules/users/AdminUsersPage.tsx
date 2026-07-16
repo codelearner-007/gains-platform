@@ -9,6 +9,8 @@ import { UserTable } from './UserTable';
 import { UserActionDialogs } from './UserActionDialogs';
 import { InviteUserDialog } from './InviteUserDialog';
 import { SchoolAccessDialog } from './SchoolAccessDialog';
+import { BulkActionBar } from './BulkActionBar';
+import { ResultsDialog } from './ResultsDialog';
 
 export default function AdminUsersPage() {
   const {
@@ -55,8 +57,20 @@ export default function AdminUsersPage() {
     inviteOpen,
     setInviteOpen,
     inviteSubmitting,
+    inviteResults,
+    resetInvite,
     schoolAccessUser,
     setSchoolAccessUser,
+
+    // Bulk selection
+    selectedIds,
+    toggleSelect,
+    setSelection,
+    clearSelection,
+    bulkLoading,
+    bulkResults,
+    setBulkResults,
+    handleBulkAction,
 
     // Actions
     handleBanUser,
@@ -66,8 +80,11 @@ export default function AdminUsersPage() {
     handleResetPassword,
     handleAssignRole,
     handleRemoveRole,
-    handleInviteUser,
+    handleInviteUsers,
   } = useUserManagement();
+
+  const bulkEnabled = canUpdateAll || canDeleteAll;
+  const emailById = new Map(users.map((u) => [u.id, u.email]));
 
   return (
     <div className="space-y-6 max-w-[1600px]">
@@ -76,13 +93,13 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">User Management</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage user accounts, roles, and permissions
+            Manage user accounts, roles, and school access
           </p>
         </div>
         {canUpdateAll && (
           <Button onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
-            Invite User
+            Invite users
           </Button>
         )}
       </div>
@@ -90,11 +107,12 @@ export default function AdminUsersPage() {
       {/* Stats */}
       <UserStatsCards stats={stats} loading={loadingStats} />
 
-      {/* Filters */}
+      {/* Search + filters menu + page size + chips */}
       <UserFiltersPanel
         filters={filters}
         searchQuery={searchQuery}
         roles={roles}
+        schools={schools}
         loadingRoles={loadingRoles}
         activeFilters={activeFilters}
         hasActiveFilters={hasActiveFilters}
@@ -118,6 +136,10 @@ export default function AdminUsersPage() {
         canUpdateAll={canUpdateAll}
         canDeleteAll={canDeleteAll}
         isSuperAdmin={isSuperAdmin}
+        selectable={bulkEnabled}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onSetSelection={setSelection}
         onSetPage={setPage}
         onBanUser={(user) => setBanDialog(user)}
         onUnbanUser={handleUnbanUser}
@@ -128,6 +150,32 @@ export default function AdminUsersPage() {
         onRemoveRole={handleRemoveRole}
         onManageSchools={(user) => setSchoolAccessUser(user)}
       />
+
+      {/* Floating bulk action bar (only when rows are selected) */}
+      {bulkEnabled && (
+        <BulkActionBar
+          count={selectedIds.size}
+          loading={bulkLoading}
+          canUpdate={canUpdateAll}
+          canDelete={canDeleteAll}
+          onAction={handleBulkAction}
+          onClear={clearSelection}
+        />
+      )}
+
+      {/* Bulk-action results */}
+      {bulkResults && (
+        <ResultsDialog
+          open={!!bulkResults}
+          onOpenChange={(o) => !o && setBulkResults(null)}
+          title={`Bulk ${bulkResults.action.replace('-', ' ')} — results`}
+          results={bulkResults.results.map((r) => ({
+            label: emailById.get(r.user_id) ?? r.user_id.slice(0, 8),
+            ok: r.ok,
+            error: r.error,
+          }))}
+        />
+      )}
 
       {/* Action Dialogs */}
       <UserActionDialogs
@@ -144,7 +192,7 @@ export default function AdminUsersPage() {
         actionLoading={actionLoading}
       />
 
-      {/* Invite User */}
+      {/* Invite (single or multi-email) */}
       <InviteUserDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
@@ -152,7 +200,9 @@ export default function AdminUsersPage() {
         schools={schools}
         loadingSchools={loadingSchools}
         submitting={inviteSubmitting}
-        onSubmit={handleInviteUser}
+        results={inviteResults}
+        onSubmit={handleInviteUsers}
+        onReset={resetInvite}
       />
 
       {/* Per-school membership management */}
