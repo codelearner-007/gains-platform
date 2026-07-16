@@ -7,7 +7,7 @@ export const AnalyticsEvent = {
 
 export type AnalyticsEventName = (typeof AnalyticsEvent)[keyof typeof AnalyticsEvent];
 
-type AnalyticsSource = 'auth_login' | 'auth_register' | (string & {});
+type AnalyticsSource = 'auth_login' | (string & {});
 
 type ErrorInfo = {
   status_code?: number;

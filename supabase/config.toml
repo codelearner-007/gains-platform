@@ -158,10 +158,6 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-[auth.email.template.confirmation]
-subject = "Confirm your email for GAINS"
-content_path = "./supabase/templates/confirmation.html"
-
 [auth.email.template.recovery]
 subject = "Reset your GAINS password"
 content_path = "./supabase/templates/recovery.html"
@@ -169,10 +165,6 @@ content_path = "./supabase/templates/recovery.html"
 [auth.email.template.invite]
 subject = "You're invited to GAINS"
 content_path = "./supabase/templates/invite.html"
-
-[auth.email.template.email_change]
-subject = "Confirm your new email for GAINS"
-content_path = "./supabase/templates/email_change.html"
 
 [auth.email.template.magic_link]
 subject = "Your GAINS sign-in link"

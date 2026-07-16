@@ -292,9 +292,9 @@ export function useUserManagement() {
     try {
       setActionLoading(user.id);
       await resendVerificationEmail(user.id);
-      toast.success('Verification email sent', { description: `Sent to ${user.email}` });
+      toast.success('Invitation resent', { description: `Sent to ${user.email}` });
     } catch (err) {
-      toast.error('Failed to send verification email', {
+      toast.error('Failed to resend invitation', {
         description: err instanceof Error ? err.message : 'Please try again.',
       });
     } finally {

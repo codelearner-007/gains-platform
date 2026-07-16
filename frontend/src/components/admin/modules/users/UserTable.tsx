@@ -233,7 +233,7 @@ export function UserTable({
                                     onClick={() => onResendVerification(user)}
                                   >
                                     <Mail className="h-4 w-4 mr-2" />
-                                    Resend Verification
+                                    Resend Invitation
                                   </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
