@@ -1,9 +1,21 @@
 'use client';
 
+import { useState, useMemo } from 'react';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useSchoolsManagement } from './useSchoolsManagement';
-import { SchoolsTable } from './SchoolsTable';
+import { SchoolCardGrid } from './SchoolCardGrid';
 import { SchoolCreateDialog } from './SchoolCreateDialog';
 import { SchoolEditDialog } from './SchoolEditDialog';
+
+type StatusFilter = 'all' | 'active' | 'inactive';
 
 export default function AdminSchoolsPage() {
   const {
@@ -19,6 +31,24 @@ export default function AdminSchoolsPage() {
     setEditSchool,
     reload,
   } = useSchoolsManagement();
+
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<StatusFilter>('all');
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return schools.filter((s) => {
+      if (status === 'active' && !s.is_active) return false;
+      if (status === 'inactive' && s.is_active) return false;
+      if (!q) return true;
+      return (
+        s.name.toLowerCase().includes(q) ||
+        s.short_name.toLowerCase().includes(q)
+      );
+    });
+  }, [schools, search, status]);
+
+  const hasFilters = search.trim() !== '' || status !== 'all';
 
   return (
     <div className="space-y-6 max-w-[1600px]">
@@ -44,12 +74,37 @@ export default function AdminSchoolsPage() {
         )}
       </div>
 
-      {/* Table */}
-      <SchoolsTable
-        schools={schools}
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search schools…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search schools"
+          />
+        </div>
+        <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
+          <SelectTrigger className="w-[150px]" aria-label="Filter by status">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Card grid */}
+      <SchoolCardGrid
+        schools={filtered}
         loading={loading}
         error={error}
         canUpdate={canUpdate}
+        hasFilters={hasFilters}
         onEdit={setEditSchool}
       />
 

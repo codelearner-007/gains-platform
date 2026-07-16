@@ -1,7 +1,7 @@
 /**
- * Shared emerald "Active" badge styling used by the admin status badges
- * (users/UserStatusBadge + schools/SchoolsTable). Kept as a single source so
- * the two stay visually identical.
+ * Shared "Active" badge styling for the admin status badges
+ * (users/UserStatusBadge). Uses the semantic `success` token (light-only,
+ * theme-driven) rather than a hardcoded colour.
  */
 export const ACTIVE_BADGE_CLASS =
-  'w-fit bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+  'w-fit bg-success/15 text-success border-success/30';
