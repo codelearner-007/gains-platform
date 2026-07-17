@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import String, distinct, func, or_, select
+from sqlalchemy import String, distinct, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
@@ -96,8 +96,6 @@ class AuditRepository(BaseRepository[AuditLog]):
         """Bulk-map user_id → email from auth.users (for actor display)."""
         if not user_ids:
             return {}
-        from sqlalchemy import text
-
         rows = await self.session.execute(
             text(
                 "SELECT id::text AS id, email FROM auth.users "

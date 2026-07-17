@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Fragment } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import {
@@ -336,67 +336,65 @@ export default function AdminAuditPage() {
                 {logs.map((log) => {
                   const isOpen = expanded === log.id;
                   return (
-                    <Fragment key={log.id}>
-                      <li>
-                        <button
-                          className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-muted/30"
-                          onClick={() => setExpanded(isOpen ? null : log.id)}
-                          aria-expanded={isOpen}
+                    <li key={log.id}>
+                      <button
+                        className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-muted/30"
+                        onClick={() => setExpanded(isOpen ? null : log.id)}
+                        aria-expanded={isOpen}
+                      >
+                        <SeverityIcon action={log.action} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-foreground">
+                            {humanizeAudit(log)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(log.created_at), 'MMM d, yyyy · h:mm:ss a')}
+                          </p>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="hidden sm:inline-flex bg-muted text-muted-foreground font-normal"
                         >
-                          <SeverityIcon action={log.action} />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm text-foreground">
-                              {humanizeAudit(log)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(log.created_at), 'MMM d, yyyy · h:mm:ss a')}
-                            </p>
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            className="hidden sm:inline-flex bg-muted text-muted-foreground font-normal"
-                          >
-                            {log.module}
-                          </Badge>
-                          <ChevronDown
-                            className={cn(
-                              'h-4 w-4 text-muted-foreground transition-transform',
-                              isOpen && 'rotate-180',
+                          {log.module}
+                        </Badge>
+                        <ChevronDown
+                          className={cn(
+                            'h-4 w-4 text-muted-foreground transition-transform',
+                            isOpen && 'rotate-180',
+                          )}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div className="border-t border-border bg-muted/20 px-5 py-3 pl-16">
+                          <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+                            <DetailRow label="Action" value={log.action} mono />
+                            <DetailRow
+                              label="Actor"
+                              value={log.actor_email ?? log.user_id ?? 'system'}
+                            />
+                            {log.resource_id && (
+                              <DetailRow label="Resource" value={log.resource_id} mono />
                             )}
-                          />
-                        </button>
-                        {isOpen && (
-                          <div className="border-t border-border bg-muted/20 px-5 py-3 pl-16">
-                            <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-                              <DetailRow label="Action" value={log.action} mono />
-                              <DetailRow
-                                label="Actor"
-                                value={log.actor_email ?? log.user_id ?? 'system'}
-                              />
-                              {log.resource_id && (
-                                <DetailRow label="Resource" value={log.resource_id} mono />
-                              )}
-                              {log.ip_address && (
-                                <DetailRow label="IP" value={log.ip_address} mono />
-                              )}
-                              {log.user_agent && (
-                                <DetailRow label="User agent" value={log.user_agent} />
-                              )}
-                            </dl>
-                            {log.details && Object.keys(log.details).length > 0 && (
-                              <div className="mt-3">
-                                <p className="mb-1 text-xs font-medium text-muted-foreground">
-                                  Details
-                                </p>
-                                <pre className="overflow-x-auto rounded-md border border-border bg-card p-3 text-xs">
-                                  {JSON.stringify(log.details, null, 2)}
-                                </pre>
-                              </div>
+                            {log.ip_address && (
+                              <DetailRow label="IP" value={log.ip_address} mono />
                             )}
-                          </div>
-                        )}
-                      </li>
-                    </Fragment>
+                            {log.user_agent && (
+                              <DetailRow label="User agent" value={log.user_agent} />
+                            )}
+                          </dl>
+                          {log.details && Object.keys(log.details).length > 0 && (
+                            <div className="mt-3">
+                              <p className="mb-1 text-xs font-medium text-muted-foreground">
+                                Details
+                              </p>
+                              <pre className="overflow-x-auto rounded-md border border-border bg-card p-3 text-xs">
+                                {JSON.stringify(log.details, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </li>
                   );
                 })}
               </ul>
