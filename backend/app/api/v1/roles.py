@@ -56,7 +56,7 @@ async def create_role(
         action="role_created",
         module="roles",
         resource_id=role.id,
-        details={"role_name": role.name, "hierarchy_level": role.hierarchy_level},
+        details={"role_name": role.name},
     )
 
     return RoleResponse.model_validate(role)

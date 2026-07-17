@@ -27,7 +27,7 @@ class Role(Base, TimestampMixin):
     )
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    hierarchy_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    hierarchy_rank: Mapped[int] = mapped_column(Integer, nullable=False)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Relationships
@@ -39,4 +39,4 @@ class Role(Base, TimestampMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<Role(id={self.id}, name={self.name}, hierarchy_level={self.hierarchy_level})>"
+        return f"<Role(id={self.id}, name={self.name}, hierarchy_rank={self.hierarchy_rank})>"

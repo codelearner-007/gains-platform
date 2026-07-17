@@ -12,7 +12,7 @@ export interface RoleResponse {
   id: string;
   name: string;
   description: string | null;
-  hierarchy_level: number;
+  hierarchy_rank: number;
   is_system: boolean;
   created_at: string;
   updated_at: string;
@@ -71,7 +71,6 @@ export async function listPermissionsGrouped(): Promise<PermissionsGroupedByModu
 export async function createRole(data: {
   name: string;
   description?: string;
-  hierarchy_level?: number;
 }): Promise<RoleResponse> {
   return apiClient.post<RoleResponse>('/v1/roles', data);
 }
@@ -84,7 +83,6 @@ export async function updateRole(
   data: {
     name?: string;
     description?: string;
-    hierarchy_level?: number;
   }
 ): Promise<RoleResponse> {
   return apiClient.patch<RoleResponse>(`/v1/roles/${roleId}`, data);

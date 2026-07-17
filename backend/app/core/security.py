@@ -9,6 +9,7 @@ import httpx
 from jose import JWTError, jwt
 
 from app.core.config import settings
+from app.core.constants import NO_ROLE_RANK
 from app.core.exceptions import InvalidTokenError
 
 logger = logging.getLogger(__name__)
@@ -130,7 +131,7 @@ def extract_user_claims(payload: Dict[str, Any]) -> Dict[str, Any]:
         "user_id": payload.get("sub"),
         "email": payload.get("email"),
         "user_role": payload.get("user_role", "user"),
-        "hierarchy_level": payload.get("hierarchy_level", 100),
+        "hierarchy_rank": payload.get("hierarchy_rank", NO_ROLE_RANK),
         "permissions": payload.get("permissions", []),
         "school_ids": payload.get("school_ids", []),
         "primary_school_id": payload.get("primary_school_id"),

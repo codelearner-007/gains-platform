@@ -67,19 +67,23 @@ class ValidationError(AppException):
 
 
 class HierarchyViolationError(AppException):
-    """Raised when attempting to assign higher privilege role."""
+    """Raised when an actor tries to act on a role or user that is senior to,
+    or the same seniority as, its own role.
+
+    Ranks are internal ordinals (lower = more senior) and are never surfaced —
+    the message and details are numberless so authz internals don't leak.
+    """
 
     def __init__(
-        self, user_level: int, target_level: int, message: Optional[str] = None
+        self, actor_rank: int, target_rank: int, message: Optional[str] = None
     ) -> None:
-        default_message = f"Cannot assign role with higher hierarchy level ({target_level}) than your own ({user_level})"
         super().__init__(
-            message=message or default_message,
+            message=message
+            or (
+                "You cannot manage a role or user that is senior to, or the "
+                "same seniority as, your own role."
+            ),
             status_code=403,
-            details={
-                "user_hierarchy_level": user_level,
-                "target_hierarchy_level": target_level,
-            },
         )
 
 

@@ -4,6 +4,6 @@ export type PermissionString = `${string}:${string}`;
 // Custom claims shape injected by the Supabase auth hook into the JWT payload
 export interface RBACClaims {
   permissions?: string[];
-  hierarchy_level?: number;
+  hierarchy_rank?: number;
   user_role?: string;
 }

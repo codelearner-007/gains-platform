@@ -26,6 +26,6 @@ async def get_current_user_info(
         user_id=current_user.user_id,
         email=current_user.email,
         user_role=current_user.user_role,
-        hierarchy_level=current_user.hierarchy_level,
+        hierarchy_rank=current_user.hierarchy_rank,
         permissions=current_user.permissions,
     )

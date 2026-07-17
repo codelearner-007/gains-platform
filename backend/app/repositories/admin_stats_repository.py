@@ -71,12 +71,12 @@ class AdminStatsRepository:
         rows = await self.session.execute(
             text(
                 """
-                SELECT r.id::text AS role_id, r.name, r.hierarchy_level,
+                SELECT r.id::text AS role_id, r.name,
                        count(ur.user_id) AS users
                 FROM roles r
                 LEFT JOIN user_roles ur ON ur.role_id = r.id
-                GROUP BY r.id, r.name, r.hierarchy_level
-                ORDER BY r.hierarchy_level DESC
+                GROUP BY r.id, r.name, r.hierarchy_rank
+                ORDER BY r.hierarchy_rank ASC
                 """
             )
         )

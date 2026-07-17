@@ -15,16 +15,8 @@ export const roleCreateSchema = z.object({
     .optional(),
 });
 
-export const roleUpdateSchema = roleCreateSchema
-  .extend({
-    hierarchy_level: z
-      .number()
-      .int('Hierarchy level must be an integer')
-      .min(0, 'Hierarchy level must be at least 0')
-      .max(100000, 'Hierarchy level must not exceed 100,000')
-      .optional(),
-  })
-  .partial();
+// Seniority is set by drag-and-drop reorder, never by an input on this form.
+export const roleUpdateSchema = roleCreateSchema.partial();
 
 // For forms/resolvers, use the INPUT type (defaults make the input optional).
 export type RoleCreateInput = z.input<typeof roleCreateSchema>;

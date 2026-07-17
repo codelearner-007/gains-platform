@@ -10,12 +10,8 @@ class CreateRoleRequest(BaseModel):
 
     name: str = Field(..., min_length=2, max_length=50, description="Role name")
     description: str | None = Field(None, description="Role description")
-    hierarchy_level: int = Field(
-        default=0,
-        ge=0,
-        le=100000,
-        description="Hierarchy level (higher = more privileged). New roles default to 0 until configured.",
-    )
+    # No rank field: new roles append as the most-junior custom role; seniority
+    # is set only by drag-and-drop reorder.
 
 
 class UpdateRoleRequest(BaseModel):
@@ -23,7 +19,7 @@ class UpdateRoleRequest(BaseModel):
 
     name: str | None = Field(None, min_length=2, max_length=50)
     description: str | None = None
-    hierarchy_level: int | None = Field(None, ge=0, le=100000)
+    # No rank field: seniority changes only via /roles/reorder.
 
 
 class UpdateRolePermissionsRequest(BaseModel):
@@ -37,10 +33,10 @@ class UpdateRolePermissionsRequest(BaseModel):
 class RoleReorderRequest(BaseModel):
     """Request body for drag-and-drop role reordering.
 
-    ``ordered_role_ids`` is the desired top-to-bottom order of the CUSTOM
-    (non-system) roles — highest authority first. The server recomputes gapped
-    ``hierarchy_level`` values inside the managed band; system roles are never
+    ``ordered_role_ids`` = exactly the custom roles the caller may manage
+    (strictly junior to them), most-senior first. The server recomputes the
+    contiguous ordinal ranks; system roles and any senior roles are never
     touched.
     """
 
-    ordered_role_ids: List[str] = Field(..., min_length=1, max_length=200)
+    ordered_role_ids: List[str] = Field(..., min_length=1, max_length=500)

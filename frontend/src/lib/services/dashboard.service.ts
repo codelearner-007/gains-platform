@@ -21,7 +21,6 @@ export interface PendingInvite {
 export interface RoleDistribution {
   role_id: string;
   name: string;
-  hierarchy_level: number;
   users: number;
 }
 

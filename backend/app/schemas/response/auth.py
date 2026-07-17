@@ -11,5 +11,5 @@ class CurrentUserResponse(BaseModel):
     user_id: str
     email: EmailStr
     user_role: str
-    hierarchy_level: int
+    hierarchy_rank: int
     permissions: List[str]

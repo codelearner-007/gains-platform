@@ -22,7 +22,7 @@ import { roleCreateSchema, type RoleCreateInput } from '@/lib/schemas/rbac.schem
 import { createRole } from '@/lib/services/rbac.service';
 
 interface RoleCreateDialogProps {
-  onSuccess: () => void;
+  onSuccess: (createdId?: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -47,13 +47,13 @@ export function RoleCreateDialog({ onSuccess, open: controlledOpen, onOpenChange
     try {
       setSubmitting(true);
       const parsed = roleCreateSchema.parse(data);
-      await createRole(parsed);
+      const created = await createRole(parsed);
       toast('Role created', {
         description: `Role "${parsed.name}" has been created successfully.`,
       });
       setOpen(false);
       reset();
-      onSuccess();
+      onSuccess(created.id);
     } catch (err) {
       console.error('Error creating role:', err);
       toast('Failed to create role', {

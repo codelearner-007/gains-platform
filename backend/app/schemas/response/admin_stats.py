@@ -30,7 +30,6 @@ class PendingInvite(BaseModel):
 class RoleDistribution(BaseModel):
     role_id: str
     name: str
-    hierarchy_level: int
     users: int
 
 

@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     const appMetadata = {
       ...user.app_metadata,
       permissions: customClaims.permissions || [],
-      hierarchy_level: customClaims.hierarchy_level,
+      hierarchy_rank: customClaims.hierarchy_rank,
       user_role: customClaims.user_role,
     };
 

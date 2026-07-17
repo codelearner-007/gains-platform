@@ -27,3 +27,15 @@ PERF_BAND_MID: float = 0.7
 # Same thresholds as 0–100 percentages (for call sites that band a percentage).
 PERF_BAND_HIGH_PCT: float = 80.0
 PERF_BAND_MID_PCT: float = 70.0
+
+# ── Role hierarchy ranks (LOWER = more senior) ───────────────────────────────
+# The role hierarchy is an ordinal rank where a SMALLER number means MORE
+# authority. `super_admin` is always rank 0; custom roles occupy the contiguous
+# band 1..N (1 = most senior custom); `user` sits at a fixed sentinel below all
+# customs. A user's *effective rank* = MIN(rank) over their roles. The rule
+# everywhere: an actor may manage a target only when the target's rank is
+# STRICTLY GREATER (more junior). No numbers are ever shown in the UI.
+SUPER_ADMIN_RANK: int = 0            # pinned system role — most senior
+USER_ROLE_RANK: int = 100_000       # pinned system role — always junior to customs
+NO_ROLE_RANK: int = 2_147_483_647   # sentinel: no roles / missing claim = most junior (fail-closed)
+MAX_CUSTOM_ROLES: int = 500         # keeps custom ranks (1..N) well below USER_ROLE_RANK

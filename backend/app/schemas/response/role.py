@@ -13,7 +13,7 @@ class RoleResponse(TimestampSchema):
     id: str
     name: str
     description: str | None = None
-    hierarchy_level: int = 0
+    hierarchy_rank: int
     is_system: bool = False
 
     model_config = {"from_attributes": True}
