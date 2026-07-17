@@ -4,9 +4,9 @@ from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import MAX_CUSTOM_ROLES
 from app.core.exceptions import (
     DuplicateResourceError,
-    HierarchyViolationError,
     ImmutableResourceError,
     ResourceNotFoundError,
     ValidationError,
@@ -16,6 +16,7 @@ from app.repositories.permission_repository import PermissionRepository
 from app.repositories.role_repository import RoleRepository
 from app.schemas.auth import CurrentUser
 from app.schemas.request.role import CreateRoleRequest, UpdateRoleRequest
+from app.services.user_role_service import validate_hierarchy
 
 
 class RoleService:
@@ -87,25 +88,73 @@ class RoleService:
         if existing:
             raise DuplicateResourceError("Role", "name", role_data.name)
 
-        # Hierarchy check: Can't create role with higher/equal hierarchy than own (except super_admin)
-        if current_user.user_role != "super_admin":
-            if role_data.hierarchy_level >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role_data.hierarchy_level
-                )
-        else:
-            # Super admin still cannot create roles higher than themselves (defense in depth)
-            if role_data.hierarchy_level > current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role_data.hierarchy_level
-                )
+        # Rank changes only via create / reorder / delete. A new role appends as
+        # the MOST-JUNIOR custom role (rank = custom_count + 1); the admin then
+        # drags it up. Serialized with reorder/delete via an advisory lock so
+        # concurrent mutations can't corrupt the contiguous 1..N invariant.
+        await self.repository.acquire_rank_lock()
+        custom_count = await self.repository.count_custom_roles()
+        if custom_count >= MAX_CUSTOM_ROLES:
+            raise ValidationError(
+                f"Maximum of {MAX_CUSTOM_ROLES} custom roles reached.", field="name"
+            )
+        new_rank = custom_count + 1
+
+        # The actor must strictly outrank the new role's position (bottom-insert
+        # is legal for any actor who can create roles at all).
+        validate_hierarchy(current_user.hierarchy_rank, new_rank)
 
         role = Role(
             name=role_data.name,
             description=role_data.description,
-            hierarchy_level=role_data.hierarchy_level,
+            hierarchy_rank=new_rank,
         )
         return await self.repository.create(role)
+
+    async def reorder_roles(
+        self, ordered_role_ids: List[str], current_user: CurrentUser
+    ) -> List[Role]:
+        """Reassign contiguous ranks (1..N) from a drag-and-drop order.
+
+        ``ordered_role_ids`` = the custom roles the actor may manage, most-senior
+        first. It must be EXACTLY the set of manageable (strictly-junior) custom
+        roles — no more, no less. Roles the actor cannot manage (the senior
+        prefix, ranks 1..k) keep their positions bit-identically; the listed
+        roles take ranks k+1..N in the given order. System roles never change.
+        """
+        await self.repository.acquire_rank_lock()
+        roles = await self.repository.list()
+        by_id = {r.id: r for r in roles}
+        customs = [r for r in roles if not r.is_system]
+
+        for role_id in ordered_role_ids:
+            role = by_id.get(role_id)
+            if role is None:
+                raise ResourceNotFoundError("Role", role_id)
+            if role.is_system:
+                raise ValidationError(
+                    "System roles cannot be reordered.", field="ordered_role_ids"
+                )
+
+        # The actor may only reorder roles strictly junior to itself; the request
+        # must list all and only those. Seniors stay frozen at their leading ranks.
+        manageable = [
+            r for r in customs if r.hierarchy_rank > current_user.hierarchy_rank
+        ]
+        if set(ordered_role_ids) != {r.id for r in manageable}:
+            raise ValidationError(
+                "The reorder must list exactly the roles you can manage.",
+                field="ordered_role_ids",
+            )
+
+        frozen = sorted(
+            (r for r in customs if r.hierarchy_rank <= current_user.hierarchy_rank),
+            key=lambda r: r.hierarchy_rank,
+        )
+        final_order = [r.id for r in frozen] + list(ordered_role_ids)
+        updates = {rid: i + 1 for i, rid in enumerate(final_order)}
+        await self.repository.set_hierarchy_ranks(updates)
+        return await self.repository.list()
 
     async def update_role(
         self,
@@ -138,18 +187,8 @@ class RoleService:
                 "Role", role.name, "System roles cannot be modified"
             )
 
-        # Hierarchy check: Can't update role with higher/equal hierarchy than own (except super_admin)
-        if current_user.user_role != "super_admin":
-            if role.hierarchy_level >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
-        else:
-            # Super admin still cannot update roles higher than themselves (defense in depth)
-            if role.hierarchy_level > current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
+        # The actor must strictly outrank the role being updated.
+        validate_hierarchy(current_user.hierarchy_rank, role.hierarchy_rank)
 
         # Check name uniqueness if name is being changed
         if role_data.name and role_data.name != role.name:
@@ -157,20 +196,7 @@ class RoleService:
             if existing:
                 raise DuplicateResourceError("Role", "name", role_data.name)
 
-        # Check new hierarchy level
-        if role_data.hierarchy_level:
-            if current_user.user_role != "super_admin":
-                if role_data.hierarchy_level >= current_user.hierarchy_level:
-                    raise HierarchyViolationError(
-                        current_user.hierarchy_level, role_data.hierarchy_level
-                    )
-            else:
-                # Super admin still cannot set hierarchy higher than themselves (defense in depth)
-                if role_data.hierarchy_level > current_user.hierarchy_level:
-                    raise HierarchyViolationError(
-                        current_user.hierarchy_level, role_data.hierarchy_level
-                    )
-
+        # Rank is never set here — it changes only via create/reorder/delete.
         update_data = role_data.model_dump(exclude_unset=True)
         return await self.repository.update(role, update_data)
 
@@ -195,20 +221,13 @@ class RoleService:
                 f"Cannot delete system role: {role.name}", field="role_id"
             )
 
-        # Hierarchy check
-        if current_user.user_role != "super_admin":
-            if role.hierarchy_level >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
-        else:
-            # Super admin still cannot delete roles higher than themselves (defense in depth)
-            if role.hierarchy_level > current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
+        # The actor must strictly outrank the role being deleted.
+        validate_hierarchy(current_user.hierarchy_rank, role.hierarchy_rank)
 
+        # Delete then re-close the rank gap so customs stay contiguous 1..N.
+        await self.repository.acquire_rank_lock()
         await self.repository.delete(role)
+        await self.repository.renumber_custom_ranks()
 
     async def assign_permissions(
         self,
@@ -240,18 +259,8 @@ class RoleService:
                 "Role", role.name, "Cannot modify super_admin permissions"
             )
 
-        # Hierarchy check
-        if current_user.user_role != "super_admin":
-            if role.hierarchy_level >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
-        else:
-            # Super admin still cannot modify permissions of roles higher than themselves (defense in depth)
-            if role.hierarchy_level > current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
+        # The actor must strictly outrank the role whose permissions change.
+        validate_hierarchy(current_user.hierarchy_rank, role.hierarchy_rank)
 
         # Verify all permissions exist
         permissions = await self.permission_repository.get_by_ids(permission_ids)

@@ -21,7 +21,13 @@ import {
   type RoleResponse,
 } from '@/lib/services/rbac.service';
 import { listSchools, type School } from '@/lib/services/schools.service';
-import { inviteUser, type InviteUserRequest } from '@/lib/services/users.service';
+import {
+  inviteUsers,
+  bulkUserAction,
+  type InviteEmailResult,
+  type BulkActionResult,
+  type BulkUserAction,
+} from '@/lib/services/users.service';
 import type { InviteFormValues } from './InviteUserDialog';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -29,6 +35,11 @@ export interface AssignRoleDialogState {
   user: UserWithRoles | null;
   roleId: string;
 }
+
+/** A per-row action awaiting explicit confirmation. */
+export type PendingUserAction =
+  | { kind: 'unban' | 'resend' | 'reset'; user: UserWithRoles }
+  | { kind: 'remove-role'; user: UserWithRoles; roleId: string; roleName: string };
 
 export function useUserManagement() {
   // Core data state
@@ -66,7 +77,19 @@ export function useUserManagement() {
   const [banDialog, setBanDialog] = useState<UserWithRoles | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [inviteResults, setInviteResults] = useState<InviteEmailResult[] | null>(null);
   const [schoolAccessUser, setSchoolAccessUser] = useState<UserWithRoles | null>(null);
+
+  // Bulk selection + bulk-action state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkResults, setBulkResults] = useState<{
+    action: BulkUserAction;
+    results: BulkActionResult[];
+  } | null>(null);
+
+  // A per-row action awaiting explicit confirmation.
+  const [pendingAction, setPendingAction] = useState<PendingUserAction | null>(null);
 
   // Permission checks
   const claims = useAdminClaims();
@@ -174,7 +197,7 @@ export function useUserManagement() {
 
   // Filter handlers
   const handleFilterChange = useCallback(
-    (key: keyof UserFilters, value: string | boolean | undefined) => {
+    (key: keyof UserFilters, value: string | number | boolean | undefined) => {
       if (key === 'search') {
         // Search is handled via debounce
         setSearchQuery((value as string) || '');
@@ -217,6 +240,12 @@ export function useUserManagement() {
   const reloadUsers = useCallback(() => {
     setFilters((prev) => ({ ...prev }));
   }, []);
+
+  // Clear row selection whenever the visible page / filter set changes
+  // (selection is per-page; carrying it across pages would be misleading).
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [filters]);
 
   // Computed active filters (including search from local state)
   const activeFilters = [
@@ -334,24 +363,32 @@ export function useUserManagement() {
     }
   }, [assignRoleDialog, reloadUsers]);
 
-  const handleInviteUser = useCallback(
+  const handleInviteUsers = useCallback(
     async (values: InviteFormValues) => {
       setInviteSubmitting(true);
       try {
-        const payload: InviteUserRequest = {
-          email: values.email,
+        const results = await inviteUsers({
+          emails: values.emails,
           full_name: values.full_name || undefined,
           role_id: values.role_id || undefined,
           school_ids: values.school_ids.length ? values.school_ids : undefined,
-        };
-        await inviteUser(payload);
-        toast.success('Invitation sent', {
-          description: `An invite email was sent to ${values.email}.`,
         });
-        setInviteOpen(false);
+        setInviteResults(results);
+        const invited = results.filter((r) => r.status === 'invited').length;
+        const failed = results.length - invited;
+        if (invited > 0) {
+          toast.success(`${invited} invitation${invited === 1 ? '' : 's'} sent`, {
+            description:
+              failed > 0 ? `${failed} skipped or failed — see details.` : undefined,
+          });
+        } else {
+          toast.error('No invitations sent', {
+            description: 'See the per-email results.',
+          });
+        }
         reloadUsers();
       } catch (err) {
-        toast.error('Failed to invite user', {
+        toast.error('Failed to send invitations', {
           description: err instanceof Error ? err.message : 'Please try again.',
         });
       } finally {
@@ -359,6 +396,51 @@ export function useUserManagement() {
       }
     },
     [reloadUsers],
+  );
+
+  const resetInvite = useCallback(() => setInviteResults(null), []);
+
+  // ── Bulk selection + actions ──────────────────────────────────────────────
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const setSelection = useCallback((ids: string[]) => {
+    setSelectedIds(new Set(ids));
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const handleBulkAction = useCallback(
+    async (action: BulkUserAction) => {
+      const ids = Array.from(selectedIds);
+      if (!ids.length) return;
+      setBulkLoading(true);
+      try {
+        const results = await bulkUserAction(action, ids);
+        setBulkResults({ action, results });
+        const ok = results.filter((r) => r.ok).length;
+        const failed = results.length - ok;
+        const notify = ok === 0 && failed > 0 ? toast.error : toast.success;
+        notify(`${ok}/${results.length} ${action.replace('-', ' ')} succeeded`, {
+          description: failed > 0 ? `${failed} failed — see details.` : undefined,
+        });
+        clearSelection();
+        reloadUsers();
+      } catch (err) {
+        toast.error('Bulk action failed', {
+          description: err instanceof Error ? err.message : 'Please try again.',
+        });
+      } finally {
+        setBulkLoading(false);
+      }
+    },
+    [selectedIds, clearSelection, reloadUsers],
   );
 
   const handleRemoveRole = useCallback(
@@ -378,6 +460,26 @@ export function useUserManagement() {
     },
     [reloadUsers]
   );
+
+  const requestAction = useCallback(
+    (a: PendingUserAction) => setPendingAction(a),
+    [],
+  );
+  const confirmPendingAction = useCallback(async () => {
+    const p = pendingAction;
+    if (!p) return;
+    setPendingAction(null);
+    if (p.kind === 'unban') await handleUnbanUser(p.user);
+    else if (p.kind === 'resend') await handleResendVerification(p.user);
+    else if (p.kind === 'reset') await handleResetPassword(p.user);
+    else if (p.kind === 'remove-role') await handleRemoveRole(p.user, p.roleId);
+  }, [
+    pendingAction,
+    handleUnbanUser,
+    handleResendVerification,
+    handleResetPassword,
+    handleRemoveRole,
+  ]);
 
   return {
     // Data
@@ -423,8 +525,26 @@ export function useUserManagement() {
     inviteOpen,
     setInviteOpen,
     inviteSubmitting,
+    inviteResults,
+    resetInvite,
     schoolAccessUser,
     setSchoolAccessUser,
+
+    // Bulk selection
+    selectedIds,
+    toggleSelect,
+    setSelection,
+    clearSelection,
+    bulkLoading,
+    bulkResults,
+    setBulkResults,
+    handleBulkAction,
+
+    // Per-row confirmation
+    pendingAction,
+    setPendingAction,
+    requestAction,
+    confirmPendingAction,
 
     // Actions
     handleBanUser,
@@ -434,6 +554,6 @@ export function useUserManagement() {
     handleResetPassword,
     handleAssignRole,
     handleRemoveRole,
-    handleInviteUser,
+    handleInviteUsers,
   };
 }

@@ -27,14 +27,16 @@ async def list_audit_logs(
     user_id: Optional[str] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    q: Optional[str] = Query(None, max_length=200),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse[AuditLogResponse]:
-    """List audit logs with pagination and filtering. Requires: audit:read"""
+    """List audit logs with pagination + filtering (module/action/user/date) and
+    free-text search over action/resource/details. Requires: audit:read"""
     service = AuditService(db)
     return await service.list_logs_paginated(
         page=page, page_size=page_size,
         module=module, action=action, user_id=user_id,
-        start_date=start_date, end_date=end_date,
+        start_date=start_date, end_date=end_date, q=q,
     )
 
 
@@ -49,3 +51,16 @@ async def list_audit_modules(
     """List distinct module names from audit logs (for filter dropdown)."""
     service = AuditService(db)
     return await service.list_distinct_modules()
+
+
+@router.get(
+    "/actions",
+    response_model=List[str],
+    dependencies=[Depends(require_permission("audit:read"))],
+)
+async def list_audit_actions(
+    db: AsyncSession = Depends(get_db),
+) -> List[str]:
+    """List distinct action names from audit logs (for filter dropdown)."""
+    service = AuditService(db)
+    return await service.list_distinct_actions()

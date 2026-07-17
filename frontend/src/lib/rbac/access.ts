@@ -9,11 +9,17 @@ import { PermissionString } from '@/lib/types/rbac.types';
 import { hasAnyPermission } from '@/lib/utils/rbac';
 
 /**
+ * Role hierarchy sentinel: no roles / missing claim = most junior (fail-closed).
+ * Mirrors the backend `NO_ROLE_RANK` (lower rank = more senior).
+ */
+export const NO_ROLE_RANK = 2_147_483_647;
+
+/**
  * User claims extracted from JWT (app_metadata)
  */
 export interface UserClaims {
   permissions: PermissionString[];
-  hierarchy_level?: number;
+  hierarchy_rank?: number;
   user_role?: string;
 }
 

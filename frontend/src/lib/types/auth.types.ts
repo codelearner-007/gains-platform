@@ -36,7 +36,7 @@ export interface UserMetadata {
 
 export interface AppMetadata {
   user_role?: string;
-  hierarchy_level?: number;
+  hierarchy_rank?: number;
   permissions?: PermissionString[];
   [key: string]: unknown;
 }

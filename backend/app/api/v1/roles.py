@@ -9,6 +9,7 @@ from app.core.dependencies import get_current_user, get_db, require_permission
 from app.schemas.auth import CurrentUser
 from app.schemas.request.role import (
     CreateRoleRequest,
+    RoleReorderRequest,
     UpdateRolePermissionsRequest,
     UpdateRoleRequest,
 )
@@ -55,10 +56,37 @@ async def create_role(
         action="role_created",
         module="roles",
         resource_id=role.id,
-        details={"role_name": role.name, "hierarchy_level": role.hierarchy_level},
+        details={"role_name": role.name},
     )
 
     return RoleResponse.model_validate(role)
+
+
+@router.put(
+    "/reorder",
+    response_model=List[RoleResponse],
+    dependencies=[Depends(require_permission("roles:update"))],
+)
+async def reorder_roles(
+    body: RoleReorderRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+) -> List[RoleResponse]:
+    """Reassign role hierarchy from a drag-and-drop order (custom roles only).
+    Requires: roles:update"""
+    service = RoleService(db)
+    roles = await service.reorder_roles(body.ordered_role_ids, current_user)
+
+    audit_service = AuditService(db)
+    await audit_service.log_action(
+        user_id=current_user.user_id,
+        action="role_reordered",
+        module="roles",
+        resource_id=None,
+        details={"ordered_role_ids": body.ordered_role_ids},
+    )
+
+    return [RoleResponse.model_validate(role) for role in roles]
 
 
 @router.get(

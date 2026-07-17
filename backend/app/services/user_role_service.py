@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import NO_ROLE_RANK
 from app.core.exceptions import (
     HierarchyViolationError,
     ImmutableResourceError,
@@ -16,16 +17,16 @@ from app.repositories.user_role_repository import UserRoleRepository
 from app.schemas.auth import CurrentUser
 
 
-def validate_hierarchy(
-    actor_hierarchy: int, target_hierarchy: int, actor_is_super: bool
-) -> None:
-    """Validate that an actor can operate on a target based on hierarchy levels."""
-    if actor_is_super:
-        if target_hierarchy > actor_hierarchy:
-            raise HierarchyViolationError(actor_hierarchy, target_hierarchy)
-    else:
-        if target_hierarchy >= actor_hierarchy:
-            raise HierarchyViolationError(actor_hierarchy, target_hierarchy)
+def validate_hierarchy(actor_rank: int, target_rank: int) -> None:
+    """An actor may act only on a STRICTLY more-junior target.
+
+    Ranks are ordinals where LOWER = more senior. The actor's rank must be
+    strictly less than the target's; equal ranks (peers) cannot manage each
+    other. super_admin (rank 0) outranks everything structurally, so there is no
+    numeric special case — its *protections* stay name/is_system-based elsewhere.
+    """
+    if target_rank <= actor_rank:
+        raise HierarchyViolationError(actor_rank, target_rank)
 
 
 class UserRoleService:
@@ -36,21 +37,18 @@ class UserRoleService:
         self.role_repository = RoleRepository(session)
 
     async def _get_target_user_info(self, user_id: str) -> Tuple[int, bool]:
-        """
-        Get target user's highest hierarchy level and superadmin status in a single query.
+        """Return the target user's EFFECTIVE rank and superadmin status.
 
-        Args:
-            user_id: User ID
-
-        Returns:
-            Tuple of (highest_hierarchy_level, is_superadmin)
+        Effective rank = MIN(rank) over the user's roles (their most senior
+        role). No roles → ``NO_ROLE_RANK`` (most junior — fail-closed, so a
+        role-less user is manageable by any admin, never treated as senior).
         """
         user_roles = await self.repository.list_by_user(user_id)
         if not user_roles:
-            return 0, False
-        highest = max(ur.role.hierarchy_level for ur in user_roles)
+            return NO_ROLE_RANK, False
+        effective_rank = min(ur.role.hierarchy_rank for ur in user_roles)
         is_super = any(ur.role.name == "super_admin" for ur in user_roles)
-        return highest, is_super
+        return effective_rank, is_super
 
     async def list_user_roles(self, user_id: str) -> List[UserRole]:
         """
@@ -90,7 +88,7 @@ class UserRoleService:
         if not role:
             raise ResourceNotFoundError("Role", role_id)
 
-        target_user_hierarchy, target_is_superadmin = await self._get_target_user_info(user_id)
+        target_user_rank, target_is_superadmin = await self._get_target_user_info(user_id)
 
         if target_is_superadmin:
             raise ImmutableResourceError(
@@ -99,15 +97,10 @@ class UserRoleService:
                 "Superadmin users cannot be modified through the system",
             )
 
-        if current_user.user_role != "super_admin":
-            if target_user_hierarchy >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level,
-                    target_user_hierarchy,
-                    message=f"Cannot modify roles for user with hierarchy {target_user_hierarchy}. Your hierarchy: {current_user.hierarchy_level}",
-                )
+        # The actor must strictly outrank the target user.
+        validate_hierarchy(current_user.hierarchy_rank, target_user_rank)
 
-        # Explicit super_admin block
+        # Explicit super_admin block (string-based, never numeric).
         if role.name == "super_admin":
             raise ImmutableResourceError(
                 "Role",
@@ -115,18 +108,8 @@ class UserRoleService:
                 "Cannot manually assign super_admin role. It is auto-assigned to the first registered user only.",
             )
 
-        # Hierarchy check: Can't assign role with higher/equal hierarchy than own (except super_admin)
-        if current_user.user_role != "super_admin":
-            if role.hierarchy_level >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
-        else:
-            # Super admin still cannot assign roles higher than themselves (shouldn't exist, but defense in depth)
-            if role.hierarchy_level > current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level, role.hierarchy_level
-                )
+        # ...and strictly outrank the role being assigned.
+        validate_hierarchy(current_user.hierarchy_rank, role.hierarchy_rank)
 
         # Idempotent: if the user already has this role (e.g. the default 'user'
         # role auto-assigned by the handle_new_user trigger), return the existing
@@ -158,7 +141,7 @@ class UserRoleService:
             HierarchyViolationError: If attempting to remove higher privilege role or modify higher hierarchy user
             ValidationError: If attempting to remove own only/highest role
         """
-        target_user_hierarchy, target_is_superadmin = await self._get_target_user_info(user_id)
+        target_user_rank, target_is_superadmin = await self._get_target_user_info(user_id)
 
         if target_is_superadmin:
             raise ImmutableResourceError(
@@ -167,13 +150,7 @@ class UserRoleService:
                 "Superadmin users cannot be modified through the system",
             )
 
-        if current_user.user_role != "super_admin":
-            if target_user_hierarchy >= current_user.hierarchy_level:
-                raise HierarchyViolationError(
-                    current_user.hierarchy_level,
-                    target_user_hierarchy,
-                    message=f"Cannot modify roles for user with hierarchy {target_user_hierarchy}. Your hierarchy: {current_user.hierarchy_level}",
-                )
+        validate_hierarchy(current_user.hierarchy_rank, target_user_rank)
 
         # Self-demotion protection: prevent users from removing their own roles
         if user_id == current_user.user_id:
@@ -187,17 +164,17 @@ class UserRoleService:
 
             role_to_remove = await self.role_repository.get(role_id)
             if role_to_remove:
-                highest_hierarchy = max(ur.role.hierarchy_level for ur in user_roles)
-                if role_to_remove.hierarchy_level == highest_hierarchy:
+                # Most senior = lowest rank.
+                most_senior_rank = min(ur.role.hierarchy_rank for ur in user_roles)
+                if role_to_remove.hierarchy_rank == most_senior_rank:
                     raise ValidationError(
-                        "Cannot remove your highest role. This would demote you and you may lose access.",
+                        "Cannot remove your most senior role. This would demote you and you may lose access.",
                         field="role_id",
                     )
 
         # Check role hierarchy
         role = await self.role_repository.get(role_id)
         if role:
-            is_super = current_user.user_role == "super_admin"
-            validate_hierarchy(current_user.hierarchy_level, role.hierarchy_level, is_super)
+            validate_hierarchy(current_user.hierarchy_rank, role.hierarchy_rank)
 
         return await self.repository.delete_by_user_and_role(user_id, role_id)

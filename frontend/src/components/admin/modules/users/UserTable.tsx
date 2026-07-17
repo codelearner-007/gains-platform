@@ -13,6 +13,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 import {
   Table,
   TableBody,
@@ -46,6 +48,11 @@ interface UserTableProps {
   canUpdateAll: boolean;
   canDeleteAll: boolean;
   isSuperAdmin: (user: UserWithRoles) => boolean;
+  /** Whether bulk selection is available (any bulk-capable permission). */
+  selectable: boolean;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onSetSelection: (ids: string[]) => void;
   onSetPage: (page: number) => void;
   onBanUser: (user: UserWithRoles) => void;
   onUnbanUser: (user: UserWithRoles) => void;
@@ -106,6 +113,10 @@ export function UserTable({
   canUpdateAll,
   canDeleteAll,
   isSuperAdmin,
+  selectable,
+  selectedIds,
+  onToggleSelect,
+  onSetSelection,
   onSetPage,
   onBanUser,
   onUnbanUser,
@@ -121,6 +132,17 @@ export function UserTable({
     if (error) return <TableError message={error} />;
     if (users.length === 0) return <TableEmpty hasActiveFilters={hasActiveFilters} />;
 
+    // Selection covers only non-superadmin rows (superadmins are protected).
+    const selectableIds = users.filter((u) => !isSuperAdmin(u)).map((u) => u.id);
+    const allSelected =
+      selectableIds.length > 0 && selectableIds.every((id) => selectedIds.has(id));
+    const someSelected = selectableIds.some((id) => selectedIds.has(id));
+    const headerChecked: boolean | 'indeterminate' = allSelected
+      ? true
+      : someSelected
+        ? 'indeterminate'
+        : false;
+
     return (
       <>
         {/* Screen reader announcement */}
@@ -132,9 +154,22 @@ export function UserTable({
           <Table aria-label="Users list">
             <TableHeader>
               <TableRow className="bg-muted/40">
+                {selectable && (
+                  <TableHead scope="col" className="w-[44px]">
+                    <Checkbox
+                      checked={headerChecked}
+                      onCheckedChange={() =>
+                        onSetSelection(allSelected ? [] : selectableIds)
+                      }
+                      aria-label="Select all users on this page"
+                      disabled={selectableIds.length === 0}
+                    />
+                  </TableHead>
+                )}
                 <TableHead scope="col" className="font-semibold">Email</TableHead>
                 <TableHead scope="col" className="font-semibold">Status</TableHead>
                 <TableHead scope="col" className="font-semibold">Roles</TableHead>
+                <TableHead scope="col" className="font-semibold">Schools</TableHead>
                 <TableHead scope="col" className="font-semibold">Last Sign In</TableHead>
                 <TableHead scope="col" className="font-semibold">Created</TableHead>
                 {hasAnyAction && (
@@ -146,7 +181,31 @@ export function UserTable({
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id} className="hover:bg-muted/30">
+                <TableRow
+                  key={user.id}
+                  className={cn(
+                    'hover:bg-muted/30',
+                    selectedIds.has(user.id) && 'bg-primary/5',
+                  )}
+                >
+                  {selectable && (
+                    <TableCell>
+                      {isSuperAdmin(user) ? (
+                        <span
+                          className="inline-flex"
+                          title="Superadmin — protected"
+                        >
+                          <Checkbox disabled aria-label="Protected user" />
+                        </span>
+                      ) : (
+                        <Checkbox
+                          checked={selectedIds.has(user.id)}
+                          onCheckedChange={() => onToggleSelect(user.id)}
+                          aria-label={`Select ${user.email}`}
+                        />
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div>
                       <p className="font-medium text-sm">{user.email}</p>
@@ -184,6 +243,40 @@ export function UserTable({
                             )}
                           </Badge>
                         ))
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {!user.schools || user.schools.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        <>
+                          {user.schools.slice(0, 2).map((s) => (
+                            <Badge
+                              key={s.school_id}
+                              variant="secondary"
+                              className="gap-1 font-normal"
+                              title={
+                                s.is_primary
+                                  ? `${s.school_name} (primary)`
+                                  : s.school_name
+                              }
+                            >
+                              {s.school_short_name || s.school_name}
+                              {s.is_primary && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  ★
+                                </span>
+                              )}
+                            </Badge>
+                          ))}
+                          {user.schools.length > 2 && (
+                            <Badge variant="secondary" className="font-normal">
+                              +{user.schools.length - 2}
+                            </Badge>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>

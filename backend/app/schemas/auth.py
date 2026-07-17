@@ -11,7 +11,7 @@ class CurrentUser(BaseModel):
     user_id: str
     email: EmailStr
     user_role: str
-    hierarchy_level: int
+    hierarchy_rank: int
     permissions: List[str]
     # Multi-tenant membership (injected by the JWT claims hook).
     school_ids: List[str] = []

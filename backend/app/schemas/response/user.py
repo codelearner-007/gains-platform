@@ -18,8 +18,18 @@ class UserStatsResponse(BaseModel):
     new_users_30d: int
 
 
+class UserSchoolBrief(BaseModel):
+    """A user's school membership, embedded in admin user listings."""
+
+    school_id: str
+    school_name: str
+    school_short_name: str | None = None
+    school_role: str
+    is_primary: bool = False
+
+
 class UserWithRolesResponse(BaseModel):
-    """User with embedded roles for admin user listings."""
+    """User with embedded roles + schools for admin user listings."""
 
     id: str
     email: str | None
@@ -30,6 +40,7 @@ class UserWithRolesResponse(BaseModel):
     banned_until: Optional[datetime] = None
     is_banned: bool = False
     roles: List[UserRoleResponse]
+    schools: List[UserSchoolBrief] = []
 
     @field_validator("is_banned", mode="before")
     @classmethod

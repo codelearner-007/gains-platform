@@ -12,7 +12,7 @@ export interface RoleResponse {
   id: string;
   name: string;
   description: string | null;
-  hierarchy_level: number;
+  hierarchy_rank: number;
   is_system: boolean;
   created_at: string;
   updated_at: string;
@@ -71,7 +71,6 @@ export async function listPermissionsGrouped(): Promise<PermissionsGroupedByModu
 export async function createRole(data: {
   name: string;
   description?: string;
-  hierarchy_level?: number;
 }): Promise<RoleResponse> {
   return apiClient.post<RoleResponse>('/v1/roles', data);
 }
@@ -84,7 +83,6 @@ export async function updateRole(
   data: {
     name?: string;
     description?: string;
-    hierarchy_level?: number;
   }
 ): Promise<RoleResponse> {
   return apiClient.patch<RoleResponse>(`/v1/roles/${roleId}`, data);
@@ -95,6 +93,19 @@ export async function updateRole(
  */
 export async function deleteRole(roleId: string): Promise<void> {
   return apiClient.delete<void>(`/v1/roles/${roleId}`);
+}
+
+/**
+ * Reorder custom (non-system) roles by hierarchy. `orderedRoleIds` is the
+ * desired top-to-bottom order (most senior first); the server recomputes gapped
+ * hierarchy levels and returns the full role list.
+ */
+export async function reorderRoles(
+  orderedRoleIds: string[],
+): Promise<RoleResponse[]> {
+  return apiClient.put<RoleResponse[]>('/v1/roles/reorder', {
+    ordered_role_ids: orderedRoleIds,
+  });
 }
 
 // ============================================================================
@@ -109,6 +120,14 @@ export interface UserRoleResponse {
   created_at: string;
 }
 
+export interface UserSchoolBrief {
+  school_id: string;
+  school_name: string;
+  school_short_name?: string | null;
+  school_role: string;
+  is_primary: boolean;
+}
+
 export interface UserWithRoles {
   id: string;
   email: string;
@@ -119,6 +138,7 @@ export interface UserWithRoles {
   banned_until?: string | null;
   is_banned: boolean;
   roles: UserRoleResponse[];
+  schools?: UserSchoolBrief[];
 }
 
 export interface UserStats {
@@ -136,6 +156,7 @@ export interface UserFilters {
   email_verified?: boolean;
   status?: 'active' | 'banned';
   search?: string;
+  school_id?: string;
 }
 
 export interface PaginatedUsersResponse {

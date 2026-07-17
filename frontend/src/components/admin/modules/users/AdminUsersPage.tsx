@@ -2,13 +2,16 @@
 
 import { UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useUserManagement } from './useUserManagement';
+import { useUserManagement, type PendingUserAction } from './useUserManagement';
+import { ConfirmActionDialog } from '@/components/admin/ConfirmActionDialog';
 import { UserStatsCards } from './UserStatsCards';
 import { UserFiltersPanel } from './UserFilters';
 import { UserTable } from './UserTable';
 import { UserActionDialogs } from './UserActionDialogs';
 import { InviteUserDialog } from './InviteUserDialog';
 import { SchoolAccessDialog } from './SchoolAccessDialog';
+import { BulkActionBar } from './BulkActionBar';
+import { ResultsDialog } from './ResultsDialog';
 
 export default function AdminUsersPage() {
   const {
@@ -55,19 +58,36 @@ export default function AdminUsersPage() {
     inviteOpen,
     setInviteOpen,
     inviteSubmitting,
+    inviteResults,
+    resetInvite,
     schoolAccessUser,
     setSchoolAccessUser,
 
+    // Bulk selection
+    selectedIds,
+    toggleSelect,
+    setSelection,
+    clearSelection,
+    bulkLoading,
+    bulkResults,
+    setBulkResults,
+    handleBulkAction,
+
+    // Per-row confirmation
+    pendingAction,
+    setPendingAction,
+    requestAction,
+    confirmPendingAction,
+
     // Actions
     handleBanUser,
-    handleUnbanUser,
     handleDeleteUser,
-    handleResendVerification,
-    handleResetPassword,
     handleAssignRole,
-    handleRemoveRole,
-    handleInviteUser,
+    handleInviteUsers,
   } = useUserManagement();
+
+  const bulkEnabled = canUpdateAll || canDeleteAll;
+  const emailById = new Map(users.map((u) => [u.id, u.email]));
 
   return (
     <div className="space-y-6 max-w-[1600px]">
@@ -76,13 +96,13 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">User Management</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage user accounts, roles, and permissions
+            Manage user accounts, roles, and school access
           </p>
         </div>
         {canUpdateAll && (
           <Button onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
-            Invite User
+            Invite users
           </Button>
         )}
       </div>
@@ -90,11 +110,12 @@ export default function AdminUsersPage() {
       {/* Stats */}
       <UserStatsCards stats={stats} loading={loadingStats} />
 
-      {/* Filters */}
+      {/* Search + filters menu + page size + chips */}
       <UserFiltersPanel
         filters={filters}
         searchQuery={searchQuery}
         roles={roles}
+        schools={schools}
         loadingRoles={loadingRoles}
         activeFilters={activeFilters}
         hasActiveFilters={hasActiveFilters}
@@ -118,16 +139,54 @@ export default function AdminUsersPage() {
         canUpdateAll={canUpdateAll}
         canDeleteAll={canDeleteAll}
         isSuperAdmin={isSuperAdmin}
+        selectable={bulkEnabled}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onSetSelection={setSelection}
         onSetPage={setPage}
         onBanUser={(user) => setBanDialog(user)}
-        onUnbanUser={handleUnbanUser}
+        onUnbanUser={(user) => requestAction({ kind: 'unban', user })}
         onDeleteUser={(user) => setDeleteDialog(user)}
-        onResendVerification={handleResendVerification}
-        onResetPassword={handleResetPassword}
+        onResendVerification={(user) => requestAction({ kind: 'resend', user })}
+        onResetPassword={(user) => requestAction({ kind: 'reset', user })}
         onAssignRole={(user) => setAssignRoleDialog({ user, roleId: '' })}
-        onRemoveRole={handleRemoveRole}
+        onRemoveRole={(user, roleId) =>
+          requestAction({
+            kind: 'remove-role',
+            user,
+            roleId,
+            roleName:
+              user.roles.find((r) => r.role_id === roleId)?.role.name ?? 'role',
+          })
+        }
         onManageSchools={(user) => setSchoolAccessUser(user)}
       />
+
+      {/* Floating bulk action bar (only when rows are selected) */}
+      {bulkEnabled && (
+        <BulkActionBar
+          count={selectedIds.size}
+          loading={bulkLoading}
+          canUpdate={canUpdateAll}
+          canDelete={canDeleteAll}
+          onAction={handleBulkAction}
+          onClear={clearSelection}
+        />
+      )}
+
+      {/* Bulk-action results */}
+      {bulkResults && (
+        <ResultsDialog
+          open={!!bulkResults}
+          onOpenChange={(o) => !o && setBulkResults(null)}
+          title={`Bulk ${bulkResults.action.replace('-', ' ')} — results`}
+          results={bulkResults.results.map((r) => ({
+            label: emailById.get(r.user_id) ?? r.user_id.slice(0, 8),
+            ok: r.ok,
+            error: r.error,
+          }))}
+        />
+      )}
 
       {/* Action Dialogs */}
       <UserActionDialogs
@@ -144,7 +203,7 @@ export default function AdminUsersPage() {
         actionLoading={actionLoading}
       />
 
-      {/* Invite User */}
+      {/* Invite (single or multi-email) */}
       <InviteUserDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
@@ -152,7 +211,9 @@ export default function AdminUsersPage() {
         schools={schools}
         loadingSchools={loadingSchools}
         submitting={inviteSubmitting}
-        onSubmit={handleInviteUser}
+        results={inviteResults}
+        onSubmit={handleInviteUsers}
+        onReset={resetInvite}
       />
 
       {/* Per-school membership management */}
@@ -162,6 +223,68 @@ export default function AdminUsersPage() {
         loadingSchools={loadingSchools}
         onOpenChange={(open) => !open && setSchoolAccessUser(null)}
       />
+
+      {/* Confirmation for the per-row unban / resend / reset / remove-role actions */}
+      {pendingAction && (() => {
+        const copy = confirmCopy(pendingAction);
+        return (
+          <ConfirmActionDialog
+            open={!!pendingAction}
+            onOpenChange={(o) => !o && setPendingAction(null)}
+            title={copy.title}
+            description={copy.description}
+            confirmLabel={copy.confirmLabel}
+            variant={copy.variant}
+            loading={actionLoading === pendingAction.user.id}
+            onConfirm={confirmPendingAction}
+          />
+        );
+      })()}
     </div>
   );
+}
+
+function confirmCopy(a: PendingUserAction): {
+  title: string;
+  description: React.ReactNode;
+  confirmLabel: string;
+  variant: 'default' | 'destructive';
+} {
+  const email = <span className="font-semibold text-foreground">{a.user.email}</span>;
+  switch (a.kind) {
+    case 'unban':
+      return {
+        title: 'Unban user?',
+        description: <>Allow {email} to sign in again.</>,
+        confirmLabel: 'Unban',
+        variant: 'default',
+      };
+    case 'resend':
+      return {
+        title: 'Resend invitation?',
+        description: <>Send a fresh invitation email to {email}.</>,
+        confirmLabel: 'Resend',
+        variant: 'default',
+      };
+    case 'reset':
+      return {
+        title: 'Send password reset?',
+        description: <>Email a password-reset link to {email}.</>,
+        confirmLabel: 'Send reset',
+        variant: 'default',
+      };
+    case 'remove-role':
+      return {
+        title: 'Remove role?',
+        description: (
+          <>
+            Remove{' '}
+            <span className="font-semibold text-foreground">{a.roleName}</span> from{' '}
+            {email}. They lose that role&apos;s permissions on their next sign-in.
+          </>
+        ),
+        confirmLabel: 'Remove role',
+        variant: 'destructive',
+      };
+  }
 }

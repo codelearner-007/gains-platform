@@ -48,7 +48,6 @@ export function RoleEditDialog({ role, onSuccess, disabled = false, disabledReas
     defaultValues: {
       name: role.name,
       description: role.description || '',
-      hierarchy_level: role.hierarchy_level,
     },
   });
 
@@ -57,7 +56,6 @@ export function RoleEditDialog({ role, onSuccess, disabled = false, disabledReas
       reset({
         name: role.name,
         description: role.description || '',
-        hierarchy_level: role.hierarchy_level,
       });
     }
   }, [open, role, reset]);
@@ -158,21 +156,6 @@ export function RoleEditDialog({ role, onSuccess, disabled = false, disabledReas
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="hierarchy_level">Hierarchy Level *</Label>
-              <Input
-                id="hierarchy_level"
-                type="number"
-                placeholder="100"
-                {...register('hierarchy_level', { valueAsNumber: true })}
-              />
-              {errors.hierarchy_level && (
-                <p className="text-sm text-destructive">{errors.hierarchy_level.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Higher values = more privileged. System roles: super_admin (10000), user (100)
-              </p>
-            </div>
           </div>
 
           <DialogFooter>

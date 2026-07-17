@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const showAdmin = user && canSeeAdminEntry({
     permissions: user.app_metadata?.permissions ?? [],
-    hierarchy_level: user.app_metadata?.hierarchy_level,
+    hierarchy_rank: user.app_metadata?.hierarchy_rank,
     user_role: user.app_metadata?.user_role,
   });
 

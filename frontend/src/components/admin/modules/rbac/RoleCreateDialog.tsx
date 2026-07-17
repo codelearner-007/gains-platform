@@ -22,7 +22,7 @@ import { roleCreateSchema, type RoleCreateInput } from '@/lib/schemas/rbac.schem
 import { createRole } from '@/lib/services/rbac.service';
 
 interface RoleCreateDialogProps {
-  onSuccess: () => void;
+  onSuccess: (createdId?: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -47,13 +47,13 @@ export function RoleCreateDialog({ onSuccess, open: controlledOpen, onOpenChange
     try {
       setSubmitting(true);
       const parsed = roleCreateSchema.parse(data);
-      await createRole(parsed);
+      const created = await createRole(parsed);
       toast('Role created', {
         description: `Role "${parsed.name}" has been created successfully.`,
       });
       setOpen(false);
       reset();
-      onSuccess();
+      onSuccess(created.id);
     } catch (err) {
       console.error('Error creating role:', err);
       toast('Failed to create role', {
@@ -66,18 +66,24 @@ export function RoleCreateDialog({ onSuccess, open: controlledOpen, onOpenChange
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Role
-        </Button>
-      </DialogTrigger>
+      {/* Only render the built-in trigger when used uncontrolled; when a parent
+          drives `open` (e.g. the RBAC page's "+" button) the trigger would be a
+          stray duplicate button. */}
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Role
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Create New Role</DialogTitle>
             <DialogDescription>
-              Define a new role. New roles start with hierarchy level 0 by default.
+              Define a new role. It&apos;s added below your own level — drag it in
+              the role list to set its exact hierarchy.
             </DialogDescription>
           </DialogHeader>
 
@@ -94,7 +100,7 @@ export function RoleCreateDialog({ onSuccess, open: controlledOpen, onOpenChange
                 <p className="text-sm text-destructive">{errors.name.message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Lowercase with underscores only
+                Lowercase letters, numbers and underscores only
               </p>
             </div>
 

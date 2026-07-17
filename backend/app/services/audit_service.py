@@ -26,10 +26,11 @@ class AuditService:
         user_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        q: Optional[str] = None,
     ) -> PaginatedResponse[AuditLogResponse]:
         total = await self.repository.count_filtered(
             module=module, action=action, user_id=user_id,
-            start_date=start_date, end_date=end_date,
+            start_date=start_date, end_date=end_date, q=q,
         )
         offset = (page - 1) * page_size
         total_pages = (total + page_size - 1) // page_size
@@ -37,11 +38,20 @@ class AuditService:
         logs = await self.repository.list_filtered(
             offset=offset, limit=page_size,
             module=module, action=action, user_id=user_id,
-            start_date=start_date, end_date=end_date,
+            start_date=start_date, end_date=end_date, q=q,
         )
 
+        items = [AuditLogResponse.model_validate(log) for log in logs]
+
+        # Attach actor emails (one bulk lookup per page — no N+1).
+        actor_ids = list({item.user_id for item in items if item.user_id})
+        emails = await self.repository.emails_for_user_ids(actor_ids)
+        for item in items:
+            if item.user_id:
+                item.actor_email = emails.get(item.user_id)
+
         return PaginatedResponse(
-            items=[AuditLogResponse.model_validate(log) for log in logs],
+            items=items,
             total=total,
             page=page,
             page_size=page_size,
@@ -50,6 +60,9 @@ class AuditService:
 
     async def list_distinct_modules(self) -> List[str]:
         return await self.repository.list_distinct_modules()
+
+    async def list_distinct_actions(self) -> List[str]:
+        return await self.repository.list_distinct_actions()
 
     async def log_action(
         self,

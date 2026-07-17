@@ -7,8 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_role_repository import UserRoleRepository
+from app.repositories.user_school_repository import UserSchoolRepository
 from app.schemas.common import PaginatedResponse
-from app.schemas.response.user import UserStatsResponse, UserWithRolesResponse
+from app.schemas.response.user import (
+    UserSchoolBrief,
+    UserStatsResponse,
+    UserWithRolesResponse,
+)
 from app.schemas.response.user_role import UserRoleResponse
 
 
@@ -18,6 +23,7 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.user_repo = UserRepository(session)
         self.user_role_repo = UserRoleRepository(session)
+        self.user_school_repo = UserSchoolRepository(session)
 
     async def get_stats(self) -> UserStatsResponse:
         stats = await self.user_repo.get_stats()
@@ -31,10 +37,11 @@ class UserService:
         email_verified: Optional[bool] = None,
         status: Optional[str] = None,
         search: Optional[str] = None,
+        school_id: Optional[str] = None,
     ) -> PaginatedResponse[UserWithRolesResponse]:
         total = await self.user_repo.count_filtered(
             role=role, email_verified=email_verified,
-            status=status, search=search,
+            status=status, search=search, school_id=school_id,
         )
         offset = (page - 1) * page_size
         total_pages = (total + page_size - 1) // page_size
@@ -42,7 +49,7 @@ class UserService:
         users = await self.user_repo.list_filtered(
             offset=offset, limit=page_size,
             role=role, email_verified=email_verified,
-            status=status, search=search,
+            status=status, search=search, school_id=school_id,
         )
 
         if not users:
@@ -59,9 +66,10 @@ class UserService:
                 else banned_until > datetime.now(banned_until.tzinfo)
             )
 
-        # Bulk fetch roles
+        # Bulk fetch roles + schools (both grouped by user_id — no N+1)
         user_ids = [u["id"] for u in users]
         roles_by_user = await self.user_role_repo.list_by_users(user_ids)
+        schools_by_user = await self.user_school_repo.list_by_users(user_ids)
 
         items = [
             UserWithRolesResponse(
@@ -69,6 +77,10 @@ class UserService:
                 roles=[
                     UserRoleResponse.model_validate(ur)
                     for ur in roles_by_user.get(user["id"], [])
+                ],
+                schools=[
+                    UserSchoolBrief(**s)
+                    for s in schools_by_user.get(user["id"], [])
                 ],
             )
             for user in users

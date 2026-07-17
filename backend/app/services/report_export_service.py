@@ -34,6 +34,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
+from app.core.constants import PERF_BAND_HIGH, PERF_BAND_MID
 from app.schemas.reports import (
     IncorrectAnswerDetailsPayload,
     QraByStandardTeacherPayload,
@@ -46,7 +47,7 @@ from app.schemas.reports import (
     StrandSummaryPayload,
     YearToDatePerformancePayload,
 )
-from app.services.report_service import (
+from app.services.reports import (
     _decode_html,
     _strip_html,
 )
@@ -80,8 +81,8 @@ INCORRECT_GREY = "FFCCCCCC"  # colors.ts INCORRECT_GREY #CCCCCC
 PBIX_ACCENT_NAVY = "FF4472C4"  # colors.ts PBIX_ACCENT_NAVY #4472C4
 
 # PBIX-mandated band thresholds (mirror report_service / colors.ts).
-_BAND_HIGH = 0.8
-_BAND_MID = 0.7
+_BAND_HIGH = PERF_BAND_HIGH
+_BAND_MID = PERF_BAND_MID
 
 # Excel number formats.
 _PCT_FMT = "0.0%"
