@@ -36,6 +36,11 @@ export interface AssignRoleDialogState {
   roleId: string;
 }
 
+/** A per-row action awaiting explicit confirmation. */
+export type PendingUserAction =
+  | { kind: 'unban' | 'resend' | 'reset'; user: UserWithRoles }
+  | { kind: 'remove-role'; user: UserWithRoles; roleId: string; roleName: string };
+
 export function useUserManagement() {
   // Core data state
   const [users, setUsers] = useState<UserWithRoles[]>([]);
@@ -82,6 +87,9 @@ export function useUserManagement() {
     action: BulkUserAction;
     results: BulkActionResult[];
   } | null>(null);
+
+  // A per-row action awaiting explicit confirmation.
+  const [pendingAction, setPendingAction] = useState<PendingUserAction | null>(null);
 
   // Permission checks
   const claims = useAdminClaims();
@@ -453,6 +461,26 @@ export function useUserManagement() {
     [reloadUsers]
   );
 
+  const requestAction = useCallback(
+    (a: PendingUserAction) => setPendingAction(a),
+    [],
+  );
+  const confirmPendingAction = useCallback(async () => {
+    const p = pendingAction;
+    if (!p) return;
+    setPendingAction(null);
+    if (p.kind === 'unban') await handleUnbanUser(p.user);
+    else if (p.kind === 'resend') await handleResendVerification(p.user);
+    else if (p.kind === 'reset') await handleResetPassword(p.user);
+    else if (p.kind === 'remove-role') await handleRemoveRole(p.user, p.roleId);
+  }, [
+    pendingAction,
+    handleUnbanUser,
+    handleResendVerification,
+    handleResetPassword,
+    handleRemoveRole,
+  ]);
+
   return {
     // Data
     users,
@@ -511,6 +539,12 @@ export function useUserManagement() {
     bulkResults,
     setBulkResults,
     handleBulkAction,
+
+    // Per-row confirmation
+    pendingAction,
+    setPendingAction,
+    requestAction,
+    confirmPendingAction,
 
     // Actions
     handleBanUser,

@@ -2,7 +2,8 @@
 
 import { UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useUserManagement } from './useUserManagement';
+import { useUserManagement, type PendingUserAction } from './useUserManagement';
+import { ConfirmActionDialog } from '@/components/admin/ConfirmActionDialog';
 import { UserStatsCards } from './UserStatsCards';
 import { UserFiltersPanel } from './UserFilters';
 import { UserTable } from './UserTable';
@@ -72,14 +73,16 @@ export default function AdminUsersPage() {
     setBulkResults,
     handleBulkAction,
 
+    // Per-row confirmation
+    pendingAction,
+    setPendingAction,
+    requestAction,
+    confirmPendingAction,
+
     // Actions
     handleBanUser,
-    handleUnbanUser,
     handleDeleteUser,
-    handleResendVerification,
-    handleResetPassword,
     handleAssignRole,
-    handleRemoveRole,
     handleInviteUsers,
   } = useUserManagement();
 
@@ -142,12 +145,20 @@ export default function AdminUsersPage() {
         onSetSelection={setSelection}
         onSetPage={setPage}
         onBanUser={(user) => setBanDialog(user)}
-        onUnbanUser={handleUnbanUser}
+        onUnbanUser={(user) => requestAction({ kind: 'unban', user })}
         onDeleteUser={(user) => setDeleteDialog(user)}
-        onResendVerification={handleResendVerification}
-        onResetPassword={handleResetPassword}
+        onResendVerification={(user) => requestAction({ kind: 'resend', user })}
+        onResetPassword={(user) => requestAction({ kind: 'reset', user })}
         onAssignRole={(user) => setAssignRoleDialog({ user, roleId: '' })}
-        onRemoveRole={handleRemoveRole}
+        onRemoveRole={(user, roleId) =>
+          requestAction({
+            kind: 'remove-role',
+            user,
+            roleId,
+            roleName:
+              user.roles.find((r) => r.role_id === roleId)?.role.name ?? 'role',
+          })
+        }
         onManageSchools={(user) => setSchoolAccessUser(user)}
       />
 
@@ -212,6 +223,68 @@ export default function AdminUsersPage() {
         loadingSchools={loadingSchools}
         onOpenChange={(open) => !open && setSchoolAccessUser(null)}
       />
+
+      {/* Confirmation for the per-row unban / resend / reset / remove-role actions */}
+      {pendingAction && (() => {
+        const copy = confirmCopy(pendingAction);
+        return (
+          <ConfirmActionDialog
+            open={!!pendingAction}
+            onOpenChange={(o) => !o && setPendingAction(null)}
+            title={copy.title}
+            description={copy.description}
+            confirmLabel={copy.confirmLabel}
+            variant={copy.variant}
+            loading={actionLoading === pendingAction.user.id}
+            onConfirm={confirmPendingAction}
+          />
+        );
+      })()}
     </div>
   );
+}
+
+function confirmCopy(a: PendingUserAction): {
+  title: string;
+  description: React.ReactNode;
+  confirmLabel: string;
+  variant: 'default' | 'destructive';
+} {
+  const email = <span className="font-semibold text-foreground">{a.user.email}</span>;
+  switch (a.kind) {
+    case 'unban':
+      return {
+        title: 'Unban user?',
+        description: <>Allow {email} to sign in again.</>,
+        confirmLabel: 'Unban',
+        variant: 'default',
+      };
+    case 'resend':
+      return {
+        title: 'Resend invitation?',
+        description: <>Send a fresh invitation email to {email}.</>,
+        confirmLabel: 'Resend',
+        variant: 'default',
+      };
+    case 'reset':
+      return {
+        title: 'Send password reset?',
+        description: <>Email a password-reset link to {email}.</>,
+        confirmLabel: 'Send reset',
+        variant: 'default',
+      };
+    case 'remove-role':
+      return {
+        title: 'Remove role?',
+        description: (
+          <>
+            Remove{' '}
+            <span className="font-semibold text-foreground">{a.roleName}</span> from{' '}
+            {email}. They lose that role&apos;s permissions on their next sign-in.
+          </>
+        ),
+        confirmLabel: 'Remove role',
+        variant: 'destructive',
+      };
+  }
 }

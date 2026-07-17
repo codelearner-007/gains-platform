@@ -73,7 +73,15 @@ export function BulkActionBar({
                 variant="ghost"
                 size="sm"
                 disabled={loading}
-                onClick={() => onAction('resend-invite')}
+                onClick={() =>
+                  ask({
+                    action: 'resend-invite',
+                    title: `Resend invitations to ${count} user${count === 1 ? '' : 's'}?`,
+                    body: 'Each selected user gets a fresh invitation email. Already-active users are skipped.',
+                    destructive: false,
+                    requireCount: false,
+                  })
+                }
               >
                 <MailCheck className="h-4 w-4 mr-1.5" />
                 Resend
@@ -82,7 +90,15 @@ export function BulkActionBar({
                 variant="ghost"
                 size="sm"
                 disabled={loading}
-                onClick={() => onAction('unban')}
+                onClick={() =>
+                  ask({
+                    action: 'unban',
+                    title: `Unban ${count} user${count === 1 ? '' : 's'}?`,
+                    body: 'The selected users will be able to sign in again.',
+                    destructive: false,
+                    requireCount: false,
+                  })
+                }
               >
                 <CheckCircle2 className="h-4 w-4 mr-1.5" />
                 Unban

@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ConfirmActionDialog } from '@/components/admin/ConfirmActionDialog';
 import type { UserWithRoles } from '@/lib/services/rbac.service';
 import type { School } from '@/lib/services/schools.service';
 import {
@@ -43,6 +44,10 @@ export function SchoolAccessDialog({
   onOpenChange,
 }: SchoolAccessDialogProps) {
   const [memberships, setMemberships] = useState<UserSchoolMembership[]>([]);
+  const [pendingMembership, setPendingMembership] = useState<{
+    kind: 'remove' | 'primary';
+    m: UserSchoolMembership;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [addSchoolId, setAddSchoolId] = useState<string>('');
@@ -136,7 +141,16 @@ export function SchoolAccessDialog({
     }
   };
 
+  const confirmMembership = async () => {
+    const p = pendingMembership;
+    if (!p) return;
+    setPendingMembership(null);
+    if (p.kind === 'remove') await handleRemove(p.m);
+    else await handleSetPrimary(p.m);
+  };
+
   return (
+    <>
     <Dialog open={!!user} onOpenChange={(open) => !open && onOpenChange(false)}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
@@ -186,7 +200,7 @@ export function SchoolAccessDialog({
                         variant="ghost"
                         size="sm"
                         disabled={busy}
-                        onClick={() => handleSetPrimary(m)}
+                        onClick={() => setPendingMembership({ kind: 'primary', m })}
                         aria-label={`Set ${m.school_name} as primary`}
                       >
                         <Star className="h-4 w-4" />
@@ -196,7 +210,7 @@ export function SchoolAccessDialog({
                       variant="ghost"
                       size="sm"
                       disabled={busy}
-                      onClick={() => handleRemove(m)}
+                      onClick={() => setPendingMembership({ kind: 'remove', m })}
                       className="text-destructive focus:text-destructive"
                       aria-label={`Remove access to ${m.school_name}`}
                     >
@@ -242,5 +256,41 @@ export function SchoolAccessDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    {pendingMembership && (
+      <ConfirmActionDialog
+        open={!!pendingMembership}
+        onOpenChange={(o) => !o && setPendingMembership(null)}
+        title={
+          pendingMembership.kind === 'remove'
+            ? 'Revoke school access?'
+            : 'Set primary school?'
+        }
+        description={
+          pendingMembership.kind === 'remove' ? (
+            <>
+              Remove access to{' '}
+              <span className="font-semibold text-foreground">
+                {pendingMembership.m.school_name}
+              </span>
+              . Applies on the user&apos;s next sign-in.
+            </>
+          ) : (
+            <>
+              Make{' '}
+              <span className="font-semibold text-foreground">
+                {pendingMembership.m.school_name}
+              </span>{' '}
+              the user&apos;s default school. Applies on their next sign-in.
+            </>
+          )
+        }
+        confirmLabel={pendingMembership.kind === 'remove' ? 'Revoke' : 'Set primary'}
+        variant={pendingMembership.kind === 'remove' ? 'destructive' : 'default'}
+        loading={busy}
+        onConfirm={confirmMembership}
+      />
+    )}
+    </>
   );
 }
