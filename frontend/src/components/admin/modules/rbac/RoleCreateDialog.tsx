@@ -66,12 +66,17 @@ export function RoleCreateDialog({ onSuccess, open: controlledOpen, onOpenChange
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Role
-        </Button>
-      </DialogTrigger>
+      {/* Only render the built-in trigger when used uncontrolled; when a parent
+          drives `open` (e.g. the RBAC page's "+" button) the trigger would be a
+          stray duplicate button. */}
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Role
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
