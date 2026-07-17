@@ -10,8 +10,9 @@
  * The multi-email invite is a two-step, no-N+1 flow: one Next call sends all the
  * invites in parallel and returns per-email results; one FastAPI
  * `bulk/provision` call then assigns the role + school memberships for every
- * successfully-invited user in a single transaction. Both steps report
- * per-target success/failure, so nothing fails silently.
+ * successfully-invited user in a single round-trip (each user's assignment is
+ * applied and committed independently, not as one atomic transaction). Both
+ * steps report per-target success/failure, so nothing fails silently.
  */
 
 import { apiClient } from './api-client';

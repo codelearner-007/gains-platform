@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { authorizeAdminRequest } from '@/lib/utils/admin-auth';
+import { enforceSameOrigin } from '@/lib/utils/origin';
 import { revokeAllUserSessions } from '@/lib/supabase/serverAdminClient';
 import { recordAuditLog } from '@/lib/utils/audit-log';
 import { zodToApiError } from '@/lib/utils/api-errors';
@@ -135,6 +136,12 @@ async function applyAction(
 
 export async function POST(request: NextRequest) {
   try {
+    // CSRF first — reject cross-origin before doing any work. The permission
+    // check (below) needs the parsed action, but the origin check does not, so
+    // it runs up front; authorizeAdminRequest re-checks it idempotently.
+    const originError = enforceSameOrigin(request);
+    if (originError) return originError;
+
     let body: unknown;
     try {
       body = await request.json();
@@ -148,7 +155,7 @@ export async function POST(request: NextRequest) {
     }
     const { action, user_ids, ban_duration } = parsed.data;
 
-    // CSRF + auth + permission (action-scoped).
+    // Auth + permission (action-scoped); re-runs the CSRF check.
     const auth = await authorizeAdminRequest(request, PERMISSION_BY_ACTION[action]);
     if (auth instanceof NextResponse) return auth;
 

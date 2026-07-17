@@ -66,7 +66,7 @@ def _super_principal() -> _SuperUser:
         user_id="00000000-0000-0000-0000-000000000000",
         email="golden@insightanalytics.net",
         user_role="super_admin",
-        hierarchy_level=10000,
+        hierarchy_rank=0,
         permissions=[],
         school_ids=list(SCHOOLS.values()),
         primary_school_id=None,
