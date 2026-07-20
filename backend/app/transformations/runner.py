@@ -94,6 +94,12 @@ TRANSFORMATIONS_ORDER: list[tuple[str, str]] = [
     # phantoms. Must run AFTER fact, BEFORE hash/cubes.
     ("07_facts/dim_reconcile.sql",             "facts"),
 
+    # Cross-band mis-file guard (F-C2 durable prevention): assert every item_id
+    # maps to exactly one (grade, subject_id) label-set. FAILS the build naming
+    # offenders so a new mis-file is caught before cubes build on phantom rows.
+    # Runs AFTER exclusions + reconcile settle labels. Read-only; no data moves.
+    ("07_facts/validate_no_cross_band.sql",    "facts"),
+
     # phase 8 — pseudonymisation tables (notebook §7 build_pseudomyzed_tables,
     # lines 1295-1320). Each TRUNCATE+INSERT.
     # dim_section_hash depends on dim_section.
