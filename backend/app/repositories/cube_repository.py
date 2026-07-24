@@ -1035,8 +1035,8 @@ class CubeRepository:
         * ``total_questions`` = COUNT(DISTINCT question_no) per strand, from
           ``cube_question_summary``.
         * ``grade_average`` = AVG(grade_average) over
-          ``cube_question_summary_overall_by_item`` per strand — the section-aware
-          per-item twin (legacy DAX ``Grade_Average_Strand_Measure``). NULL (BLANK)
+          ``cube_question_summary_overall`` per strand — the section-agnostic base
+          cqso (legacy DAX ``Grade_Average_Strand_Measure``). NULL (BLANK)
           when the strand carries no cqso rows, exactly like legacy.
 
         Server-paginated (``limit``/``offset``) + sorted. ``sort_sql``/``dir_sql``

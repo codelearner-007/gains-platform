@@ -203,13 +203,43 @@ async def _create_run(session: AsyncSession, school_id: UUID | None) -> UUID:
     return run_id
 
 
+async def _adopt_run(
+    session: AsyncSession, run_id: UUID, school_id: UUID | None
+) -> None:
+    """Adopt a caller-created ``pending`` run row (R1).
+
+    When the endpoint pre-creates the ``ingestion_runs`` row (so the response can
+    carry the id) and passes ``run_id`` in, phase 1 flips that row to
+    ``running`` instead of INSERTing a new one. ``school_id`` is only filled if
+    the row does not already carry one (the endpoint stamps it at create time).
+    """
+    await session.execute(
+        text(
+            """
+            UPDATE ingestion_runs
+            SET status = 'running',
+                started_at = now(),
+                school_id = COALESCE(school_id, :school_id)
+            WHERE run_id = :run_id
+            """
+        ),
+        {"run_id": run_id, "school_id": school_id},
+    )
+
+
 async def _finish_run(
     session: AsyncSession,
     run_id: UUID,
     status: str,
     summary: IngestSummary,
 ) -> None:
-    """Update ingestion_runs with final status + counters."""
+    """Update ingestion_runs with final status + counters.
+
+    ``status`` is the caller-decided terminal/intermediate status. On a clean
+    run this is ``landed_status`` (default ``"succeeded"`` for the CLI; the
+    durable worker passes ``"landed"`` so the run is not marked ``succeeded``
+    until transforms are applied). On failure it is always ``"failed"``.
+    """
     error_details = (
         {"errors": summary.errors[:50]}  # cap to keep JSON sane
         if summary.errors
@@ -415,18 +445,23 @@ async def _process_blob(
 
     file_type = parsed_path.file_type
 
-    raw_bytes = blob_client.download(blob.path, school_root)
-    file_hash = hashlib.sha256(raw_bytes).hexdigest()
-
-    if await _file_already_ingested(session, school.school_id, file_hash):
-        logger.info(
-            "[%s] skip (already ingested): %s", school.short_name, blob.path
-        )
-        summary.files_skipped += 1
-        return
-
     rows_inserted = 0
     try:
+        # E1 (HARDENING_PLAN §1, fixes F4): download + the idempotency SELECT are
+        # INSIDE the counted try so a Storage download error (or an idempotency
+        # query failure) bumps `error_count` and re-raises — instead of escaping
+        # uncounted, which used to leave `error_count == 0` and let a
+        # never-ingested file get archived to `processed/` (silent data loss).
+        raw_bytes = blob_client.download(blob.path, school_root)
+        file_hash = hashlib.sha256(raw_bytes).hexdigest()
+
+        if await _file_already_ingested(session, school.school_id, file_hash):
+            logger.info(
+                "[%s] skip (already ingested): %s", school.short_name, blob.path
+            )
+            summary.files_skipped += 1
+            return
+
         if file_type == "submission_summary":
             ss_rows = parse_submission_summary.parse(
                 csv_bytes=raw_bytes,
@@ -518,6 +553,8 @@ async def run_ingestion(
     whole_tree_root: str | None = None,
     skip_transforms: bool = False,
     commit_every: int = 0,
+    run_id: UUID | None = None,
+    landed_status: str = "succeeded",
 ) -> IngestSummary:
     """Run a single ingestion pass.
 
@@ -531,6 +568,16 @@ async def run_ingestion(
             (not one pass per school) to avoid ingesting every file 5×, then let
             staging distribute rows to all schools. `school_filter` then only
             restricts which schools' rows survive staging (None = all).
+        run_id: When set (R1), a caller has pre-created the ``ingestion_runs``
+            row (status ``pending``) so it could return the id before the run
+            executes. Phase 1 then ADOPTS that row (pending → running) instead of
+            INSERTing a new one. When None, phase 1 creates the row itself.
+        landed_status: The status phase 3 writes on a CLEAN run (E2,
+            HARDENING_PLAN §1). Defaults to ``"succeeded"`` so the CLI is
+            unchanged. The durable worker passes ``"landed"`` so a run that has
+            only landed raw (``skip_transforms=True``) is not marked
+            ``succeeded`` until the worker's transform gate applies transforms.
+            A failed run always writes ``"failed"`` regardless of this value.
 
     Returns:
         IngestSummary with totals.
@@ -563,10 +610,17 @@ async def run_ingestion(
         #     denoting an orchestrator/multi-school run. Per-school audits should
         #     JOIN via `ingested_files.school_id` instead.
         run_school_id: UUID | None = schools[0].school_id if len(schools) == 1 else None
-        run_id = await _create_run(session, run_school_id)
+        if run_id is not None:
+            # R1: caller pre-created the row (so the response could carry the id).
+            # Adopt it (pending → running) instead of INSERTing a new row.
+            await _adopt_run(session, run_id, run_school_id)
+        else:
+            run_id = await _create_run(session, run_school_id)
 
     # Phase 2: do the actual work in its own transaction.
-    final_status = "succeeded"
+    # E2: on a clean run phase 3 writes `landed_status` (default "succeeded" for
+    # the CLI; the worker passes "landed"). A failure below overrides it.
+    final_status = landed_status
     final_error: Exception | None = None
     try:
         async with session_scope() as session:

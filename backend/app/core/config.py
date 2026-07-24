@@ -45,6 +45,29 @@ class Settings(BaseSettings):
     # intact so enabling restores full function.
     LTI_ENABLED: bool = False
 
+    # Schoology ingestion (scraper → Supabase Storage → backend).
+    # Private bucket the scraper uploads CSV exports into and the
+    # SupabaseStorageBlobClient reads from (created by
+    # 20260722090000_schoology_ingest_storage.sql).
+    INGESTION_STORAGE_BUCKET: str = "schoology-ingest"
+    # Shared secret for the machine-auth scraper endpoints
+    # (X-Ingestion-Secret header). None/empty → the dependency fails CLOSED (401)
+    # so the trigger surface is never open when unconfigured.
+    INGESTION_TRIGGER_SECRET: str | None = None
+
+    # Ingestion durability (HARDENING_PLAN §3). The transform kill-switch is the
+    # PRIMARY gate: prod (raw=0, derived-layer load) stays False so it NEVER
+    # rebuilds cubes; the local full-raw ingestion env sets True. The worker
+    # loop, its lease/heartbeat cadence, the attempt cap, and the empty-raw
+    # floor together give restart/redeploy durability with no half-data.
+    INGESTION_TRANSFORMS_ENABLED: bool = False
+    INGESTION_WORKER_ENABLED: bool = True
+    INGESTION_WORKER_POLL_SECONDS: int = 15
+    INGESTION_LEASE_SECONDS: int = 180
+    INGESTION_HEARTBEAT_SECONDS: int = 30
+    INGESTION_MAX_ATTEMPTS: int = 3
+    INGESTION_RAW_FLOOR: int = 1000
+
     # Redis
     REDIS_URL: str | None = None
     REDIS_PREFIX: str = "starter_template"

@@ -59,6 +59,32 @@ Used 2026-07-13 to apply the entire 2026-07 audit remediation. Steps:
    - `session_replication_role=replica` **skips the per-row FK check to `schools`**
      — that check made wide-row fact COPY exceed 60 s (100k fact chunk: 60s+ → 25s).
      Safe because the data is known-FK-valid (local's school_ids ⊆ prod `schools`).
+   - **Historic-lock interaction (migration `20260723100000_historic_lock.sql`):**
+     `session_replication_role=replica` ALSO skips the origin-mode BEFORE
+     DELETE/TRUNCATE triggers on `fact_student_submission`, so this resync's fact
+     TRUNCATE proceeds even if a lock row existed. Additionally prod's
+     `locked_sessions` is ALWAYS empty (see below), so the triggers are inert
+     regardless. **NEVER insert a lock row for a prod session** — the historic
+     lock is a LOCAL-rebuild-machine safety; prod's protection is "never runs
+     transforms + this gated sync + replica-mode trigger-skip", not the trigger.
+   - **Stale table-list caveat (post-2026-07-23 cleanup):** prod DROPPED
+     `fact_student_submissions_hash` and 2 dead cubes
+     (`cube_overallperformance_summary`, `cube_question_summary_overall_by_item`).
+     A resync must sync only the LIVE serving set — `fact_student_submission`, the
+     7 remaining `cube_*`, `dim_*` — and must NOT recreate the hash table or dead
+     cubes on prod (they are build-time-only / dead weight; see
+     `.planning/ingestion-lti/DATA_LIGHTWEIGHT_PLAN.md`).
+   - **EXPECTED one-time shift on `cube_question_summary_overall` (post-2026-07-23
+     tie-breaker fix (X)):** the first Method-A sync of a local rebuilt with the
+     `desc_per_standard` tie-breaker fix (added `uniques_id` to the DISTINCT ON)
+     carries a ONE-TIME change to **87 rows** of `cube_question_summary_overall`,
+     confined ENTIRELY to the `description` TEXT column (4 standards: MA.1.NSO.2,
+     MA.3.AR.3, MA.6.AR.2, MA.7.GR.1, whose duplicate `dim_standard` rows had a
+     non-deterministic pick). It is **numerically INERT** — grade_average /
+     total_score / total_possible_point / percentage_incorrect_answers are
+     byte-identical (golden-verified: numeric md5 unchanged). This is EXPECTED and
+     desirable (it makes the pick stable forever); **do NOT investigate it as prod
+     drift.** After this one sync the 87 descriptions never move again.
    - **Heavily-indexed tables (fact: 9 idx, fact_hash: 6):** progressive
      index-maintenance blows later chunks past timeout. Pattern: capture index
      DDL → `DROP INDEX` all → load at constant speed (~15 s/100k) → recreate each

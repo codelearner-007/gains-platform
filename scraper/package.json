@@ -1,0 +1,19 @@
+{
+  "name": "schoology-exporter",
+  "version": "1.0.0",
+  "description": "Schoology assessment results exporter for the Gains Platform (Schoology API + Playwright export -> Supabase Storage -> backend trigger)",
+  "main": "schoology-exporter.js",
+  "scripts": {
+    "export": "node schoology-exporter.js",
+    "export:headed": "node schoology-exporter.js --headed",
+    "dry-run": "node schoology-exporter.js --dry-run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.49.0"
+  }
+}

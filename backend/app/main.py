@@ -1,8 +1,10 @@
 """FastAPI application entry point."""
 
+import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -38,10 +40,33 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     logger.info("Starting FastAPI application...")
     await init_redis()
+
+    # Durable ingestion worker (HARDENING_PLAN §4). Gated by
+    # INGESTION_WORKER_ENABLED. NEVER auto-started under pytest — the request
+    # ASGI fixture would otherwise spin up a live poller that hits the DB; the
+    # resilience E2E starts its own worker explicitly in a subprocess. So we also
+    # bail when PYTEST_CURRENT_TEST is set.
+    worker_task: Optional[asyncio.Task] = None
+    worker = None
+    if settings.INGESTION_WORKER_ENABLED and not os.environ.get("PYTEST_CURRENT_TEST"):
+        from app.services.ingestion_worker import IngestionWorker
+
+        worker = IngestionWorker()
+        worker_task = asyncio.create_task(worker.run_forever())
+        logger.info("Ingestion worker started")
+
     yield
 
     # Shutdown
     logger.info("Shutting down FastAPI application...")
+    if worker is not None and worker_task is not None:
+        worker.stop()
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Ingestion worker stopped")
     await close_redis()
     session_manager = get_session_manager()
     await session_manager.close()

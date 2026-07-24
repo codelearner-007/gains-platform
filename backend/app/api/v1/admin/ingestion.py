@@ -63,11 +63,17 @@ async def trigger_ingestion(
 ) -> JSONResponse:
     """Trigger an ingestion run.
 
-    The endpoint returns 202 Accepted with a ``run_id``. The actual ingestion
-    is dispatched out-of-band (orchestrator picks up the ``pending`` row and
-    flips it through ``running`` → ``succeeded`` / ``failed``).
+    Returns 202 Accepted with a ``run_id`` after ENQUEUEING a ``pending``
+    ``ingestion_runs`` row (coalescing onto an existing pending run for the same
+    school). The in-process durable worker (started in the FastAPI lifespan)
+    claims the row, lands its raw rows, runs the transform gate, and marks it
+    ``succeeded`` / ``failed`` — surviving restarts via a lease + reaper. There
+    is NO synchronous dispatch / BackgroundTask here.
     """
     service = IngestionAdminService(db)
+    # Validate the target school exists BEFORE enqueuing so an unknown school_id
+    # 404s without leaving an orphan pending row (R10; None → all-schools).
+    await service.resolve_short_name(payload.school_id)
     response = await service.trigger_run(payload)
 
     audit = AuditService(db)
@@ -78,6 +84,11 @@ async def trigger_ingestion(
         resource_id=response.run_id,
         details=payload.model_dump(exclude_unset=True),
     )
+
+    # Commit the pending run row AND the audit log together so both are durable
+    # before the worker claims the run from the queue.
+    await db.commit()
+
     return JSONResponse(
         status_code=status.HTTP_202_ACCEPTED,
         content={

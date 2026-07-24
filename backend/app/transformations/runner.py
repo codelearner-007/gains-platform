@@ -37,6 +37,7 @@ if _BACKEND_DIR not in _sys.path:
 import argparse
 import asyncio
 import logging
+import re
 from pathlib import Path
 
 from sqlalchemy import text
@@ -119,11 +120,15 @@ TRANSFORMATIONS_ORDER: list[tuple[str, str]] = [
     ("09_cubes/cube_question_summary.sql",               "cubes"),
     ("09_cubes/cube_questionincorrectchoice_summary.sql","cubes"),
     ("09_cubes/cube_question_summary_overall.sql",       "cubes"),
-    # Per-item twin of cube_question_summary_overall (adds item_id to the grain)
-    # so per-assessment Strand/Standard rollups read a section-scoped grade
-    # instead of the subject_id-pooled (cross-section) cqso value.
+    # Per-item twin of cube_question_summary_overall. NO LONGER SERVED — merge-
+    # section-reports reversed the R3 per-item read, so serving now uses base
+    # cqso (the twin's old readers get_strand/standard_rollup_for_item were
+    # rewritten). Retained as a LOCAL verification artifact only: the twin-
+    # invariant test (tests/reports::test_twin_invariant_holds) re-aggregates it
+    # over item_id to prove base cqso's section-merged totals match a section-
+    # scoped re-agg. DROPPED on prod (serving-only, no tests run there) — same
+    # local(build/test)/prod(serving-only) asymmetry as the hash tables.
     ("09_cubes/cube_question_summary_overall_by_item.sql", "cubes"),
-    ("09_cubes/cube_overallperformance_summary.sql",     "cubes"),
     ("09_cubes/cube_user_summary.sql",                   "cubes"),
 ]
 
@@ -131,6 +136,91 @@ TRANSFORMATIONS_ORDER: list[tuple[str, str]] = [
 def _base_dir() -> Path:
     """Resolve the directory containing the SQL subfolders (this module's dir)."""
     return Path(__file__).resolve().parent
+
+
+# ─── §LOCK layer 2: SQL guard (unscoped-TRUNCATE refusal) ──────────────────
+# Session-bearing tables whose rows belong to a specific (school, session)
+# slice. An unscoped `TRUNCATE` of any of these erases EVERY year at once — the
+# "someone re-runs the old full rebuild" footgun. While ANY lock exists we
+# refuse to execute a file that would do that (the DB trigger on
+# fact_student_submission is the last line; this catches it one layer earlier
+# and names the offending file + locked session(s)).
+#
+# Cube tables are matched by the `cube_` prefix rather than enumerated, so a new
+# cube is covered automatically. Everything here is INERT when locked_sessions
+# is empty: the guard only runs its scan when at least one lock exists.
+_SESSION_BEARING_TABLES: tuple[str, ...] = (
+    "stg_student_submission",
+    "stg_question_data",
+    "fact_student_submission",
+    "dim_subject",
+    "dim_question_data",
+)
+
+# `TRUNCATE [TABLE] [ONLY] [public.]<name>` — the bare/unscoped form the legacy
+# full rebuild emits. We only flag TRUNCATE (a scoped `DELETE ... WHERE session`
+# is the §SCOPE path and is allowed); a TRUNCATE cannot be row-scoped.
+_TRUNCATE_RE = re.compile(
+    r"\btruncate\b(?:\s+table\b)?(?:\s+only\b)?\s+(?:public\.)?"
+    r"(?P<name>[a-z_][a-z0-9_]*)",
+    re.IGNORECASE,
+)
+
+
+def _truncated_session_tables(sql: str) -> list[str]:
+    """Return the session-bearing table names an unscoped TRUNCATE in ``sql``
+    would erase (comments stripped first). Empty list => this file is safe."""
+    hits: list[str] = []
+    for m in _TRUNCATE_RE.finditer(_strip_sql_comments(sql)):
+        name = m.group("name").lower()
+        if name in _SESSION_BEARING_TABLES or name.startswith("cube_"):
+            hits.append(name)
+    return hits
+
+
+async def _assert_no_locked_truncate(
+    session: AsyncSession, base: Path, only_tag: str | None
+) -> None:
+    """Refuse an unscoped-TRUNCATE build while any historic session is locked.
+
+    Consults ``locked_sessions`` via ``any_locked()``. When empty (the common
+    case) this returns immediately — the normal full rebuild is untouched. When
+    at least one lock exists, scan the files that WOULD run in this invocation;
+    if any contains an unscoped TRUNCATE of a session-bearing table, raise a
+    clear error naming the locked session(s) and the offending file(s) so the
+    operator knows exactly what was blocked and why.
+
+    Imported lazily so the module has no import-time dependency on the repo and
+    the CLI keeps working from either invocation path.
+    """
+    from app.repositories.locked_sessions_repository import LockedSessionsRepository
+
+    repo = LockedSessionsRepository(session)
+    if not await repo.any_locked():
+        return  # inert: no locks → normal path, no scan
+
+    offenders: list[str] = []
+    for relpath, tag in TRANSFORMATIONS_ORDER:
+        if only_tag is not None and tag != only_tag:
+            continue
+        sql = (base / relpath).read_text(encoding="utf-8")
+        tables = _truncated_session_tables(sql)
+        if tables:
+            offenders.append(f"{relpath} (TRUNCATE {', '.join(sorted(set(tables)))})")
+
+    if not offenders:
+        return  # locks exist but this build has no unscoped TRUNCATE → allowed
+
+    locks = await repo.list_all()
+    locked_labels = ", ".join(
+        f"{row['school_id']}:{row['session']}" for row in locks
+    ) or "(unknown)"
+    raise RuntimeError(
+        "transform run REFUSED (historic-lock §LOCK): "
+        f"{len(locks)} locked session(s) exist [{locked_labels}] and this build "
+        f"would unscoped-TRUNCATE session-bearing table(s). Offending file(s): "
+        + "; ".join(offenders)
+    )
 
 
 def _strip_sql_comments(sql: str) -> str:
@@ -275,6 +365,13 @@ async def run_all(
     base = _base_dir()
     results: dict[str, int] = {}
     failed_cubes: list[str] = []  # G4: track isolate_cubes failures to fail loudly
+
+    # §LOCK layer 2: if ANY session is locked, refuse to run this build when it
+    # contains an unscoped TRUNCATE of a session-bearing table (staging/fact/
+    # dim_subject/dim_question_data/cube_*). This is the "old full rebuild by
+    # accident" backstop at the app layer. When nothing is locked this is a
+    # no-op and the normal path is entirely unchanged.
+    await _assert_no_locked_truncate(session, base, only_tag)
 
     for relpath, tag in TRANSFORMATIONS_ORDER:
         if only_tag is not None and tag != only_tag:
