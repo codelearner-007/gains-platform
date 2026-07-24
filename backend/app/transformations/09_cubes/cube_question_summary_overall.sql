@@ -207,8 +207,15 @@ desc_per_standard AS (
   -- match an Algebra standard's long form, and the lex-min `ORDER BY`
   -- pick let the Civics description win. Exact match removes that ambiguity.
   -- If multiple dim_standard rows share the same `schoology_standard`
-  -- (alias-fanout), DISTINCT ON picks one deterministically; their
-  -- descriptions are expected to match anyway.
+  -- (alias-fanout), DISTINCT ON must pick one DETERMINISTICALLY. A few standards
+  -- (e.g. MA.1.GR.1, MA.1.NSO.2) genuinely carry TWO rows with the SAME
+  -- schoology_standard but DIFFERENT descriptions, so `ORDER BY long_standard,
+  -- schoology_standard` alone leaves the winner to heap/scan order — which then
+  -- flips whenever any dim_standard write shifts that order (e.g. a new-year
+  -- ingest adding a standard). Appending the `uniques_id` PK as a final
+  -- tie-breaker makes the pick stable forever (row identity, not scan order), so
+  -- a rebuild that adds standards can never silently change a historic row's
+  -- description. Description-only pick — no numeric aggregate depends on it.
   SELECT DISTINCT ON (long_standard)
     long_standard,
     description,
@@ -219,12 +226,12 @@ desc_per_standard AS (
       '.'
     ) AS trimmed_standard
   FROM (
-    SELECT t.long_standard, ds.schoology_standard, ds.description
+    SELECT t.long_standard, ds.schoology_standard, ds.description, ds.uniques_id
     FROM (SELECT DISTINCT standard AS long_standard FROM latest_with_hash WHERE standard IS NOT NULL) t
     JOIN dim_standard ds
       ON ds.schoology_standard = t.long_standard
   ) sub
-  ORDER BY long_standard, schoology_standard
+  ORDER BY long_standard, schoology_standard, uniques_id
 ),
 section_per_item AS (
   SELECT school_id, item_id, MIN(section_nid) AS section_nid
