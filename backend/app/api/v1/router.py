@@ -8,6 +8,7 @@ from app.api.v1 import (
     auth,
     dashboard,
     dim,
+    ingestion,
     lti,
     permissions,
     profile,
@@ -44,6 +45,9 @@ api_router.include_router(reports.router)
 api_router.include_router(students.router)
 api_router.include_router(dim.router)
 api_router.include_router(schools.router)
+# Machine-auth scraper ingestion endpoints (X-Ingestion-Secret; no user JWT).
+# /api/v1/ingestion/* — distinct from admin's /api/v1/admin/ingestion/*.
+api_router.include_router(ingestion.router)
 # LTI routes are gated behind LTI_ENABLED (default off). When disabled, no
 # /api/v1/lti/* route is registered, so they 404 and no LTI code path can
 # provision auth.users / user_schools.

@@ -1,0 +1,463 @@
+"""Durable ingestion worker tests (HARDENING_PLAN §9 Wave 2 Agent C).
+
+These drive the REAL worker code (``_land_run`` / ``_transform_batch`` /
+``_run_transform_gate`` / ``_archive``) with every DB touch redirected to an
+in-memory fake — so NO real transforms run and raw is NEVER truncated
+(STOP conditions §11.3):
+
+    * ``worker_mod.session_scope`` is monkeypatched to yield a ``FakeSession``
+      that interprets the small set of SQL statements the worker issues
+      (advisory lock, ``SET statement_timeout``, fact count, dirty-token read,
+      warehouse dirty set/clear, run mark, school resolution) against in-memory
+      state. It executes NO SQL against the real database.
+    * ``run_transformations`` (transformations.run_all) is monkeypatched to a
+      recorder that flips the fake fact count — it never opens a connection.
+    * ``run_ingestion`` is monkeypatched to return a synthetic ``IngestSummary``.
+
+The empty-raw floor is exercised by STUBBING ``raw_student_submission`` count
+below the floor, not by emptying real raw. The collapse-guard is exercised by
+having the fake transform runner leave the fake fact at 0 after a positive
+pre-count.
+"""
+
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
+
+import pytest
+
+import app.services.ingestion_worker as worker_mod
+from app.jobs.blob_client import BlobInfo
+from app.jobs.ingest_schoology import IngestSummary
+from app.services.ingestion_worker import IngestionWorker
+
+_T0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+
+# ── In-memory warehouse the FakeSession reads/writes ────────────────────────
+
+
+class FakeWarehouse:
+    """The tiny slice of DB state the worker touches during a batch."""
+
+    def __init__(self) -> None:
+        self.dirty = False
+        self.dirty_token: Optional[str] = None
+        self.raw_total = 5000  # above the default floor (1000)
+        # fact count: first read = pre, later reads = post (run_all flips it).
+        self.fact = 100
+        # Recorded run-status marks: list of (run_id, status, details_json).
+        self.marks: List[tuple[str, str, Optional[str]]] = []
+        # Recorded dirty-flag transitions for assertions.
+        self.set_dirty: List[str] = []
+        self.cleared: List[str] = []
+        # school_id -> short_name resolution table.
+        self.schools: Dict[str, Optional[str]] = {}
+
+
+class _Result:
+    def __init__(self, rows: List[Any]) -> None:
+        self._rows = rows
+
+    def first(self):
+        return self._rows[0] if self._rows else None
+
+    def scalar_one(self):
+        return self._rows[0][0]
+
+
+class _Row(tuple):
+    """A tuple that also exposes ._mapping-free positional access (worker uses
+    row[0] only)."""
+
+
+class FakeSession:
+    """Interprets the worker's SQL against a ``FakeWarehouse`` — no real DB."""
+
+    def __init__(self, wh: FakeWarehouse) -> None:
+        self.wh = wh
+
+    async def execute(self, statement: Any, params: Optional[dict] = None) -> _Result:
+        sql = str(statement).lower()
+        p = params or {}
+
+        if "pg_advisory_xact_lock" in sql:
+            return _Result([])
+        if "set statement_timeout" in sql:
+            return _Result([])
+        if "count(*) from fact_student_submission" in sql:
+            row = _Row((self.wh.fact,))
+            return _Result([row])
+        if "count(*) from raw_student_submission" in sql:
+            return _Result([_Row((self.wh.raw_total,))])
+        if "dirty_token" in sql and "select" in sql:
+            tok = self.wh.dirty_token if self.wh.dirty else None
+            return _Result([_Row((tok,))])
+        if "short_name from schools" in sql:
+            sid = p.get("sid")
+            name = self.wh.schools.get(sid)
+            return _Result([_Row((name,))] if name is not None else [])
+        # warehouse_state UPDATE (set dirty / clear)
+        if "update public.warehouse_state" in sql or "update warehouse_state" in sql:
+            if "transforms_dirty = true" in sql:
+                self.wh.dirty = True
+                self.wh.dirty_token = p.get("token")
+                self.wh.set_dirty.append(p.get("token"))
+            elif "transforms_dirty = false" in sql:
+                self.wh.dirty = False
+                self.wh.dirty_token = None
+                self.wh.cleared.append(p.get("rid"))
+            return _Result([])
+        # ingestion_runs mark UPDATE
+        if "update public.ingestion_runs" in sql:
+            # crude status extract from the bound param
+            self.wh.marks.append((p.get("rid"), p.get("status"), p.get("details")))
+            return _Result([])
+        return _Result([])
+
+
+class FakeBlobClient:
+    """In-memory blob client: path→last_modified map + a move log."""
+
+    def __init__(self, files: Optional[Dict[str, datetime]] = None) -> None:
+        self.files: Dict[str, datetime] = dict(files or {})
+        self.moves: List[tuple[str, str]] = []
+
+    def list_files(self, school_root: str) -> List[BlobInfo]:  # noqa: ARG002
+        return [
+            BlobInfo(path=p, last_modified=m, size_bytes=1)
+            for p, m in self.files.items()
+        ]
+
+    def download(self, blob_path: str, school_root: str) -> bytes:  # noqa: ARG002
+        return b""
+
+    def move(self, from_key: str, to_key: str) -> None:
+        self.moves.append((from_key, to_key))
+
+
+# ── Fixtures ────────────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def wh() -> FakeWarehouse:
+    return FakeWarehouse()
+
+
+@pytest.fixture(autouse=True)
+def _patch_db(monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse) -> None:
+    """Redirect session_scope + dispose_engine + transformations + ingest so the
+    worker never touches a real DB and never runs real transforms."""
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield FakeSession(wh)
+
+    async def _noop_dispose() -> None:
+        return None
+
+    async def _default_run_all(session: Any = None) -> dict:  # noqa: ARG001
+        return {}
+
+    async def _default_run_ingestion(**_kw: Any) -> IngestSummary:
+        return IngestSummary(files_seen=0)
+
+    monkeypatch.setattr(worker_mod, "session_scope", _fake_scope)
+    monkeypatch.setattr(worker_mod, "dispose_engine", _noop_dispose)
+    monkeypatch.setattr(worker_mod, "run_transformations", _default_run_all)
+    monkeypatch.setattr(worker_mod, "run_ingestion", _default_run_ingestion)
+
+
+def _worker(blob: Optional[FakeBlobClient] = None) -> IngestionWorker:
+    """Real IngestionWorker with a fast heartbeat disabled and a fake blob."""
+    b = blob or FakeBlobClient()
+    w = IngestionWorker(
+        worker_id="test-worker",
+        heartbeat_seconds=3600,  # never fires within a test
+        blob_client_factory=lambda: b,
+    )
+    return w
+
+
+def _run_marks(wh: FakeWarehouse) -> set[tuple[str, str]]:
+    return {(rid, st) for rid, st, _ in wh.marks}
+
+
+# ── Transform-gate tests (§5) ───────────────────────────────────────────────
+
+
+async def test_transform_runs_on_dirty_even_with_zero_rows(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """0 rows landed but a PRE-EXISTING dirty flag (prior crash) → transforms MUST
+    run (closes the permanent-staleness hole, F27)."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+    ran = {"n": 0}
+
+    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+        ran["n"] += 1
+        return {"fact": 1}
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
+
+    rid = str(uuid4())
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())  # owned by someone else → pre-dirty
+    wh.fact = 100
+
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 0, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    assert ran["n"] == 1
+    assert (rid, "succeeded") in _run_marks(wh)
+    assert rid in wh.cleared and wh.dirty is False
+
+
+async def test_skip_clean_when_owns_token_and_zero_rows(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """0 rows + owns the current dirty token → clear WITHOUT transforming."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+    ran = {"n": 0}
+
+    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+        ran["n"] += 1
+        return {}
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
+
+    rid = str(uuid4())
+    wh.dirty = True
+    wh.dirty_token = rid  # driver run owns it
+
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 0, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    assert ran["n"] == 0, "skip-clean must not transform"
+    assert rid in wh.cleared and wh.dirty is False
+    assert (rid, "succeeded") in _run_marks(wh)
+
+
+async def test_refuse_on_empty_raw_floor(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """Raw below the floor → REFUSE; run failed, dirty flag stays. The floor is
+    STUBBED below-floor, real raw is untouched."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+    wh.raw_total = 0  # simulate prod raw=0 WITHOUT truncating real raw
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())  # pre-dirty (not this batch's)
+
+    rid = str(uuid4())
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 500, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    assert (rid, "failed") in _run_marks(wh)
+    assert wh.dirty is True, "dirty must survive a refused transform"
+    assert rid not in wh.cleared
+
+
+async def test_collapse_guard_aborts_on_fact_zero(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """fact_pre>0 and post==0 → collapse-guard raises → failed, dirty stays."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+
+    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+        # The rebuild "wipes" the fact to 0 (a bug we must catch).
+        wh.fact = 0
+        return {}
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
+
+    wh.fact = 100  # positive pre-count
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())
+
+    rid = str(uuid4())
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 500, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    assert (rid, "failed") in _run_marks(wh)
+    assert wh.dirty is True
+    assert rid not in wh.cleared
+
+
+async def test_transform_failure_marks_failed_and_leaves_dirty(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """A transform exception → run failed + flag stays dirty (self-heals)."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+
+    async def _boom(session: Any = None) -> dict:  # noqa: ARG001
+        raise RuntimeError("transform boom")
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _boom)
+
+    wh.fact = 100
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())
+
+    rid = str(uuid4())
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 500, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    assert (rid, "failed") in _run_marks(wh)
+    assert wh.dirty is True
+    assert rid not in wh.cleared
+
+
+async def test_kill_switch_leaves_landed_and_dirty(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """Kill-switch OFF (prod) → no transform; runs stay 'landed'; dirty stays."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", False)
+    ran = {"n": 0}
+
+    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+        ran["n"] += 1
+        return {}
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
+
+    rid = str(uuid4())
+    wh.dirty = True
+    wh.dirty_token = rid
+
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 500, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    assert ran["n"] == 0
+    assert all(st != "succeeded" for _, st in _run_marks(wh))
+    assert wh.dirty is True
+
+
+# ── Landing / archive tests (§4 / §6) ───────────────────────────────────────
+
+
+async def test_empty_school_run_fails(wh: FakeWarehouse):
+    """F9: a claimed run whose school does not resolve → failed, not silent."""
+    # school_id present but not in the resolution table → _short_name_for None.
+    rid = str(uuid4())
+    w = _worker()
+    result = await w._land_run({"run_id": rid, "school_id": "unknown-sid"})
+
+    assert result is None
+    assert (rid, "failed") in _run_marks(wh)
+
+
+async def test_archive_skips_changed_key(wh: FakeWarehouse):
+    """A key re-uploaded mid-run (newer last_modified) is left LIVE, not archived."""
+    blob = FakeBlobClient({"a.csv": _T0, "b.csv": _T0})
+    w = _worker(blob)
+    snapshot = [
+        BlobInfo(path="a.csv", last_modified=_T0, size_bytes=1),
+        BlobInfo(path="b.csv", last_modified=_T0, size_bytes=1),
+    ]
+    blob.files["a.csv"] = _T0 + timedelta(minutes=5)  # re-uploaded newer mid-run
+
+    w._archive(blob, "Athenian", str(uuid4()), snapshot)
+
+    moved = {frm for frm, _ in blob.moves}
+    assert "Athenian/b.csv" in moved, "unchanged key must archive"
+    assert "Athenian/a.csv" not in moved, "re-uploaded key must stay live"
+
+
+async def test_clean_landing_sets_dirty_archives_and_returns_context(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """Clean landing: dirty set BEFORE landing, snapshot keys archived, context
+    returned for the batch transform pass."""
+    wh.schools = {"sid-1": "Athenian"}
+
+    async def _good(**_kw: Any) -> IngestSummary:
+        return IngestSummary(
+            files_seen=2, files_processed=2, files_skipped=0,
+            error_count=0, rows_inserted=42,
+        )
+
+    monkeypatch.setattr(worker_mod, "run_ingestion", _good)
+
+    rid = str(uuid4())
+    blob = FakeBlobClient({"x.csv": _T0, "y.csv": _T0})
+    w = _worker(blob)
+    result = await w._land_run({"run_id": rid, "school_id": "sid-1"})
+
+    assert result == {
+        "run_id": rid, "short_name": "Athenian",
+        "rows_inserted": 42, "error_count": 0,
+    }
+    assert wh.set_dirty == [rid], "dirty set BEFORE landing, token=run_id"
+    assert len(blob.moves) == 2
+    assert all(to.startswith(f"processed/Athenian/{rid}/") for _, to in blob.moves)
+
+
+async def test_invariant_violation_fails_run_no_archive(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """files_seen != processed+skipped+errors → run failed, no archive (F4 belt)."""
+    wh.schools = {"sid-1": "Athenian"}
+
+    async def _bad(**_kw: Any) -> IngestSummary:
+        return IngestSummary(
+            files_seen=3, files_processed=1, files_skipped=0, error_count=0
+        )
+
+    monkeypatch.setattr(worker_mod, "run_ingestion", _bad)
+
+    rid = str(uuid4())
+    blob = FakeBlobClient({"a.csv": _T0})
+    w = _worker(blob)
+    result = await w._land_run({"run_id": rid, "school_id": "sid-1"})
+
+    assert result is None
+    assert (rid, "failed") in _run_marks(wh)
+    assert blob.moves == []
+
+
+async def test_errored_landing_leaves_files_live(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """error_count>0 → no archive; context returned with error_count so the batch
+    does NOT promote the run to succeeded."""
+    wh.schools = {"sid-1": "Athenian"}
+
+    async def _err(**_kw: Any) -> IngestSummary:
+        return IngestSummary(
+            files_seen=2, files_processed=1, files_skipped=0,
+            error_count=1, rows_inserted=10,
+        )
+
+    monkeypatch.setattr(worker_mod, "run_ingestion", _err)
+
+    rid = str(uuid4())
+    blob = FakeBlobClient({"x.csv": _T0, "y.csv": _T0})
+    w = _worker(blob)
+    result = await w._land_run({"run_id": rid, "school_id": "sid-1"})
+
+    assert result is not None and result["error_count"] == 1
+    assert blob.moves == [], "errored landing must not archive"
+
+    # And the batch pass must NOT mark an errored landing succeeded even on a
+    # healthy transform.
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+    wh.fact = 100
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())
+    await w._transform_batch([result])
+    assert (rid, "succeeded") not in _run_marks(wh)
