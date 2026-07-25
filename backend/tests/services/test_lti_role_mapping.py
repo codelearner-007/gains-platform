@@ -20,6 +20,11 @@ INSTRUCTOR = "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
 CONTENT_DEV = "http://purl.imsglobal.org/vocab/lis/v2/membership#ContentDeveloper"
 TA = "http://purl.imsglobal.org/vocab/lis/v2/membership#TeachingAssistant"
 LEARNER = "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"
+# Institution-person roles Schoology emits for a NON-course launch (e.g. the
+# User-profile-navigation placement) — a teacher arrives as Faculty/Staff, not
+# course membership#Instructor. Must still resolve to teacher.
+FACULTY = "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"
+STAFF = "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"
 
 
 @pytest.mark.parametrize(
@@ -30,9 +35,13 @@ LEARNER = "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"
         ([INSTRUCTOR], "teacher"),
         ([CONTENT_DEV], "teacher"),
         ([TA], "teacher"),
+        # Schoology non-course launch: teacher arrives as Faculty/Staff.
+        ([FACULTY], "teacher"),
+        ([STAFF], "teacher"),
         ([LEARNER], "student"),
         # least-privilege defaults
         ([], "student"),
+        # Mentor = parent/guardian/observer in IMS, NOT staff — must stay student.
         (["http://purl.imsglobal.org/vocab/lis/v2/membership#Mentor"], "student"),
         (["garbage"], "student"),
         # MOST-PRIVILEGED-WINS (privilege-escalation guard): a teacher mixed with
@@ -42,6 +51,11 @@ LEARNER = "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"
         # admin outranks everything, order-independent.
         ([LEARNER, INSTRUCTOR, ADMIN], "admin"),
         ([ADMIN, LEARNER], "admin"),
+        # the new institution Staff/Faculty roles obey the same guard: staff
+        # mixed with a learner stays teacher; faculty never outranks admin.
+        ([STAFF, LEARNER], "teacher"),
+        ([LEARNER, FACULTY], "teacher"),
+        ([FACULTY, ADMIN], "admin"),
     ],
 )
 def test_map_lti_roles_collapses_most_privileged(roles, expected):
