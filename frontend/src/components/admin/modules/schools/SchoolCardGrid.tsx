@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Clock, CalendarDays } from 'lucide-react';
+import { Pencil, Clock, CalendarDays, Plug } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { School } from '@/lib/services/schools.service';
@@ -10,8 +10,10 @@ interface SchoolCardGridProps {
   loading: boolean;
   error: string | null;
   canUpdate: boolean;
+  canManageLti: boolean;
   hasFilters: boolean;
   onEdit: (school: School) => void;
+  onManageLti: (school: School) => void;
 }
 
 function initials(name: string): string {
@@ -46,8 +48,10 @@ export function SchoolCardGrid({
   loading,
   error,
   canUpdate,
+  canManageLti,
   hasFilters,
   onEdit,
+  onManageLti,
 }: SchoolCardGridProps) {
   if (loading) {
     return (
@@ -117,17 +121,30 @@ export function SchoolCardGrid({
             </div>
           </dl>
 
-          {canUpdate && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => onEdit(school)}
-              >
-                <Pencil className="h-3.5 w-3.5 mr-2" />
-                Manage
-              </Button>
+          {(canUpdate || canManageLti) && (
+            <div className="mt-4 pt-4 border-t border-border flex gap-2">
+              {canUpdate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => onEdit(school)}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-2" />
+                  Manage
+                </Button>
+              )}
+              {canManageLti && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => onManageLti(school)}
+                >
+                  <Plug className="h-3.5 w-3.5 mr-2" />
+                  LTI
+                </Button>
+              )}
             </div>
           )}
         </div>

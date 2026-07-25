@@ -601,3 +601,78 @@ surface and the per-school RLS/tenancy stack described above are already built a
 codebase; the remaining work (session bridge, onboarding seeding, iframe/CSP, tests, enablement) is
 specified here for a **later implementation phase that begins only after owner review and greenlight.**
 ```
+
+> **Update (implementation waves):** §1–§12 above are the original *plan*. The session bridge (§5),
+> onboarding admin UI (§6), and the iframe/CSP + enablement posture (§7) have since been built on
+> `feat/lti-integration`. LTI still ships **gated OFF** (`LTI_ENABLED=False`). §13 below is the
+> **enablement runbook** for turning it on per school.
+
+---
+
+## 13. Enablement / Deploy Runbook
+
+Concrete steps to turn LTI on for a real school. LTI stays **OFF by default**
+(`LTI_ENABLED=False`, `config.py:46`) so nothing here activates until every env var below is set
+and the flag is flipped. **Nothing in this section requires committing a secret** — all secrets are
+env-only.
+
+### 13.1 Environment variables (set in the deploy env, never committed)
+
+| Var | Process | Purpose | Notes |
+|---|---|---|---|
+| `LTI_ENABLED` | FastAPI (backend) | Mounts the public `/api/v1/lti/*` routes (`router.py:54-55`). | `true` only when a school is ready. Off → the routes 404 and no LTI code can provision `auth.users` / `user_schools`. |
+| `LTI_BRIDGE_SECRET` | **BOTH** FastAPI **and** Next | Shared secret for the machine-auth session-bridge hop. FastAPI's `/api/v1/lti/consume-ticket` requires the `X-LTI-Bridge-Secret` header (`lti.py:44-56`); the Next bridge sends it (`api/lti/bridge/route.ts:39-56`). | Must be the **same strong-random value** in both processes. Unset/empty on the backend → the dependency fails **CLOSED** (401), so the consume surface is never open unconfigured (`config.py:47-51`). Generate with e.g. `python -c "import secrets;print(secrets.token_urlsafe(48))"`. |
+| `PUBLIC_BASE_URL` | FastAPI | Drives `redirect_uri`, the three tool URLs, and the bridge redirect target (`lti.py:33,38,137`; `lti_admin_service.py:27,42`). | Real **HTTPS** origin of the deployed app. **Must exactly match** what the district registers in Schoology (the redirect/target-link URI is checked by the platform). |
+| `NEXT_PUBLIC_API_URL` | Next | Bridge reads the FastAPI base from it to call `consume-ticket` (`api/lti/bridge/route.ts:49`). | Point at the backend origin for the deploy. |
+| `LTI_REDIRECT_BASE` | Next (optional) | Where the bridge lands the browser after minting the session (`api/lti/bridge/route.ts:10-11`). | Defaults to `/app/reports/standard-summary`. Override only to change the landing report. |
+
+### 13.2 Iframe / cookie posture (this wave)
+
+- **`frame-ancestors` is scoped, in middleware, to the `/app` surface + `/api/lti/bridge` only**
+  (`frontend/src/middleware.ts`). That surface emits
+  `Content-Security-Policy: frame-ancestors 'self' https://*.schoology.com https://app.schoology.com`
+  and **no** `X-Frame-Options`. **Every other path** (`/admin`, `/auth`, marketing, API) gets
+  `X-Frame-Options: DENY` — the app set no framing headers before this change, so `/admin` is now
+  *hardened*, never framable by Schoology. Do not widen the frame-ancestors allow-list or move it
+  off the `/app` branch.
+- **Bridge session cookies are `SameSite=None; Secure` in production only.** Gated on
+  `NODE_ENV === 'production'` in the bridge (`api/lti/bridge/route.ts`) via a per-route
+  `cookieOptions` override on `createSSRClient` (`frontend/src/lib/supabase/server.ts`). Local http
+  dev falls back to the shared `Lax` default so cookie-setting still works (the mock harness runs
+  same-origin). This override is **bridge-scoped** — password login and OAuth keep `Lax`, preserving
+  same-origin CSRF for normal web login.
+
+### 13.3 Per-school onboarding (dynamic via the admin UI)
+
+The registration/deployment bindings are managed in the admin Schools module (LTI dialog), not by
+editing code:
+
+1. **District installs the GAINS app** in that school's Schoology organization (district-internal →
+   bypasses App Center public review). Installation mints the `deployment_id`.
+2. **District returns `client_id` + `deployment_id`** (Schoology renders the deployment id as the
+   full `"{client_id}-{n}"` string — store it verbatim).
+3. **Admin pastes them into the LTI dialog** (Schools module → the school's LTI binding). This inserts
+   the `lti_registration` (if new for that `client_id`) + the `lti_deployment` binding to the school.
+4. **Admin copies the three tool URLs back** from the dialog (`LtiToolUrls.tsx`) and gives them to
+   the district: OIDC Login Init, Launch (Redirect), Public JWKS.
+5. **District configures the Schoology app** with those URLs. **Recommend the new-window / new-tab
+   launch presentation** (surfaced in the LTI dialog) — it sidesteps third-party-cookie blocking.
+6. **Admin flips the per-school binding `is_active` on** (`20260725090100_lti_deployment_is_active.sql`).
+7. **Smoke-test a real launch** from inside Schoology; confirm the teacher lands authenticated in
+   that school's dashboard with rows scoped to their school (RLS).
+
+### 13.4 Open validation item — untestable without real Schoology
+
+**Third-party-cookie behavior in an embedded (iframe) launch cannot be verified in this codebase or
+with the mock harness.** Modern browsers increasingly block third-party cookies by default; the
+Supabase chunked SSR cookies under `SameSite=None` inside a `*.schoology.com` iframe **may be
+blocked on the district's real browsers**. This is a **known open validation step**, not a silent
+assumption:
+
+- The iframe-capable posture is built (frame-ancestors + prod `SameSite=None; Secure`) so embedding
+  *can* work where the browser allows third-party cookies.
+- **The recommended and default launch presentation is new-tab / new-window**, which is a top-level
+  context (plain 302/307 redirect chain, no iframe dependence) and therefore not subject to
+  third-party-cookie blocking.
+- **Before enabling embedded/iframe launch for a district, verify cookie-setting through the bridge
+  on that district's actual browsers.** If blocked, use the new-tab launch (the default).

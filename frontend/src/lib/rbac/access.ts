@@ -85,7 +85,7 @@ export const ADMIN_MODULES: AdminModule[] = [
     name: 'Schools',
     description: 'Manage schools (tenants)',
     viewPermissions: ['schools:read_all'],
-    editPermissions: ['schools:create', 'schools:update'],
+    editPermissions: ['schools:create', 'schools:update', 'schools:manage_lti'],
   },
 ];
 

@@ -14,6 +14,7 @@ import { useSchoolsManagement } from './useSchoolsManagement';
 import { SchoolCardGrid } from './SchoolCardGrid';
 import { SchoolCreateDialog } from './SchoolCreateDialog';
 import { SchoolEditDialog } from './SchoolEditDialog';
+import { SchoolLTIDialog } from './SchoolLTIDialog';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
@@ -25,10 +26,13 @@ export default function AdminSchoolsPage() {
     error,
     canCreate,
     canUpdate,
+    canManageLti,
     createOpen,
     setCreateOpen,
     editSchool,
     setEditSchool,
+    ltiSchool,
+    setLtiSchool,
     reload,
   } = useSchoolsManagement();
 
@@ -104,8 +108,10 @@ export default function AdminSchoolsPage() {
         loading={loading}
         error={error}
         canUpdate={canUpdate}
+        canManageLti={canManageLti}
         hasFilters={hasFilters}
         onEdit={setEditSchool}
+        onManageLti={setLtiSchool}
       />
 
       {/* Edit Dialog */}
@@ -113,6 +119,12 @@ export default function AdminSchoolsPage() {
         school={editSchool}
         onClose={() => setEditSchool(null)}
         onSuccess={reload}
+      />
+
+      {/* LTI Configuration Dialog */}
+      <SchoolLTIDialog
+        school={ltiSchool}
+        onClose={() => setLtiSchool(null)}
       />
     </div>
   );

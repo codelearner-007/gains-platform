@@ -8,31 +8,58 @@ id_token, not a session.
 
 from __future__ import annotations
 
+import hmac
 import logging
 import os
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Header, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.dependencies import get_db
+from app.core.exceptions import AppException
+from app.core.rate_limit import limiter
 from app.services.lti_service import LtiError, LtiService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/lti", tags=["LTI"])
 
-# Where to send the browser after a verified launch. The selected-school cookie
-# / Supabase session bridge is layered on by the app shell; for the launch we
-# carry the resolved school_id so the report renders the right tenant.
-LTI_REDIRECT_BASE = os.getenv("LTI_REDIRECT_BASE", "/app/reports/standard-summary")
+# Origin the browser is on. After a verified launch we hand off to the Next
+# session bridge (/api/lti/bridge) here; the bridge owns the post-session
+# redirect target (LTI_REDIRECT_BASE lives on the Next side now).
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://localhost:3000")
 
 
 def _tool_launch_url(request: Request) -> str:
     # The redirect_uri we registered with the platform — our /lti/launch.
     return f"{PUBLIC_BASE_URL}/api/v1/lti/launch"
+
+
+async def require_bridge_secret(
+    x_lti_bridge_secret: str | None = Header(default=None),
+) -> None:
+    """Constant-time machine-auth check for the session bridge; fails CLOSED.
+
+    Modeled on ingestion.py:require_ingestion_secret. When
+    ``LTI_BRIDGE_SECRET`` is unset/empty, every caller is rejected BEFORE any
+    compare (never ``compare_digest(x, "")``); a missing/wrong header is likewise
+    rejected. The Next /api/lti/bridge route is the only intended caller.
+    """
+    configured = settings.LTI_BRIDGE_SECRET
+    if (
+        not configured
+        or not x_lti_bridge_secret
+        or not hmac.compare_digest(x_lti_bridge_secret, configured)
+    ):
+        raise AppException("unauthorized", status_code=status.HTTP_401_UNAUTHORIZED)
+
+
+class ConsumeTicketRequest(BaseModel):
+    ticket: str
 
 
 async def _login(request, db, *, iss, login_hint, client_id, lti_message_hint,
@@ -53,6 +80,7 @@ async def _login(request, db, *, iss, login_hint, client_id, lti_message_hint,
 
 
 @router.get("/login")
+@limiter.limit(settings.RATE_LIMIT_LTI)
 async def login_get(
     request: Request,
     iss: str,
@@ -69,6 +97,7 @@ async def login_get(
 
 
 @router.post("/login")
+@limiter.limit(settings.RATE_LIMIT_LTI)
 async def login_post(
     request: Request,
     iss: str = Form(...),
@@ -85,6 +114,7 @@ async def login_post(
 
 
 @router.post("/launch")
+@limiter.limit(settings.RATE_LIMIT_LTI)
 async def launch(
     request: Request,
     id_token: str = Form(...),
@@ -100,23 +130,43 @@ async def launch(
         logger.warning("LTI launch rejected: %s", e)
         return JSONResponse(status_code=400, content={"error": str(e)})
 
-    # Hand off into the app, carrying the resolved tenant. A signed launch
-    # ticket / Supabase session is set by the bridge; here we redirect with the
-    # school_id so the report scopes correctly.
-    params = []
-    if result.school_id:
-        params.append(f"school_id={result.school_id}")
-    params.append(f"lti_uid={result.user_id}")
-    target = f"{PUBLIC_BASE_URL}{LTI_REDIRECT_BASE}"
-    if params:
-        target += "?" + "&".join(params)
-    resp = RedirectResponse(target, status_code=302)
-    # Short-lived, cross-site-capable launch cookie for the app shell to pick up.
-    resp.set_cookie(
-        "gains_lti_launch", result.user_id, max_age=300, httponly=True,
-        secure=True, samesite="none",
+    # Hand off into the app via a single-use ticket. The tenant (school_id) and
+    # the exact provisioned email travel in the ticket ROW (not query params /
+    # cookies): the Next bridge consumes the ticket, mints a real Supabase
+    # session for that email, and re-applies school_id on the final redirect.
+    ticket = await service.mint_handoff_ticket(
+        result.user_id, result.school_id, result.email
     )
-    return resp
+    return RedirectResponse(
+        f"{PUBLIC_BASE_URL}/api/lti/bridge?ticket={ticket}", status_code=302
+    )
+
+
+@router.post("/consume-ticket")
+@limiter.limit(settings.RATE_LIMIT_LTI)
+async def consume_ticket(
+    request: Request,
+    payload: ConsumeTicketRequest,
+    _: None = Depends(require_bridge_secret),
+    db: AsyncSession = Depends(get_db),
+):
+    """Machine-auth: exchange a single-use handoff ticket for the user identity.
+
+    Called ONLY by the Next /api/lti/bridge route (X-LTI-Bridge-Secret). Uses the
+    privileged ``get_db`` session (no user JWT — an RLS session would resolve to
+    an empty tenant set), same as the ingestion machine path. Invalid / expired /
+    already-consumed tickets all return 400 {"error":"invalid_ticket"} — the
+    bridge never distinguishes them.
+    """
+    service = LtiService(db)
+    row = await service.consume_handoff_ticket(payload.ticket)
+    if row is None:
+        return JSONResponse(status_code=400, content={"error": "invalid_ticket"})
+    return {
+        "user_id": row["user_id"],
+        "email": row["email"],
+        "school_id": row["school_id"],
+    }
 
 
 @router.get("/.well-known/jwks.json")
