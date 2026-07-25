@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     # user_schools while the integration is dormant. Code/tables/migrations remain
     # intact so enabling restores full function.
     LTI_ENABLED: bool = False
+    # Shared secret for the machine-auth LTI session-bridge endpoint
+    # (X-LTI-Bridge-Secret header on /api/v1/lti/consume-ticket). None/empty →
+    # the dependency fails CLOSED (401), same rationale as
+    # INGESTION_TRIGGER_SECRET, so the consume surface is never open unconfigured.
+    LTI_BRIDGE_SECRET: str | None = None
 
     # Schoology ingestion (scraper → Supabase Storage → backend).
     # Private bucket the scraper uploads CSV exports into and the
@@ -83,6 +88,13 @@ class Settings(BaseSettings):
     # Report XLSX export is CPU/memory heavy (large student×question matrices);
     # cap it well below the read endpoints.
     RATE_LIMIT_REPORTS_EXPORT: str = "20/minute"
+    # Public LTI protocol routes (login/launch/consume-ticket). A single user
+    # click drives a handful of these; the limit is generous enough for a
+    # classroom launching concurrently (buckets are per-IP for unauthenticated
+    # platform traffic) yet caps brute-force/replay probing. Same order of
+    # magnitude as ingestion's 10/minute. NOTE: /.well-known/jwks.json is left
+    # UNLIMITED (Schoology polls it).
+    RATE_LIMIT_LTI: str = "30/minute"
 
     # CORS (optional, disabled by default for Vercel rewrites)
     ENABLE_CORS: bool = False

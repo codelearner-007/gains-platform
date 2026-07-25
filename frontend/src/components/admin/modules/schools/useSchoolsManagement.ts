@@ -14,11 +14,13 @@ export function useSchoolsManagement() {
   // Dialog state
   const [createOpen, setCreateOpen] = useState(false);
   const [editSchool, setEditSchool] = useState<School | null>(null);
+  const [ltiSchool, setLtiSchool] = useState<School | null>(null);
 
   // Permission checks
   const claims = useAdminClaims();
   const canCreate = hasPermission(claims.permissions, 'schools:create');
   const canUpdate = hasPermission(claims.permissions, 'schools:update');
+  const canManageLti = hasPermission(claims.permissions, 'schools:manage_lti');
 
   const loadSchools = useCallback(async () => {
     try {
@@ -53,12 +55,15 @@ export function useSchoolsManagement() {
     // Permissions
     canCreate,
     canUpdate,
+    canManageLti,
 
     // Dialogs
     createOpen,
     setCreateOpen,
     editSchool,
     setEditSchool,
+    ltiSchool,
+    setLtiSchool,
 
     // Actions
     reload: loadSchools,

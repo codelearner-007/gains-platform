@@ -27,6 +27,7 @@ import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 
 import httpx
 import jwt
@@ -36,17 +37,17 @@ from cryptography.hazmat.primitives.serialization import (
     Encoding, NoEncryption, PrivateFormat,
 )
 
+# Make the backend package importable regardless of checkout location
+# (this seed script lives at <repo>/supabase/seeds/).
+_BACKEND_DIR = str(Path(__file__).resolve().parents[2] / "backend")
+sys.path.insert(0, _BACKEND_DIR)
+from app.services.lti_service import (  # noqa: E402
+    SCHOOLOGY_DEFAULTS as SCHOOLOGY,
+    generate_tool_keypair,
+)
+
 PG = "postgresql://postgres:postgres@127.0.0.1:56322/postgres"
 BACKEND = "http://127.0.0.1:8000"
-
-# Real Schoology LTI 1.3 platform endpoints (from research). client_id/keyset
-# get filled in by the org admin after installing the app in Schoology.
-SCHOOLOGY = {
-    "issuer": "https://schoology.schoology.com",
-    "auth_login_url": "https://lti-service.svc.schoology.com/lti-service/authorize-redirect",
-    "auth_token_url": "https://lti-service.svc.schoology.com/lti-service/access-token",
-    "jwks_url": "https://lti-service.svc.schoology.com/lti-service/.well-known/jwks",
-}
 
 # Mock platform constants — used ONLY by the `launch` test harness, which
 # registers + tears these down within a single run (never persisted by `seed`).
@@ -64,7 +65,7 @@ def pem(key: rsa.RSAPrivateKey) -> str:
 
 def cmd_seed() -> int:
     """Register the Schoology 1.3 template (the only persistent registration)."""
-    tool_key = pem(rsa.generate_private_key(public_exponent=65537, key_size=2048))
+    tool_key, tool_kid = generate_tool_keypair()
     conn = psycopg2.connect(PG)
     conn.autocommit = True
     c = conn.cursor()
@@ -75,9 +76,9 @@ def cmd_seed() -> int:
     c.execute(
         """INSERT INTO lti_registration (issuer, client_id, platform_name,
              auth_login_url, auth_token_url, jwks_url, tool_private_key, tool_kid)
-           VALUES (%s,'REPLACE_AFTER_SCHOOLOGY_INSTALL','Schoology',%s,%s,%s,%s,'gains-tool-1')""",
+           VALUES (%s,'REPLACE_AFTER_SCHOOLOGY_INSTALL','Schoology',%s,%s,%s,%s,%s)""",
         (SCHOOLOGY["issuer"], SCHOOLOGY["auth_login_url"],
-         SCHOOLOGY["auth_token_url"], SCHOOLOGY["jwks_url"], tool_key),
+         SCHOOLOGY["auth_token_url"], SCHOOLOGY["jwks_url"], tool_key, tool_kid),
     )
     conn.close()
     print("Seeded LTI registration:")
@@ -119,10 +120,33 @@ def _register_mock_platform(conn, tool_key: str) -> tuple[str, str]:
     return reg_id, school_id
 
 
-def _cleanup_mock_platform(conn) -> None:
-    """Remove the transient mock registration + its deployments/sessions."""
+def _cleanup_mock_platform(conn, role: str) -> None:
+    """Remove ALL synthetic rows a mock launch creates, idempotently.
+
+    Deleting the mock registration cascades lti_user_identity + lti_launch_session
+    (both FK registration_id ON DELETE CASCADE), but NOT the provisioned
+    auth.users row, its user_schools membership, or its lti_handoff_ticket (those
+    hang off user_id, not the registration). So we delete the synthetic user
+    explicitly — its ON DELETE CASCADE FKs then reap user_schools,
+    lti_user_identity, and lti_handoff_ticket. Order/idempotence: safe to run
+    even if the launch failed partway (each DELETE is a no-op when absent).
+    """
     c = conn.cursor()
+    # The provisioned auth.users email is the synthetic lti-{hash}@lti.local
+    # (H1: identity is keyed on (registration_id, sub), NEVER the claim email), so
+    # we cannot clean up by the demo claim email. Capture the provisioned user_ids
+    # via lti_user_identity BEFORE deleting the mock registration (whose cascade
+    # wipes lti_user_identity), then delete those auth.users rows — their ON DELETE
+    # CASCADE FKs reap user_schools, lti_user_identity, and lti_handoff_ticket.
+    c.execute(
+        "SELECT DISTINCT user_id FROM lti_user_identity WHERE registration_id IN "
+        "(SELECT id FROM lti_registration WHERE issuer=%s)",
+        (MOCK_ISS,),
+    )
+    user_ids = [str(r[0]) for r in c.fetchall()]
     c.execute("DELETE FROM lti_registration WHERE issuer=%s", (MOCK_ISS,))
+    if user_ids:
+        c.execute("DELETE FROM auth.users WHERE id = ANY(%s::uuid[])", (user_ids,))
 
 
 def cmd_launch(role: str) -> int:
@@ -133,7 +157,7 @@ def cmd_launch(role: str) -> int:
     }[role]
 
     # Register a transient mock platform for this run (cleaned up in finally).
-    tool_key = pem(rsa.generate_private_key(public_exponent=65537, key_size=2048))
+    tool_key, _ = generate_tool_keypair(kid_prefix="gains-tool-mock")
     reg_conn = psycopg2.connect(PG)
     reg_conn.autocommit = True
     _register_mock_platform(reg_conn, tool_key)
@@ -185,11 +209,33 @@ def cmd_launch(role: str) -> int:
             }, pem(plat), algorithm="RS256", headers={"kid": MOCK_KID})
             r = cli.post("/api/v1/lti/launch", data={"id_token": token, "state": state})
             print(f"launch -> {r.status_code}")
-            print(f"redirect: {r.headers.get('location')}")
-            return 0 if r.status_code == 302 else 1
+            bridge_loc = r.headers.get("location")
+            print(f"launch redirect: {bridge_loc}")
+            if r.status_code != 302 or not bridge_loc:
+                return 1
+
+        # E2E ORACLE: follow the launch redirect THROUGH the Next bridge, which
+        # consumes the ticket, mints a real Supabase session, and redirects to
+        # the tenant-scoped report. Requires the Next dev server up on :3000.
+        with httpx.Client(follow_redirects=False) as web:
+            b = web.get(bridge_loc)
+            print(f"bridge -> {b.status_code}")
+            final_loc = b.headers.get("location")
+            print(f"bridge redirect: {final_loc}")
+            sb_cookies = [
+                k for k in b.cookies.keys() if k.startswith("sb-")
+            ]
+            print(f"bridge set-cookie (sb-*): {sb_cookies or 'NONE'}")
+            ok = (
+                b.status_code in (302, 303, 307)
+                and bool(final_loc)
+                and "/app/" in final_loc
+                and any(k.startswith("sb-") for k in b.cookies.keys())
+            )
+            return 0 if ok else 1
     finally:
         srv.shutdown()
-        _cleanup_mock_platform(reg_conn)
+        _cleanup_mock_platform(reg_conn, role)
         reg_conn.close()
 
 
@@ -206,5 +252,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.path.insert(0, "/Users/mac/Desktop/PS_P/gains-platform/backend")
+    sys.path.insert(0, _BACKEND_DIR)
     raise SystemExit(main())
