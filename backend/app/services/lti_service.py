@@ -60,6 +60,12 @@ _ROLE_URIS = {
     "teacher": (
         "membership#instructor",
         "institution/person#instructor",
+        # Schoology flags teachers as Faculty/Staff and, for a non-course launch
+        # (e.g. User-profile-navigation placement), emits the institution role
+        # rather than the course membership#Instructor — without these two a
+        # teacher would collapse to student and be denied all data.
+        "institution/person#faculty",
+        "institution/person#staff",
         "membership#contentdeveloper",
         "membership#teachingassistant",
     ),
