@@ -12,6 +12,17 @@ export async function updateSession(request: NextRequest) {
         request,
     })
 
+    // A framed (Schoology iframe / LTI) session carries the `gains-framed` marker
+    // set by the bridge. On EVERY /app request this middleware re-issues the
+    // session cookie; without preserving Partitioned; SameSite=None; Secure here,
+    // the first pass downgrades the bridge's partitioned cookie to the default
+    // Lax/unpartitioned form and the third-party iframe drops it (blank app).
+    // Scoped by the marker so standalone password/OAuth sessions stay Lax +
+    // unpartitioned (their correct same-origin CSRF posture).
+    const framed =
+        process.env.NODE_ENV === 'production' &&
+        request.cookies.has('gains-framed')
+
     const supabase = createServerClient(
         publicSettings.NEXT_PUBLIC_SUPABASE_URL,
         publicSettings.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -26,7 +37,13 @@ export async function updateSession(request: NextRequest) {
                         request,
                     })
                     cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
+                        supabaseResponse.cookies.set(
+                            name,
+                            value,
+                            framed
+                                ? { ...options, sameSite: 'none', secure: true, partitioned: true }
+                                : options,
+                        )
                     )
                 },
             },
