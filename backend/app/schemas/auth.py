@@ -2,14 +2,19 @@
 
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class CurrentUser(BaseModel):
     """Current authenticated user with permissions and school membership."""
 
     user_id: str
-    email: EmailStr
+    # Plain str, not EmailStr: this is a trusted claim from our own JWT, not user
+    # input, and LTI users carry a synthetic address (lti-<hash>@lti.local, see
+    # synthetic_lti_email) whose reserved `.local` TLD EmailStr rejects — which
+    # would 422 every authenticated request for an LTI user. Authorization never
+    # uses email (only permissions/school_ids/is_super_admin).
+    email: str
     user_role: str
     hierarchy_rank: int
     permissions: List[str]
