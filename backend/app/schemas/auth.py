@@ -22,6 +22,11 @@ class CurrentUser(BaseModel):
     school_ids: List[str] = []
     primary_school_id: Optional[str] = None
     is_super_admin: bool = False
+    # True for Schoology-embedded (LTI-provisioned) accounts. Defaults False so an
+    # absent claim (e.g. a token minted before the claim existed) is treated as a
+    # normal account — the safe default for a lock-down (the middleware route wall
+    # is the real enforcement; this flag gates account-mutation endpoints).
+    is_lti_user: bool = False
 
     def has_permission(self, permission: str) -> bool:
         """Check if user has a specific permission."""

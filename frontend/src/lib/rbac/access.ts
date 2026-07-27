@@ -90,6 +90,32 @@ export const ADMIN_MODULES: AdminModule[] = [
 ];
 
 /**
+ * Whether this session is a Schoology-embedded (LTI) user. Keyed on the signed
+ * `is_lti_user` JWT claim (derived server-side from the durable lti_user_identity
+ * row), never on the synthetic email string.
+ */
+export function isLtiUser(claims: { is_lti_user?: boolean } | null | undefined): boolean {
+  return claims?.is_lti_user === true;
+}
+
+/**
+ * Routes an LTI (Schoology-embedded) user is allowed to reach. They get a
+ * locked, analytics-only experience: the dashboard and the reports it drills
+ * into — nothing else (no settings / account).
+ *
+ * Expressed as an ALLOWLIST so any NEW `/app/*` route added later is locked-out
+ * by default (fails closed) until it is explicitly permitted here.
+ */
+export function isLtiAllowedPath(pathname: string): boolean {
+  return (
+    pathname === '/app' ||
+    pathname === '/app/' ||
+    pathname.startsWith('/app/reports/') ||
+    pathname.startsWith('/app/students/')
+  );
+}
+
+/**
  * Check if user can see the Admin nav entry
  */
 export function canSeeAdminEntry(claims: UserClaims | null): boolean {

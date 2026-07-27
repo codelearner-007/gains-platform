@@ -3,6 +3,7 @@ import { createSSRClient } from '@/lib/supabase/server';
 import { resetPasswordSchema } from '@/lib/schemas/auth.schema';
 import { enforceMFAForOperation } from '@/lib/utils/mfa-check';
 import { enforceSameOrigin } from '@/lib/utils/origin';
+import { forbidLtiUser } from '@/lib/server/lti-guard';
 import { zodToApiError } from '@/lib/utils/api-errors';
 import { z } from 'zod';
 import { enforceRateLimitResponse } from '@/lib/utils/rate-limit';
@@ -36,6 +37,11 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
+      // A Schoology-embedded (LTI) account has no password; setting one here
+      // would mint a standalone password login and escape the lock-down. Reject.
+      const ltiError = await forbidLtiUser();
+      if (ltiError) return ltiError;
+
       // User is authenticated - enforce MFA if they have it enabled
       const mfaError = await enforceMFAForOperation(supabase);
       if (mfaError) return mfaError;

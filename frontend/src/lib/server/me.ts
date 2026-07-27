@@ -68,6 +68,27 @@ export async function getMe(): Promise<CurrentUser | null> {
 }
 
 /**
+ * Server-side: is the current session a Schoology-embedded (LTI) user?
+ *
+ * Reads the signed `is_lti_user` JWT claim directly (no MFA/user round-trip) so
+ * the `/app` shell can be rendered locked-down on first paint (no flash of the
+ * full nav), and also backs the account-mutation API guard (`forbidLtiUser`).
+ * Fails to `false` (treat as a normal account) on any error: a real LTI user
+ * always carries the claim, so the only false-negative is a transient read
+ * hiccup on a request that already needs a valid session to do anything.
+ */
+export async function getIsLtiUser(): Promise<boolean> {
+  try {
+    const supabase = await createSSRClient();
+    const { data, error } = await supabase.auth.getClaims();
+    if (error) return false;
+    return (data?.claims as RBACClaims | undefined)?.is_lti_user === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get user claims for RBAC checks
  */
 export function getUserClaims(user: CurrentUser | null) {

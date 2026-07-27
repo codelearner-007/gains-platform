@@ -44,6 +44,22 @@ class PermissionDeniedError(AppException):
         self._required_permission = required_permission
 
 
+class LtiActionForbiddenError(AppException):
+    """Raised when an LTI (Schoology-embedded) user attempts an action reserved
+    for full platform accounts.
+
+    LTI users get a locked, analytics-only experience (dashboard + reports).
+    Account/profile mutation endpoints carry no permission of their own, so this
+    closes the write boundary at the API even if the UI/middleware were bypassed.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            message="This action is not available for Schoology-integrated accounts",
+            status_code=403,
+        )
+
+
 class InvalidTokenError(AppException):
     """Raised when JWT token is invalid or expired."""
 

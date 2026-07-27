@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { checkMFAStatus } from '@/lib/utils/mfa-check'
-import { ADMIN_MODULES, canAccessAdminModule, canSeeAdminEntry } from '@/lib/rbac/access'
+import { ADMIN_MODULES, canAccessAdminModule, canSeeAdminEntry, isLtiAllowedPath } from '@/lib/rbac/access'
 import type { PermissionString, RBACClaims } from '@/lib/types/rbac.types'
 import { publicSettings } from '../core/public-settings'
 
@@ -114,6 +114,28 @@ export async function updateSession(request: NextRequest) {
             const url = request.nextUrl.clone()
             url.pathname = '/auth/login'
             url.searchParams.set('sessionError', '1')
+            return NextResponse.redirect(url)
+        }
+    }
+
+    // LTI (Schoology-embedded) users get a locked, analytics-only experience:
+    // the dashboard and the reports it drills into — nothing else. Enforced here
+    // at the edge (not merely hidden in the UI), so a typed URL to
+    // /app/user-settings etc. is bounced back to the dashboard. isLtiAllowedPath
+    // is an allowlist, so any future /app route is locked-out by default.
+    if (user && user.user && pathname.startsWith('/app')) {
+        const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
+        if (claimsError) {
+            console.error('Failed to get JWT claims in middleware (LTI gating):', claimsError)
+        }
+        const jwtClaims = (claimsData?.claims ?? {}) as RBACClaims
+        // Absent/unreadable claim → treat as a normal account (full experience).
+        // The account-mutation API endpoints (forbid_lti_user) are the backstop
+        // that enforces the boundary for a real LTI user regardless.
+        if (jwtClaims.is_lti_user === true && !isLtiAllowedPath(pathname)) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/app'
+            url.search = ''
             return NextResponse.redirect(url)
         }
     }

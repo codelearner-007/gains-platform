@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_user, get_db
+from app.core.dependencies import forbid_lti_user, get_current_user, get_db
 from app.schemas.auth import CurrentUser
 from app.schemas.request.profile import UpdateProfileRequest
 from app.schemas.response.profile import ProfileResponse
@@ -27,9 +27,9 @@ async def get_profile(
 async def update_profile(
     data: UpdateProfileRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(forbid_lti_user),
 ) -> ProfileResponse:
-    """Update the current user's profile."""
+    """Update the current user's profile. Not available to LTI users."""
     service = ProfileService(db)
     profile = await service.update_profile(current_user.user_id, data)
     return ProfileResponse.model_validate(profile)
@@ -39,9 +39,9 @@ async def update_profile(
 async def upload_avatar(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(get_current_user),
+    current_user: CurrentUser = Depends(forbid_lti_user),
 ) -> dict:
-    """Upload an avatar image. Returns the public URL."""
+    """Upload an avatar image. Returns the public URL. Not available to LTI users."""
     service = ProfileService(db)
     avatar_url = await service.upload_avatar(current_user.user_id, file)
     return {"avatar_url": avatar_url}

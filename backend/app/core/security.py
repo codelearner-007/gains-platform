@@ -136,4 +136,5 @@ def extract_user_claims(payload: Dict[str, Any]) -> Dict[str, Any]:
         "school_ids": payload.get("school_ids", []),
         "primary_school_id": payload.get("primary_school_id"),
         "is_super_admin": payload.get("is_super_admin", False),
+        "is_lti_user": payload.get("is_lti_user", False),
     }

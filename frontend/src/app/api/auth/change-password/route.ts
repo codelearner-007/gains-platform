@@ -3,6 +3,7 @@ import { createSSRClient } from '@/lib/supabase/server';
 import { createServerAdminClient } from '@/lib/supabase/serverAdminClient';
 import { enforceMFAForOperation } from '@/lib/utils/mfa-check';
 import { enforceSameOrigin } from '@/lib/utils/origin';
+import { forbidLtiUser } from '@/lib/server/lti-guard';
 import { strongPasswordSchema } from '@/lib/schemas/password.schema';
 import { zodToApiError } from '@/lib/utils/api-errors';
 import { z } from 'zod';
@@ -34,6 +35,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const ltiError = await forbidLtiUser();
+    if (ltiError) return ltiError;
 
     // Change password is a sensitive operation - enforce MFA if user has it enabled
     const mfaError = await enforceMFAForOperation(supabase);

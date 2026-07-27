@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSSRClient } from '@/lib/supabase/server';
 import { enforceSameOrigin } from '@/lib/utils/origin';
+import { forbidLtiUser } from '@/lib/server/lti-guard';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const ltiError = await forbidLtiUser();
+    if (ltiError) return ltiError;
 
     const body = await request.json();
     const { friendlyName } = body;

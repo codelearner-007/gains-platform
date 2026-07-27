@@ -6,4 +6,7 @@ export interface RBACClaims {
   permissions?: string[];
   hierarchy_rank?: number;
   user_role?: string;
+  // True for Schoology-embedded (LTI-provisioned) accounts. Derived in the auth
+  // hook from the durable lti_user_identity row, not the email string.
+  is_lti_user?: boolean;
 }

@@ -10,7 +10,11 @@ from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import InvalidTokenError, PermissionDeniedError
+from app.core.exceptions import (
+    InvalidTokenError,
+    LtiActionForbiddenError,
+    PermissionDeniedError,
+)
 from app.core.security import extract_user_claims, verify_token
 from app.db.session import get_session_manager
 from app.schemas.auth import CurrentUser
@@ -185,6 +189,26 @@ async def get_current_user(
     payload = await verify_token(token)
     claims = extract_user_claims(payload)
     return CurrentUser(**claims)
+
+
+async def forbid_lti_user(
+    current_user: CurrentUser = Depends(get_current_user),
+) -> CurrentUser:
+    """Reject LTI (Schoology-embedded) users, allow everyone else.
+
+    Use as the auth dependency on account-mutation endpoints (profile edit,
+    avatar upload) which have no permission of their own. LTI users get a
+    locked, analytics-only experience; this enforces it at the API boundary —
+    the real wall — not just in the UI. Reads stay on ``get_current_user``.
+
+    Example:
+        @router.patch("")
+        async def update_profile(current_user: CurrentUser = Depends(forbid_lti_user)):
+            ...
+    """
+    if current_user.is_lti_user:
+        raise LtiActionForbiddenError()
+    return current_user
 
 
 def require_permission(required_permission: str) -> Callable:
