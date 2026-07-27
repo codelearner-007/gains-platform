@@ -7,8 +7,7 @@ import { publicSettings } from '@/lib/core/public-settings';
 // backend redirects here (/api/lti/bridge?ticket=...) instead of straight to a
 // report so that a real Supabase session cookie is set on the app's own origin
 // before the app shell renders.
-const LTI_REDIRECT_BASE =
-  process.env.LTI_REDIRECT_BASE || '/app/reports/standard-summary';
+const LTI_REDIRECT_BASE = process.env.LTI_REDIRECT_BASE || '/app';
 
 function invalidLaunch(request: Request) {
   return NextResponse.redirect(
@@ -92,12 +91,16 @@ export async function GET(request: Request) {
   // In dev we fall back to the shared Lax default (the mock harness runs
   // same-origin, so Lax is fine and cookie-setting still works). This override
   // is scoped to THIS route's client only; password login / OAuth keep Lax.
-  const bridgeCookieOptions =
-    process.env.NODE_ENV === 'production'
-      ? ({ sameSite: 'none' as const, secure: true })
-      : undefined;
+  const isProd = process.env.NODE_ENV === 'production';
+  const bridgeCookieOptions = isProd
+    ? ({ sameSite: 'none' as const, secure: true })
+    : undefined;
 
-  const supabase = await createSSRClient(bridgeCookieOptions);
+  // Partitioned (CHIPS) so the SameSite=None session cookie survives inside the
+  // Schoology iframe under modern Chrome's third-party-cookie blocking.
+  const supabase = await createSSRClient(bridgeCookieOptions, {
+    partitioned: isProd,
+  });
   const { error: otpError } = await supabase.auth.verifyOtp({
     type: 'magiclink',
     token_hash: tokenHash,
