@@ -7,12 +7,10 @@ session.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.repositories.base_repository import row_to_dict
 
 
 class DimRepository:
@@ -151,32 +149,3 @@ class DimRepository:
         )
         result = await self.session.execute(sql)
         return [dict(r._mapping) for r in result.all()]
-
-    # ────── dim_item (assessment lookup) ──────
-
-    async def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
-        sql = text(
-            """
-            SELECT
-                di.item_id,
-                di.item_name,
-                di.item_type,
-                di.subject_id,
-                ds.subject,
-                ds.grade,
-                ds.session,
-                ds.assessment_type,
-                di.section_name,
-                di.section_instructors,
-                di.assessment_date,
-                di.school_id::text AS school_id
-            FROM dim_item di
-            LEFT JOIN dim_subject ds
-              ON ds.school_id = di.school_id AND ds.subject_id = di.subject_id
-            WHERE di.item_id = :item_id
-            LIMIT 1
-            """
-        )
-        result = await self.session.execute(sql, {"item_id": item_id})
-        row = result.first()
-        return row_to_dict(row) if row else None
