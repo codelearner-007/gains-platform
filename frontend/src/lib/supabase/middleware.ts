@@ -4,6 +4,7 @@ import { checkMFAStatus } from '@/lib/utils/mfa-check'
 import { ADMIN_MODULES, canAccessAdminModule, canSeeAdminEntry, isLtiAllowedPath } from '@/lib/rbac/access'
 import type { PermissionString, RBACClaims } from '@/lib/types/rbac.types'
 import { publicSettings } from '../core/public-settings'
+import { GAINS_FRAMED_COOKIE } from '@/lib/lti/constants'
 
 const KNOWN_ADMIN_MODULE_KEYS = new Set(ADMIN_MODULES.map((m) => m.key))
 
@@ -21,7 +22,7 @@ export async function updateSession(request: NextRequest) {
     // unpartitioned (their correct same-origin CSRF posture).
     const framed =
         process.env.NODE_ENV === 'production' &&
-        request.cookies.has('gains-framed')
+        request.cookies.has(GAINS_FRAMED_COOKIE)
 
     const supabase = createServerClient(
         publicSettings.NEXT_PUBLIC_SUPABASE_URL,

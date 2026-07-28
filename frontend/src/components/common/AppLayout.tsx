@@ -27,13 +27,8 @@ function getInitials(email: string) {
 
 export default function AppLayout({
   children,
-  isLtiUser = false,
 }: {
   children: React.ReactNode;
-  // Schoology-embedded users get a bare, analytics-only shell: Dashboard +
-  // reports, and none of the account/settings chrome. Decided server-side (see
-  // ProtectedShellLayout) so there is no flash of the full nav on first paint.
-  isLtiUser?: boolean;
 }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
@@ -56,11 +51,10 @@ export default function AppLayout({
 
   const navigation = [
     { name: 'Dashboard', href: '/app', icon: Home },
-    // Account/settings is hidden for Schoology-embedded users.
-    ...(isLtiUser ? [] : [{ name: 'Settings', href: '/app/user-settings', icon: User }]),
+    { name: 'Settings', href: '/app/user-settings', icon: User },
   ];
 
-  const showAdmin = !isLtiUser && user && canSeeAdminEntry({
+  const showAdmin = user && canSeeAdminEntry({
     permissions: user.app_metadata?.permissions ?? [],
     hierarchy_rank: user.app_metadata?.hierarchy_rank,
     user_role: user.app_metadata?.user_role,
@@ -97,11 +91,9 @@ export default function AppLayout({
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {!isLtiUser && (
-            <div className="px-1 pb-3">
-              <SchoolSwitcher />
-            </div>
-          )}
+          <div className="px-1 pb-3">
+            <SchoolSwitcher />
+          </div>
           {navigation.map((item) => {
             const isActive =
               item.href === '/app'
@@ -155,7 +147,6 @@ export default function AppLayout({
           )}
         </nav>
 
-        {!isLtiUser && (
         <div className="flex-shrink-0 border-t border-border p-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild disabled={loading}>
@@ -206,7 +197,6 @@ export default function AppLayout({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        )}
       </aside>
 
       <div className="lg:pl-64 print:pl-0 min-h-screen flex flex-col">

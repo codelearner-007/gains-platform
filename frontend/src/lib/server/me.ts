@@ -4,7 +4,9 @@
  * Used for server-side route gating in admin pages
  */
 
+import { cookies } from 'next/headers';
 import { createSSRClient } from '@/lib/supabase/server';
+import { GAINS_FRAMED_COOKIE } from '@/lib/lti/constants';
 import { checkMFAStatus } from '@/lib/utils/mfa-check';
 import type { AppMetadata, UserMetadata } from '@/lib/types/auth.types';
 import type { PermissionString, RBACClaims } from '@/lib/types/rbac.types';
@@ -83,6 +85,25 @@ export async function getIsLtiUser(): Promise<boolean> {
     const { data, error } = await supabase.auth.getClaims();
     if (error) return false;
     return (data?.claims as RBACClaims | undefined)?.is_lti_user === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Server-side: is the current request rendered inside the Schoology iframe?
+ *
+ * Keyed on the `gains-framed` cookie — set ONLY by the LTI bridge (httpOnly,
+ * partitioned to schoology.com) and the authoritative "in-frame" signal. Drives
+ * the CHROME-LESS shell (no sidebar/header/logo) and suppresses cookie consent.
+ * UX signal ONLY — account/security lock-down stays keyed on the `is_lti_user`
+ * claim (see `getIsLtiUser` / `forbidLtiUser`). Fails to `false` (standard
+ * chrome) on any error — the safe default.
+ */
+export async function getIsFramed(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.has(GAINS_FRAMED_COOKIE);
   } catch {
     return false;
   }

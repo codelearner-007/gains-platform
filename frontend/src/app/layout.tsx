@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getIsFramed } from "@/lib/server/me";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
@@ -24,12 +25,16 @@ export const metadata: Metadata = {
     "GAINS turns your school's assessments into clear reports on students, standards, and growth over time.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const gaID = publicSettings.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  // Suppress the cookie-consent banner inside the Schoology iframe: the partitioned
+  // third-party context has no working store for it and the owner wants a
+  // chrome-less frame. `gains-framed` is server-readable here (set by the bridge).
+  const framed = await getIsFramed();
   return (
     <html lang="en" className={inter.variable}>
     <body className={inter.className}>
@@ -42,7 +47,7 @@ export default function RootLayout({
       {children}
       <ToastMount />
       <Analytics />
-      <CookieConsent />
+      {!framed && <CookieConsent />}
       {gaID && <GoogleAnalytics gaId={gaID} />}
     </body>
     </html>
