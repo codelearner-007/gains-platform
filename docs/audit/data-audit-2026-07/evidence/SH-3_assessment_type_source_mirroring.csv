@@ -1,7 +1,0 @@
-school_name,assessment_type_literal,len,dim_subject_rows,raw_student_submission_rows,source_verdict
-Athenian Academy of Technology and the Arts,'Lesson  Assessments',19,1138,1791449,PRESENT_IN_RAW_SOURCE
-Athenian Academy of Technology and the Arts,'Lesson Assessments',18,1,1305,PRESENT_IN_RAW_SOURCE
-Athenian Academy of Technology and the Arts,'Unit-Chap  Assessments',22,44,39453,PRESENT_IN_RAW_SOURCE
-Central Florida Preparatory School,'Lesson  Assessments',19,1,0,no_raw_for_school(parquet-loaded)
-Central Florida Preparatory School,'topic',5,102,0,no_raw_for_school(parquet-loaded)
-Crestwell School,'2 sectionsAll Sections',22,1,0,no_raw_for_school(parquet-loaded)

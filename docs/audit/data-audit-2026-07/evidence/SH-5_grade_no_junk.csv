@@ -1,5 +1,0 @@
-school,grade,grade_sort,grade_no,right1_check,issue,row_count
-Athenian Academy of Technology and the Arts,Grade K,Grade 0,K,K,"Grade K renders AFTER Grade 8 (raw-text sort, grade_sort unused)",113
-Central Florida Preparatory School,Higher-Ed,Higher-Ed,d,d,grade_no junk letter (d),46
-Central Florida Preparatory School,Regular 9–12,Regular 9–12,2,2,grade_no collides with Grade 2 (2),36
-Crestwell School,Grade K,Grade 0,K,K,"Grade K renders AFTER Grade 8 (raw-text sort, grade_sort unused)",28

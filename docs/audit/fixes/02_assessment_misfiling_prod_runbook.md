@@ -1,5 +1,12 @@
 # Assessment Misfiling Fixes — Production Runbook
 
+> ⚠️ **SUPERSEDED by [`03_prod_data_sync_runbook.md`](./03_prod_data_sync_runbook.md).**
+> The in-place convergence SQL below is **historical**: the misfiling fixes were
+> ultimately applied to production via the full truncate + chunked-COPY **reload**
+> (Method A) documented in runbook 03, which is the canonical current procedure for
+> changing prod data. Kept for provenance of the SQL patterns — do not use as the
+> current procedure.
+
 **Read this before applying any of the misfiling / data-quality fixes to production.**
 Self-contained: every SQL pattern needed is inline, so it works without the original
 session scratchpad. Written 2026-07-09 after applying + verifying all of the below on

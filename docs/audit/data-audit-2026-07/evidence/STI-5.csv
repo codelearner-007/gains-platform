@@ -1,7 +1,0 @@
-course_nid,stg_course_name,items,fact_rows,stg_rows,stg_code_notnull,stg_code_null,diagnosis
-7696815268,Math 2nd,31,10593,14406,0,14406,in_staging_but_course_code_100pct_NULL->dropped_by_legacy_dropna
-7610645764,Math 5th,23,7123,7042,0,7042,in_staging_but_course_code_100pct_NULL->dropped_by_legacy_dropna
-7610717834,Reading 5th,23,5354,10582,0,10582,in_staging_but_course_code_100pct_NULL->dropped_by_legacy_dropna
-7926223489,ELA 8th,4,692,1117,0,1117,in_staging_but_course_code_100pct_NULL->dropped_by_legacy_dropna
-7926504449,Science 7th,2,612,2106,0,2106,in_staging_but_course_code_100pct_NULL->dropped_by_legacy_dropna
-7926509542,Science 8th,2,600,1488,0,1488,in_staging_but_course_code_100pct_NULL->dropped_by_legacy_dropna
