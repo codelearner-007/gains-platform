@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createSSRClient } from '@/lib/supabase/server';
 import { createServerAdminClient } from '@/lib/supabase/serverAdminClient';
 import { publicSettings } from '@/lib/core/public-settings';
+import { GAINS_FRAMED_COOKIE } from '@/lib/lti/constants';
 
 // Where to land the browser after a verified launch mints a session. The
 // backend redirects here (/api/lti/bridge?ticket=...) instead of straight to a
@@ -131,29 +132,19 @@ export async function GET(request: Request) {
   const dest = new URL(LTI_REDIRECT_BASE, request.url);
   if (school_id) dest.searchParams.set('school_id', school_id);
   const res = NextResponse.redirect(dest);
-  if (isProd) {
-    // Mark this as an iframe (Schoology) session. The middleware reads this to
-    // keep Partitioned; SameSite=None; Secure on the session-cookie refreshes it
-    // performs on every /app request — WITHOUT it, the first middleware pass
-    // rewrites the bridge cookie with the default Lax/unpartitioned options and
-    // the third-party iframe drops it (blank app).
-    //
-    // Two properties keep the weaker SameSite=None posture confined to the frame:
-    //   1. Partitioned (CHIPS): set from inside the Schoology iframe, the marker
-    //      lives in the schoology.com-keyed partition, so a standalone top-level
-    //      tab (partition = our own site) never sees it → its session stays Lax.
-    //   2. Session-scoped (NO maxAge): the marker dies with the browsing session
-    //      instead of durably downgrading standalone visits for days. Every
-    //      launch re-sets it, so an active framed session never loses it. This is
-    //      the belt-and-suspenders for browsers that ignore Partitioned (older
-    //      Chrome / Safari), where property 1 alone would not contain it.
-    res.cookies.set('gains-framed', '1', {
-      sameSite: 'none',
-      secure: true,
-      partitioned: true,
-      path: '/',
-      httpOnly: true,
-    });
-  }
+
+  // Mark this as an iframe (Schoology) session — read by the middleware (to keep
+  // Partitioned; SameSite=None; Secure on its per-request session-cookie refresh)
+  // and by getIsFramed() (chrome-less shell + no cookie consent). Always set, so
+  // the framed shell is testable over local http; the partitioned transport
+  // attributes (which local http can't carry) stay PROD-only, leaving prod
+  // behavior unchanged. Session-scoped (no maxAge): every launch re-sets it.
+  res.cookies.set(GAINS_FRAMED_COOKIE, '1', {
+    path: '/',
+    httpOnly: true,
+    ...(isProd
+      ? { sameSite: 'none' as const, secure: true, partitioned: true }
+      : {}),
+  });
   return res;
 }

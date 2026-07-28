@@ -99,10 +99,10 @@ export function LtiToolUrls({ toolKid }: { toolKid?: string | null }) {
       {toolKid && <CopyRow label="Tool Key ID" value={toolKid} />}
       <p className="text-xs text-muted-foreground">
         Recommended launch presentation:{' '}
-        <span className="font-medium text-foreground">new window / new tab</span>.
-        This avoids third-party-cookie blocking that can occur when the dashboard
-        is embedded in an iframe. Embedded (iframe) launch is supported but should
-        be verified on the district&apos;s browsers first.
+        <span className="font-medium text-foreground">Embedded (iframe)</span>.
+        GAINS renders inside Schoology as a chrome-less dashboard; the launch uses
+        partitioned (CHIPS) session cookies so it survives modern browsers&apos;
+        third-party-cookie blocking.
       </p>
     </div>
   );
