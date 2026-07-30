@@ -85,4 +85,28 @@ jobs:
         run: |
           files="tests/services/test_lti_currentuser_email.py"
           [ -f tests/services/test_lti_dashboard_only.py ] && files="$files tests/services/test_lti_dashboard_only.py"
+          # These two are DB-free by construction and pin structural guarantees that
+          # were otherwise enforced by nothing: the production transform refusal, and
+          # the frozen storage-key contract with the scraper.
+          [ -f tests/jobs/test_prod_transform_guard.py ] && files="$files tests/jobs/test_prod_transform_guard.py"
+          [ -f tests/jobs/test_storage_key_contract.py ] && files="$files tests/jobs/test_storage_key_contract.py"
           pytest -q $files
+
+  scraper:
+    name: scraper
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install deps
+        working-directory: scraper
+        run: npm ci --omit=dev
+      - name: Unit tests
+        # Pure unit tests: no network, no browser, no DB (~200ms). They pin the
+        # pagination invariants, the storage-key contract on the producing side, and
+        # the "notifications never change the run outcome" rule. `pretest` fails if
+        # the test files ever disappear, so the suite cannot pass vacuously.
+        working-directory: scraper
+        run: npm test
