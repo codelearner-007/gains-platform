@@ -91,8 +91,16 @@ class FakeSession:
         if "count(*) from fact_student_submission" in sql:
             row = _Row((self.wh.fact,))
             return _Result([row])
-        if "count(*) from raw_student_submission" in sql:
-            return _Result([_Row((self.wh.raw_total,))])
+        if "raw_student_submission" in sql and "count(*)" in sql:
+            # Matches BOTH shapes of the empty-raw floor probe: the unbounded
+            # `count(*) FROM raw_student_submission` and the bounded probe
+            # `count(*) FROM (SELECT 1 FROM raw_student_submission LIMIT :cap) t`.
+            # Matching only the unbounded literal silently returned an empty
+            # result for the bounded form, so the gate raised and every
+            # transform-path assertion in this module tested the failure branch.
+            cap = p.get("cap")
+            total = self.wh.raw_total if cap is None else min(self.wh.raw_total, cap)
+            return _Result([_Row((total,))])
         if "dirty_token" in sql and "select" in sql:
             tok = self.wh.dirty_token if self.wh.dirty else None
             return _Result([_Row((tok,))])
