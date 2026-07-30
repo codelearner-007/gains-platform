@@ -65,3 +65,37 @@ test("the base image is a Node >= 22 variant", () => {
     `base image distro "${distro}" may ship Node < 22, which @supabase/* rejects`,
   );
 });
+
+
+/**
+ * A Railway deploy RUNS the container. So a start command that scrapes means every
+ * deploy performs a live export — which is exactly what happened once: a
+ * `startCommand` of `node schoology-exporter.js --school Athenian` turned the
+ * service's first deploy into a production run against real student data.
+ *
+ * Overriding it to something safe at the service level does not help: this file
+ * takes precedence over the dashboard/API setting. So the committed value is the
+ * only thing that decides, and it is asserted here.
+ */
+test("railway.json's start command cannot trigger a scrape", () => {
+  const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, "railway.json"), "utf8"));
+  const cmd = cfg.deploy.startCommand;
+
+  for (const flag of ["--school", "--assessment", "--due-until", "--include-undated"]) {
+    assert.ok(
+      !cmd.includes(flag),
+      `startCommand contains ${flag} — every deploy of this service would scrape. `
+      + `Keep it inert and invoke runs with \`railway run\`. If enabling cron, that is `
+      + `a deliberate, reviewable change (see DEPLOY.md) — update this test with it.`,
+    );
+  }
+  // Positively assert the inert form, so silently emptying the command also fails.
+  assert.match(cmd, /--help$/, "the inert start command should be `--help`");
+});
+
+test("a one-shot job must never be auto-restarted", () => {
+  // The scraper exits non-zero on partial failure. ON_FAILURE would restart it into
+  // a full re-export: hammering Schoology and duplicating objects in the bucket.
+  const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, "railway.json"), "utf8"));
+  assert.equal(cfg.deploy.restartPolicyType, "NEVER");
+});

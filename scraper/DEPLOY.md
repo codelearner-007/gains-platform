@@ -8,11 +8,25 @@ from the backend's.
 | | backend | scraper |
 |---|---|---|
 | shape | long-running HTTP server | one-shot job that exits |
-| `startCommand` | `uvicorn …` | `node schoology-exporter.js --school <name>` |
+| `startCommand` | `uvicorn …` | `node schoology-exporter.js --help` (inert) |
 | `healthcheckPath` | `/health` | none — nothing to health-check |
 | `restartPolicyType` | `ON_FAILURE` | **`NEVER`** |
 
-`restartPolicyType: NEVER` is the important one. On `ON_FAILURE`, a scrape that
+### The start command is deliberately inert
+
+`startCommand` runs `--help` and exits 0. It does **not** scrape.
+
+That is not laziness — a Railway deploy *runs* the container, so any real command
+here means **every deploy performs a scrape**. That happened once: a start command of
+`node schoology-exporter.js --school Athenian` turned the service's first deploy into
+a live production export. Worth knowing if you are tempted to "just put the flags
+back": a service-level start command set through the dashboard or API does **not**
+win over this file, so overriding it there to something safe does not work either.
+
+A deploy therefore proves the image builds and the config resolves, and writes
+nothing. Scrapes are invoked explicitly (below).
+
+`restartPolicyType: NEVER` is the second important one. On `ON_FAILURE`, a scrape that
 exits non-zero (which now happens on partial upload failure) would be restarted
 by Railway and would re-export everything — hammering Schoology and duplicating
 objects in the bucket. A job that fails should stay failed and be looked at.
@@ -120,10 +134,17 @@ The last two matter more than they look: an assessment dated in the future, or
 with no due date, is invisible to the default window. That is the usual reason a
 run reports "0 assessments" when the assessment plainly exists.
 
-**Scheduled (later).** Once a real run has been signed off, add a schedule in
-Railway → service → Settings → Cron Schedule, e.g. `0 7 * * *` (07:00 UTC / 03:00
-ET, after the school day). Railway then runs the container on that schedule using
-`startCommand`. Start with one school.
+**Scheduled (later).** Railway cron runs the container on a schedule using
+`startCommand` — so enabling it needs BOTH:
+
+1. change `startCommand` in `scraper/railway.json` to the real command
+   (e.g. `node schoology-exporter.js --school Athenian`), and
+2. set a Cron Schedule in Railway → service → Settings, e.g. `0 7 * * *`
+   (07:00 UTC / 03:00 ET, after the school day).
+
+Requiring a committed change for step 1 is intentional: turning on unattended
+scraping should appear in a diff and be reviewable, not be a dashboard toggle. Note
+the consequence of step 1 — from then on, every deploy of this service scrapes.
 
 Keep runs serialised. Schoology's Transfer History is a single per-account page,
 so two concurrent scrapes on the same identity interleave their exports.

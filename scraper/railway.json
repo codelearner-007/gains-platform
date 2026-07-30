@@ -5,7 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "node schoology-exporter.js --school Athenian",
+    "startCommand": "node schoology-exporter.js --help",
     "restartPolicyType": "NEVER",
     "numReplicas": 1
   }
