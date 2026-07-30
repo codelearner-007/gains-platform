@@ -412,9 +412,10 @@ class IngestionWorker:
             * ``"skip_clean"``— 0 rows + own token → cleared WITHOUT transforming.
             * ``"disabled"``  — kill-switch OFF; nothing ran, dirty flag left set.
 
-        Raises on the production refusal (§LOCK-PROD), the empty-raw floor, or a
-        collapse-guard trip — the caller fails the batch's clean runs and leaves
-        the flag dirty.
+        Raises on the empty-raw floor, a collapse-guard trip, or the §HISTORIC
+        invariant inside ``run_all`` refusing to alter a year the raw layer cannot
+        regenerate — the caller fails the batch's clean runs and leaves the flag
+        dirty.
         """
         # 1. Kill-switch (PRIMARY). Prod stays False → never rebuilds. Leave the
         #    dirty flag set (raw is safe; cubes refresh where enabled).
@@ -425,18 +426,6 @@ class IngestionWorker:
             )
             return "disabled"
 
-        # 1b. Production structural guard (§LOCK-PROD). Reaching here on prod
-        #     means the kill-switch was flipped ON against a derived-layer-only
-        #     database (raw=0, stg=0, fact≈1.6M). A rebuild would TRUNCATE
-        #     staging + fact and repopulate from whatever this scrape landed,
-        #     then rebuild every cube from the remnant. NEITHER gate below
-        #     catches that: the empty-raw floor passes any batch over 1000 rows,
-        #     and the collapse-guard only trips on fact >0 → 0, not 1.6M → 500.
-        #     So refuse structurally instead of trusting a default to stay unset.
-        #     Raising (not returning "disabled") is deliberate: the caller marks
-        #     the batch failed with this message, so the misconfiguration is
-        #     visible in `ingestion_runs` instead of silently doing nothing. Raw
-        #     is already landed and untouched either way.
         # NOTE: there is deliberately no environment check here any more. Historic
         # years are protected by the §HISTORIC invariant inside run_all (see
         # app/transformations/runner.py), which fingerprints every (school, session)
