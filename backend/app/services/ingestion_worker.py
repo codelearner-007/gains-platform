@@ -412,8 +412,10 @@ class IngestionWorker:
             * ``"skip_clean"``— 0 rows + own token → cleared WITHOUT transforming.
             * ``"disabled"``  — kill-switch OFF; nothing ran, dirty flag left set.
 
-        Raises on refusal (empty-raw floor) or a collapse-guard trip — the caller
-        fails the batch's clean runs and leaves the flag dirty.
+        Raises on the empty-raw floor, a collapse-guard trip, or the §HISTORIC
+        invariant inside ``run_all`` refusing to alter a year the raw layer cannot
+        regenerate — the caller fails the batch's clean runs and leaves the flag
+        dirty.
         """
         # 1. Kill-switch (PRIMARY). Prod stays False → never rebuilds. Leave the
         #    dirty flag set (raw is safe; cubes refresh where enabled).
@@ -423,6 +425,13 @@ class IngestionWorker:
                 "runs stay landed"
             )
             return "disabled"
+
+        # NOTE: there is deliberately no environment check here any more. Historic
+        # years are protected by the §HISTORIC invariant inside run_all (see
+        # app/transformations/runner.py), which fingerprints every (school, session)
+        # slice before and after the build and rolls back if one that raw cannot
+        # regenerate was touched. That is a property of the DATA, so it holds on
+        # this path and on every CLI path identically, with nothing to configure.
 
         # 5. Skip-clean economics (F27): a batch that landed 0 rows AND owns the
         #    current dirty token clears its own pre-mark WITHOUT transforming. But

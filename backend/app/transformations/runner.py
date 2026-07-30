@@ -138,6 +138,144 @@ def _base_dir() -> Path:
     return Path(__file__).resolve().parent
 
 
+# ─── §HISTORIC: unconditional protection of un-reproducible years ──────────
+#
+# THE RULE, IN ONE LINE: a (school, session) slice that the raw layer cannot
+# rebuild must come out of a transform run byte-identical, or the whole run rolls
+# back.
+#
+# WHY IT IS A DATA CHECK AND NOT A FLAG
+# This replaced an `ENVIRONMENT == "production"` check plus an
+# INGESTION_ALLOW_PROD_TRANSFORMS override. Both were the wrong shape: they
+# protected a *label*, not the data. If ENVIRONMENT were unset, misspelled, or
+# copied from a dev template onto a serving box, the guard silently did nothing —
+# and the failure mode it was guarding is unrecoverable. A flag that must be right
+# for your data to survive is not a safeguard; it is a second thing to get wrong.
+#
+# The invariant below needs no configuration, is identical in every environment,
+# and cannot be turned off without editing this file (which is reviewable, unlike
+# an env var).
+#
+# HOW "CAN RAW REBUILD THIS?" IS DECIDED
+# Staging does not trust the `school_id` stamped on a raw row (that comes from the
+# folder it was found in). It resolves the REAL school from the CSV's own
+# "User School ID" column — see 01_staging/stg_student_submission.sql. The
+# coverage query below resolves the same way, so "raw covers this slice" means
+# exactly what staging will actually produce. Comparing on the stamped id instead
+# reports every slice as un-reproducible on a mixed backup tree, which is wrong in
+# the dangerous direction: it would block legitimate rebuilds and teach whoever
+# hits it to disable the guard.
+#
+# WHAT THIS BUYS, PER ENVIRONMENT — no branching, just consequences of the rule:
+#   * Production (raw is empty by design): NOTHING is reproducible, so every slice
+#     is frozen. A rebuild there — however it is triggered, by the worker, either
+#     CLI, or a future caller — TRUNCATEs fact, fails this check, and rolls back.
+#     Reports survive.
+#   * The full-raw rebuild machine: every slice is reproducible, so a rebuild is
+#     allowed. Prior years are rewritten and must come back identical; if the
+#     fingerprint moves, that is real drift and it is logged loudly rather than
+#     silently shipped to prod on the next sync.
+#   * A box holding only the new year's raw: prior years are frozen automatically.
+#     Ingesting 2026-27 cannot damage 2025-26 or 2024-25.
+#
+# SCOPE: fact_student_submission only. Cubes are pure derivations of fact, so a
+# preserved fact means a reproducible cube; guarding fact is the whole surface.
+# NOT COVERED: SQL typed straight into psql, which never enters this process. The
+# DB-level backstop for that is the trigger pair in
+# 20260723100000_historic_lock.sql, deliberately inert until a lock row exists.
+
+_HISTORIC_FINGERPRINT_SQL = text(
+    """
+    SELECT school_id::text AS school_id,
+           coalesce(session, '(null)') AS session,
+           count(*)                    AS n,
+           coalesce(sum(hashtext(user_id_ques_id_stand)::bigint), 0) AS fp
+    FROM fact_student_submission
+    GROUP BY 1, 2
+    """
+)
+
+# Resolve raw the way stg_student_submission.sql does — via the CSV's own
+# "User School ID", never the stamped raw.school_id.
+_RAW_COVERAGE_SQL = text(
+    """
+    SELECT DISTINCT s.school_id::text AS school_id,
+           coalesce(r.session, '(null)') AS session
+    FROM raw_student_submission r
+    JOIN schools s
+      ON s.schoology_school_id = NULLIF(TRIM(r.user_school_id), '')
+    """
+)
+
+
+async def _fact_session_fingerprints(session: AsyncSession) -> dict[tuple[str, str], tuple[int, int]]:
+    """(school_id, session) -> (row_count, order-independent fingerprint).
+
+    `sum(hashtext(pk))` is used rather than an ordered `md5(string_agg(...))`
+    because it is order-independent and cheap enough to run on every build
+    (~2 s over 1.6M rows, twice per run).
+    """
+    rows = (await session.execute(_HISTORIC_FINGERPRINT_SQL)).all()
+    return {(r.school_id, r.session): (int(r.n), int(r.fp)) for r in rows}
+
+
+async def _raw_session_coverage(session: AsyncSession) -> set[tuple[str, str]]:
+    """(school_id, session) pairs the raw layer can rebuild."""
+    rows = (await session.execute(_RAW_COVERAGE_SQL)).all()
+    return {(r.school_id, r.session) for r in rows}
+
+
+def _assert_historic_slices_intact(
+    before: dict[tuple[str, str], tuple[int, int]],
+    after: dict[tuple[str, str], tuple[int, int]],
+    raw_coverage: set[tuple[str, str]],
+) -> None:
+    """Raise if any slice raw cannot rebuild was altered. Log drift on the rest.
+
+    Raising propagates out of ``run_all``; every caller runs it inside a
+    transaction it commits afterwards, so the rollback takes the TRUNCATEs with it.
+    """
+    violations: list[str] = []
+    drifted: list[str] = []
+
+    for key, (n_before, fp_before) in sorted(before.items()):
+        school, sess = key
+        n_after, fp_after = after.get(key, (0, 0))
+        unchanged = (n_after == n_before) and (fp_after == fp_before)
+        if unchanged:
+            continue
+        detail = (
+            f"school={school} session={sess}: "
+            f"{n_before} rows -> {n_after} (fingerprint "
+            f"{'unchanged' if fp_after == fp_before else 'CHANGED'})"
+        )
+        if key in raw_coverage:
+            # Rebuildable from source: permitted, but never silent — an unexpected
+            # move here is the drift that would otherwise reach prod on the next sync.
+            drifted.append(detail)
+        else:
+            violations.append(detail)
+
+    for d in drifted:
+        logger.warning("historic slice changed but IS rebuildable from raw — %s", d)
+
+    if violations:
+        raise RuntimeError(
+            "TRANSFORM ROLLED BACK — it altered "
+            f"{len(violations)} historic (school, session) slice(s) that the raw "
+            "layer cannot rebuild:\n  "
+            + "\n  ".join(violations)
+            + "\n\nThis is the unconditional §HISTORIC invariant in "
+            "app/transformations/runner.py: a year that cannot be regenerated from "
+            "raw must never be modified by a rebuild. There is no flag to bypass "
+            "it. If this fired on the production database, that is the guard doing "
+            "its job — prod carries a serving fact/cube layer over an empty raw "
+            "layer, and new data reaches it via the gated sync in "
+            "docs/audit/fixes/03_prod_data_sync_runbook.md, never an in-place "
+            "rebuild."
+        )
+
+
 # ─── §LOCK layer 2: SQL guard (unscoped-TRUNCATE refusal) ──────────────────
 # Session-bearing tables whose rows belong to a specific (school, session)
 # slice. An unscoped `TRUNCATE` of any of these erases EVERY year at once — the
@@ -366,6 +504,24 @@ async def run_all(
     results: dict[str, int] = {}
     failed_cubes: list[str] = []  # G4: track isolate_cubes failures to fail loudly
 
+    # §HISTORIC (see the block above _fact_session_fingerprints): fingerprint every
+    # (school, session) slice and which of them raw can rebuild, BEFORE anything
+    # truncates. Verified again at the end; a violation raises and the caller's
+    # transaction rolls the whole build back.
+    #
+    # This sits at the chokepoint every transform path funnels through — the
+    # worker, `python -m app.jobs.ingest_schoology` (whose skip_transforms defaults
+    # to False), `python -m app.transformations.runner`, and gains_data.py alike.
+    historic_before = await _fact_session_fingerprints(session)
+    raw_coverage = await _raw_session_coverage(session)
+    frozen = sorted(k for k in historic_before if k not in raw_coverage)
+    logger.info(
+        "§HISTORIC: %d slice(s) present, %d frozen (no raw ancestry)",
+        len(historic_before), len(frozen),
+    )
+    for school, sess in frozen:
+        logger.info("§HISTORIC: frozen school=%s session=%s", school, sess)
+
     # §LOCK layer 2: if ANY session is locked, refuse to run this build when it
     # contains an unscoped TRUNCATE of a session-bearing table (staging/fact/
     # dim_subject/dim_question_data/cube_*). This is the "old full rebuild by
@@ -430,6 +586,17 @@ async def run_all(
             banner,
         )
         raise RuntimeError(f"STALE CUBES (not rebuilt): {banner}")
+
+    # §HISTORIC verification. Runs LAST, on the same session, so a violation raises
+    # before the caller commits and the rollback undoes every TRUNCATE in this
+    # build. This is the unconditional guarantee that a year the raw layer cannot
+    # regenerate is never modified by a rebuild.
+    historic_after = await _fact_session_fingerprints(session)
+    _assert_historic_slices_intact(historic_before, historic_after, raw_coverage)
+    logger.info(
+        "§HISTORIC: verified — %d frozen slice(s) unchanged",
+        sum(1 for k in historic_before if k not in raw_coverage),
+    )
 
     return results
 

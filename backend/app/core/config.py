@@ -60,11 +60,14 @@ class Settings(BaseSettings):
     # so the trigger surface is never open when unconfigured.
     INGESTION_TRIGGER_SECRET: str | None = None
 
-    # Ingestion durability (HARDENING_PLAN §3). The transform kill-switch is the
-    # PRIMARY gate: prod (raw=0, derived-layer load) stays False so it NEVER
-    # rebuilds cubes; the local full-raw ingestion env sets True. The worker
-    # loop, its lease/heartbeat cadence, the attempt cap, and the empty-raw
-    # floor together give restart/redeploy durability with no half-data.
+    # Ingestion durability (HARDENING_PLAN §3). This kill-switch decides whether a
+    # box ATTEMPTS a rebuild at all — on a serving database there is nothing to
+    # gain by trying, so it stays False there and the full-raw rebuild machine sets
+    # it True. It is an efficiency setting, NOT the safety mechanism: historic-year
+    # data is protected unconditionally in code by the §HISTORIC invariant in
+    # app/transformations/runner.py, which needs no configuration and cannot be
+    # switched off. Flipping this on by mistake is therefore survivable — the
+    # rebuild is refused and rolled back by the invariant, not by this flag.
     INGESTION_TRANSFORMS_ENABLED: bool = False
     INGESTION_WORKER_ENABLED: bool = True
     INGESTION_WORKER_POLL_SECONDS: int = 15
