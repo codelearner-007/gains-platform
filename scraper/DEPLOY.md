@@ -97,20 +97,38 @@ trigger endpoint fails closed and rejects everything. Generate one
 
 ## Running it
 
-**Manual (current mode).** The service has no `cronSchedule`, so it only runs when
-triggered:
+**Manual (current mode).** The service has no `cronSchedule`, and `startCommand` is
+inert, so deploying it does nothing.
+
+Be aware of what `railway run` actually does: it runs the command **on your machine**
+with the service's variables injected — *not* inside Railway. That is still the right
+way to fire a one-off, because it uses the production Supabase project, the production
+backend and the production trigger secret, so everything downstream is genuinely
+production. It just needs Docker (or a local Playwright browser) on the machine you
+run it from.
+
+Pull the production variables and run the image:
 
 ```bash
-railway run --service scraper node schoology-exporter.js --school Athenian --dry-run
-railway run --service scraper node schoology-exporter.js --school Athenian
-```
+# 9 production variables, values never printed
+railway variables --service scraper --kv \
+  | grep -E '^(SCHOOLOGY_|SUPABASE_|BACKEND_BASE_URL|INGESTION_TRIGGER_SECRET|SCRAPER_)' > prod.env
+chmod 600 prod.env
 
-Locally, name the script explicitly — the image uses `CMD`, not `ENTRYPOINT`:
+docker build -t gains-scraper scraper/
 
-```bash
-docker run --rm --env-file .env gains-scraper \
+# discovery only — no browser, no export, no upload, no trigger
+docker run --rm --env-file prod.env gains-scraper \
   node schoology-exporter.js --school Athenian --dry-run
+
+# the real thing
+docker run --rm --env-file prod.env gains-scraper \
+  node schoology-exporter.js --school Athenian
 ```
+
+Delete `prod.env` afterwards — it holds the production service-role key.
+
+Note the image uses `CMD`, not `ENTRYPOINT`, so the script is named explicitly.
 
 `CMD` is deliberate. Railway's custom start command *replaces* `CMD`, but with an
 `ENTRYPOINT` set it is appended as arguments instead, yielding
@@ -118,6 +136,12 @@ docker run --rm --env-file .env gains-scraper \
 work when the arguments arrive separately and breaks when the platform wraps them
 in `sh -c`, because the flags then collapse into a single argv string and
 `--school` stops matching. `CMD` behaves correctly under both.
+
+**`railway.json` beats the dashboard.** A `startCommand` set on the service through
+the dashboard or the API is IGNORED while this file defines one — verified twice, once
+by accident (a `--dry-run` override was set before a deploy and the deploy still ran
+live) and once deliberately (an override was set, the deploy printed usage anyway).
+So the committed value is the only one that matters.
 
 Per-run flags — the control surface for "which school, which assessments":
 
