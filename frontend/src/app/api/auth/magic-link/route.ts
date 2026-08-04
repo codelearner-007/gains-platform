@@ -18,11 +18,13 @@ const requestSchema = z.object({
  * reset flow's protections:
  * - Same-origin enforced (CSRF).
  * - Reuses the auth-login rate limit policy.
- * - Always returns the same generic success message — never reveals whether
+ * - Always returns the same generic success message and never reveals whether
  *   the email is registered (avoids account enumeration).
  *
- * The email link points at our `/api/auth/confirm` route, which verifies
- * the token, runs MFA-aware checks, and signs the user in.
+ * The email link points at our `/api/auth/confirm` route, which hands the
+ * token to the `/auth/confirm` interstitial where the user clicks a button to
+ * verify (MFA-aware) and sign in. The click gate keeps email scanners from
+ * consuming the one-time token on prefetch.
  */
 export async function POST(request: NextRequest) {
   try {

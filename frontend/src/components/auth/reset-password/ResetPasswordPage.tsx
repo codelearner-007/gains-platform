@@ -20,40 +20,32 @@ export function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Verify the reset code from URL on mount
+  // Establish the recovery session on mount. Two delivery paths land here:
+  //  - the token_hash flow: /api/auth/confirm already verified the token and set
+  //    the session cookie, then forwarded here with no `?code`;
+  //  - the PKCE `?code` flow: exchange the code for the session here.
+  // Either way we confirm a session is present (getCurrentUser) before showing
+  // the set-password form, and sync GlobalContext so the navbar is correct.
   useEffect(() => {
     const code = searchParams.get('code');
 
-    if (!code) {
-      setVerificationError('Invalid or missing reset code. Please request a new password reset link.');
-      setVerifying(false);
-      return;
-    }
-
-    // Exchange code for session
-    const exchangeCode = async () => {
+    const establishSession = async () => {
       try {
-        await authService.exchangeCodeForSession(code);
-
-        // Load current user immediately so GlobalContext is correct even though it only auto-loads once.
-        // This ensures the app navbar won't show "Guest" after reset completes.
-        try {
-          const me = await authService.getCurrentUser();
-          const mfa = !!me.requiresMFA;
-          setRequiresMFA(mfa);
-          setAuthFromLogin({ user: me.user, mfaRequired: mfa });
-        } catch {
-          // Non-fatal: user can still reset password; GlobalContext can refresh later if needed.
+        if (code) {
+          await authService.exchangeCodeForSession(code);
         }
-
+        const me = await authService.getCurrentUser();
+        const mfa = !!me.requiresMFA;
+        setRequiresMFA(mfa);
+        setAuthFromLogin({ user: me.user, mfaRequired: mfa });
         setVerifying(false);
       } catch {
-        setVerificationError('Invalid or expired reset link. Please request a new password reset.');
+        setVerificationError('This password reset link is invalid or has expired. Please request a new one.');
         setVerifying(false);
       }
     };
 
-    exchangeCode();
+    establishSession();
   }, [searchParams, setAuthFromLogin]);
 
   const handleSubmit = async (data: { newPassword: string; confirmPassword: string }) => {
