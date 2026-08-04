@@ -145,8 +145,12 @@ secure_password_change = false
 max_frequency = "1m0s"
 # Number of characters used in the email OTP.
 otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# Number of seconds before the email OTP / email link expires. Set to 24h to
+# match the "expires 24 hours after it is sent" copy in the invite / recovery /
+# magic-link templates and the hosted project's default. Keep this value and
+# that copy in sync; the hosted dashboard OTP expiry must match before the
+# templates ship to production.
+otp_expiry = 86400
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
