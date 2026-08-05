@@ -10,6 +10,7 @@ import {
   LineChart,
   GraduationCap,
   Network,
+  Telescope,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -37,7 +38,8 @@ export type ReportSlug =
   // Program family
   | 'year-to-date-performance'
   | 'standard-summary'
-  | 'strand-summary';
+  | 'strand-summary'
+  | 'forward-view';
 
 export type ReportGroup = 'assessment' | 'program';
 
@@ -203,6 +205,16 @@ export const REPORT_TYPES: readonly ReportType[] = [
     group: 'program',
     kind: 'paginated',
     priority: 3,
+  },
+  {
+    slug: 'forward-view',
+    canonicalName: 'Forward View',
+    shortName: 'Forward View',
+    menuHint: 'Prior-year troublesome standards by unit & period',
+    icon: Telescope,
+    group: 'program',
+    kind: 'interactive',
+    priority: 4,
   },
 ] as const;
 

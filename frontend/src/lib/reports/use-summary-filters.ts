@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type {
   AssessmentFilters,
+  ForwardViewFilters,
   StandardSummaryFilters,
   StrandSummaryFilters,
 } from './types';
@@ -23,14 +24,16 @@ export const SUMMARY_FILTER_KEYS = [
 
 type SummaryFilterKey = (typeof SUMMARY_FILTER_KEYS)[number];
 
-/** Common shape – `AssessmentFilters`, `StandardSummaryFilters`, and
- *  `StrandSummaryFilters` are structurally identical for the five core
- *  keys; `StrandSummaryFilters` adds an extra `strand` cross-filter
- *  preserved via `preserveParams`. */
+/** Common shape – `AssessmentFilters`, `StandardSummaryFilters`,
+ *  `StrandSummaryFilters` and `ForwardViewFilters` are structurally identical
+ *  for the five core keys; `StrandSummaryFilters` adds an extra `strand`
+ *  cross-filter and `ForwardViewFilters` an extra `threshold`, each preserved
+ *  via `preserveParams`. */
 type SummaryFilters =
   | AssessmentFilters
   | StandardSummaryFilters
-  | StrandSummaryFilters;
+  | StrandSummaryFilters
+  | ForwardViewFilters;
 
 function readFiltersFromParams<F extends SummaryFilters>(
   params: URLSearchParams,

@@ -10,6 +10,7 @@
 import type { ReportKind } from './export-csv';
 import type {
   AssessmentFilters,
+  ForwardViewFilters,
   StandardSummaryFilters,
   StrandSummaryFilters,
 } from './types';
@@ -23,6 +24,7 @@ export type XlsxFilters =
   | AssessmentFilters
   | StandardSummaryFilters
   | StrandSummaryFilters
+  | ForwardViewFilters
   | Record<string, string | null | undefined>;
 
 /** Identifiers + scope needed to address a report's `export.xlsx` route. */
@@ -43,6 +45,7 @@ const REPORT_PATH: Record<ReportKind, string> = {
   ytd: 'year-to-date-performance',
   'standard-summary': 'standard-summary',
   'strand-summary': 'strand-summary',
+  'forward-view': 'forward-view',
   sdd: 'standards-deep-dive',
   iad: 'incorrect-answer-details',
 };

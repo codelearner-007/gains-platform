@@ -10,12 +10,14 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import require_permission
 from app.middleware.rls import get_db_with_rls
 from app.schemas.reports import (
+    ForwardViewFilters,
+    ForwardViewPayload,
     StandardSummaryFilters,
     StandardSummaryPayload,
     StrandSummaryFilters,
@@ -130,4 +132,42 @@ async def strand_summary(
             grade=grade,
             strand=strand,
         ),
+    )
+
+
+@router.get(
+    "/forward-view",
+    response_model=ForwardViewPayload,
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+async def forward_view(
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
+    threshold: float = Query(0.7, ge=0.05, le=0.95),
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> ForwardViewPayload:
+    """Forward View: troublesome standards for a session, by period → unit.
+
+    Flags the standards students struggled with in the selected session —
+    grouped by PERIOD (assessment_type) → UNIT (item_name) — so teachers know
+    where to focus. ``session`` defaults to the school's current (latest)
+    session when omitted (resolved server side, echoed in
+    ``filters_applied.session``). ``threshold`` (0–1 fraction, default 0.7)
+    is the flag cut-off; a standard is flagged when its pooled % correct
+    (SUM(score)/SUM(possible)) is strictly below it. ``section`` narrows to a
+    class roster. All filter params optional. Requires: reports:read.
+    """
+    service = ReportService(db)
+    return await service.build_forward_view(
+        ForwardViewFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+            threshold=threshold,
+        )
     )

@@ -36,6 +36,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from app.core.constants import PERF_BAND_HIGH, PERF_BAND_MID
 from app.schemas.reports import (
+    ForwardViewPayload,
     IncorrectAnswerDetailsPayload,
     QraByStandardTeacherPayload,
     QraByTeacherPayload,
@@ -723,6 +724,61 @@ def _strand_summary_to_xlsx(payload: StrandSummaryPayload) -> Workbook:
     return wb
 
 
+def _forward_view_to_xlsx(payload: ForwardViewPayload) -> Workbook:
+    """Forward View → one flat sheet (period → unit → standard).
+
+    Info rows carry the school / resolved session / flag threshold so the
+    workbook is self-describing; the ``% Correct`` cell reuses the FROZEN
+    ``_perf_fill`` ramp (70/80), NOT the configurable flag threshold, and the
+    ``Flagged`` column reflects the server-computed ``is_troublesome``.
+    """
+    wb = Workbook()
+    ws = wb.active
+    _set_title(ws, "Forward View")
+    _txt_cell(ws, 1, 1, f"School: {payload.school.name}", bold=True)
+    _txt_cell(ws, 2, 1, f"Session: {payload.filters_applied.session}", bold=True)
+    _txt_cell(ws, 3, 1, f"Flag threshold: {payload.kpis.threshold_pct}", bold=True)
+    headers = [
+        "Period",
+        "Unit",
+        "Date",
+        "Standard",
+        "CPALMS",
+        "Strand",
+        "Description",
+        "Questions",
+        "Points Earned",
+        "Points Possible",
+        "% Correct",
+        "Flagged",
+    ]
+    _write_header(ws, 5, headers)
+    r = 6
+    for period in payload.periods:
+        for unit in period.units:
+            for s in unit.standards:
+                _txt_cell(ws, r, 1, period.period)
+                _txt_cell(ws, r, 2, unit.unit)
+                _txt_cell(ws, r, 3, unit.assessment_date or "", align=_CENTER)
+                _txt_cell(ws, r, 4, s.schoology_standard)
+                _txt_cell(ws, r, 5, s.cpalms_standard)
+                _txt_cell(ws, r, 6, s.strand)
+                _txt_cell(ws, r, 7, _plain(s.description))
+                _txt_cell(ws, r, 8, s.num_questions, align=_CENTER)
+                _txt_cell(ws, r, 9, s.total_score, align=_CENTER)
+                _txt_cell(ws, r, 10, s.total_possible_point, align=_CENTER)
+                # null grade_average renders BLANK (unscored — never flagged).
+                _pct_cell(ws, r, 11, s.grade_average, fill=_perf_fill(s.grade_average))
+                _txt_cell(ws, r, 12, "Focus" if s.is_troublesome else "", align=_CENTER)
+                r += 1
+    ws.freeze_panes = "A6"
+    _autosize(
+        ws,
+        {1: 20, 2: 26, 3: 12, 4: 20, 5: 16, 6: 22, 7: 48, 8: 11, 9: 14, 10: 15, 11: 12, 12: 10},
+    )
+    return wb
+
+
 def _sdd_to_xlsx(payload: StandardsDeepDivePayload) -> Workbook:
     wb = Workbook()
     ws = wb.active
@@ -788,6 +844,7 @@ _BUILDERS = {
     "ytd": _ytd_to_xlsx,
     "standard-summary": _standard_summary_to_xlsx,
     "strand-summary": _strand_summary_to_xlsx,
+    "forward-view": _forward_view_to_xlsx,
     "sdd": _sdd_to_xlsx,
     "iad": _iad_to_xlsx,
 }

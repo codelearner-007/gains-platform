@@ -8,9 +8,11 @@ import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { AssessmentFilters } from '@/lib/reports/types';
 import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
+import { useEffectiveSession } from '@/lib/reports/use-latest-session';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
+import ReportScopePrompt from '@/components/app/modules/reports/shared/ReportScopePrompt';
 import ReportBreadcrumb, {
   programCrumbs,
 } from '@/components/app/modules/reports/shared/ReportBreadcrumb';
@@ -47,16 +49,28 @@ export default function YearToDatePerformancePage() {
   });
   const { schoolId } = useSelectedSchool();
 
+  // Session defaults to the school's latest, resolved on the frontend and always
+  // sent explicitly, so a report never fetches without a concrete session.
+  const { session: effectiveSession } = useEffectiveSession(
+    schoolId,
+    filters.session,
+  );
+
   const queryFilters = useMemo<AssessmentFilters>(
-    () => ({ ...filters, school_id: schoolId ?? undefined }),
-    [filters, schoolId],
+    () => ({
+      ...filters,
+      session: effectiveSession,
+      school_id: schoolId ?? undefined,
+    }),
+    [filters, effectiveSession, schoolId],
   );
 
   // Legacy YTD is always parameter-scoped (Grade × Subject × …) and paginated;
   // the whole-school unbounded matrix (hundreds of standard columns × every
   // student) is neither a legacy view nor renderable. Require Subject + Grade
-  // before fetching/rendering — mirrors the legacy RDL's required parameters.
-  const scoped = Boolean(filters.subject && filters.grade);
+  // (plus a resolved session) before fetching/rendering — mirrors the legacy
+  // RDL's required parameters.
+  const scoped = Boolean(filters.subject && filters.grade && effectiveSession);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: reportsKeys.ytd(queryFilters),
@@ -75,17 +89,22 @@ export default function YearToDatePerformancePage() {
             name={data?.school.name || 'year-to-date'}
             xlsxUrl={buildXlsxUrl('ytd', {
               schoolId: schoolId ?? undefined,
-              filters,
+              filters: { ...filters, session: effectiveSession },
             })}
           />
         </div>
         <ReportTypeSwitcher group="program" />
-        <ReportFilters value={filters} onChange={setFilters} />
+        <ReportFilters
+          value={filters}
+          onChange={setFilters}
+          requireScope
+          resolvedSession={effectiveSession}
+        />
         <VariantTabs active={variant} />
       </div>
 
       {!scoped ? (
-        <ScopePrompt />
+        <ReportScopePrompt session={effectiveSession} />
       ) : isLoading ? (
         <LoadingState label="Loading year-to-date longitudinal…" />
       ) : isError ? (
@@ -147,16 +166,6 @@ function buildYtdMeta(
   return [type, [subj, grade].filter(Boolean).join(' - ')]
     .filter(Boolean)
     .join(' | ');
-}
-
-function ScopePrompt() {
-  return (
-    <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-      Select a <span className="font-medium">Subject</span> and{' '}
-      <span className="font-medium">Grade</span> above to view the year-to-date
-      longitudinal matrix.
-    </div>
-  );
 }
 
 function EmptyState() {

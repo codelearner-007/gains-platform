@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { reportsApi, reportsKeys } from '@/lib/reports/api-client';
 import type { StandardSummaryFilters } from '@/lib/reports/types';
 import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
+import { useEffectiveSession } from '@/lib/reports/use-latest-session';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
@@ -33,9 +34,17 @@ export default function StandardSummaryPage() {
   });
   const { schoolId } = useSelectedSchool();
 
+  // Session defaults to the school's latest year (resolved on the frontend and
+  // always sent) so the report shows a single, current year — not every year
+  // pooled together — matching the "Academic year …" header.
+  const { session: effectiveSession, sessionsPending } = useEffectiveSession(
+    schoolId,
+    filters.session,
+  );
+
   const queryFilters = useMemo<StandardSummaryFilters>(
-    () => ({ ...filters, school_id: schoolId ?? undefined }),
-    [filters, schoolId],
+    () => ({ ...filters, session: effectiveSession, school_id: schoolId ?? undefined }),
+    [filters, effectiveSession, schoolId],
   );
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -44,9 +53,13 @@ export default function StandardSummaryPage() {
     // full KPI block separately.
     queryKey: reportsKeys.standardSummary(queryFilters, true),
     queryFn: () => reportsApi.standardSummary(queryFilters, true),
+    // Wait for the latest session to resolve so the first paint is the current
+    // year, never a flash of all-years-pooled data.
+    enabled: Boolean(effectiveSession),
   });
 
-  if (isLoading) return <LoadingState label="Loading standard summary…" />;
+  if (isLoading || sessionsPending)
+    return <LoadingState label="Loading standard summary…" />;
   if (isError) {
     return (
       <ErrorState
@@ -60,8 +73,9 @@ export default function StandardSummaryPage() {
   if (!data) return null;
 
   const count = data.standards.length;
-  const subtitle = data.school.current_session
-    ? `Academic year ${data.school.current_session} • ${count} standards`
+  const yearLabel = effectiveSession ?? data.school.current_session;
+  const subtitle = yearLabel
+    ? `Academic year ${yearLabel} • ${count} standards`
     : `${count} standards`;
 
   return (
@@ -75,7 +89,7 @@ export default function StandardSummaryPage() {
             name={data.school.name || 'standard-summary'}
             xlsxUrl={buildXlsxUrl('standard-summary', {
               schoolId: schoolId ?? undefined,
-              filters,
+              filters: { ...filters, session: effectiveSession },
             })}
           />
         </div>
@@ -92,7 +106,12 @@ export default function StandardSummaryPage() {
       </div>
 
       <div className="mb-2">
-        <ReportFilters value={filters} onChange={setFilters} showSection={false} />
+        <ReportFilters
+          value={filters}
+          onChange={setFilters}
+          showSection={false}
+          resolvedSession={effectiveSession}
+        />
       </div>
 
       {data.data_quality?.alignment_status === 'missing' && (

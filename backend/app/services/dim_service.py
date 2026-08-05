@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,8 +40,14 @@ class DimService:
         rows = await self.repo.list_grades()
         return [GradeRow.model_validate(r) for r in rows]
 
-    async def list_sections(self) -> List[SectionRow]:
-        rows = await self.repo.list_sections()
+    async def list_sections(
+        self,
+        session: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> List[SectionRow]:
+        rows = await self.repo.list_sections(session, subject, grade, category)
         return [SectionRow.model_validate(r) for r in rows]
 
     async def list_sessions(self) -> List[SessionRow]:

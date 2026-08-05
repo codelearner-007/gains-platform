@@ -353,9 +353,14 @@ export interface GradeRow {
   grade: string | null;
 }
 
+/**
+ * One scoped Section option. The backend groups `cube_user_summary` by
+ * (section_name, section_instructors) and array_aggs the underlying section
+ * node ids, so a display name shared by several class shells (e.g. "2nd
+ * Period") collapses to ONE option whose value carries every constituent nid.
+ */
 export interface SectionRow {
-  section_nid: string;
-  section_code: string | null;
+  section_nids: string[];
   section_name: string | null;
   section_instructors: string | null;
 }
@@ -785,4 +790,102 @@ export interface QraByStandardTeacherPayload {
   assessment: AssessmentMeta;
   kpis: PaginatedKpis;
   standard_groups: QraStandardGroup[];
+}
+
+// ─── Forward View (troublesome standards for a session, by period & unit) ─
+// Heads-up report: for the resolved session (default = current/latest) it
+// pools SUM(total_score)/SUM(total_possible_point) per (period, unit, standard)
+// and flags any standard whose pooled % falls below a per-request threshold.
+// The `is_troublesome` flag is computed SERVER-SIDE against `threshold` and
+// echoed so the UI, CSV and XLSX never disagree; the client MUST NOT recompute it.
+
+/**
+ * URL/query filter set for the Forward View page. The five summary keys are
+ * URL-backed via `useSummaryFilters`; `school_id` comes from the school
+ * switcher and `threshold` is the flag cutoff as a FRACTION string (e.g.
+ * "0.7"), converted from the URL `?threshold=<pct-int>` at the api-client
+ * boundary. `session` is optional — when absent the backend defaults to the
+ * school's current (latest) session and echoes it.
+ */
+export interface ForwardViewFilters {
+  session?: string;
+  subject?: string;
+  grade?: string;
+  category?: string;
+  section?: string;
+  school_id?: string;
+  /** Flag cutoff as a fraction string (e.g. "0.7"); backend clamps 0.05–0.95. */
+  threshold?: string;
+}
+
+/** The resolved filter echo. `session` is never null (backend-resolved) and
+ *  `threshold` is the numeric fraction actually applied. */
+export interface ForwardViewFiltersApplied {
+  session: string;
+  subject: string | null;
+  grade: string | null;
+  category: string | null;
+  section: string | null;
+  threshold: number;
+}
+
+/**
+ * One (period × unit × standard) row. Pooled points math, worst-first within a
+ * unit (pct ASC, nulls last). `grade_average` is null when
+ * `total_possible_point == 0` (rendered "—", never flagged); `is_troublesome`
+ * is the server-side `grade_average < threshold` flag — trust it, do not
+ * recompute client-side.
+ */
+export interface ForwardViewStandardRow {
+  schoology_standard: string;
+  cpalms_standard: string;
+  strand: string;
+  description: string;
+  direct_link: string | null;
+  num_questions: number;
+  total_score: number;
+  total_possible_point: number;
+  grade_average: number | null;
+  grade_average_pct: string;
+  is_troublesome: boolean;
+}
+
+/** One assessment (UNIT = normalized `item_name`) within a period. */
+export interface ForwardViewUnitGroup {
+  unit: string;
+  assessment_date: string | null;
+  flagged_count: number;
+  standards: ForwardViewStandardRow[];
+}
+
+/** One period band (PERIOD = normalized `assessment_type`), pre-ordered
+ *  chronologically by earliest assessment date then name. */
+export interface ForwardViewPeriodGroup {
+  period: string;
+  date_start: string | null;
+  date_end: string | null;
+  standards_count: number;
+  flagged_count: number;
+  units: ForwardViewUnitGroup[];
+}
+
+export interface ForwardViewKpis {
+  standards_assessed: number;
+  flagged_standards: number;
+  flag_rate: number;
+  flag_rate_pct: string;
+  units_covered: number;
+  periods_covered: number;
+  threshold: number;
+  threshold_pct: string;
+}
+
+export interface ForwardViewPayload {
+  school: YTDSchoolInfo;
+  filters_applied: ForwardViewFiltersApplied;
+  kpis: ForwardViewKpis;
+  /** ≤10 flagged rows, scope-pooled, pct ascending. */
+  top_focus: ForwardViewStandardRow[];
+  periods: ForwardViewPeriodGroup[];
+  data_quality?: AlignmentDataQuality | null;
 }
