@@ -7,7 +7,7 @@ session.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -86,15 +86,55 @@ class DimRepository:
         result = await self.session.execute(sql)
         return [dict(r._mapping) for r in result.all()]
 
-    async def list_sections(self) -> List[Dict[str, Any]]:
+    async def list_sections(
+        self,
+        session: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Scoped section options for the report filter bar.
+
+        Sourced from ``cube_user_summary`` (the only place a section is bound to
+        a session/subject/grade/assessment_type scope), not the unscoped
+        ``dim_section`` roster, so the filter offers only sections that actually
+        appear in the selected report scope. Rows are grouped by
+        ``(section_name, section_instructors)`` — a single classroom that is
+        split into multiple Schoology shells (distinct ``section_nid`` values)
+        collapses to one option whose value is the comma-joined nid list, so
+        selecting it includes every shell. ``section_name`` is dereferenced via
+        a LEFT JOIN to ``dim_section`` (the fan-out over its per-item rows is
+        deduped by ``array_agg(DISTINCT ...)``). All four scope params are
+        optional; RLS scopes the read to the caller's school.
+        """
         sql = text(
             """
-            SELECT section_nid, section_code, section_name, section_instructors
-            FROM dim_section
-            ORDER BY section_name NULLS LAST
+            SELECT
+                array_agg(DISTINCT cus.section_nid) AS section_nids,
+                dsec.section_name,
+                cus.section_instructors
+            FROM cube_user_summary cus
+            LEFT JOIN dim_section dsec
+                   ON dsec.school_id = cus.school_id
+                  AND dsec.section_nid = cus.section_nid
+            WHERE cus.section_nid IS NOT NULL
+              AND (CAST(:session AS TEXT) IS NULL OR cus.session = CAST(:session AS TEXT))
+              AND (CAST(:subject AS TEXT) IS NULL OR cus.subject = CAST(:subject AS TEXT))
+              AND (CAST(:grade AS TEXT) IS NULL OR cus.grade = CAST(:grade AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR cus.assessment_type = CAST(:category AS TEXT))
+            GROUP BY dsec.section_name, cus.section_instructors
+            ORDER BY dsec.section_name NULLS LAST, cus.section_instructors NULLS LAST
             """
         )
-        result = await self.session.execute(sql)
+        result = await self.session.execute(
+            sql,
+            {
+                "session": session,
+                "subject": subject,
+                "grade": grade,
+                "category": category,
+            },
+        )
         return [dict(r._mapping) for r in result.all()]
 
     async def list_sessions(self) -> List[Dict[str, Any]]:

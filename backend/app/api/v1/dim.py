@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db, require_permission
@@ -89,11 +89,20 @@ async def list_grades(
     dependencies=[Depends(require_permission("reports:read"))],
 )
 async def list_sections(
+    session: Optional[str] = Query(None),
+    subject: Optional[str] = Query(None),
+    grade: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db_with_rls),
 ) -> List[SectionRow]:
-    """Per-school ``dim_section`` lookup (RLS applied)."""
+    """Scoped section options (RLS applied).
+
+    Sourced from ``cube_user_summary`` and grouped by classroom; the optional
+    session/subject/grade/category params narrow the options to the selected
+    report scope.
+    """
     service = DimService(db)
-    return await service.list_sections()
+    return await service.list_sections(session, subject, grade, category)
 
 
 @router.get(

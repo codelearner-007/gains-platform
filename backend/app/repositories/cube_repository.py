@@ -43,7 +43,7 @@ _QS_SCHOOL_FILTER_SQL = """\
                             AND (
                               dsec.section_name = CAST(:section AS TEXT)
                            OR dsec.section_code = CAST(:section AS TEXT)
-                           OR dsec.section_nid  = CAST(:section AS TEXT)
+                           OR dsec.section_nid  = ANY(string_to_array(CAST(:section AS TEXT), ','))
                             )
                         )
                       )"""
@@ -75,7 +75,7 @@ _CUS_YTD_FILTER_SQL = """\
               AND (CAST(:category AS TEXT) IS NULL OR cus.assessment_type = CAST(:category AS TEXT))
               AND (
                     CAST(:section AS TEXT) IS NULL
-                 OR cus.section_nid = CAST(:section AS TEXT)
+                 OR cus.section_nid = ANY(string_to_array(CAST(:section AS TEXT), ','))
                  OR EXISTS (
                       SELECT 1 FROM dim_section dsec
                       WHERE dsec.school_id = cus.school_id
@@ -83,7 +83,7 @@ _CUS_YTD_FILTER_SQL = """\
                         AND (
                           dsec.section_name = CAST(:section AS TEXT)
                        OR dsec.section_code = CAST(:section AS TEXT)
-                       OR dsec.section_nid  = CAST(:section AS TEXT)
+                       OR dsec.section_nid  = ANY(string_to_array(CAST(:section AS TEXT), ','))
                         )
                     )
                   )"""
@@ -2363,6 +2363,132 @@ class CubeRepository:
             JOIN user_year uy ON uy.user_uid = c.user_uid
             LEFT JOIN units u ON u.standard_label = c.standard_label
             CROSS JOIN grand g
+            """
+        )
+        result = await self.session.execute(
+            sql,
+            _school_filter_params(
+                session_filter, subject, grade, category, section
+            ),
+        )
+        return [_row_to_dict(r) for r in result.all()]
+
+    # ────────────────────────────────────────────────────────────────────
+    # Forward View rollup — prior-year troublesome standards, by period → unit.
+    #
+    # One row per (period, unit, standard) with POOLED points
+    # (SUM(total_score)/SUM(total_possible_point) is computed in the service
+    # from these sums) — the same cube_user_summary scan the YTD matrix uses,
+    # regrouped to add ``assessment_type`` (PERIOD, E.2) and ``item_name``
+    # (UNIT, E.1) to the GROUP BY, both whitespace-normalised. Standards are
+    # the RAW ``cus.standards`` code; NULL / '' / 'Other' are excluded (X.4).
+    # dim_item supplies each unit's assessment_date; dim_standard (deduped
+    # per code) supplies the CPALMS label / strand / description / direct_link.
+    # RLS scopes the tenant via ``app.current_school_id`` — no school predicate.
+    #
+    # Ordering matches the report nesting so the service can nest in one pass:
+    # periods by earliest date then name, units within a period likewise, and
+    # standards within a unit by pooled % correct ASC (nulls last) then code.
+    # ────────────────────────────────────────────────────────────────────
+    async def get_forward_view_rollup(
+        self,
+        session_filter: Optional[str],
+        subject: Optional[str],
+        grade: Optional[str],
+        category: Optional[str],
+        section: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        """Per (period, unit, standard) pooled-points rows for the Forward View.
+
+        Returns, per (normalised assessment_type, normalised item_name, raw
+        standard code): ``num_questions`` = COUNT(DISTINCT question_no),
+        ``total_score`` / ``total_possible_point`` = SUM of each, the unit's
+        ``assessment_date`` (earliest dim_item date for the item_ids sharing
+        the normalised name), and the dim_standard chrome (cpalms_standard,
+        strand, description, direct_link).
+        """
+        sql = text(
+            f"""
+            WITH scoped AS (
+                SELECT
+                    btrim(regexp_replace(cus.assessment_type, '\\s+', ' ', 'g'))
+                                                        AS period,
+                    btrim(regexp_replace(cus.item_name, '\\s+', ' ', 'g'))
+                                                        AS unit,
+                    cus.standards                       AS schoology_standard,
+                    cus.school_id,
+                    cus.item_id,
+                    cus.question_no,
+                    cus.total_score,
+                    cus.total_possible_point
+                FROM cube_user_summary cus
+                WHERE {_CUS_YTD_FILTER_SQL}
+                  AND cus.standards IS NOT NULL
+                  AND cus.standards <> ''
+                  AND cus.standards <> 'Other'
+            ),
+            unit_dates AS (
+                -- One assessment_date per (period, unit): the earliest
+                -- dim_item date across the item_ids that share the normalised
+                -- assessment name within the period.
+                SELECT s.period, s.unit,
+                       MIN(di.assessment_date) AS assessment_date
+                FROM scoped s
+                LEFT JOIN dim_item di
+                  ON di.school_id = s.school_id AND di.item_id = s.item_id
+                GROUP BY s.period, s.unit
+            ),
+            cells AS (
+                SELECT
+                    period,
+                    unit,
+                    schoology_standard,
+                    COUNT(DISTINCT question_no)         AS num_questions,
+                    SUM(total_score)::float             AS total_score,
+                    SUM(total_possible_point)::float    AS total_possible_point
+                FROM scoped
+                GROUP BY period, unit, schoology_standard
+            ),
+            std_meta AS (
+                -- One dim_standard row per code (dedupe aliases
+                -- deterministically) for the CPALMS label / strand / description
+                -- / deep-link. Restricted to the codes actually in scope so the
+                -- DISTINCT ON sorts a handful of rows, not the whole catalog.
+                SELECT DISTINCT ON (schoology_standard)
+                    schoology_standard, cpalms_standard, strand,
+                    custom_cleaned_description, description, direct_link
+                FROM dim_standard
+                WHERE schoology_standard IS NOT NULL AND schoology_standard <> ''
+                  AND schoology_standard IN (SELECT schoology_standard FROM cells)
+                ORDER BY schoology_standard, identifier
+            )
+            SELECT
+                c.period                                          AS period,
+                c.unit                                            AS unit,
+                ud.assessment_date                                AS assessment_date,
+                c.schoology_standard                              AS schoology_standard,
+                COALESCE(NULLIF(m.cpalms_standard, ''),
+                         c.schoology_standard)                    AS cpalms_standard,
+                COALESCE(m.strand, '')                            AS strand,
+                COALESCE(NULLIF(m.custom_cleaned_description, ''),
+                         m.description, '')                       AS description,
+                m.direct_link                                     AS direct_link,
+                c.num_questions                                   AS num_questions,
+                c.total_score                                     AS total_score,
+                c.total_possible_point                            AS total_possible_point
+            FROM cells c
+            LEFT JOIN unit_dates ud
+              ON ud.period = c.period AND ud.unit = c.unit
+            LEFT JOIN std_meta m ON m.schoology_standard = c.schoology_standard
+            ORDER BY
+                MIN(ud.assessment_date) OVER (PARTITION BY c.period)
+                    ASC NULLS LAST,
+                c.period,
+                ud.assessment_date ASC NULLS LAST,
+                c.unit,
+                (c.total_score / NULLIF(c.total_possible_point, 0))
+                    ASC NULLS LAST,
+                c.schoology_standard
             """
         )
         result = await self.session.execute(

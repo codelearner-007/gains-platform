@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +20,7 @@ from app.core.dependencies import require_permission
 from app.core.rate_limit import limiter
 from app.middleware.rls import get_db_with_rls
 from app.schemas.reports import (
+    ForwardViewFilters,
     StandardSummaryFilters,
     StrandSummaryFilters,
     YTDFilters,
@@ -158,6 +159,35 @@ async def strand_summary_export_xlsx(
         )
     )
     return _xlsx_response("strand-summary", payload.school.name, payload)
+
+
+@router.get(
+    "/forward-view/export.xlsx",
+    dependencies=[Depends(require_permission("reports:read"))],
+)
+@limiter.limit(settings.RATE_LIMIT_REPORTS_EXPORT)
+async def forward_view_export_xlsx(
+    request: Request,
+    session: Optional[str] = None,
+    category: Optional[str] = None,
+    subject: Optional[str] = None,
+    grade: Optional[str] = None,
+    section: Optional[str] = None,
+    threshold: float = Query(0.7, ge=0.05, le=0.95),
+    db: AsyncSession = Depends(get_db_with_rls),
+) -> StreamingResponse:
+    """XLSX export of the Forward View report. Requires: reports:read"""
+    payload = await ReportService(db).build_forward_view(
+        ForwardViewFilters(
+            session=session,
+            category=category,
+            subject=subject,
+            grade=grade,
+            section=section,
+            threshold=threshold,
+        )
+    )
+    return _xlsx_response("forward-view", payload.school.name, payload)
 
 
 @router.get(

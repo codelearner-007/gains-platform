@@ -268,6 +268,26 @@ export function formatNumber(value: number): string {
     : value.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
+/**
+ * Format a date-only ISO string ("2024-11-04") to a locale short date WITHOUT
+ * the UTC-midnight timezone shift that `new Date("2024-11-04")` causes in a
+ * negative-offset locale (which can render the previous day). Returns null for
+ * empty / unparseable input.
+ */
+export function formatShortDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  const d = m
+    ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    : new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 // ── Shared report constants / string helpers ───────────────────────────────
 
 /**

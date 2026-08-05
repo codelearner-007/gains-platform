@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -52,8 +52,11 @@ class GradeRow(BaseModel):
 
 
 class SectionRow(BaseModel):
-    section_nid: str
-    section_code: Optional[str] = None
+    """Scoped section option: one classroom (``section_name`` +
+    ``section_instructors``) whose split Schoology shells are collapsed into
+    ``section_nids`` (the comma-joined nid list is the filter value)."""
+
+    section_nids: List[str]
     section_name: Optional[str] = None
     section_instructors: Optional[str] = None
 

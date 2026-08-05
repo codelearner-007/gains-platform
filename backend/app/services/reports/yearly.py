@@ -14,6 +14,12 @@ from app.schemas.reports import (
     AlignmentDataQuality,
     AlignmentDataQualityReport,
     AlignmentItemRow,
+    ForwardViewFilters,
+    ForwardViewKpis,
+    ForwardViewPayload,
+    ForwardViewPeriodGroup,
+    ForwardViewStandardRow,
+    ForwardViewUnitGroup,
     StandardSummaryFilters,
     StandardSummaryKpis,
     StandardSummaryPayload,
@@ -41,9 +47,9 @@ from ._helpers import (
     _coerce_str_list,
     _decode_html,
     _format_pct,
+    _format_pct_opt,
     _strip_html,
 )
-
 
 class _YearlyMixin:
     """Yearly / school-wide builders composed onto :class:`ReportService`."""
@@ -378,6 +384,233 @@ class _YearlyMixin:
             filters_applied=filters,
             kpis=kpis,
             standards=standards,
+            data_quality=data_quality,
+        )
+
+    # ────────────────────────────────────────────────────────────────────
+    # Forward View (prior-year troublesome standards, by period → unit)
+    # ────────────────────────────────────────────────────────────────────
+    async def build_forward_view(
+        self, filters: ForwardViewFilters
+    ) -> ForwardViewPayload:
+        """Prior-year troublesome-standards heads-up, by period → unit.
+
+        The session defaults to the school's current session when no session
+        is pinned — resolved server side and echoed in
+        ``filters_applied.session`` (never null). Standards are pooled
+        (``SUM(total_score)/SUM(total_possible_point)``, E.4) per (period,
+        unit, standard) and flagged when that pooled % correct is strictly
+        below ``filters.threshold`` (E.3, computed here so CSV/XLSX/UI agree).
+        AsyncSession forbids concurrent statements — every cube read awaits
+        sequentially.
+        """
+        meta = await self.cube.get_school_wide_meta() or {}
+        current_session = safe_str(meta.get("current_session"))
+        # Resolve: explicit pin → current session (never null). The frontend
+        # resolves and always sends the latest session explicitly; when it is
+        # omitted (direct API / CSV), fall back to the school's current session.
+        session = safe_str(filters.session) or current_session
+        threshold = filters.threshold
+
+        rows = await self.cube.get_forward_view_rollup(
+            session_filter=session or None,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+            section=filters.section,
+        )
+
+        # Rows arrive pre-ordered period → unit → (pooled % asc). Nest in a
+        # single pass; insertion-order dicts preserve the SQL ordering because
+        # each group's rows are contiguous. ``std_pool`` re-pools each standard
+        # across the WHOLE scope for the top-focus strip (sum of sums).
+        periods_acc: "dict[str, dict[str, dict[str, Any]]]" = {}
+        std_pool: dict[str, dict[str, Any]] = {}
+        for r in rows:
+            schoology = safe_str(r.get("schoology_standard"))
+            if not schoology:
+                continue
+            period = safe_str(r.get("period"))
+            unit = safe_str(r.get("unit"))
+            score = to_float(r.get("total_score"))
+            possible = to_float(r.get("total_possible_point"))
+            grade_avg = round(score / possible, 6) if possible > 0 else None
+            row = ForwardViewStandardRow(
+                schoology_standard=schoology,
+                cpalms_standard=safe_str(r.get("cpalms_standard")) or schoology,
+                strand=_decode_html(safe_str(r.get("strand"))),
+                description=_strip_html(safe_str(r.get("description"))),
+                direct_link=r.get("direct_link") or None,
+                num_questions=to_int(r.get("num_questions")),
+                total_score=round(score, 6),
+                total_possible_point=round(possible, 6),
+                grade_average=grade_avg,
+                grade_average_pct=_format_pct_opt(grade_avg),
+                is_troublesome=grade_avg is not None and grade_avg < threshold,
+            )
+            unit_acc = periods_acc.setdefault(period, {}).setdefault(
+                unit, {"assessment_date": r.get("assessment_date"), "rows": []}
+            )
+            unit_acc["rows"].append(row)
+
+            pool = std_pool.setdefault(
+                schoology,
+                {
+                    "score": 0.0,
+                    "possible": 0.0,
+                    "num_questions": 0,
+                    "cpalms_standard": row.cpalms_standard,
+                    "strand": row.strand,
+                    "description": row.description,
+                    "direct_link": row.direct_link,
+                },
+            )
+            pool["score"] += score
+            pool["possible"] += possible
+            pool["num_questions"] += to_int(r.get("num_questions"))
+
+        # ── Nest → period bands ─────────────────────────────────────────────
+        # Period counts are DISTINCT standard codes within the period (not a sum
+        # of per-unit cells): ``standards_count`` = distinct codes assessed in
+        # the period, ``flagged_count`` = distinct codes with ≥1 flagged cell in
+        # the period. A code recurring across units counts once, and one flagged
+        # in any of the period's units counts once — so the band reads "N of M
+        # standards flagged" honestly even though it collapses several cells.
+        period_groups: list[ForwardViewPeriodGroup] = []
+        for period, units in periods_acc.items():
+            unit_groups: list[ForwardViewUnitGroup] = []
+            unit_dates: list[Any] = []
+            period_codes: set[str] = set()
+            period_flagged_codes: set[str] = set()
+            for unit, acc in units.items():
+                unit_rows: list[ForwardViewStandardRow] = acc["rows"]
+                unit_flagged = sum(1 for x in unit_rows if x.is_troublesome)
+                adate = acc["assessment_date"]
+                unit_groups.append(
+                    ForwardViewUnitGroup(
+                        unit=unit,
+                        assessment_date=adate.isoformat() if adate else None,
+                        flagged_count=unit_flagged,
+                        standards=unit_rows,
+                    )
+                )
+                for x in unit_rows:
+                    period_codes.add(x.schoology_standard)
+                    if x.is_troublesome:
+                        period_flagged_codes.add(x.schoology_standard)
+                if adate:
+                    unit_dates.append(adate)
+            period_groups.append(
+                ForwardViewPeriodGroup(
+                    period=period,
+                    date_start=min(unit_dates).isoformat() if unit_dates else None,
+                    date_end=max(unit_dates).isoformat() if unit_dates else None,
+                    standards_count=len(period_codes),
+                    flagged_count=len(period_flagged_codes),
+                    units=unit_groups,
+                )
+            )
+
+        # ── Scope-pooled per standard: assessed denominator + flagged list ──
+        # A standard is "assessed" if it has any pooled possible points, and
+        # "flagged" if its WHOLE-scope pooled % correct is below the threshold
+        # (consistent with the per-row flag and the Top Focus strip). The Top
+        # Focus strip is these flagged standards, worst-first, capped at 10.
+        assessed_standards = 0
+        flagged_pool: list[ForwardViewStandardRow] = []
+        for schoology, pool in std_pool.items():
+            possible = pool["possible"]
+            if possible <= 0:
+                continue
+            assessed_standards += 1
+            pooled = round(pool["score"] / possible, 6)
+            if pooled >= threshold:
+                continue
+            flagged_pool.append(
+                ForwardViewStandardRow(
+                    schoology_standard=schoology,
+                    cpalms_standard=pool["cpalms_standard"] or schoology,
+                    strand=pool["strand"],
+                    description=pool["description"],
+                    direct_link=pool["direct_link"],
+                    num_questions=pool["num_questions"],
+                    total_score=round(pool["score"], 6),
+                    total_possible_point=round(possible, 6),
+                    grade_average=pooled,
+                    grade_average_pct=_format_pct_opt(pooled),
+                    is_troublesome=True,
+                )
+            )
+        flagged_pool.sort(
+            key=lambda x: (
+                x.grade_average if x.grade_average is not None else 1.0,
+                x.schoology_standard,
+            )
+        )
+        flagged_standards = len(flagged_pool)
+        top_focus = flagged_pool[:10]
+
+        # ── KPIs: DISTINCT standard codes (assessed denominator, flagged
+        # numerator) so "Standards Assessed" reads honestly when a standard
+        # recurs across units; unit/period counts are structural.
+        units_covered = sum(len(p.units) for p in period_groups)
+        flag_rate = (
+            flagged_standards / assessed_standards if assessed_standards else 0.0
+        )
+        kpis = ForwardViewKpis(
+            standards_assessed=assessed_standards,
+            flagged_standards=flagged_standards,
+            flag_rate=round(flag_rate, 6),
+            flag_rate_pct=_format_pct(flag_rate),
+            units_covered=units_covered,
+            periods_covered=len(period_groups),
+            threshold=threshold,
+            threshold_pct=_format_pct(threshold),
+        )
+
+        school = YTDSchoolInfo(
+            name=safe_str(meta.get("name")),
+            logo_url=meta.get("logo_url") or None,
+            current_session=current_session,
+        )
+
+        # Alignment quality over the resolved scope (sequential await). Section
+        # is intentionally NOT passed: DQ matches section on
+        # ``dim_question_data.section`` (display labels like "Sec 1"), but our
+        # section value is a ``section_nid`` CSV — passing it would never match
+        # and would falsely report "alignment missing". DQ is a scope-level
+        # (session/subject/grade) data signal, computed section-agnostically
+        # like the standard/strand summaries.
+        quality = await self.cube.get_school_alignment_quality(
+            session_filter=session or None,
+            subject=filters.subject,
+            grade=filters.grade,
+            category=filters.category,
+        )
+        data_quality = AlignmentDataQuality(
+            alignment_status=_classify_alignment(
+                quality["questions_total"], quality["questions_with_alignment"]
+            ),
+            questions_total=quality["questions_total"],
+            questions_with_alignment=quality["questions_with_alignment"],
+            items_total=quality["items_total"],
+            items_with_alignment=quality["items_with_alignment"],
+            remediation_hint=_ALIGNMENT_REMEDIATION,
+        )
+
+        return ForwardViewPayload(
+            school=school,
+            filters_applied=ForwardViewFilters(
+                session=session,
+                subject=filters.subject,
+                grade=filters.grade,
+                category=filters.category,
+                section=filters.section,
+                threshold=threshold,
+            ),
+            kpis=kpis,
+            top_focus=top_focus,
+            periods=period_groups,
             data_quality=data_quality,
         )
 

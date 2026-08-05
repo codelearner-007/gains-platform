@@ -16,6 +16,7 @@ import {
   splitStandards,
 } from './format';
 import type {
+  ForwardViewPayload,
   IncorrectAnswerDetailsPayload,
   PaginatedQuestionRow,
   QraByStandardTeacherPayload,
@@ -29,7 +30,7 @@ import type {
   YearToDatePerformancePayload,
 } from './types';
 
-/** Report kinds that have a CSV flattener. Matches the 11 report endpoints. */
+/** Report kinds that have a CSV flattener. Matches the report endpoints. */
 export type ReportKind =
   | 'qra'
   | 'qra-paginated'
@@ -39,6 +40,7 @@ export type ReportKind =
   | 'ytd'
   | 'standard-summary'
   | 'strand-summary'
+  | 'forward-view'
   | 'sdd'
   | 'iad';
 
@@ -406,6 +408,52 @@ function strandSummaryToCsv(p: StrandSummaryPayload): string {
   return rowsToCsv(rows);
 }
 
+/**
+ * Forward View: one row per (period, unit, standard) — the exact visible grain
+ * of the period → unit → standards body. Points columns expose the pooled math
+ * behind each %; `Flagged` echoes the server-side `is_troublesome` flag so the
+ * CSV can never disagree with the on-screen "Focus" pill.
+ */
+function forwardViewToCsv(p: ForwardViewPayload): string {
+  const header: CsvRow = [
+    'Period',
+    'Unit',
+    'Assessment Date',
+    'Standard',
+    'CPALMS Standard',
+    'Strand',
+    'Description',
+    'Questions',
+    'Points Earned',
+    'Points Possible',
+    '% Correct',
+    'Flagged',
+  ];
+  const rows: CsvRow[] = [header];
+  for (const period of p.periods) {
+    for (const unit of period.units) {
+      for (const s of unit.standards) {
+        rows.push([
+          period.period,
+          unit.unit,
+          unit.assessment_date ?? '',
+          s.schoology_standard,
+          s.cpalms_standard,
+          s.strand,
+          htmlToPlainText(s.description),
+          num(s.num_questions),
+          num(s.total_score),
+          num(s.total_possible_point),
+          // null grade_average renders BLANK (unassessed / 0 possible points).
+          s.grade_average === null ? '' : pct(s.grade_average),
+          s.is_troublesome ? 'Yes' : 'No',
+        ]);
+      }
+    }
+  }
+  return rowsToCsv(rows);
+}
+
 /** SDD: standards_rollup grain — one row per Schoology standard. */
 function sddToCsv(p: StandardsDeepDivePayload): string {
   const header: CsvRow = [
@@ -475,6 +523,7 @@ export interface ReportPayloadByKind {
   ytd: YearToDatePerformancePayload;
   'standard-summary': StandardSummaryPayload;
   'strand-summary': StrandSummaryPayload;
+  'forward-view': ForwardViewPayload;
   sdd: StandardsDeepDivePayload;
   iad: IncorrectAnswerDetailsPayload;
 }
@@ -501,6 +550,8 @@ export function reportToCsv<K extends ReportKind>(
       return standardSummaryToCsv(payload as StandardSummaryPayload);
     case 'strand-summary':
       return strandSummaryToCsv(payload as StrandSummaryPayload);
+    case 'forward-view':
+      return forwardViewToCsv(payload as ForwardViewPayload);
     case 'sdd':
       return sddToCsv(payload as StandardsDeepDivePayload);
     case 'iad':

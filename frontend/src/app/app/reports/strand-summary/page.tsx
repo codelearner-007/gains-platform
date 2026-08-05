@@ -8,6 +8,7 @@ import type {
   StrandSummaryStandardRow,
 } from '@/lib/reports/types';
 import { useSummaryFilters } from '@/lib/reports/use-summary-filters';
+import { useEffectiveSession } from '@/lib/reports/use-latest-session';
 import { useSelectedSchool } from '@/lib/context/SelectedSchoolContext';
 import ReportPageHeader from '@/components/app/modules/reports/shared/ReportPageHeader';
 import ReportCanvas from '@/components/app/modules/reports/shared/ReportCanvas';
@@ -39,14 +40,24 @@ export default function StrandSummaryPage() {
   });
   const { schoolId } = useSelectedSchool();
 
+  // Session defaults to the school's latest year (resolved on the frontend and
+  // always sent) so the report shows a single, current year — not every year
+  // pooled together — matching the "Academic year …" header.
+  const { session: effectiveSession, sessionsPending } = useEffectiveSession(
+    schoolId,
+    filters.session,
+  );
+
   const queryFilters: StrandSummaryFilters = useMemo(
-    () => ({ ...filters, school_id: schoolId ?? undefined }),
-    [filters, schoolId],
+    () => ({ ...filters, session: effectiveSession, school_id: schoolId ?? undefined }),
+    [filters, effectiveSession, schoolId],
   );
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: reportsKeys.strandSummary(queryFilters),
     queryFn: () => reportsApi.strandSummary(queryFilters),
+    // Wait for the latest session so the first paint is the current year.
+    enabled: Boolean(effectiveSession),
   });
 
   // Pre-bucket the per-standard rows by strand once, so each StrandCard reads
@@ -62,7 +73,8 @@ export default function StrandSummaryPage() {
     return map;
   }, [data?.standards_rollup]);
 
-  if (isLoading) return <LoadingState label="Loading strand summary…" />;
+  if (isLoading || sessionsPending)
+    return <LoadingState label="Loading strand summary…" />;
   if (isError) {
     return (
       <ErrorState
@@ -80,8 +92,9 @@ export default function StrandSummaryPage() {
     (n, s) => n + s.num_standards,
     0,
   );
-  const subtitle = data.school.current_session
-    ? `Academic year ${data.school.current_session} • ${strandCount} strands • ${standardCount} standards`
+  const yearLabel = effectiveSession ?? data.school.current_session;
+  const subtitle = yearLabel
+    ? `Academic year ${yearLabel} • ${strandCount} strands • ${standardCount} standards`
     : `${strandCount} strands • ${standardCount} standards`;
 
   return (
@@ -95,7 +108,7 @@ export default function StrandSummaryPage() {
             name={data.school.name || 'strand-summary'}
             xlsxUrl={buildXlsxUrl('strand-summary', {
               schoolId: schoolId ?? undefined,
-              filters: { ...filters },
+              filters: { ...filters, session: effectiveSession },
             })}
           />
         </div>
@@ -112,7 +125,12 @@ export default function StrandSummaryPage() {
       </div>
 
       <div className="mb-2">
-        <ReportFilters value={filters} onChange={setFilters} showSection={false} />
+        <ReportFilters
+          value={filters}
+          onChange={setFilters}
+          showSection={false}
+          resolvedSession={effectiveSession}
+        />
       </div>
 
       {data.data_quality?.alignment_status === 'missing' && (

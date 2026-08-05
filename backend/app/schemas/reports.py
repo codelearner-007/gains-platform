@@ -555,6 +555,115 @@ class StrandSummaryPayload(BaseModel):
     data_refreshed_at: str = ""
 
 
+# ─── Forward View (troublesome standards for a session, by period → unit) ──
+#
+# Heads-up report: flags the standards students struggled with in the
+# resolved (default = current/latest) session, grouped by PERIOD
+# (assessment_type) → UNIT (item_name) → standard. Pooled % correct
+# (SUM(total_score)/SUM(total_possible_point)) per (period, unit, standard),
+# with a client-configurable ``threshold`` deciding ``is_troublesome`` server
+# side so CSV / XLSX / UI never disagree. Sourced from ``cube_user_summary``.
+
+
+class ForwardViewFilters(BaseModel):
+    """Echo of the query params applied so the client can re-render chips.
+
+    ``session`` is the RESOLVED session (never null on the response — the
+    service defaults it to the school's current (latest) session).
+    ``threshold`` is the flag cut-off as a 0–1 fraction (default
+    ``PERF_BAND_MID`` = 0.7); a standard is flagged when its pooled % correct
+    is strictly below it. ``section`` narrows to a class roster (X.2).
+    """
+
+    session: Optional[str] = None
+    subject: Optional[str] = None
+    grade: Optional[str] = None
+    category: Optional[str] = None
+    section: Optional[str] = None
+    threshold: float = 0.7
+
+
+class ForwardViewStandardRow(BaseModel):
+    """One (period, unit, standard) row — pooled across all students.
+
+    ``grade_average`` = ``SUM(total_score)/SUM(total_possible_point)`` (0–1
+    fraction), ``None`` when ``total_possible_point == 0`` (unscored — never
+    flagged). ``is_troublesome`` = ``grade_average is not None and
+    grade_average < threshold`` (computed server side). In ``top_focus`` the
+    same shape carries the SCOPE-POOLED sums for a standard (``num_questions``
+    = sum of the per-unit counts).
+    """
+
+    schoology_standard: str
+    cpalms_standard: str
+    strand: str
+    description: str
+    direct_link: Optional[str] = None
+    num_questions: int
+    total_score: float
+    total_possible_point: float
+    grade_average: Optional[float] = None
+    grade_average_pct: str
+    is_troublesome: bool
+
+
+class ForwardViewUnitGroup(BaseModel):
+    """One assessment (``item_name``) within a period; standards worst-first."""
+
+    unit: str
+    assessment_date: Optional[str] = None
+    flagged_count: int
+    standards: List[ForwardViewStandardRow]
+
+
+class ForwardViewPeriodGroup(BaseModel):
+    """One period band (``assessment_type``); units chronological then name.
+
+    ``date_start`` / ``date_end`` = min / max of the contained units'
+    assessment dates (ISO strings, or ``None`` when no unit carries a date).
+    ``standards_count`` = DISTINCT standard codes assessed in the period and
+    ``flagged_count`` = DISTINCT codes with at least one flagged cell in the
+    period — both count a recurring code once, so they are not the sum of the
+    per-unit cell counts.
+    """
+
+    period: str
+    date_start: Optional[str] = None
+    date_end: Optional[str] = None
+    standards_count: int
+    flagged_count: int
+    units: List[ForwardViewUnitGroup]
+
+
+class ForwardViewKpis(BaseModel):
+    """KPI strip counts, over the resolved scope. ``standards_assessed`` and
+    ``flagged_standards`` count DISTINCT standard codes (assessed = pooled
+    possible points > 0; flagged = scope-pooled % correct < threshold), so a
+    standard that recurs across units is counted once — not per (period, unit,
+    standard) row instance. ``units_covered`` / ``periods_covered`` are the
+    distinct unit-card / period-band counts."""
+
+    standards_assessed: int
+    flagged_standards: int
+    flag_rate: float
+    flag_rate_pct: str
+    units_covered: int
+    periods_covered: int
+    threshold: float
+    threshold_pct: str
+
+
+class ForwardViewPayload(BaseModel):
+    """Forward View report payload (prior-year troublesome standards)."""
+
+    school: YTDSchoolInfo
+    filters_applied: ForwardViewFilters
+    kpis: ForwardViewKpis
+    top_focus: List[ForwardViewStandardRow]
+    periods: List[ForwardViewPeriodGroup]
+    data_quality: Optional[AlignmentDataQuality] = None
+
+
 # ─── Dashboard overview + Performance-by-Strand grid ───────────────────────
 
 

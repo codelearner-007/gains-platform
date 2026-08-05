@@ -26,6 +26,8 @@ interface KpiCardProps {
   valueClassName?: string;
   /** Override background color. Default: KPI_CARD_BG. */
   backgroundColor?: string;
+  /** Optional native tooltip explaining how the metric is computed. */
+  hint?: string;
 }
 
 const baseContainer =
@@ -38,11 +40,13 @@ export default function KpiCard({
   className = '',
   valueClassName = 'text-[28px]',
   backgroundColor = KPI_CARD_BG,
+  hint,
 }: KpiCardProps) {
   return (
     <div
       className={`${baseContainer} ${className}`.trim()}
       style={{ backgroundColor, borderColor: LAYOUT_BORDER }}
+      title={hint}
     >
       <div className="text-[12px] font-medium text-neutral-700 text-center">
         {label}

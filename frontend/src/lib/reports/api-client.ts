@@ -6,6 +6,8 @@ import type {
   AssessmentTypeRow,
   DashboardOverviewPayload,
   DashboardStrandRowsPage,
+  ForwardViewFilters,
+  ForwardViewPayload,
   GradeRow,
   IncorrectAnswerDetailsPayload,
   InstructorRow,
@@ -26,6 +28,15 @@ import type {
   SubjectRow,
   YearToDatePerformancePayload,
 } from './types';
+
+/** Active filter scope that narrows the Section list to the sections that
+ *  actually taught this session/subject/grade/category. All parts optional. */
+export interface SectionScope {
+  session?: string;
+  subject?: string;
+  grade?: string;
+  category?: string;
+}
 
 /** Server-side paging/sort/search options for the assessment summary grid. */
 export interface AssessmentSummaryQuery {
@@ -104,6 +115,14 @@ export const reportsApi = {
     fetch(`/api/v1/reports/strand-summary${buildQuery(filters)}`, {
       credentials: 'include',
     }).then(handleResponse<StrandSummaryPayload>),
+
+  // ``threshold`` arrives as a fraction string (e.g. "0.7"); ``session`` may be
+  // absent (the backend defaults to the current/latest session and echoes it).
+  // All scoping (school, filters, threshold) rides the query string via ``buildQuery``.
+  forwardView: (filters?: ForwardViewFilters) =>
+    fetch(`/api/v1/reports/forward-view${buildQuery(filters)}`, {
+      credentials: 'include',
+    }).then(handleResponse<ForwardViewPayload>),
 
   alignmentDataQuality: () =>
     fetch('/api/v1/reports/data-quality/standards-alignment', {
@@ -245,10 +264,20 @@ export const reportsApi = {
       credentials: 'include',
     }).then(handleResponse<GradeRow[]>),
 
-  sections: (schoolId?: string) =>
-    fetch(`/api/v1/dim/sections${buildQuery({ school_id: schoolId })}`, {
-      credentials: 'include',
-    }).then(handleResponse<SectionRow[]>),
+  // Scoped section list: the backend narrows `cube_user_summary` to the
+  // session/subject/grade/category before grouping, so the caller passes the
+  // active filter scope and receives only the sections that actually taught it.
+  sections: (schoolId?: string, scope?: SectionScope) =>
+    fetch(
+      `/api/v1/dim/sections${buildQuery({
+        school_id: schoolId,
+        session: scope?.session,
+        subject: scope?.subject,
+        grade: scope?.grade,
+        category: scope?.category,
+      })}`,
+      { credentials: 'include' },
+    ).then(handleResponse<SectionRow[]>),
 };
 
 export const reportsKeys = {
@@ -274,6 +303,10 @@ export const reportsKeys = {
     [...reportsKeys.all, 'standardSummary', filters ?? {}, cardsOnly ?? false] as const,
   strandSummary: (filters?: StrandSummaryFilters) =>
     [...reportsKeys.all, 'strandSummary', filters ?? {}] as const,
+  // The full filter object (incl. school_id + threshold fraction) is embedded
+  // so any threshold/filter change is a distinct cache entry.
+  forwardView: (filters?: ForwardViewFilters) =>
+    [...reportsKeys.all, 'forwardView', filters ?? {}] as const,
   dashboardOverview: (
     filters?: Pick<AssessmentFilters, 'session' | 'category' | 'grade' | 'school_id'>,
   ) => [...reportsKeys.all, 'dashboard-overview', filters ?? {}] as const,
@@ -327,6 +360,8 @@ export const reportsKeys = {
     [...reportsKeys.all, 'dim', 'subjects', schoolId ?? null] as const,
   grades: (schoolId?: string) =>
     [...reportsKeys.all, 'dim', 'grades', schoolId ?? null] as const,
-  sections: (schoolId?: string) =>
-    [...reportsKeys.all, 'dim', 'sections', schoolId ?? null] as const,
+  // The scope object is embedded so each session/subject/grade/category is a
+  // distinct cache entry (the section list changes as the scope narrows).
+  sections: (schoolId?: string, scope?: SectionScope) =>
+    [...reportsKeys.all, 'dim', 'sections', schoolId ?? null, scope ?? {}] as const,
 };

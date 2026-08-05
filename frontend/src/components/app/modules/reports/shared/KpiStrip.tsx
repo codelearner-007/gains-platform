@@ -25,6 +25,8 @@ export interface KpiTile {
   value: ReactNode;
   /** Value typography override (e.g. text-[24px]). */
   valueClassName: string;
+  /** Optional native tooltip explaining how the metric is computed. */
+  hint?: string;
 }
 
 interface KpiStripProps {
@@ -48,6 +50,7 @@ export default function KpiStrip({ cols, tiles }: KpiStripProps) {
           valueClassName={tile.valueClassName}
           label={tile.label}
           value={tile.value}
+          hint={tile.hint}
         />
       ))}
     </div>
