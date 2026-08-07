@@ -737,20 +737,27 @@ class ScopeReport:
     (i.e. run_subjects[run] ⊆ survivors). Otherwise it contributed a pruned
     group → mark failed, retain its raw for retry.
 
-    ``qd_only_noop`` is the QD-only sentinel: a batch that landed question-data
-    raw but ZERO student submissions (|S| = 0 with landed_student == 0). The
-    scoped path cannot build from question-data alone, so run_all applies
-    nothing; the worker marks the folded runs failed and RETAINS their raw
-    (purge skips — the QD change is recoverable via a full rebuild) rather than
-    promoting them succeeded+applied and purging (which would silently drop the
-    correction).
+    ``noop_reason`` is the empty-scope sentinel: on a scoped run that built
+    NOTHING it names WHY so the worker marks the folded runs failed and RETAINS
+    their raw (purge skips — the change is recoverable via a full rebuild) rather
+    than promoting them succeeded+applied and purging (which would silently drop
+    the correction). Values:
+
+      * ``None``        — a real transform (subjects survived + were applied).
+      * ``"qd_only"``   — landed ZERO student-submission rows (question-data-only
+        / empty ingest); nothing is buildable from question-data alone.
+      * ``"all_pruned"``— subjects were discovered but the roster gate pruned
+        EVERY group (partial / truncated re-scrape).
+      * ``"no_subjects"``— real student raw landed but ZERO in-scope subjects were
+        discovered (an anomaly: wrong ``schools.student_role_id`` or a tenant
+        override dropping every row).
     """
 
     run_subjects: dict[str, frozenset[str]]
     groups: tuple[frozenset[str], ...]
     survivors: frozenset[str]
     failed_subjects: frozenset[str]
-    qd_only_noop: bool = False
+    noop_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1260,46 +1267,67 @@ async def _apply_roster_gate(
 
 
 async def _handle_empty_scope(
-    landed_student: int, results: TransformResult, *, all_pruned: bool
+    landed_student: int,
+    results: TransformResult,
+    *,
+    all_pruned: bool,
+    run_subjects: dict[str, frozenset[str]] | None = None,
+    subjects: frozenset[str] = frozenset(),
 ) -> TransformResult:
-    """No survivors: raise (fail-closed) when substantial student raw landed,
-    else return the QD-only no-op sentinel. Raising rolls back the whole txn
-    (nothing was applied), so the caller / worker marks the batch failed and
-    retains its raw.
+    """No survivors: NEVER raise. Always attach a no-op sentinel and return so the
+    worker marks the folded run(s) FAILED and RETAINS their raw (purge skips) —
+    NOT succeeded+applied+purged, which would silently drop the correction.
 
-    landed_student == 0 is the QD-only / empty-ingest case: nothing is buildable
-    from question-data alone, so we attach a ``ScopeReport(qd_only_noop=True)``
-    sentinel and return. The worker uses it to mark the folded run(s) FAILED and
-    RETAIN their raw (purge skips) — NOT succeeded+applied+purged, which would
-    silently drop the question-data correction.
+    Raising here would propagate out of the transform gate, roll the worker's txn
+    back (leaving the warehouse dirty flag set and the runs ``landed``), and the
+    dirty-drain re-drive would re-process the same batch forever (an infinite
+    retry loop). Returning a terminal sentinel instead lets the worker fail the
+    runs, clear the dirty flag, and move on.
+
+    ``noop_reason`` distinguishes the three cases (see ``ScopeReport``):
+      * ``"qd_only"``    — landed 0 student rows (question-data-only / empty).
+      * ``"all_pruned"`` — subjects discovered, roster gate pruned every group.
+      * ``"no_subjects"``— real student raw landed but 0 subjects discovered
+        (a genuine anomaly — logged at ERROR).
     """
-    if landed_student > 0:
-        why = (
-            "every assessment group was pruned by the roster gate (partial/"
-            "truncated re-scrape)"
-            if all_pruned
-            else "the batch produced ZERO in-scope subjects"
-        )
-        raise RuntimeError(
-            "SCOPED TRANSFORM ABORTED — "
-            f"{landed_student} raw_student_submission row(s) landed but {why}. "
-            "Nothing was applied and the transaction is rolled back (raw "
-            "retained). Check schools.student_role_id and the tenant overrides "
-            "(subject/grade/item_label), or run a full-assessment re-scrape."
-        )
-    logger.warning(
-        "scoped transform no-op: batch landed 0 student-submission row(s) "
-        "(question-data-only or empty ingest) — nothing to build. The scoped "
-        "path cannot apply question-data alone; the folded run(s) are marked "
-        "FAILED and their raw is RETAINED (not purged). Re-scrape with "
-        "submissions or run a full rebuild to apply the change."
+    reason = (
+        "qd_only"
+        if landed_student == 0
+        else ("all_pruned" if all_pruned else "no_subjects")
     )
+    if reason == "qd_only":
+        logger.warning(
+            "scoped transform no-op: batch landed 0 student-submission row(s) "
+            "(question-data-only or empty ingest) — nothing to build. The scoped "
+            "path cannot apply question-data alone; the folded run(s) are marked "
+            "FAILED and their raw is RETAINED (not purged). Re-scrape with "
+            "submissions or run a full rebuild to apply the change."
+        )
+    elif reason == "all_pruned":
+        logger.warning(
+            "scoped transform no-op: %d student-submission row(s) landed but the "
+            "roster gate pruned EVERY assessment group (partial/truncated "
+            "re-scrape) — nothing to build. The folded run(s) are marked FAILED "
+            "and their raw is RETAINED (not purged). Re-scrape the full "
+            "assessment(s) to apply the change.",
+            landed_student,
+        )
+    else:  # no_subjects — a real anomaly
+        logger.error(
+            "scoped transform no-op: %d student-submission row(s) landed but the "
+            "batch produced ZERO in-scope subjects — nothing to build. This is an "
+            "anomaly: check schools.student_role_id and the tenant overrides "
+            "(subject/grade/item_label), or run a full-assessment re-scrape. The "
+            "folded run(s) are marked FAILED and their raw is RETAINED (not "
+            "purged).",
+            landed_student,
+        )
     results.scope = ScopeReport(
-        run_subjects={},
+        run_subjects=run_subjects or {},
         groups=(),
         survivors=frozenset(),
-        failed_subjects=frozenset(),
-        qd_only_noop=True,
+        failed_subjects=subjects,
+        noop_reason=reason,
     )
     return results
 
@@ -1400,7 +1428,11 @@ async def run_all(
         if not prep.subjects:
             # No subjects discovered at all (|S| = 0).
             return await _handle_empty_scope(
-                prep.landed_student, results, all_pruned=False
+                prep.landed_student,
+                results,
+                all_pruned=False,
+                run_subjects=prep.run_subjects,
+                subjects=prep.subjects,
             )
 
         # pass B: re-run staging scoped to S (subject-scoped arm).
@@ -1414,9 +1446,13 @@ async def run_all(
             session, prep.groups, pre_pruned=prep.locked_pruned
         )
         if not survivors:
-            # Every group pruned → nothing to build. Fail-closed / no-op.
+            # Every group pruned → nothing to build. No-op sentinel (no raise).
             return await _handle_empty_scope(
-                prep.landed_student, results, all_pruned=True
+                prep.landed_student,
+                results,
+                all_pruned=True,
+                run_subjects=prep.run_subjects,
+                subjects=prep.subjects,
             )
 
         scope_report = ScopeReport(
