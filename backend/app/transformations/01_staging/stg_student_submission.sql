@@ -1,3 +1,7 @@
+-- SCOPED-TRANSFORM NOTE: this file now references the session-local _scope_run_ids /
+-- _scope_assessments / _scope_items temp tables (created by run_all). A manual psql
+-- replay must first create all three EMPTY, else the scope predicates error.
+--
 -- Staging: raw_student_submission -> stg_student_submission.
 -- Resolves school_id (UUID) from user_school_id (TEXT in CSV) via the
 -- schools.schoology_school_id key, then applies four tenant overrides per
@@ -126,4 +130,24 @@ WHERE NULLIF(TRIM(rss.grade), '')   IS DISTINCT FROM 'remove grade level'
     SELECT 1 FROM student_exclusions se
     WHERE se.school_id = s.school_id
       AND se.user_uid  = NULLIF(TRIM(rss.user_uid), '')
+  )
+  -- SCOPED-TRANSFORM 3-way INSERT filter. No-op when all _scope_* temp tables are
+  -- empty -> byte-identical to the full rebuild.
+  --   FULL   : _scope_run_ids AND _scope_assessments both empty -> pass every row.
+  --   pass A : discovery — restrict to the batch's freshly-landed raw runs.
+  --   pass B : build — restrict to rows whose recomputed subject_id is in S.
+  -- The pass-B uuid_6 expression is VERBATIM the fact subject_id build (override
+  -- COALESCE arms + arg order school,subject,assessment_type,grade,session,item_name).
+  AND (
+    (NOT EXISTS (SELECT 1 FROM _scope_run_ids)
+     AND NOT EXISTS (SELECT 1 FROM _scope_assessments))
+    OR rss.ingestion_run_id IN (SELECT run_id FROM _scope_run_ids)
+    OR uuid_6(
+         s.school_id::text,
+         COALESCE(ilo.subject_override, sco.subject_override, so.subject_override, NULLIF(TRIM(rss.subject), '')),
+         COALESCE(ilo.assessment_type_override, NULLIF(regexp_replace(btrim(rss.assessment_type), '\s+', ' ', 'g'), '')),
+         COALESCE(ilo.grade_override, go.grade_override, NULLIF(TRIM(rss.grade), '')),
+         NULLIF(TRIM(rss.session), ''),
+         COALESCE(ilo.item_name_override, NULLIF(TRIM(rss.item_name), ''))
+       ) IN (SELECT subject_id FROM _scope_assessments)
   );

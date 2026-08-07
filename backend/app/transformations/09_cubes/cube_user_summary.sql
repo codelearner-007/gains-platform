@@ -5,7 +5,20 @@
 -- 6 chained intermediate aggregates, then a final SELECT that joins them all
 -- onto the base grain.
 
-TRUNCATE TABLE cube_user_summary;
+-- Scoped rebuild: this cube embeds session-wide aggregate columns
+-- (*_by_overall_year, *_by_section, *_by_standard, ...), so a per-subject scope
+-- would leave sibling items' session-level columns stale. Instead we delete and
+-- recompute the whole (school_id, session) slice from the PRESERVED fact. Empty
+-- scope (full rebuild) falls through to TRUNCATE — byte-identical to legacy.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM cube_user_summary
+    WHERE (school_id, COALESCE(session, '(null)'))
+          IN (SELECT school_id, COALESCE(session, '(null)') FROM _scope_assessments);
+  ELSE
+    TRUNCATE TABLE cube_user_summary;
+  END IF;
+END $scope$;
 
 INSERT INTO cube_user_summary (
   id, school_id, school_id_csv, section_nid, section_instructors,
@@ -63,6 +76,12 @@ WITH fact_join_qd AS (
    AND qd.question_id = f.question_id
    AND COALESCE(qd.position_number, '__NULL__')
        = COALESCE(f.position_number, '__NULL__')
+  -- Scoped rebuild: restrict the fact scan to the touched (school_id, session)
+  -- slices so every downstream aggregate recomputes the whole slice from the
+  -- preserved fact. No-op when _scope_assessments is empty (full rebuild).
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR (f.school_id, COALESCE(f.session, '(null)'))
+            IN (SELECT school_id, COALESCE(session, '(null)') FROM _scope_assessments))
 ),
 section_meta AS (
   -- For each (school_id, section_nid) -> section_instructors.

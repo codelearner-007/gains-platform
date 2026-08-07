@@ -61,13 +61,19 @@ class Settings(BaseSettings):
     INGESTION_TRIGGER_SECRET: str | None = None
 
     # Ingestion durability (HARDENING_PLAN §3). This kill-switch decides whether a
-    # box ATTEMPTS a rebuild at all — on a serving database there is nothing to
-    # gain by trying, so it stays False there and the full-raw rebuild machine sets
-    # it True. It is an efficiency setting, NOT the safety mechanism: historic-year
+    # box ATTEMPTS a transform at all. It is enabled in BOTH sanctioned modes:
+    #   * the full-raw rebuild machine sets it True to run whole-DB rebuilds; and
+    #   * a serving box sets it True to run SCOPED, incremental transforms — the
+    #     sanctioned way to fold freshly-scraped runs into a serving database,
+    #     paired with INGESTION_PURGE_TRANSFORMED_RAW=True so each folded slice is
+    #     purged of raw ancestry and returned to frozen/protected state.
+    # So this flag being True on a serving box is expected, not a mistake; the
+    # scoped path (not a full rebuild) is what actually runs there.
+    # It is an efficiency/gating setting, NOT the safety mechanism: historic-year
     # data is protected unconditionally in code by the §HISTORIC invariant in
     # app/transformations/runner.py, which needs no configuration and cannot be
-    # switched off. Flipping this on by mistake is therefore survivable — the
-    # rebuild is refused and rolled back by the invariant, not by this flag.
+    # switched off. Even a mistaken FULL rebuild is therefore survivable — it is
+    # refused and rolled back by the invariant, not by this flag.
     INGESTION_TRANSFORMS_ENABLED: bool = False
     INGESTION_WORKER_ENABLED: bool = True
     INGESTION_WORKER_POLL_SECONDS: int = 15
@@ -75,6 +81,18 @@ class Settings(BaseSettings):
     INGESTION_HEARTBEAT_SECONDS: int = 30
     INGESTION_MAX_ATTEMPTS: int = 3
     INGESTION_RAW_FLOOR: int = 1000
+    # Post-transform raw purge (RECON LOCKED decision 2 — environment-aware).
+    # When True (prod-only), a SUCCESSFUL scoped transform is followed by a
+    # post-commit, self-healing sweep that DELETEs raw_* rows for every run
+    # already folded into fact (status='succeeded' AND transforms_applied=true),
+    # then VACUUMs — keeping a serving box lean and returning each transformed
+    # slice to "frozen/protected" (no raw ancestry) so the §HISTORIC invariant
+    # reinforces it. Default False on the local full-raw rebuild machine, which
+    # KEEPS raw as the reproducibility source of truth. This is a CONFIG choice,
+    # NOT derivable from data: a local first ingest is indistinguishable from a
+    # prod ingest by row contents, so the guard/pipeline stay config-free and
+    # only this cleanup policy is environment-gated.
+    INGESTION_PURGE_TRANSFORMED_RAW: bool = False
 
     # Redis
     REDIS_URL: str | None = None

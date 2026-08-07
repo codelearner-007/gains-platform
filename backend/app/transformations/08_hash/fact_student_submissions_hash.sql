@@ -8,10 +8,30 @@
 -- explicit access in queries that need the hash).
 --
 -- TRUNCATE+INSERT idempotency: pure derivation from fact + dim_student_hash.
+--
+-- PROD-ABSENT GUARD: fact_student_submissions_hash is dropped on prod (kept only
+-- on the local rebuild machine). Wrapping the whole body in a to_regclass DO-guard
+-- makes the file a safe no-op wherever the table is missing — plpgsql plans the
+-- inner INSERT lazily, so the RETURN skips it before the missing relation is ever
+-- resolved.
+--
+-- SCOPED MODE: gated on _scope_assessments (the canonical mode flag — never
+-- _scope_items), delete + re-derive only the touched subject_ids. Full mode keeps
+-- the TRUNCATE — byte-identical to today.
+DO $guard$
+BEGIN
+  IF to_regclass('public.fact_student_submissions_hash') IS NULL THEN
+    RETURN;
+  END IF;
 
-TRUNCATE TABLE fact_student_submissions_hash;
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM fact_student_submissions_hash
+    WHERE subject_id IN (SELECT subject_id FROM _scope_assessments);
+  ELSE
+    TRUNCATE TABLE fact_student_submissions_hash;
+  END IF;
 
-INSERT INTO fact_student_submissions_hash (
+  INSERT INTO fact_student_submissions_hash (
   user_id_ques_id_stand,
   school_id,
   user_uid,
@@ -91,4 +111,9 @@ SELECT
 FROM fact_student_submission f
 LEFT JOIN dim_student_hash sh
   ON sh.school_id = f.school_id
- AND sh.user_uid  = f.user_uid;
+ AND sh.user_uid  = f.user_uid
+  -- SCOPED MODE: re-derive only the touched subject_ids. Full mode
+  -- (_scope_assessments empty) → NOT EXISTS InitPlan TRUE once → no-op.
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR f.subject_id IN (SELECT subject_id FROM _scope_assessments));
+END $guard$;

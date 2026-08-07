@@ -12,6 +12,18 @@
 --      (the FIRST occurrence per item — earliest assessment date).
 --   5. publish primary_key='Item_ID'.
 
+-- SCOPED MODE: item_id churns on re-ingest, so upsert-alone would orphan the old
+-- item_ids of a re-ingested assessment. Prepend a scoped DELETE over the touched
+-- items (_scope_items) so replaced items are removed before the upsert re-adds
+-- the fresh ones. NO ELSE/TRUNCATE branch: this is an upsert dim, so full mode
+-- (_scope_items empty) simply skips the DELETE → byte-identical to today.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_items) THEN
+    DELETE FROM dim_item
+    WHERE (school_id, item_id) IN (SELECT school_id, item_id FROM _scope_items);
+  END IF;
+END $scope$;
+
 INSERT INTO dim_item (
   item_id, school_id, subject_id, item_type, item_name,
   school_id_csv, section_name, section_instructors, assessment_date

@@ -32,7 +32,12 @@ import pytest
 import app.services.ingestion_worker as worker_mod
 from app.jobs.blob_client import BlobInfo
 from app.jobs.ingest_schoology import IngestSummary
-from app.services.ingestion_worker import IngestionWorker
+from app.services.ingestion_worker import (
+    IngestionWorker,
+    _extract_failed_run_ids,
+    _extract_pruned_subjects,
+)
+from app.transformations.runner import ScopeReport, TransformResult
 
 _T0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
@@ -56,6 +61,13 @@ class FakeWarehouse:
         self.cleared: List[str] = []
         # school_id -> short_name resolution table.
         self.schools: Dict[str, Optional[str]] = {}
+        # Prior-crash 'landed' run_ids the ``_scope_run_ids`` sweep folds in
+        # (SELECT run_id::text FROM ingestion_runs WHERE status='landed'). Empty
+        # by default so a batch's scope == its own ``landed`` list.
+        self.landed_run_ids: List[str] = []
+        # ``_post_commit_maintenance`` calls recorded as their ``purge`` arg (the
+        # autouse fixture stubs the method so no real engine/VACUUM is touched).
+        self.post_commit: List[bool] = []
 
 
 class _Result:
@@ -67,6 +79,10 @@ class _Result:
 
     def scalar_one(self):
         return self._rows[0][0]
+
+    def all(self):
+        # ``_scope_run_ids`` reads the swept 'landed' set via ``.all()``.
+        return self._rows
 
 
 class _Row(tuple):
@@ -104,6 +120,12 @@ class FakeSession:
         if "dirty_token" in sql and "select" in sql:
             tok = self.wh.dirty_token if self.wh.dirty else None
             return _Result([_Row((tok,))])
+        # ``_scope_run_ids`` sweep of prior-crash 'landed' runs.
+        if "run_id::text from ingestion_runs" in sql and "status = 'landed'" in sql:
+            return _Result([_Row((rid,)) for rid in self.wh.landed_run_ids])
+        # ``warehouse_dirty()`` read (re-drive path).
+        if "transforms_dirty from" in sql and "select" in sql:
+            return _Result([_Row((self.wh.dirty,))])
         if "short_name from schools" in sql:
             sid = p.get("sid")
             name = self.wh.schools.get(sid)
@@ -167,16 +189,25 @@ def _patch_db(monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse) -> None:
     async def _noop_dispose() -> None:
         return None
 
-    async def _default_run_all(session: Any = None) -> dict:  # noqa: ARG001
+    async def _default_run_all(
+        session: Any = None, scope_run_ids: Any = None
+    ) -> dict:  # noqa: ARG001
         return {}
 
     async def _default_run_ingestion(**_kw: Any) -> IngestSummary:
         return IngestSummary(files_seen=0)
 
+    async def _fake_post_commit(self, *, purge: bool) -> None:  # noqa: ANN001, ARG001
+        # Record the purge decision; NEVER touch the real jobs engine / VACUUM.
+        wh.post_commit.append(purge)
+
     monkeypatch.setattr(worker_mod, "session_scope", _fake_scope)
     monkeypatch.setattr(worker_mod, "dispose_engine", _noop_dispose)
     monkeypatch.setattr(worker_mod, "run_transformations", _default_run_all)
     monkeypatch.setattr(worker_mod, "run_ingestion", _default_run_ingestion)
+    monkeypatch.setattr(
+        worker_mod.IngestionWorker, "_post_commit_maintenance", _fake_post_commit
+    )
 
 
 def _worker(blob: Optional[FakeBlobClient] = None) -> IngestionWorker:
@@ -205,7 +236,7 @@ async def test_transform_runs_on_dirty_even_with_zero_rows(
     monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
     ran = {"n": 0}
 
-    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+    async def _run_all(session: Any = None, scope_run_ids: Any = None) -> dict:  # noqa: ARG001
         ran["n"] += 1
         return {"fact": 1}
 
@@ -233,7 +264,7 @@ async def test_skip_clean_when_owns_token_and_zero_rows(
     monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
     ran = {"n": 0}
 
-    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+    async def _run_all(session: Any = None, scope_run_ids: Any = None) -> dict:  # noqa: ARG001
         ran["n"] += 1
         return {}
 
@@ -253,11 +284,14 @@ async def test_skip_clean_when_owns_token_and_zero_rows(
     assert (rid, "succeeded") in _run_marks(wh)
 
 
-async def test_refuse_on_empty_raw_floor(
+async def test_refuse_on_empty_raw_floor_unscoped(
     monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
 ):
-    """Raw below the floor → REFUSE; run failed, dirty flag stays. The floor is
-    STUBBED below-floor, real raw is untouched."""
+    """Raw below the floor → REFUSE (RAISE) on an UNSCOPED rebuild. The floor is a
+    total-raw guard for a would-be full rebuild only; the gate is driven directly
+    with ``scope_run_ids=[]`` (empty scope == unscoped) since a worker batch that
+    landed a run always carries a non-empty scope. Stubbed below-floor; real raw
+    untouched."""
     monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
     wh.raw_total = 0  # simulate prod raw=0 WITHOUT truncating real raw
     wh.dirty = True
@@ -265,13 +299,43 @@ async def test_refuse_on_empty_raw_floor(
 
     rid = str(uuid4())
     w = _worker()
-    landed = [{"run_id": rid, "short_name": "Athenian",
-               "rows_inserted": 500, "error_count": 0}]
-    await w._transform_batch(landed)
+    with pytest.raises(RuntimeError, match="raw layer empty/below floor"):
+        await w._run_transform_gate(rid, rows_this_batch=500, scope_run_ids=[])
 
-    assert (rid, "failed") in _run_marks(wh)
     assert wh.dirty is True, "dirty must survive a refused transform"
     assert rid not in wh.cleared
+
+
+async def test_scoped_path_bypasses_empty_raw_floor(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """The floor is BYPASSED on the scoped path (non-empty ``scope_run_ids``): a
+    lean prod box (raw≈20, below the 1000 floor) must still apply the scoped
+    subjects — safety is the subject-grain §HISTORIC guard, not a global row
+    floor. So a batch with raw below the floor transforms + succeeds."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+    ran = {"n": 0}
+
+    async def _run_all(session: Any = None, scope_run_ids: Any = None) -> dict:  # noqa: ARG001
+        ran["n"] += 1
+        return {}
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
+
+    wh.raw_total = 20  # below the 1000 floor, like a lean prod box
+    wh.fact = 100
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())
+
+    rid = str(uuid4())
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 20, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    assert ran["n"] == 1, "scoped path must transform despite raw below the floor"
+    assert (rid, "succeeded") in _run_marks(wh)
+    assert rid in wh.cleared
 
 
 async def test_collapse_guard_aborts_on_fact_zero(
@@ -280,7 +344,7 @@ async def test_collapse_guard_aborts_on_fact_zero(
     """fact_pre>0 and post==0 → collapse-guard raises → failed, dirty stays."""
     monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
 
-    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+    async def _run_all(session: Any = None, scope_run_ids: Any = None) -> dict:  # noqa: ARG001
         # The rebuild "wipes" the fact to 0 (a bug we must catch).
         wh.fact = 0
         return {}
@@ -308,7 +372,7 @@ async def test_transform_failure_marks_failed_and_leaves_dirty(
     """A transform exception → run failed + flag stays dirty (self-heals)."""
     monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
 
-    async def _boom(session: Any = None) -> dict:  # noqa: ARG001
+    async def _boom(session: Any = None, scope_run_ids: Any = None) -> dict:  # noqa: ARG001
         raise RuntimeError("transform boom")
 
     monkeypatch.setattr(worker_mod, "run_transformations", _boom)
@@ -335,7 +399,7 @@ async def test_kill_switch_leaves_landed_and_dirty(
     monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", False)
     ran = {"n": 0}
 
-    async def _run_all(session: Any = None) -> dict:  # noqa: ARG001
+    async def _run_all(session: Any = None, scope_run_ids: Any = None) -> dict:  # noqa: ARG001
         ran["n"] += 1
         return {}
 
@@ -441,8 +505,10 @@ async def test_invariant_violation_fails_run_no_archive(
 async def test_errored_landing_leaves_files_live(
     monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
 ):
-    """error_count>0 → no archive; context returned with error_count so the batch
-    does NOT promote the run to succeeded."""
+    """error_count>0 → no archive (source files stay live for a fresh re-ingest).
+    But once the batch transform APPLIES that run's subjects, the run is promoted
+    to ``succeeded`` with a ``landing_note`` (#4/#8) — leaving it 'landed' would
+    re-fold + re-DELETE/INSERT it on every future drain forever."""
     wh.schools = {"sid-1": "Athenian"}
 
     async def _err(**_kw: Any) -> IngestSummary:
@@ -461,11 +527,157 @@ async def test_errored_landing_leaves_files_live(
     assert result is not None and result["error_count"] == 1
     assert blob.moves == [], "errored landing must not archive"
 
-    # And the batch pass must NOT mark an errored landing succeeded even on a
-    # healthy transform.
+    # The batch pass now PROMOTES an errored landing whose subjects applied to
+    # succeeded, carrying a landing_note (else it is re-folded forever).
     monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
     wh.fact = 100
     wh.dirty = True
     wh.dirty_token = str(uuid4())
     await w._transform_batch([result])
-    assert (rid, "succeeded") not in _run_marks(wh)
+
+    assert (rid, "succeeded") in _run_marks(wh)
+    # ...and the success carries a landing_note recording the file errors.
+    succeeded_details = [
+        det for r, st, det in wh.marks if r == rid and st == "succeeded"
+    ]
+    assert succeeded_details and "landing_note" in (succeeded_details[0] or "")
+
+
+# ── _extract_failed_run_ids / _extract_pruned_subjects (pure, DB-free) #7/#14 ─
+
+
+def _scope(run_subjects, survivors, *, qd_only_noop=False) -> TransformResult:
+    """A ``TransformResult`` carrying a faithful ``ScopeReport`` — the exact shape
+    ``run_all`` returns on a scoped run and the worker's extractors read."""
+    survivor_set = frozenset(survivors)
+    all_subjects = {s for subs in run_subjects.values() for s in subs}
+    tr = TransformResult()
+    tr.scope = ScopeReport(
+        run_subjects={r: frozenset(s) for r, s in run_subjects.items()},
+        groups=(),
+        survivors=survivor_set,
+        failed_subjects=frozenset(all_subjects - survivor_set),
+        qd_only_noop=qd_only_noop,
+    )
+    return tr
+
+
+def test_extract_failed_run_ids_all_survive_is_empty() -> None:
+    """Every produced subject survived → no run failed."""
+    tr = _scope({"r1": {"s1", "s2"}}, {"s1", "s2"})
+    assert _extract_failed_run_ids(tr) == []
+
+
+def test_extract_failed_run_ids_run_fully_pruned() -> None:
+    """A run whose only subject was pruned is failed."""
+    tr = _scope({"r1": {"s1"}}, set())
+    assert _extract_failed_run_ids(tr) == ["r1"]
+
+
+def test_extract_failed_run_ids_partial_multigroup_run_is_failed() -> None:
+    """Any-pruned semantics: a run contributing to BOTH a surviving group and a
+    pruned group (run_subjects ⊄ survivors) is failed so its raw is retained for a
+    full re-scrape — even though its surviving subject's data WAS applied."""
+    tr = _scope({"r1": {"s1", "s2"}}, {"s1"})  # s2 pruned
+    assert _extract_failed_run_ids(tr) == ["r1"]
+
+
+def test_extract_failed_run_ids_none_scope_is_empty() -> None:
+    """Full/empty-scope mode: ``.scope`` is None → no run failed (byte-identical
+    to today's unscoped promotion)."""
+    assert _extract_failed_run_ids(TransformResult()) == []
+    assert _extract_failed_run_ids({}) == []
+
+
+def test_extract_failed_run_ids_malformed_shape_is_empty() -> None:
+    """A defensive no-crash: an unrecognized scope shape yields [] (no run wrongly
+    failed)."""
+
+    class _Bad:
+        scope = object()  # has .scope but no run_subjects/survivors
+
+    assert _extract_failed_run_ids(_Bad()) == []
+
+
+def test_extract_pruned_subjects_maps_run_to_dropped_subjects() -> None:
+    """The operator-facing map: pruned run → the subject_ids it lost (sorted)."""
+    tr = _scope({"r1": {"s1", "s2"}, "r2": {"s3"}}, {"s1", "s3"})
+    assert _extract_pruned_subjects(tr) == {"r1": ["s2"]}
+
+
+def test_extract_pruned_subjects_none_scope_is_empty() -> None:
+    assert _extract_pruned_subjects(TransformResult()) == {}
+
+
+# ── _transform_batch marking over the FULL folded set (b)/(c) #7/#8 ──────────
+
+
+async def test_transform_batch_marks_full_folded_set(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """The transform folds this batch's runs ∪ every prior-crash 'landed' run
+    (``_scope_run_ids``) and must mark that WHOLE set (#4/#8): a swept run whose
+    subject survived → succeeded; a swept run whose subject was pruned → failed
+    (raw retained). Here R1 is the fresh landed run (survives) and R2 is a swept
+    prior-'landed' run (pruned)."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+    r1, r2 = str(uuid4()), str(uuid4())
+
+    async def _run_all(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
+        # R1 survives (s1 ∈ survivors); R2 pruned (s2 ∉ survivors).
+        return _scope({r1: {"s1"}, r2: {"s2"}}, {"s1"})
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
+
+    wh.fact = 100
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())
+    wh.landed_run_ids = [r2]  # a swept prior-'landed' run, not in this batch
+
+    w = _worker()
+    landed = [{"run_id": r1, "short_name": "Athenian",
+               "rows_inserted": 500, "error_count": 0}]
+    await w._transform_batch(landed)
+
+    marks = _run_marks(wh)
+    assert (r1, "succeeded") in marks, "surviving run promoted"
+    assert (r2, "failed") in marks, "swept, pruned run marked failed"
+    assert (r2, "succeeded") not in marks, "pruned run's raw must be retained"
+    # A real applied transform runs post-commit maintenance (purge decision made).
+    assert wh.post_commit, "applied transform must run post-commit maintenance"
+    # The failed run names the assessment(s) to re-scrape.
+    r2_failed = [det for r, st, det in wh.marks if r == r2 and st == "failed"]
+    assert r2_failed and "s2" in (r2_failed[0] or "")
+
+
+async def test_transform_batch_qd_only_noop_fails_and_retains_raw(
+    monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
+):
+    """A QD-only batch (question-data raw, ZERO student submissions) built nothing:
+    every folded run is marked ``failed`` (transforms_applied stays false → the
+    purge RETAINS their raw for a re-scrape / full rebuild) and NO post-commit
+    purge/VACUUM runs (#5/#9/#12)."""
+    monkeypatch.setattr(worker_mod.settings, "INGESTION_TRANSFORMS_ENABLED", True)
+    rid = str(uuid4())
+
+    async def _run_all(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
+        # The QD-only sentinel: no subjects, nothing built.
+        return _scope({}, set(), qd_only_noop=True)
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
+
+    wh.fact = 100
+    wh.dirty = True
+    wh.dirty_token = str(uuid4())
+
+    w = _worker()
+    landed = [{"run_id": rid, "short_name": "Athenian",
+               "rows_inserted": 5, "error_count": 0}]  # QD rows, no submissions
+    await w._transform_batch(landed)
+
+    marks = _run_marks(wh)
+    assert (rid, "failed") in marks
+    assert (rid, "succeeded") not in marks
+    assert wh.post_commit == [], "QD-only no-op must not purge/VACUUM"
+    failed_details = [det for r, st, det in wh.marks if r == rid and st == "failed"]
+    assert failed_details and "question-data" in (failed_details[0] or "")

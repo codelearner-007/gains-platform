@@ -22,14 +22,29 @@
 -- Table + indexes are created by
 -- supabase/migrations/20260616000000_cube_question_summary_overall_by_item.sql
 -- (so it exists at deploy time, before this transform runs). This file only
--- (re)populates it — TRUNCATE + INSERT, like every other 09_cubes transform.
-TRUNCATE TABLE cube_question_summary_overall_by_item;
+-- (re)populates it.
+--
+-- The whole populate is wrapped in a to_regclass(...) IS NOT NULL guard because
+-- this twin cube is intentionally ABSENT on prod — where the table does not
+-- exist the block is a no-op instead of erroring on the missing relation.
+-- When present: a scoped run (temp table _scope_assessments non-empty) deletes
+-- only the touched subject_ids and re-inserts them from the preserved fact. The
+-- table has NO PK, so this is a plain DELETE + INSERT (never an upsert). Empty
+-- scope (full rebuild) falls through to TRUNCATE — byte-identical to legacy.
+DO $twin$ BEGIN
+  IF to_regclass('public.cube_question_summary_overall_by_item') IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+      DELETE FROM cube_question_summary_overall_by_item
+      WHERE subject_id IN (SELECT subject_id FROM _scope_assessments);
+    ELSE
+      TRUNCATE TABLE cube_question_summary_overall_by_item;
+    END IF;
 
-INSERT INTO cube_question_summary_overall_by_item (
-  school_id, subject_id, item_id, ukey, question_no, position_number,
-  correct_answer, standards, total_possible_point, total_score, grade_average
-)
-WITH ranked AS (
+    INSERT INTO cube_question_summary_overall_by_item (
+      school_id, subject_id, item_id, ukey, question_no, position_number,
+      correct_answer, standards, total_possible_point, total_score, grade_average
+    )
+    WITH ranked AS (
   -- Latest-attempt filter — IDENTICAL to cube_question_summary_overall.sql.
   SELECT
     f.*,
@@ -42,6 +57,12 @@ WITH ranked AS (
                f.user_id_ques_id_stand
     ) AS rn
   FROM fact_student_submission f
+  -- Scoped rebuild: restrict the fact scan to the touched subject_ids. The
+  -- latest-attempt PARTITION BY is keyed within a single subject_id, so a
+  -- subject-level filter keeps or drops whole partitions and never changes the
+  -- rn=1 winner. No-op when _scope_assessments is empty (full rebuild).
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR f.subject_id IN (SELECT subject_id FROM _scope_assessments))
 ),
 latest AS (
   SELECT * FROM ranked WHERE rn = 1
@@ -101,3 +122,5 @@ FROM (
 WHERE school_id IS NOT NULL
 GROUP BY school_id, subject_id, item_id, ukey, question_no, question,
          position_number, correct_answer, standard;
+  END IF;
+END $twin$;

@@ -1,3 +1,7 @@
+-- SCOPED-TRANSFORM NOTE: this file now references the session-local _scope_run_ids /
+-- _scope_assessments / _scope_items temp tables (created by run_all). A manual psql
+-- replay must first create all three EMPTY, else the scope predicates error.
+--
 -- fact_student_submission — 35-column grain row, one per
 -- (school_id, user_uid, question_id, position_number, answer_submission,
 -- points_possible, submission, standard).
@@ -51,7 +55,18 @@
 -- behind as orphans, defeating the latest-export collapse — so we truncate
 -- first, exactly like the staging and cube builds. The ON CONFLICT clause
 -- remains as an in-run safety net for the synthetic PK.
-TRUNCATE TABLE fact_student_submission;
+--
+-- SCOPED-TRANSFORM: in scoped mode delete only S's rows (subject_id is STABLE
+-- across item_id churn, so a re-ingest under new item_ids leaves no trash); in
+-- full mode fall back to the byte-identical TRUNCATE.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM fact_student_submission
+    WHERE subject_id IN (SELECT subject_id FROM _scope_assessments);
+  ELSE
+    TRUNCATE TABLE fact_student_submission;
+  END IF;
+END $scope$;
 
 INSERT INTO fact_student_submission (
   user_id_ques_id_stand,
@@ -136,6 +151,17 @@ WITH base AS (
         AND x.subject   = src.subject
         AND x.grade     = src.grade
     )
+    -- SCOPED-TRANSFORM INSERT filter. No-op when _scope_assessments is empty
+    -- (full rebuild). In scoped mode, keep only rows whose subject_id is in S.
+    -- uuid_6(...) here is VERBATIM the fact subject_id build below (:337-339),
+    -- reading the already-overridden staging columns with the ::text cast.
+    AND (
+      NOT EXISTS (SELECT 1 FROM _scope_assessments)
+      OR uuid_6(
+           src.school_id::text, src.subject, src.assessment_type,
+           src.grade, src.session, src.item_name
+         ) IN (SELECT subject_id FROM _scope_assessments)
+    )
 ),
 latest_export AS (
   -- LATEST-EXPORT-WINS (legacy parity, Schoology_py.ipynb build_fact_tables
@@ -190,11 +216,22 @@ deduped AS (
   -- points_received DESC NULLS LAST so the highest-grade row wins on tie.
   SELECT *,
     ROW_NUMBER() OVER (
-      PARTITION BY school_id, user_uid, question_id, position_number,
+      -- SCOPED-TRANSFORM: `session` added to the partition so a future ingest
+      -- that reuses a question_id across sessions cannot silently collapse two
+      -- sessions' rows (no-op today; question_id is session-unique). NEVER add
+      -- grade — that completes the cross-band phantom (validate_no_cross_band).
+      PARTITION BY school_id, session, user_uid, question_id, position_number,
                    answer_submission
+      -- The first three keys are non-total (ties on non-key columns made rn=1
+      -- plan-dependent); the trailing keys make the winner deterministic.
       ORDER BY submission DESC NULLS LAST,
                points_received DESC NULLS LAST,
-               points_possible DESC NULLS LAST
+               points_possible DESC NULLS LAST,
+               item_id ASC NULLS LAST,
+               sub_question ASC NULLS LAST,
+               section ASC NULLS LAST,
+               submission_grade ASC NULLS LAST,
+               file_name ASC NULLS LAST
     ) AS rn
   FROM latest_export
 ),

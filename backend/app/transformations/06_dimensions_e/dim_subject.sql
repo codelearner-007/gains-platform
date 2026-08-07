@@ -18,7 +18,18 @@
 -- subject_id (the hash of the labels), so an upsert-only build would leave the
 -- OLD subject_id row behind as a 0-fact phantom card. dim_subject is a pure
 -- DISTINCT projection of staging, so a full rebuild is safe and idempotent.
-TRUNCATE TABLE dim_subject;
+--
+-- SCOPED MODE (temp table _scope_assessments non-empty): replace only the
+-- touched subject_ids instead of wiping the whole dim. Full mode (both scope
+-- temp tables empty) keeps the original TRUNCATE — byte-identical to today.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM dim_subject
+    WHERE subject_id IN (SELECT subject_id FROM _scope_assessments);
+  ELSE
+    TRUNCATE TABLE dim_subject;
+  END IF;
+END $scope$;
 
 INSERT INTO dim_subject (
   subject_id, school_id, school_id_csv, subject, assessment_type, grade,
@@ -55,6 +66,19 @@ WHERE src.user_role_id    = sch.student_role_id
   AND src.grade           IS NOT NULL
   AND src.session         IS NOT NULL
   AND src.item_name       IS NOT NULL
+  -- SCOPED MODE: only (re)insert the touched subject_ids. In full mode
+  -- (_scope_assessments empty) the NOT EXISTS InitPlan is TRUE once and the
+  -- filter is a no-op → byte-identical to today. Reuses this file's own
+  -- subject_id expression (staging is already override-resolved).
+  AND (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+       OR uuid_6(
+            src.school_id::text,
+            src.subject,
+            src.assessment_type,
+            src.grade,
+            src.session,
+            src.item_name
+          ) IN (SELECT subject_id FROM _scope_assessments))
 ORDER BY
   src.school_id,
   uuid_6(src.school_id::text, src.subject, src.assessment_type, src.grade, src.session, src.item_name),

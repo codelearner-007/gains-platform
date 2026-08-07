@@ -25,7 +25,28 @@
 -- row (ON CONFLICT keys on md5(qkey)) is never matched and would PERSIST as a
 -- duplicate question row -> distractor/IAD/standard joins double-count. dqd is a
 -- pure projection of staging, so a full rebuild is safe and idempotent.
-TRUNCATE TABLE dim_question_data;
+--
+-- SCOPED MODE (gated on _scope_assessments, the canonical mode flag — NOT
+-- _scope_items, so an empty item set in scoped mode can never fall through to a
+-- full TRUNCATE): delete only the touched items' question rows. Full mode keeps
+-- the TRUNCATE — byte-identical to today.
+--
+-- FRESH-QD GUARD (#12): only delete a touched item's question rows when that
+-- item ALSO has fresh question-data staged this run. A submissions-only
+-- re-ingest of an existing item scopes the item (it lands in _scope_items) but
+-- ships no stg_question_data rows for it; without this guard the DELETE would
+-- wipe the item's prior question metadata (distractors/standards) that the
+-- re-insert cannot rebuild, and (on prod, if the original QD raw was purged)
+-- lose it permanently. Truly-dead items are still swept by scope_prune_orphans.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM dim_question_data
+    WHERE (school_id, item_id) IN (SELECT school_id, item_id FROM _scope_items)
+      AND (school_id, item_id) IN (SELECT DISTINCT school_id, item_id FROM stg_question_data);
+  ELSE
+    TRUNCATE TABLE dim_question_data;
+  END IF;
+END $scope$;
 
 INSERT INTO dim_question_data (
   qkey, school_id, ukey, question, position_number, item_id, item_name,
@@ -74,6 +95,12 @@ qd_filtered AS (
     file_name
   FROM qd_with_school
   WHERE question_id IS NOT NULL
+    -- SCOPED MODE: restrict to the touched items. Full mode (_scope_assessments
+    -- empty) → NOT EXISTS InitPlan TRUE once → no-op, byte-identical to today.
+    -- school_id/item_id here are the staging columns (qd.*), matching _scope_items'
+    -- (school_id, item_id) grain.
+    AND (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR (school_id, item_id) IN (SELECT school_id, item_id FROM _scope_items))
 ),
 qd_latest AS (
   -- LATEST-EXPORT-WINS (F-C3 durable dedup, mirrors the fact's latest_export).
@@ -187,7 +214,17 @@ deduped AS (
     qkey,
     standard_identifier NULLS LAST,
     COALESCE(length(matched_schoology_standard), 0) DESC,
-    matched_schoology_standard
+    matched_schoology_standard,
+    -- BP3 deterministic total-order tiebreak. qkey omits sub_question / item
+    -- content, so a single (school_id, qkey) can carry >1 physical question row
+    -- (verified: 37 qkey-component groups span >1 sub_question in the corpus).
+    -- With identical standards_val those rows tie on every key above, making the
+    -- DISTINCT ON winner PLAN-DEPENDENT today (would flip when the scope predicate
+    -- changes the plan). Pinning it on (sub_question, ukey) — ukey encodes
+    -- item_name/question/correct_answer — makes the pick deterministic. item_id
+    -- needs no tiebreak: question_id → unique item_id (0/59,288 pairs span items).
+    sub_question NULLS LAST,
+    ukey NULLS LAST
 )
 SELECT
   qkey, school_id, ukey, question, position_number, item_id, item_name,

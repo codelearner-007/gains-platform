@@ -1,3 +1,7 @@
+-- SCOPED-TRANSFORM NOTE: this file now references the session-local _scope_run_ids /
+-- _scope_assessments / _scope_items temp tables (created by run_all). A manual psql
+-- replay must first create all three EMPTY, else the scope predicates error.
+--
 -- Staging: raw_question_data -> stg_question_data.
 -- The raw table is already wide-to-long melted (Standards*, Answer_Breakdown*)
 -- by the Phase 1 ingestion parser. This staging step trims strings, applies
@@ -99,4 +103,17 @@ LEFT JOIN LATERAL (
 -- Drop the 2025-26 placeholder pair (folder name literally "remove grade level"
 -- / "No grade level"); mirrors the same filter in stg_student_submission.sql.
 WHERE NULLIF(TRIM(rqd.grade), '')   IS DISTINCT FROM 'remove grade level'
-  AND NULLIF(TRIM(rqd.subject), '') IS DISTINCT FROM 'No grade level';
+  AND NULLIF(TRIM(rqd.subject), '') IS DISTINCT FROM 'No grade level'
+  -- SCOPED-TRANSFORM 3-way INSERT filter. No-op when all _scope_* temp tables are
+  -- empty -> byte-identical to the full rebuild.
+  --   FULL   : _scope_run_ids AND _scope_assessments both empty -> pass every row.
+  --   pass A : discovery — restrict to the batch's freshly-landed raw runs.
+  --   pass B : build — restrict to rows whose (resolved school_id, item_id) is in
+  --            _scope_items (the churn-union of pass-A + pre-delete-fact items).
+  AND (
+    (NOT EXISTS (SELECT 1 FROM _scope_run_ids)
+     AND NOT EXISTS (SELECT 1 FROM _scope_assessments))
+    OR rqd.ingestion_run_id IN (SELECT run_id FROM _scope_run_ids)
+    OR (s.school_id, NULLIF(TRIM(rqd.item_id), ''))
+         IN (SELECT school_id, item_id FROM _scope_items)
+  );
