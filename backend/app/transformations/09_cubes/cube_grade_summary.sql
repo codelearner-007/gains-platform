@@ -15,7 +15,21 @@
 --
 -- TRUNCATE+INSERT idempotency: deterministic GROUPING SETS + sha256.
 
-TRUNCATE TABLE cube_grade_summary;
+-- Scoped rebuild: every persisted row is school-rooted — each GROUPING SET is
+-- anchored on school_id and the () grand-total row is dropped by the final
+-- WHERE school_id IS NOT NULL — and the AVG/MIN/MAX aggregates are within-school.
+-- So deleting + recomputing only the touched schools' slices is byte-identical
+-- to a full rebuild for those schools while leaving untouched schools intact.
+-- Empty scope (full rebuild) falls through to the whole-table DELETE —
+-- byte-identical to today.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM cube_grade_summary
+    WHERE school_id IN (SELECT DISTINCT school_id FROM _scope_assessments);
+  ELSE
+    DELETE FROM cube_grade_summary;
+  END IF;
+END $scope$;
 
 INSERT INTO cube_grade_summary (
   id, school_id, school_id_csv, subject_id, item_id,
@@ -30,6 +44,11 @@ WITH per_user AS (
     item_id,
     SUM(points_received)::numeric / NULLIF(SUM(points_possible), 0) AS grade_average
   FROM fact_student_submission
+  -- Scoped rebuild: restrict the fact scan to the touched schools so the rollup
+  -- recomputes only those slices. No-op when _scope_assessments is empty
+  -- (full rebuild) — NOT EXISTS InitPlan TRUE, byte-identical to today.
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR school_id IN (SELECT DISTINCT school_id FROM _scope_assessments))
   GROUP BY school_id, school_id_csv, subject_id, user_uid, item_id
 ),
 rolled AS (

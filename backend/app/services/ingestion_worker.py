@@ -20,8 +20,13 @@ Design (why it looks the way it does):
   * **Transform gate (§5).** Raw is landed with ``skip_transforms=True`` and the
     run left ``landed``; transforms run ONCE per batch behind the kill-switch,
     the empty-raw floor, a global advisory mutex, and a collapse-guard, and the
-    dirty flag is cleared in the SAME txn as the cube rebuild. Prod
-    (``INGESTION_TRANSFORMS_ENABLED=False``, raw=0) NEVER rebuilds.
+    dirty flag is cleared in the SAME txn as the cube rebuild. Turning
+    ``INGESTION_TRANSFORMS_ENABLED`` ON is the sanctioned way to run the SCOPED
+    incremental transform (+ the ``INGESTION_PURGE_TRANSFORMED_RAW`` raw purge)
+    on a serving box: the scoped path writes only the batch's subjects behind
+    the §HISTORIC guard, so a lean prod box (raw≈20) rebuilds just those slices
+    rather than the whole warehouse. With the flag OFF (the default) nothing
+    rebuilds.
 
 STOP conditions honored: the transform txn only ever runs the real
 ``transformations.run_all``; nothing here truncates raw. The empty-raw floor is
@@ -35,6 +40,7 @@ import asyncio
 import logging
 import os
 import socket
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -43,18 +49,144 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.jobs.blob_client import BlobInfo, SupabaseStorageBlobClient
-from app.jobs.db import dispose_engine, session_scope
+from app.jobs.db import dispose_engine, get_engine, session_scope
 from app.jobs.ingest_schoology import IngestSummary, run_ingestion
 from app.repositories.ingestion_run_repository import IngestionRunRepository
 from app.repositories.locked_sessions_repository import LockedSessionsRepository
 from app.transformations import run_all as run_transformations
+from app.transformations.runner import _TRANSFORM_LOCK_KEY
 
 logger = logging.getLogger("ingestion_worker")
 
-# Constant advisory-lock key for the GLOBAL transform mutex (§5 step 3). A fixed
-# int64 unrelated to any per-school key (those are derived from school_id bytes),
-# so only one transform pass can run across all workers/processes at a time.
-_TRANSFORM_LOCK_KEY = 0x1A9E571A5F0  # fixed advisory-lock key; value arbitrary, must stay constant
+# GLOBAL transform mutex key (§5 step 3): imported from the runner as the single
+# source of truth so the worker's transform session and run_all agree on it. The
+# worker acquires it BEFORE calling run_all, so run_all's re-acquire on the same
+# session is a re-entrant no-op. A fixed int64 unrelated to any per-school key.
+
+# Scoped-touched tables VACUUM(ANALYZE)ed post-commit after an applied transform:
+# the subject-scoped DELETE+INSERT leaves dead tuples that are not auto-reclaimed
+# (and TRUNCATE/COPY-loaded tables have zeroed stats). VACUUM(ANALYZE) takes only
+# SHARE UPDATE EXCLUSIVE — it never blocks serving. A table absent on a given box
+# (prod drops the twin cube) is skipped and logged, not fatal.
+_SCOPED_TOUCHED_TABLES: tuple[str, ...] = (
+    "fact_student_submission",
+    "dim_subject",
+    "dim_question_data",
+    "dim_item",
+    "dim_unit_lesson",
+    "dim_section",
+    # Upserted / TRUNCATE+INSERT dims the scoped pass also writes (ON CONFLICT DO
+    # UPDATE leaves dead tuples; hash/strand rebuilds zero reltuples → the
+    # immediately-following in-txn cube joins want fresh stats). #19.
+    "dim_student",
+    "dim_teacher",
+    "dim_parent",
+    "dim_course",
+    "dim_school",
+    "dim_session",
+    "dim_grade",
+    "dim_assessment_type",
+    "dim_strand",
+    # Pseudonymization hash tables (rebuilt TRUNCATE+INSERT). Prod dropped these
+    # in cleanup — the absent-table skip in the VACUUM loop handles that. #19.
+    "dim_student_hash",
+    "dim_section_hash",
+    "fact_student_submissions_hash",
+    "cube_question_summary",
+    "cube_question_summary_overall",
+    "cube_question_summary_overall_by_item",
+    "cube_user_summary",
+    "cube_school_summary",
+    "cube_grade_summary",
+    "cube_standard_summary",
+    "cube_questionincorrectchoice_summary",
+)
+# Raw tables the self-healing purge sweeps (and then VACUUMs) when
+# INGESTION_PURGE_TRANSFORMED_RAW is enabled. All carry ingestion_run_id.
+_RAW_TABLES: tuple[str, ...] = (
+    "raw_student_submission",
+    "raw_question_data",
+    "raw_submission_summary",
+)
+# Chunk size for the purge DELETE so each statement stays well under any timeout.
+_PURGE_CHUNK = 50_000
+
+# Persisted error strings for the two non-success terminal outcomes of an applied
+# scoped transform. Kept as module constants so the worker and its tests agree.
+_PARTIAL_PRUNE_ERROR = (
+    "≥1 contributed subject pruned (partial batch; surviving subjects applied); "
+    "raw retained — re-scrape the full assessment to correct the pruned subject"
+)
+_QD_ONLY_ERROR = (
+    "QD-only batch: no student submissions — scoped path cannot apply "
+    "question-data alone; raw retained. Re-scrape with submissions or run a "
+    "full rebuild."
+)
+
+
+@dataclass(frozen=True)
+class _GateOutcome:
+    """Result of ``_run_transform_gate`` — the marking plan for the batch.
+
+    ``outcome`` is one of ``"applied"`` / ``"skip_clean"`` / ``"disabled"``.
+    The remaining fields are only meaningful on ``"applied"``:
+
+      * ``failed_run_ids`` — runs the roster gate pruned (≥1 subject dropped);
+        the caller marks them ``failed`` and retains their raw.
+      * ``qd_only_noop`` — the batch carried question-data raw and ZERO student
+        submissions, so the scoped path built nothing (``run_all`` returned the
+        QD-only sentinel). Every folded run is failed + raw retained.
+      * ``pruned_subjects`` — run_id → the subject_ids of that run that were
+        pruned, surfaced in ``error_details`` so the operator knows which
+        assessment to re-scrape.
+    """
+
+    outcome: str
+    failed_run_ids: tuple[str, ...] = ()
+    qd_only_noop: bool = False
+    pruned_subjects: Dict[str, List[str]] = field(default_factory=dict)
+
+
+def _extract_failed_run_ids(xform_result: object) -> list[str]:
+    """Pull the roster-gate failed-run set out of ``run_all``'s return value.
+
+    CONTRACT with the runner (R1 owns runner.py): in SCOPED mode ``run_all``
+    returns a ``TransformResult`` (a ``model→rowcount`` dict subclass) whose
+    ``.scope`` attribute is a ``ScopeReport`` carrying ``run_subjects``
+    (run_id → the subject_ids that run produced), ``survivors`` and
+    ``failed_subjects``. A run FAILED iff any subject it produced was pruned by
+    the roster gate — i.e. ``run_subjects[run]`` is not a subset of
+    ``survivors``. In full/empty-scope mode ``.scope`` is ``None``, so this
+    returns ``[]`` and every clean run is promoted (byte-identical to today).
+    Defensive: any unrecognized/absent shape also yields ``[]`` (no run wrongly
+    failed).
+
+    A run is failed iff it has ≥1 pruned subject, so this delegates to
+    ``_extract_pruned_subjects`` and returns its keys (insertion-stable dict
+    order == the previous list order).
+    """
+    return list(_extract_pruned_subjects(xform_result))
+
+
+def _extract_pruned_subjects(xform_result: object) -> Dict[str, List[str]]:
+    """Map each pruned run_id → the subject_ids it produced that did NOT survive.
+
+    Surfaced into the failed run's ``error_details`` so an operator knows which
+    assessment(s) to re-scrape (#11/#20). Same defensive contract as
+    ``_extract_failed_run_ids``: no scope / unrecognized shape → ``{}``.
+    """
+    scope = getattr(xform_result, "scope", None)
+    run_subjects = getattr(scope, "run_subjects", None)
+    survivors = getattr(scope, "survivors", None)
+    if not isinstance(run_subjects, dict) or survivors is None:
+        return {}
+    survivor_set = frozenset(survivors)
+    out: Dict[str, List[str]] = {}
+    for run, subs in run_subjects.items():
+        pruned = sorted(str(s) for s in subs if s not in survivor_set)
+        if pruned:
+            out[str(run)] = pruned
+    return out
 
 
 def _worker_id() -> str:
@@ -166,8 +298,15 @@ class IngestionWorker:
         N schools queued at once become one warehouse rebuild, not N. Each run is
         landed independently (its own terminal ``landed``/``failed`` + archive);
         the single trailing transform pass then flips every clean ``landed`` run
-        for this batch to ``succeeded``. If nothing landed cleanly, no transform
-        pass runs.
+        for this batch to ``succeeded``.
+
+        If NOTHING landed this poll we still re-drive a transform when the
+        warehouse is dirty AND prior ``landed`` runs remain in scope — a crash
+        between landing and the transform-mark leaves those runs orphaned (the
+        reaper only touches ``running``/``transforming``, ``claim_next`` only
+        ``pending``), so without this they would never be built or made terminal.
+        The re-drive runs the SAME transform pass with an empty ``landed`` list
+        and the swept scope, on the existing poll (no cron).
         """
         landed: List[Dict[str, Any]] = []
         while not self._stop.is_set():
@@ -178,12 +317,31 @@ class IngestionWorker:
             if result is not None:
                 landed.append(result)
 
-        if not landed:
+        if landed:
+            # ONE transform pass for the whole batch. It flips every clean landed
+            # run to `succeeded` (or fails them all together on a transform error)
+            # AND marks any swept prior-'landed' runs folded into the same scope.
+            await self._transform_batch(landed)
             return
 
-        # ONE transform pass for the whole batch. It flips every clean landed run
-        # to `succeeded` (or fails them all together on a transform error).
-        await self._transform_batch(landed)
+        # No new landings. Re-drive only when transforms are enabled (a disabled
+        # box stays inert — no per-poll churn), the warehouse is dirty, and the
+        # landed sweep is non-empty.
+        if not settings.INGESTION_TRANSFORMS_ENABLED:
+            return
+        async with session_scope() as session:
+            dirty = await IngestionRunRepository(session).warehouse_dirty()
+        if not dirty:
+            return
+        swept = await self._scope_run_ids([])
+        if not swept:
+            return
+        logger.info(
+            "no new landings, warehouse dirty + %d orphaned 'landed' run(s) → "
+            "re-driving transform",
+            len(swept),
+        )
+        await self._transform_batch([], force_transform=True)
 
     async def _claim_next(self) -> Optional[Dict[str, Any]]:
         async with session_scope() as session:
@@ -351,25 +509,48 @@ class IngestionWorker:
     # Transform gate (§5) — ONE pass for the batch.
     # ------------------------------------------------------------------
 
-    async def _transform_batch(self, landed: List[Dict[str, Any]]) -> None:
-        """Apply the transform gate once, then finalize each landed run.
+    async def _transform_batch(
+        self, landed: List[Dict[str, Any]], *, force_transform: bool = False
+    ) -> None:
+        """Apply the transform gate once, then mark the FULL folded run set.
 
-        On success every clean landed run (error_count == 0) is marked
-        ``succeeded``; runs that landed with errors stay ``landed`` (their source
-        files were left live). On a transform failure every clean landed run is
-        marked ``failed`` and the dirty flag is left set for the reaper/next run.
+        The transform pass folds this batch's runs ∪ every run still ``landed``
+        from a prior crash (``_scope_run_ids``), rebuilding ALL their subjects in
+        one scoped pass. So marking must cover that whole folded set, not just the
+        current ``landed`` list (#4/#8): each folded run whose subjects survived
+        is promoted to ``succeeded`` + ``transforms_applied`` (else it stays
+        ``landed`` forever and is re-folded on every future drain), each run with
+        ≥1 pruned subject is marked ``failed`` (raw retained for a full
+        re-scrape), and a QD-only no-op fails every folded run (raw retained).
+
+        ``force_transform`` (re-drive path, ``landed`` empty) bypasses the 0-row
+        skip-clean economics so an orphaned-``landed`` backlog is always built.
         """
-        # A stable run_id to own the transform (the newest landed run's id — it
-        # is the token the dirty flag will be cleared against).
-        driver_run_id = landed[-1]["run_id"]
+        scope_run_ids = await self._scope_run_ids(landed)
+        if landed:
+            # A stable run_id to own the transform (the newest landed run's id —
+            # the token the dirty flag will be cleared against).
+            driver_run_id = landed[-1]["run_id"]
+        elif scope_run_ids:
+            # Re-drive: no new landings, but prior 'landed' runs remain in scope.
+            # Drive the pass off a swept run id so they are built + made terminal.
+            driver_run_id = scope_run_ids[-1]
+        else:
+            return  # nothing landed and nothing swept → nothing to transform
         rows_this_batch = sum(r["rows_inserted"] for r in landed)
 
         try:
-            outcome = await self._run_transform_gate(driver_run_id, rows_this_batch)
+            gate = await self._run_transform_gate(
+                driver_run_id,
+                rows_this_batch,
+                scope_run_ids,
+                force_transform=force_transform,
+            )
         except Exception as exc:  # noqa: BLE001
             logger.exception("transform gate failed for batch (driver %s)", driver_run_id)
             # Every clean landed run in this batch is not durable until transforms
-            # apply → fail them all; the dirty flag stays set (self-heals).
+            # apply → fail them all; the dirty flag stays set (self-heals). Swept
+            # prior-'landed' runs stay 'landed' and are retried next drive.
             for r in landed:
                 if r["error_count"] == 0:
                     await self._mark(
@@ -379,43 +560,125 @@ class IngestionWorker:
                     )
             return
 
-        # Kill-switch case: transforms are OFF (prod), so a clean landing is NOT
-        # yet a `succeeded` run — leave it `landed` (raw is safe; the dirty flag
-        # stays set for a later env where transforms are enabled).
-        if outcome == "disabled":
+        # Kill-switch case: transforms are OFF (prod default), so a clean landing
+        # is NOT yet a `succeeded` run — leave it `landed` (raw is safe; the dirty
+        # flag stays set for a later env where transforms are enabled).
+        if gate.outcome == "disabled":
             for r in landed:
-                logger.info(
-                    "run %s left 'landed' (transforms disabled)", r["run_id"]
-                )
+                logger.info("run %s left 'landed' (transforms disabled)", r["run_id"])
             return
 
-        # Transforms applied (or skip-clean cleared): promote every clean landing
-        # to `succeeded`. Runs that landed WITH errors stay `landed` (their source
-        # files were left live for a retry).
-        for r in landed:
-            if r["error_count"] == 0:
-                await self._mark(
-                    r["run_id"],
-                    "succeeded",
-                    {"transforms_applied": outcome == "applied"},
+        # Skip-clean: a 0-row batch that owned the dirty token cleared it WITHOUT
+        # transforming — nothing was built. Mark only THIS batch's clean runs
+        # `succeeded` (transforms_applied stays false; a 0-row run has ~no raw).
+        # A pre-existing dirty flag routes to a real transform instead, so no
+        # prior-'landed' run is silently skipped here.
+        if gate.outcome == "skip_clean":
+            for r in landed:
+                if r["error_count"] == 0:
+                    await self._finalize_succeeded(
+                        r["run_id"], transforms_applied=False
+                    )
+                else:
+                    logger.info(
+                        "run %s left 'landed' (had %d error(s))",
+                        r["run_id"], r["error_count"],
+                    )
+            return
+
+        # outcome == "applied" from here.
+
+        # QD-only no-op: the transform committed (dirty cleared) but nothing was
+        # built — the batch carried question-data raw and zero student
+        # submissions, so the scoped path had no subjects to apply. Fail every
+        # folded run so ``transforms_applied`` stays false and the purge retains
+        # their raw for a re-scrape with submissions / full rebuild (#5/#9/#12).
+        # No cube/dim was touched → no purge, no VACUUM.
+        if gate.qd_only_noop:
+            for run_id in scope_run_ids:
+                await self._mark(run_id, "failed", {"error": _QD_ONLY_ERROR})
+            logger.warning(
+                "QD-only batch (%d folded run(s)): no student submissions; "
+                "nothing built, raw retained for re-scrape / full rebuild",
+                len(scope_run_ids),
+            )
+            return
+
+        # Real applied transform. Mark the FULL folded set (#4/#8). ``landed``
+        # supplies error_count for this batch's runs; swept prior-'landed' runs
+        # are outside it and default to a clean success (their subjects were
+        # rebuilt in this pass).
+        landed_errors = {r["run_id"]: r["error_count"] for r in landed}
+        failed = frozenset(gate.failed_run_ids)
+        for run_id in scope_run_ids:
+            if run_id in failed:
+                # ≥1 contributed subject pruned (any-pruned semantics). Surviving
+                # subjects of this run were still applied; its raw is retained so
+                # the pruned assessment can be re-scraped in full (#11/#20).
+                details: Dict[str, Any] = {"error": _PARTIAL_PRUNE_ERROR}
+                pruned = gate.pruned_subjects.get(run_id)
+                if pruned:
+                    details["pruned_subject_ids"] = list(pruned)
+                await self._mark(run_id, "failed", details)
+                logger.warning(
+                    "run %s marked 'failed' (roster-gate pruned %s); surviving "
+                    "subjects applied, raw retained for retry",
+                    run_id,
+                    f"{len(pruned)} subject(s)" if pruned else "a contributed subject",
                 )
             else:
-                logger.info(
-                    "run %s left 'landed' (had %d error(s))",
-                    r["run_id"], r["error_count"],
+                # Subjects survived → durable. Promote to `succeeded`. A run that
+                # landed WITH file errors but whose subjects applied is still
+                # promoted (else it is re-folded forever), carrying a note.
+                err = landed_errors.get(run_id, 0)
+                note = (
+                    {"landing_note": f"landed with {err} error(s); surviving "
+                     "subjects applied"}
+                    if err
+                    else None
+                )
+                await self._finalize_succeeded(
+                    run_id, transforms_applied=True, details=note
                 )
 
-    async def _run_transform_gate(self, run_id: str, rows_this_batch: int) -> str:
-        """The §5 gate. Returns the outcome:
+        # POST-COMMIT: on a real transform, run the separate-connection
+        # (autocommit) self-healing raw purge + VACUUM. After marking, so the
+        # purge sees the freshly-succeeded runs. Fail-open-loud inside the helper.
+        await self._post_commit_maintenance(
+            purge=settings.INGESTION_PURGE_TRANSFORMED_RAW
+        )
+
+    async def _run_transform_gate(
+        self,
+        run_id: str,
+        rows_this_batch: int,
+        scope_run_ids: List[str],
+        *,
+        force_transform: bool = False,
+    ) -> "_GateOutcome":
+        """The §5 gate. Returns a ``_GateOutcome`` whose ``outcome`` is:
 
             * ``"applied"``   — transforms ran and the dirty flag was cleared.
             * ``"skip_clean"``— 0 rows + own token → cleared WITHOUT transforming.
             * ``"disabled"``  — kill-switch OFF; nothing ran, dirty flag left set.
 
-        Raises on the empty-raw floor, a collapse-guard trip, or the §HISTORIC
-        invariant inside ``run_all`` refusing to alter a year the raw layer cannot
-        regenerate — the caller fails the batch's clean runs and leaves the flag
-        dirty.
+        On ``"applied"`` the outcome also carries ``failed_run_ids`` (roster-gate
+        pruned runs), ``qd_only_noop`` (batch had QD raw but no submissions →
+        nothing built), and ``pruned_subjects`` (run_id → its dropped subjects);
+        the caller uses them to mark the folded run set.
+
+        Raises on a collapse-guard trip or the §HISTORIC invariant inside
+        ``run_all`` refusing to alter a slice the raw layer cannot regenerate —
+        the caller fails the batch's clean runs and leaves the flag dirty.
+
+        ``force_transform`` (re-drive path) skips the 0-row skip-clean economics
+        so a swept orphaned-``landed`` backlog is always transformed.
+
+        The empty-raw floor is BYPASSED whenever ``scope_run_ids`` is non-empty:
+        the scoped path writes only the batch's subjects and the subject-grain
+        §HISTORIC guard (not a global row floor) is the safety mechanism, so the
+        floor — which would false-block a lean prod box (raw≈20) — is skipped.
+        The floor still applies to a would-be unscoped full rebuild.
         """
         # 1. Kill-switch (PRIMARY). Prod stays False → never rebuilds. Leave the
         #    dirty flag set (raw is safe; cubes refresh where enabled).
@@ -424,7 +687,7 @@ class IngestionWorker:
                 "transforms DISABLED (kill-switch); leaving warehouse dirty, "
                 "runs stay landed"
             )
-            return "disabled"
+            return _GateOutcome("disabled")
 
         # NOTE: there is deliberately no environment check here any more. Historic
         # years are protected by the §HISTORIC invariant inside run_all (see
@@ -437,7 +700,7 @@ class IngestionWorker:
         #    current dirty token clears its own pre-mark WITHOUT transforming. But
         #    0 rows with a PRE-EXISTING dirty flag (from a prior crash) DOES
         #    transform — closing the permanent-staleness hole.
-        if rows_this_batch == 0:
+        if rows_this_batch == 0 and not force_transform:
             async with session_scope() as session:
                 own_token = await self._owns_dirty_token(session, run_id)
                 pre_dirty = not own_token  # dirty from something other than us
@@ -448,27 +711,31 @@ class IngestionWorker:
                     "batch landed 0 rows and owns dirty token → skip-clean "
                     "(no transform)"
                 )
-                return "skip_clean"
+                return _GateOutcome("skip_clean")
             logger.info(
                 "batch landed 0 rows but warehouse pre-dirty → running transforms"
             )
 
         # 2. Empty-raw floor preflight (total-raw guard; catches prod raw=0).
-        #    Bounded probe: we only need "≥ floor", so stop counting at the floor
-        #    instead of a full count(*) over ~2.6M rows.
-        async with session_scope() as session:
-            raw_total = await IngestionRunRepository(session).raw_total_count(
-                cap=settings.INGESTION_RAW_FLOOR
-            )
-        if raw_total < settings.INGESTION_RAW_FLOOR:
-            raise RuntimeError(
-                f"transforms refused: raw layer empty/below floor "
-                f"(raw_total={raw_total} < {settings.INGESTION_RAW_FLOOR})"
-            )
+        #    BYPASSED on the scoped path: with a non-empty scope the run writes
+        #    only the batch's subjects and safety is the subject-grain §HISTORIC
+        #    guard, not a global row floor (a lean prod box has raw≈20 which the
+        #    floor would wrongly block). Only a would-be unscoped full rebuild
+        #    still hits the floor. Bounded probe: stop counting at the floor.
+        if not scope_run_ids:
+            async with session_scope() as session:
+                raw_total = await IngestionRunRepository(session).raw_total_count(
+                    cap=settings.INGESTION_RAW_FLOOR
+                )
+            if raw_total < settings.INGESTION_RAW_FLOOR:
+                raise RuntimeError(
+                    f"transforms refused: raw layer empty/below floor "
+                    f"(raw_total={raw_total} < {settings.INGESTION_RAW_FLOOR})"
+                )
 
-        # 3 + 4. Global mutex + rebuild + atomic clear, all in ONE txn. A crash
-        # mid-transform rolls back the cubes AND the clear together, so the old
-        # cubes survive and the dirty flag stays set for the reaper.
+        # 3 + 4. Global mutex + scoped rebuild + atomic clear, all in ONE txn. A
+        # crash mid-transform rolls back the cubes AND the clear together, so the
+        # old cubes survive and the dirty flag stays set for the reaper.
         async with self._transform_session() as session:
             await session.execute(
                 text("SELECT pg_advisory_xact_lock(:k)"), {"k": _TRANSFORM_LOCK_KEY}
@@ -478,12 +745,14 @@ class IngestionWorker:
             await session.execute(text("SET statement_timeout = 0"))
 
             fact_pre = await self._fact_count(session)
-            await run_transformations(session)
+            xform_result = await run_transformations(
+                session, scope_run_ids=scope_run_ids
+            )
             fact_post = await self._fact_count(session)
 
-            # Collapse-guard: transforms that wipe a previously-populated fact to
-            # 0 rows are a bug (e.g. a bad staging join) — RAISE so the txn rolls
-            # back and the old cubes survive.
+            # Collapse-guard (kept): a scoped transform never truncates fact
+            # globally (only subject-scoped DELETE), so fact_pre>0 → fact_post==0
+            # still means a bug — RAISE so the txn rolls back and old cubes survive.
             if fact_pre > 0 and fact_post == 0:
                 raise RuntimeError(
                     f"transform collapse-guard: fact_student_submission went "
@@ -494,10 +763,23 @@ class IngestionWorker:
             # a clean flag commit atomically.
             await IngestionRunRepository(session).clear_warehouse_dirty(run_id)
 
-        logger.info(
-            "transforms applied (driver run %s): fact %d rows", run_id, fact_post
+        failed_run_ids = _extract_failed_run_ids(xform_result)
+        pruned_subjects = _extract_pruned_subjects(xform_result)
+        qd_only_noop = bool(
+            getattr(getattr(xform_result, "scope", None), "qd_only_noop", False)
         )
-        return "applied"
+        logger.info(
+            "transforms applied (driver run %s): fact %d rows%s%s",
+            run_id, fact_post,
+            "; QD-only no-op (no submissions, nothing built)" if qd_only_noop else "",
+            f"; {len(failed_run_ids)} run(s) roster-pruned" if failed_run_ids else "",
+        )
+        return _GateOutcome(
+            outcome="applied",
+            failed_run_ids=tuple(failed_run_ids),
+            qd_only_noop=qd_only_noop,
+            pruned_subjects=pruned_subjects,
+        )
 
     @staticmethod
     async def _owns_dirty_token(session: AsyncSession, run_id: str) -> bool:
@@ -520,6 +802,127 @@ class IngestionWorker:
         """Session context for the transform txn. Overridable in tests. Uses the
         jobs engine's ``session_scope`` (its own connection, direct URL)."""
         return session_scope()
+
+    async def _scope_run_ids(self, landed: List[Dict[str, Any]]) -> List[str]:
+        """Discovery scope for the scoped transform: this batch's run_ids ∪ every
+        run still ``landed`` (a prior crash between landing and transform-mark).
+        Their raw is folded idempotently; ``run_all`` derives the touched
+        subject set S from it (pass A → pass B)."""
+        ids = {str(r["run_id"]) for r in landed}
+        async with session_scope() as session:
+            rows = (
+                await session.execute(
+                    text(
+                        "SELECT run_id::text FROM ingestion_runs "
+                        "WHERE status = 'landed'"
+                    )
+                )
+            ).all()
+        ids.update(row[0] for row in rows)
+        return sorted(ids)
+
+    async def _finalize_succeeded(
+        self,
+        run_id: str,
+        *,
+        transforms_applied: bool,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Mark a run ``succeeded`` AND set the ``transforms_applied`` COLUMN.
+
+        ``mark(..., details)`` only merges into the ``error_details`` jsonb; the
+        P6 self-healing purge keys off the ``transforms_applied`` COLUMN, so set
+        it explicitly (same txn) — otherwise transformed raw would never be
+        swept. ``details`` is ``None`` for a clean success so ``error_details``
+        stays error-only (#25 — never write ``transforms_applied`` into it); a
+        run that landed with file errors but whose subjects still applied passes
+        a small ``landing_note`` (#4/#8)."""
+        async with session_scope() as session:
+            repo = IngestionRunRepository(session)
+            await repo.mark(run_id, "succeeded", details)
+            await session.execute(
+                text(
+                    "UPDATE ingestion_runs SET transforms_applied = :ta "
+                    "WHERE run_id = CAST(:rid AS UUID)"
+                ),
+                {"ta": transforms_applied, "rid": run_id},
+            )
+
+    async def _post_commit_maintenance(self, *, purge: bool) -> None:
+        """POST-COMMIT (separate AUTOCOMMIT conn): optional self-healing raw purge
+        then VACUUM(ANALYZE) of the scoped-touched tables. Runs only AFTER the
+        transform txn committed and the runs are marked.
+
+        Fail-open-loud: every error is logged and swallowed so a maintenance
+        hiccup never fails an already-applied, already-committed run. VACUUM
+        cannot run inside a txn, so this uses an AUTOCOMMIT connection (each
+        statement is its own txn)."""
+        engine = get_engine()
+        try:
+            async with engine.connect() as conn:
+                conn = await conn.execution_options(isolation_level="AUTOCOMMIT")
+                purged = 0
+                if purge:
+                    purged = await self._purge_transformed_raw(conn)
+                tables = list(_SCOPED_TOUCHED_TABLES)
+                if purged:
+                    tables += list(_RAW_TABLES)
+                for tbl in tables:
+                    try:
+                        # PARALLEL 0 disables parallel index vacuuming, which
+                        # allocates dynamic shared-memory segments — those fail
+                        # on a container with a small /dev/shm ("could not resize
+                        # shared memory segment ... No space left on device") for
+                        # the large tables (fact, cube_user_summary). Serial
+                        # vacuum is fine here and portable across shm sizes.
+                        await conn.execute(text(f"VACUUM (ANALYZE, PARALLEL 0) {tbl}"))
+                    except Exception:  # noqa: BLE001 — one absent table must not stop the rest
+                        logger.warning(
+                            "post-commit VACUUM of %s failed (continuing)",
+                            tbl, exc_info=True,
+                        )
+        except Exception:  # noqa: BLE001 — transform already committed; never fail it
+            logger.exception(
+                "post-commit maintenance failed (transform already committed; "
+                "ignoring)"
+            )
+
+    async def _purge_transformed_raw(self, conn: Any) -> int:
+        """Self-healing sweep (P6): DELETE raw for EVERY run already folded into
+        fact (``status='succeeded' AND transforms_applied=true``) — not just this
+        batch, so a previously-orphaned run's raw is reclaimed on the next
+        ingest. Failed / pruned / landed runs' raw is RETAINED (retry material).
+        Chunked so each DELETE stays well under any statement timeout. Returns
+        the total rows deleted."""
+        total = 0
+        for tbl in _RAW_TABLES:
+            while True:
+                res = await conn.execute(
+                    text(
+                        f"""
+                        WITH victims AS (
+                            SELECT ctid FROM {tbl}
+                            WHERE ingestion_run_id IN (
+                                SELECT run_id FROM ingestion_runs
+                                WHERE status = 'succeeded'
+                                  AND transforms_applied = true
+                            )
+                            LIMIT :chunk
+                        )
+                        DELETE FROM {tbl} WHERE ctid IN (SELECT ctid FROM victims)
+                        """
+                    ),
+                    {"chunk": _PURGE_CHUNK},
+                )
+                deleted = res.rowcount or 0
+                total += deleted
+                if deleted < _PURGE_CHUNK:
+                    break
+        if total:
+            logger.info(
+                "post-commit purge: deleted %d transformed raw row(s)", total
+            )
+        return total
 
     # ------------------------------------------------------------------
     # Small helpers

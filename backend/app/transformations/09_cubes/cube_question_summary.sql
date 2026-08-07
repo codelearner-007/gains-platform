@@ -22,7 +22,18 @@
 --   5. id = sha256(school_id || item_id || item_name || question_id ||
 --                  position_number || standard || correct_answer)
 
-TRUNCATE TABLE cube_question_summary;
+-- Scoped rebuild: when the run declares a scope (temp table _scope_assessments
+-- non-empty), delete only the touched subject_ids and re-insert them from the
+-- preserved fact. Empty scope (full rebuild) falls through to TRUNCATE, so the
+-- statement is byte-identical to the legacy path when no scope is declared.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM cube_question_summary
+    WHERE subject_id IN (SELECT subject_id FROM _scope_assessments);
+  ELSE
+    TRUNCATE TABLE cube_question_summary;
+  END IF;
+END $scope$;
 
 INSERT INTO cube_question_summary (
   id, school_id, school_id_csv, question_id, item_id, item_name, subject_id,
@@ -68,6 +79,10 @@ WITH fact_with_hash AS (
   LEFT JOIN dim_student_hash sh
     ON sh.school_id = f.school_id
    AND sh.user_uid  = f.user_uid
+  -- Scoped rebuild: restrict the fact scan to the touched subject_ids. No-op
+  -- when _scope_assessments is empty (full rebuild).
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR f.subject_id IN (SELECT subject_id FROM _scope_assessments))
 ),
 totals AS (
   -- Per-question totals (notebook 1583-1591).
@@ -111,6 +126,8 @@ totals AS (
       MAX(points_received) AS points_received,
       MAX(points_possible) AS points_possible
     FROM fact_student_submission
+    WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+           OR subject_id IN (SELECT subject_id FROM _scope_assessments))
     GROUP BY school_id, item_id, question_id, user_uid, submission,
              position_number
   ) per_student_question
@@ -322,6 +339,8 @@ FROM (
     school_id, school_id_csv, item_id, item_name, question_id,
     position_number, subject_id, identifier
   FROM fact_student_submission
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR subject_id IN (SELECT subject_id FROM _scope_assessments))
   ORDER BY school_id, item_id, question_id, position_number, identifier NULLS LAST
 ) f_meta
 LEFT JOIN totals

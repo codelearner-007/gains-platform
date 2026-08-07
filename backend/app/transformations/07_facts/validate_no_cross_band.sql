@@ -1,3 +1,7 @@
+-- SCOPED-TRANSFORM NOTE: this file now references the session-local _scope_items
+-- temp table (created by run_all). A manual psql replay must first create the 3
+-- _scope_* temp tables EMPTY, else the scope predicate errors on a missing table.
+--
 -- validate_no_cross_band.sql — build-time guard against cross-band mis-files.
 --
 -- Durable prevention for the cross-band phantom class (audit F-C2). After the
@@ -36,6 +40,9 @@ BEGIN
            count(DISTINCT grade)      AS n_grades,
            count(DISTINCT subject_id) AS n_subjects
     FROM fact_student_submission
+    -- SCOPED-TRANSFORM: validate only the touched items (no-op in full mode).
+    WHERE (NOT EXISTS (SELECT 1 FROM _scope_items)
+           OR (school_id, item_id) IN (SELECT school_id, item_id FROM _scope_items))
     GROUP BY school_id, item_id
     HAVING count(DISTINCT grade) > 1
         OR count(DISTINCT subject_id) > 1

@@ -15,7 +15,20 @@
 -- blend across schools. Single-tenant pipelines (e.g. Athenian) collapse to
 -- one school_id per row anyway, so row counts and aggregates are unchanged.
 
-TRUNCATE TABLE cube_standard_summary;
+-- Scoped rebuild: every GROUPING SET is anchored on school_id (there is no ()
+-- grand-total set here), so every persisted row belongs to exactly one school
+-- and its COUNT(DISTINCT)/SUM aggregates are within-school. Deleting +
+-- recomputing only the touched schools' slices is byte-identical to a full
+-- rebuild for those schools while leaving untouched schools intact. Empty scope
+-- (full rebuild) falls through to the whole-table DELETE — byte-identical to today.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM cube_standard_summary
+    WHERE school_id IN (SELECT DISTINCT school_id FROM _scope_assessments);
+  ELSE
+    DELETE FROM cube_standard_summary;
+  END IF;
+END $scope$;
 
 INSERT INTO cube_standard_summary (
   id, school_id, item_id, strand_id, identifier,
@@ -43,6 +56,11 @@ WITH rolled AS (
     GROUPING(item_id) + GROUPING(strand_id) + GROUPING(identifier)
                                    AS sub_level
   FROM fact_student_submission
+  -- Scoped rebuild: restrict the fact scan to the touched schools so the rollup
+  -- recomputes only those slices. No-op when _scope_assessments is empty
+  -- (full rebuild) — NOT EXISTS InitPlan TRUE, byte-identical to today.
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR school_id IN (SELECT DISTINCT school_id FROM _scope_assessments))
   GROUP BY GROUPING SETS (
     (school_id, item_id, strand_id, identifier),
     (school_id, item_id, strand_id),

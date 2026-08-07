@@ -149,7 +149,7 @@ async def test_pre_dirty_zero_rows_invokes_transform(
     calls = {"n": 0}
     fake_fact = {"pre": 100, "post": 100}
 
-    async def _fake_run_all(session: Any = None):  # noqa: ARG001
+    async def _fake_run_all(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
         calls["n"] += 1
         return {}
 
@@ -166,9 +166,11 @@ async def test_pre_dirty_zero_rows_invokes_transform(
     async with session_scope() as session:
         await _set_state(session, dirty=True, dirty_token=str(uuid4()))  # pre-dirty
 
-    outcome = await _worker()._run_transform_gate(rid, rows_this_batch=0)
+    outcome = await _worker()._run_transform_gate(
+        rid, rows_this_batch=0, scope_run_ids=[]
+    )
 
-    assert outcome == "applied", "pre-dirty + 0 rows must still transform"
+    assert outcome.outcome == "applied", "pre-dirty + 0 rows must still transform"
     assert calls["n"] == 1
     state = await _current_state()
     assert state["transforms_dirty"] is False, "clear happens via the transform path"
@@ -187,7 +189,7 @@ async def test_transform_exception_marks_failed_and_leaves_dirty(
     import app.services.ingestion_worker as worker_mod
     from app.jobs.db import session_scope
 
-    async def _boom(session: Any = None):  # noqa: ARG001
+    async def _boom(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
         raise RuntimeError("transform boom")
 
     monkeypatch.setattr(worker_mod, "run_transformations", _boom)
@@ -229,7 +231,7 @@ async def test_empty_raw_floor_refuses(
 
     ran = {"n": 0}
 
-    async def _fake_run_all(session: Any = None):  # noqa: ARG001
+    async def _fake_run_all(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
         ran["n"] += 1
         return {}
 
@@ -248,12 +250,63 @@ async def test_empty_raw_floor_refuses(
         await _set_state(session, dirty=True, dirty_token=str(uuid4()))  # pre-dirty
 
     with pytest.raises(RuntimeError, match="raw layer empty/below floor"):
-        # rows_this_batch>0 so we bypass skip-clean and hit the floor preflight.
-        await _worker()._run_transform_gate(rid, rows_this_batch=500)
+        # rows_this_batch>0 so we bypass skip-clean; EMPTY scope (unscoped full
+        # rebuild) so the floor preflight applies — it is bypassed only on the
+        # scoped path (see test_scoped_scope_bypasses_floor below).
+        await _worker()._run_transform_gate(rid, rows_this_batch=500, scope_run_ids=[])
 
     assert ran["n"] == 0, "refusal must not run transforms"
     state = await _current_state()
     assert state["transforms_dirty"] is True, "dirty must survive a refusal"
+
+
+# ── 3b. scoped path BYPASSES the empty-raw floor ────────────────────────────
+
+
+async def test_scoped_scope_bypasses_floor(
+    warehouse_snapshot, monkeypatch: pytest.MonkeyPatch
+):
+    """A NON-empty ``scope_run_ids`` bypasses the empty-raw floor: a lean prod box
+    (raw below the 1000 floor) must still apply the batch's subjects — safety is
+    the subject-grain §HISTORIC guard inside ``run_all``, not a global row floor.
+    ``raw_total_count`` is stubbed to RAISE so any consultation of the floor fails
+    the test; the scoped path must transform + return ``applied`` without it."""
+    import app.services.ingestion_worker as worker_mod
+    from app.jobs.db import session_scope
+    from app.repositories.ingestion_run_repository import IngestionRunRepository
+
+    calls = {"n": 0}
+
+    async def _fake_run_all(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
+        calls["n"] += 1
+        return {}
+
+    monkeypatch.setattr(worker_mod, "run_transformations", _fake_run_all)
+    monkeypatch.setattr(
+        worker_mod.IngestionWorker,
+        "_fact_count",
+        staticmethod(lambda session: _make_fact({"pre": 100, "post": 100})),
+    )
+
+    async def _floor_must_not_run(self) -> int:  # noqa: ARG001
+        raise AssertionError("scoped path must NOT consult the empty-raw floor")
+
+    monkeypatch.setattr(
+        IngestionRunRepository, "raw_total_count", _floor_must_not_run
+    )
+
+    rid = str(uuid4())
+    async with session_scope() as session:
+        await _set_state(session, dirty=True, dirty_token=str(uuid4()))
+
+    outcome = await _worker()._run_transform_gate(
+        rid, rows_this_batch=500, scope_run_ids=[str(uuid4())]
+    )
+
+    assert outcome.outcome == "applied", "scoped path transforms despite low raw"
+    assert calls["n"] == 1
+    state = await _current_state()
+    assert state["transforms_dirty"] is False, "clear happens via the transform path"
 
 
 # ── 4. collapse-guard aborts on fact → 0 ────────────────────────────────────
@@ -269,7 +322,7 @@ async def test_collapse_guard_aborts_on_fact_zero(
 
     fact = {"value": 100}  # pre-count
 
-    async def _wipe(session: Any = None):  # noqa: ARG001
+    async def _wipe(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
         fact["value"] = 0  # the "rebuild" wipes the fact — the bug we catch
         return {}
 
@@ -285,7 +338,7 @@ async def test_collapse_guard_aborts_on_fact_zero(
         await _set_state(session, dirty=True, dirty_token=str(uuid4()))
 
     with pytest.raises(RuntimeError, match="collapse-guard"):
-        await _worker()._run_transform_gate(rid, rows_this_batch=500)
+        await _worker()._run_transform_gate(rid, rows_this_batch=500, scope_run_ids=[])
 
     state = await _current_state()
     assert state["transforms_dirty"] is True, (
@@ -307,7 +360,7 @@ async def test_skip_clean_clears_only_when_owns_token_zero_rows(
 
     ran = {"n": 0}
 
-    async def _fake_run_all(session: Any = None):  # noqa: ARG001
+    async def _fake_run_all(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
         ran["n"] += 1
         return {}
 
@@ -317,9 +370,11 @@ async def test_skip_clean_clears_only_when_owns_token_zero_rows(
     async with session_scope() as session:
         await _set_state(session, dirty=True, dirty_token=rid)  # driver owns it
 
-    outcome = await _worker()._run_transform_gate(rid, rows_this_batch=0)
+    outcome = await _worker()._run_transform_gate(
+        rid, rows_this_batch=0, scope_run_ids=[]
+    )
 
-    assert outcome == "skip_clean"
+    assert outcome.outcome == "skip_clean"
     assert ran["n"] == 0, "skip-clean must NOT transform"
     state = await _current_state()
     assert state["transforms_dirty"] is False, "own-token skip-clean clears the flag"

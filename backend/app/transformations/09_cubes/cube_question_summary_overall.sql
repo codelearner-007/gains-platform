@@ -20,7 +20,19 @@
 --   5. ID hash uses ukey (D1 fix per user — notebook bug at line 2173 used
 --      Standards twice; we use ukey as intended).
 
-TRUNCATE TABLE cube_question_summary_overall;
+-- Scoped rebuild: when the run declares a scope (temp table _scope_assessments
+-- non-empty), delete only the touched subject_ids and re-aggregate them from the
+-- preserved fact — which re-pools the FULL subject cohort (every section sharing
+-- the subject_id), so a re-ingested single section still recomputes correctly.
+-- Empty scope (full rebuild) falls through to TRUNCATE (byte-identical to legacy).
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM cube_question_summary_overall
+    WHERE subject_id IN (SELECT subject_id FROM _scope_assessments);
+  ELSE
+    TRUNCATE TABLE cube_question_summary_overall;
+  END IF;
+END $scope$;
 
 INSERT INTO cube_question_summary_overall (
   id, school_id, subject_id, ukey, question_no, sorting_question_no,
@@ -48,6 +60,13 @@ WITH ranked AS (
                f.user_id_ques_id_stand
     ) AS rn
   FROM fact_student_submission f
+  -- Scoped rebuild: restrict the fact scan to the touched subject_ids. The
+  -- latest-attempt window PARTITION BY is keyed within a single subject_id
+  -- (section_nid/item_id/question_id each map to exactly one subject_id), so a
+  -- subject-level filter keeps or drops whole partitions and never changes the
+  -- rn=1 winner. No-op when _scope_assessments is empty (full rebuild).
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR f.subject_id IN (SELECT subject_id FROM _scope_assessments))
 ),
 latest AS (
   SELECT * FROM ranked WHERE rn = 1

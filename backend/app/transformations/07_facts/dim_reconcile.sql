@@ -1,3 +1,7 @@
+-- SCOPED-TRANSFORM NOTE: this file now references the session-local _scope_items /
+-- _scope_assessments temp tables (created by run_all). A manual psql replay must
+-- first create the 3 _scope_* tables EMPTY, else the scope predicates error.
+--
 -- =============================================================================
 -- Post-fact dimension reconciliation (2026-07 audit, F-C1).
 --
@@ -22,13 +26,19 @@ FROM (
   FROM (
     SELECT school_id, item_id, subject_id, count(*) AS c
     FROM fact_student_submission
+    -- SCOPED-TRANSFORM: re-settle only the touched items (no-op in full mode).
+    WHERE (NOT EXISTS (SELECT 1 FROM _scope_items)
+           OR (school_id, item_id) IN (SELECT school_id, item_id FROM _scope_items))
     GROUP BY 1, 2, 3
   ) t
   ORDER BY school_id, item_id, c DESC, subject_id
 ) fdom
 WHERE di.school_id = fdom.school_id
   AND di.item_id = fdom.item_id
-  AND di.subject_id IS DISTINCT FROM fdom.subject_id;
+  AND di.subject_id IS DISTINCT FROM fdom.subject_id
+  -- SCOPED-TRANSFORM: update only the touched items (no-op in full mode).
+  AND (NOT EXISTS (SELECT 1 FROM _scope_items)
+       OR (di.school_id, di.item_id) IN (SELECT school_id, item_id FROM _scope_items));
 
 -- (2) Drop phantom dim_subject cards: subject_ids with no fact rows AND no cube
 -- rows (cubes are rebuilt after this, so 0 fact rows is the authority here).
@@ -36,7 +46,11 @@ DELETE FROM dim_subject ds
 WHERE NOT EXISTS (
   SELECT 1 FROM fact_student_submission f
   WHERE f.school_id = ds.school_id AND f.subject_id = ds.subject_id
-);
+)
+  -- SCOPED-TRANSFORM: only prune phantom cards for the touched subjects; never
+  -- delete an untouched historic subject's row (no-op in full mode).
+  AND (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+       OR ds.subject_id IN (SELECT subject_id FROM _scope_assessments));
 
 -- (3) Canonicalize instructor identity (2026-07 audit, DG-4): 'Sitara Shamsheer'
 -- and 'Sitara Qalander' are the same person (co-teaching the same Crestwell

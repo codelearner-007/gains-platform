@@ -552,6 +552,7 @@ async def run_ingestion(
     blob_client: BlobClient | None = None,
     whole_tree_root: str | None = None,
     skip_transforms: bool = False,
+    scoped_transforms: bool = False,
     commit_every: int = 0,
     run_id: UUID | None = None,
     landed_status: str = "succeeded",
@@ -568,6 +569,14 @@ async def run_ingestion(
             (not one pass per school) to avoid ingesting every file 5×, then let
             staging distribute rows to all schools. `school_filter` then only
             restricts which schools' rows survive staging (None = all).
+        scoped_transforms: OPT-IN incremental transform (default False → full
+            rebuild, unchanged). When True (and ``skip_transforms`` is False),
+            the transform pass is SCOPED to THIS run's raw: its ``run_id`` is
+            passed as ``scope_run_ids`` so ``run_all`` rebuilds only the
+            assessments this ingest touched (subject-scoped DELETE + insert +
+            rollup recompute over preserved fact) instead of a destructive
+            full-year rebuild. The default full rebuild is preserved for the
+            local rebuild machine / ``gains_data`` paths.
         run_id: When set (R1), a caller has pre-created the ``ingestion_runs``
             row (status ``pending``) so it could return the id before the run
             executes. Phase 1 then ADOPTS that row (pending → running) instead of
@@ -722,11 +731,19 @@ async def run_ingestion(
                     "via `python -m app.transformations.runner --tag …`."
                 )
             else:
-                xform_results = await run_transformations(session)
+                # Default (scoped_transforms=False) → scope_run_ids=None → full
+                # rebuild, byte-identical to today. Opt-in scoped mode passes THIS
+                # run's id so run_all rebuilds only the assessments it touched.
+                scope_arg = [str(run_id)] if scoped_transforms else None
+                xform_results = await run_transformations(
+                    session, scope_run_ids=scope_arg
+                )
+                row_total = sum(xform_results.values())
                 logger.info(
-                    "transformations complete: %d models, %d total rows touched",
+                    "transformations complete (%s): %d models, %d total rows touched",
+                    "scoped" if scoped_transforms else "full",
                     len(xform_results),
-                    sum(xform_results.values()),
+                    row_total,
                 )
     except Exception as e:
         # Outer phase-2 rollback. Phase 2 transaction is rolled back — none of
@@ -781,12 +798,24 @@ async def main(argv: list[str] | None = None) -> int:
         default="INFO",
         help="Python logging level (DEBUG, INFO, WARNING).",
     )
+    parser.add_argument(
+        "--scoped-transforms",
+        action="store_true",
+        help=(
+            "Incrementally rebuild ONLY the assessments this run ingests "
+            "(subject-scoped) instead of a full destructive rebuild. Opt-in; "
+            "the default remains a full rebuild."
+        ),
+    )
     args = parser.parse_args(argv)
 
     _setup_logging(args.log_level)
 
     try:
-        summary = await run_ingestion(school_filter=args.school)
+        summary = await run_ingestion(
+            school_filter=args.school,
+            scoped_transforms=args.scoped_transforms,
+        )
     finally:
         await dispose_engine()
 

@@ -16,7 +16,20 @@
 --
 -- school_id is in every grouping set so multi-tenant data does not blend.
 
-TRUNCATE TABLE cube_questionincorrectchoice_summary;
+-- Scoped rebuild: every GROUPING SET is anchored on school_id (there is no ()
+-- grand-total set here), so every persisted row belongs to exactly one school
+-- and its COUNT(DISTINCT)/SUM aggregates are within-school. Deleting +
+-- recomputing only the touched schools' slices is byte-identical to a full
+-- rebuild for those schools while leaving untouched schools intact. Empty scope
+-- (full rebuild) falls through to the whole-table DELETE — byte-identical to today.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_assessments) THEN
+    DELETE FROM cube_questionincorrectchoice_summary
+    WHERE school_id IN (SELECT DISTINCT school_id FROM _scope_assessments);
+  ELSE
+    DELETE FROM cube_questionincorrectchoice_summary;
+  END IF;
+END $scope$;
 
 INSERT INTO cube_questionincorrectchoice_summary (
   id, school_id, question_id, ukey, answer_submission,
@@ -49,6 +62,12 @@ WITH joined AS (
    AND qd.question_id     = f.question_id
    AND COALESCE(qd.position_number, '__NULL__')
        = COALESCE(f.position_number, '__NULL__')
+  -- Scoped rebuild: restrict the fact scan to the touched schools so the rollup
+  -- recomputes only those slices. Filtering the preserved (left) side keeps the
+  -- LEFT JOIN semantics. No-op when _scope_assessments is empty (full rebuild) —
+  -- NOT EXISTS InitPlan TRUE, byte-identical to today.
+  WHERE (NOT EXISTS (SELECT 1 FROM _scope_assessments)
+         OR f.school_id IN (SELECT DISTINCT school_id FROM _scope_assessments))
 ),
 rolled AS (
   SELECT

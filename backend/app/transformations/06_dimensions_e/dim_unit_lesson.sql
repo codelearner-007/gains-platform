@@ -9,6 +9,19 @@
 -- item_name / user_school_id across submissions (seen once >1 school is
 -- ingested), which then collide on the (school_id, item_id) conflict key in a
 -- single INSERT → CardinalityViolation. ORDER BY makes the pick deterministic.
+
+-- SCOPED MODE: dim_unit_lesson is item-keyed (school_id, item_id), and item_id
+-- churns on re-ingest, so upsert-alone would orphan the old item_ids. Prepend a
+-- scoped DELETE over the touched items (_scope_items). NO ELSE/TRUNCATE branch:
+-- upsert dim, so full mode (_scope_items empty) skips the DELETE → byte-identical
+-- to today.
+DO $scope$ BEGIN
+  IF EXISTS (SELECT 1 FROM _scope_items) THEN
+    DELETE FROM dim_unit_lesson
+    WHERE (school_id, item_id) IN (SELECT school_id, item_id FROM _scope_items);
+  END IF;
+END $scope$;
+
 INSERT INTO dim_unit_lesson (item_id, school_id, item_name, school_id_csv)
 SELECT DISTINCT ON (src.school_id, src.item_id)
   src.item_id,
