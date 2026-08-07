@@ -455,8 +455,14 @@ class StandardSummaryKpis(BaseModel):
     total_students: int
     at_target_pct: float
     at_target_pct_str: str
-    grade_average: float
-    grade_average_pct: str
+    # None (and pct "") when the scope has no non-quiz assessments (all-quiz /
+    # empty) — the hero renders "—" instead of a misleading 0.0%.
+    grade_average: Optional[float] = None
+    grade_average_pct: str = ""
+    # Quiz-only pooled grade average (dashboard Quizzes tab). None (pct "") when
+    # the current scope has no quizzes → the tab shows count only, never "0%".
+    quiz_grade_average: Optional[float] = None
+    quiz_grade_average_pct: str = ""
 
 
 class StandardSummaryRollupRow(BaseModel):

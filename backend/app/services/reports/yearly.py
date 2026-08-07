@@ -48,6 +48,7 @@ from ._helpers import (
     _decode_html,
     _format_pct,
     _format_pct_opt,
+    _round_opt,
     _strip_html,
 )
 
@@ -333,6 +334,7 @@ class _YearlyMixin:
         total_students = 0
         total_questions_cqso = 0
         grade_average = 0.0
+        quiz_grade_average: Optional[float] = None
         if not cards_only:
             total_students = await self.cube.get_school_total_students(
                 session_filter=filters.session,
@@ -352,14 +354,26 @@ class _YearlyMixin:
                 grade=filters.grade,
                 category=filters.category,
             )
+            # Quiz-only pooled average for the dashboard Quizzes-tab stat —
+            # same scope as the (non-quiz) hero average above. None when the
+            # scope has no quizzes (rendered blank, never 0%).
+            quiz_grade_average = await self.cube.get_school_overall_grade_average(
+                session_filter=filters.session,
+                subject=filters.subject,
+                grade=filters.grade,
+                category=filters.category,
+                quiz_mode="only",
+            )
         kpis = StandardSummaryKpis(
             total_standards=total_standards,
             total_questions=total_questions_cqso,
             total_students=total_students,
             at_target_pct=round(at_target_pct, 6),
             at_target_pct_str=_format_pct(at_target_pct),
-            grade_average=round(grade_average, 6),
-            grade_average_pct=_format_pct(grade_average),
+            grade_average=_round_opt(grade_average),
+            grade_average_pct=_format_pct_opt(grade_average),
+            quiz_grade_average=_round_opt(quiz_grade_average),
+            quiz_grade_average_pct=_format_pct_opt(quiz_grade_average),
         )
 
         quality = await self.cube.get_school_alignment_quality(

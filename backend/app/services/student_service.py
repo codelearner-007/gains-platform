@@ -32,6 +32,7 @@ from app.schemas.students import (
     StudentSubjectReport,
     StudentSubjectStat,
 )
+from app.services.reports import _strip_html
 from app.utils.coercion import safe_str, to_int
 
 # Default roster page size — mirrors the dashboard's By-Assessment grid.
@@ -285,7 +286,7 @@ class StudentService:
                 StudentStandardRow(
                     identifier=safe_str(s.get("identifier")),
                     code=safe_str(s.get("code")) or safe_str(s.get("identifier")),
-                    description=safe_str(s.get("description")) or None,
+                    description=_strip_html(safe_str(s.get("description"))) or None,
                     strand=safe_str(s.get("strand")) or None,
                     cluster=safe_str(s.get("cluster")) or None,
                     complexity=safe_str(s.get("complexity")) or None,

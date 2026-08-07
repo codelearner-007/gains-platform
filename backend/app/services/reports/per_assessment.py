@@ -334,7 +334,7 @@ class _PerAssessmentMixin:
             correct_answer=safe_str(question_row.get("correct_answer")),
             standards=safe_str(question_row.get("standards")),
             strand=safe_str(question_row.get("strand_raw")),
-            description=safe_str(question_row.get("description")),
+            description=_strip_html(safe_str(question_row.get("description"))),
             grade_average=round(grade_average, 6),
             grade_average_pct=_format_pct(grade_average),
             total_possible_point=round(

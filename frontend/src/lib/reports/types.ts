@@ -560,8 +560,14 @@ export interface StandardSummaryKpis {
   total_students: number;
   at_target_pct: number;
   at_target_pct_str: string;
-  grade_average: number;
+  /** null (and pct "") when the scope has no non-quiz assessments (all-quiz /
+   *  empty) — the hero renders "—" instead of a misleading 0.0%. */
+  grade_average: number | null;
   grade_average_pct: string;
+  /** Quiz-only pooled average for the dashboard Quizzes tab. null (pct "") when
+   *  the current scope has no quizzes (tab shows count only, never "0%"). */
+  quiz_grade_average: number | null;
+  quiz_grade_average_pct: string;
 }
 
 export interface StandardSummaryRollupRow {

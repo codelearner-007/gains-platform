@@ -75,9 +75,10 @@ const STUDENT_INITIAL_DIR: Record<StudentSortKey, 'asc' | 'desc'> = {
  *  Merges the old top "By Assessment / By Student" mode with the panel's
  *  "By Assessment / By Standard / By Strand" grouping into one control, so
  *  "Assessment" no longer means two different things. */
-type DashView = 'assessment' | 'student' | 'standard' | 'strand';
+type DashView = 'assessment' | 'quiz' | 'student' | 'standard' | 'strand';
 const VIEW_OPTIONS: { value: DashView; label: string }[] = [
   { value: 'assessment', label: 'Assessments' },
+  { value: 'quiz', label: 'Quizzes' },
   { value: 'student', label: 'Students' },
   { value: 'standard', label: 'Standards' },
   { value: 'strand', label: 'Strands' },
@@ -237,16 +238,43 @@ export function DashboardPage() {
       q: debouncedSearch,
       sort,
       dir,
+      kind: 'assessment',
     }),
     queryFn: ({ pageParam }) =>
       reportsApi.assessmentSummaries(filters, schoolId ?? undefined, {
         q: debouncedSearch || undefined,
         sort,
         dir,
+        kind: 'assessment',
         limit: PAGE_SIZE,
         offset: pageParam,
       }),
     enabled: inited && defaultsReady,
+    initialPageParam: 0,
+    getNextPageParam: nextPageParam,
+    placeholderData: (prev) => prev,
+  });
+
+  // By Quizzes — same server-paginated grid as By-Assessment but quiz-only.
+  // Lazy: only fetched while the Quizzes view is active (a distinct query key
+  // via kind='quiz', so it never shares cache with the Assessments tab).
+  const quizQ = useInfiniteQuery({
+    queryKey: reportsKeys.assessmentSummaries(filters, schoolId ?? undefined, {
+      q: debouncedSearch,
+      sort,
+      dir,
+      kind: 'quiz',
+    }),
+    queryFn: ({ pageParam }) =>
+      reportsApi.assessmentSummaries(filters, schoolId ?? undefined, {
+        q: debouncedSearch || undefined,
+        sort,
+        dir,
+        kind: 'quiz',
+        limit: PAGE_SIZE,
+        offset: pageParam,
+      }),
+    enabled: inited && defaultsReady && view === 'quiz',
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     placeholderData: (prev) => prev,
@@ -363,6 +391,11 @@ export function DashboardPage() {
         .map((r) => r.grade_average as number),
     [assessmentRows],
   );
+  const quizRows = useMemo(
+    () => quizQ.data?.pages.flatMap((p) => p.rows) ?? [],
+    [quizQ.data],
+  );
+  const quizTotal = quizQ.data?.pages[0]?.total ?? 0;
   const strandRows = useMemo(
     () => strandRowsQ.data?.pages.flatMap((p) => p.rows) ?? [],
     [strandRowsQ.data],
@@ -379,10 +412,32 @@ export function DashboardPage() {
   const headerLoading = !inited || stdQ.isLoading;
   // In-flight (refetch) state — NOT a scroll fetch-more — for the two grids.
   const asmtFetching = asmtQ.isFetching && !asmtQ.isFetchingNextPage;
+  const quizFetching = quizQ.isFetching && !quizQ.isFetchingNextPage;
   const strandFetching = strandRowsQ.isFetching && !strandRowsQ.isFetchingNextPage;
   const asmtLoading = !inited || asmtQ.isPending;
+  const quizLoading = view === 'quiz' && (!inited || quizQ.isPending);
   const strandLoading = view === 'strand' && (!inited || strandRowsQ.isPending);
   const subjectsLoading = !inited || overviewQ.isLoading;
+
+  // Assessments and Quizzes render the SAME By-Assessment table — just a
+  // different data source. Pick it once so the table is wired in one place.
+  const isQuizView = view === 'quiz';
+  const asmtViewQuery = isQuizView ? quizQ : asmtQ;
+  const asmtViewRows = isQuizView ? quizRows : assessmentRows;
+  const asmtViewTotal = isQuizView ? quizTotal : assessmentTotal;
+  const asmtViewLoading = isQuizView ? quizLoading : asmtLoading;
+  const asmtViewMarker = isQuizView
+    ? (kpis?.quiz_grade_average ?? null)
+    : schoolAverage;
+
+  // Row count shown in the search box, per active view.
+  const resultCounts: Record<DashView, number> = {
+    assessment: assessmentTotal,
+    quiz: quizTotal,
+    student: studentTotal,
+    standard: stdQ.data?.standards?.length ?? 0,
+    strand: strandTotal,
+  };
   // Search spinner: while the debounce is settling OR the server query for the
   // (debounced) term is in flight — but ONLY when a search term is active, so
   // subject/grade/year filtering doesn't trip it (which would swap the search
@@ -390,12 +445,17 @@ export function DashboardPage() {
   const searchLoading =
     search.trim() !== debouncedSearch ||
     (debouncedSearch.length > 0 &&
-      (view === 'student' ? studentFetching : asmtFetching || strandFetching));
+      (view === 'student'
+        ? studentFetching
+        : view === 'quiz'
+          ? quizFetching
+          : asmtFetching || strandFetching));
 
   const anyError =
     overviewQ.isError ||
     stdQ.isError ||
     asmtQ.isError ||
+    (view === 'quiz' && quizQ.isError) ||
     strandRowsQ.isError ||
     studentsQ.isError;
 
@@ -407,6 +467,7 @@ export function DashboardPage() {
     overviewQ.isFetching ||
     stdQ.isFetching ||
     asmtFetching ||
+    (view === 'quiz' && quizFetching) ||
     strandFetching ||
     studentFetching;
 
@@ -502,7 +563,7 @@ export function DashboardPage() {
           is active. */}
       <div className={`transition-opacity duration-200 ${dataStreaming ? 'opacity-60' : ''}`}>
         <KpiHeroBand
-          gradeAveragePct={kpis?.grade_average_pct ?? '—'}
+          gradeAveragePct={kpis?.grade_average_pct || '—'}
           totalStudents={kpis?.total_students ?? '—'}
           totalStandards={kpis?.total_standards ?? '—'}
           totalQuestions={kpis?.total_questions ?? '—'}
@@ -510,6 +571,11 @@ export function DashboardPage() {
           trend={gradeTrend}
           loading={headerLoading}
           schoolWideHint={schoolWideHint}
+          gradeAverageNote={
+            kpis?.grade_average != null && kpis?.quiz_grade_average != null
+              ? 'Excludes quizzes'
+              : undefined
+          }
         />
       </div>
 
@@ -549,7 +615,10 @@ export function DashboardPage() {
               value={search}
               onChange={setSearch}
               loading={searchLoading}
-              resultCount={view === 'student' ? studentTotal : assessmentTotal}
+              noun={(
+                VIEW_OPTIONS.find((v) => v.value === view)?.label ?? 'Assessments'
+              ).toLowerCase()}
+              resultCount={resultCounts[view]}
             />
           </div>
         </div>
@@ -575,31 +644,53 @@ export function DashboardPage() {
             loading={studentLoading}
           />
         ) : (
-          <AssessmentsSummaryTable
-            view={view}
-            schoolAverage={schoolAverage}
-            assessments={assessmentRows}
-            assessmentTotal={assessmentTotal}
-            assessmentHasMore={asmtQ.hasNextPage}
-            assessmentFetchingMore={asmtQ.isFetchingNextPage}
-            onAssessmentFetchMore={() => void asmtQ.fetchNextPage()}
-            assessmentSort={sort}
-            assessmentDir={dir}
-            onAssessmentSort={onSort}
-            assessmentLoading={asmtLoading}
-            strandRows={strandRows}
-            strandTotal={strandTotal}
-            strandHasMore={strandRowsQ.hasNextPage}
-            strandFetchingMore={strandRowsQ.isFetchingNextPage}
-            onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
-            strandSort={strandSort}
-            strandDir={strandDir}
-            onStrandSort={onStrandSort}
-            strandLoading={strandLoading}
-            standards={stdQ.data?.standards ?? []}
-            search={search}
-            loading={headerLoading}
-          />
+          <div className="space-y-3">
+            {/* Quizzes tab: its own count + quiz-only average (blank when none). */}
+            {isQuizView && quizTotal > 0 && (
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+                <span className="font-medium text-foreground">
+                  {quizTotal} {quizTotal === 1 ? 'quiz' : 'quizzes'}
+                </span>
+                {kpis?.quiz_grade_average_pct && (
+                  <span className="text-muted-foreground">
+                    Quiz average{' '}
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {kpis.quiz_grade_average_pct}
+                    </span>
+                  </span>
+                )}
+              </div>
+            )}
+            <AssessmentsSummaryTable
+              // Quizzes reuse the By-Assessment table with a quiz-only source.
+              view={isQuizView ? 'assessment' : view}
+              schoolAverage={asmtViewMarker}
+              assessments={asmtViewRows}
+              assessmentTotal={asmtViewTotal}
+              assessmentHasMore={asmtViewQuery.hasNextPage}
+              assessmentFetchingMore={asmtViewQuery.isFetchingNextPage}
+              onAssessmentFetchMore={() => void asmtViewQuery.fetchNextPage()}
+              assessmentSort={sort}
+              assessmentDir={dir}
+              onAssessmentSort={onSort}
+              assessmentLoading={asmtViewLoading}
+              assessmentEmptyLabel={
+                isQuizView ? 'No quizzes for the current filters.' : undefined
+              }
+              strandRows={strandRows}
+              strandTotal={strandTotal}
+              strandHasMore={strandRowsQ.hasNextPage}
+              strandFetchingMore={strandRowsQ.isFetchingNextPage}
+              onStrandFetchMore={() => void strandRowsQ.fetchNextPage()}
+              strandSort={strandSort}
+              strandDir={strandDir}
+              onStrandSort={onStrandSort}
+              strandLoading={strandLoading}
+              standards={stdQ.data?.standards ?? []}
+              search={search}
+              loading={headerLoading}
+            />
+          </div>
         )}
         </div>
       </section>
