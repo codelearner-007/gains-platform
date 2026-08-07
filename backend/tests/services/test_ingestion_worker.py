@@ -546,7 +546,7 @@ async def test_errored_landing_leaves_files_live(
 # ── _extract_failed_run_ids / _extract_pruned_subjects (pure, DB-free) #7/#14 ─
 
 
-def _scope(run_subjects, survivors, *, qd_only_noop=False) -> TransformResult:
+def _scope(run_subjects, survivors, *, noop_reason=None) -> TransformResult:
     """A ``TransformResult`` carrying a faithful ``ScopeReport`` — the exact shape
     ``run_all`` returns on a scoped run and the worker's extractors read."""
     survivor_set = frozenset(survivors)
@@ -557,7 +557,7 @@ def _scope(run_subjects, survivors, *, qd_only_noop=False) -> TransformResult:
         groups=(),
         survivors=survivor_set,
         failed_subjects=frozenset(all_subjects - survivor_set),
-        qd_only_noop=qd_only_noop,
+        noop_reason=noop_reason,
     )
     return tr
 
@@ -650,7 +650,7 @@ async def test_transform_batch_marks_full_folded_set(
     assert r2_failed and "s2" in (r2_failed[0] or "")
 
 
-async def test_transform_batch_qd_only_noop_fails_and_retains_raw(
+async def test_transform_batch_qd_only_fails_and_retains_raw(
     monkeypatch: pytest.MonkeyPatch, wh: FakeWarehouse
 ):
     """A QD-only batch (question-data raw, ZERO student submissions) built nothing:
@@ -662,7 +662,7 @@ async def test_transform_batch_qd_only_noop_fails_and_retains_raw(
 
     async def _run_all(session: Any = None, scope_run_ids: Any = None):  # noqa: ARG001
         # The QD-only sentinel: no subjects, nothing built.
-        return _scope({}, set(), qd_only_noop=True)
+        return _scope({}, set(), noop_reason="qd_only")
 
     monkeypatch.setattr(worker_mod, "run_transformations", _run_all)
 

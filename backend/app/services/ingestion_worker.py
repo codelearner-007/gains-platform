@@ -122,6 +122,21 @@ _QD_ONLY_ERROR = (
     "question-data alone; raw retained. Re-scrape with submissions or run a "
     "full rebuild."
 )
+_ALL_PRUNED_ERROR = (
+    "all assessment groups roster-pruned (partial/truncated re-scrape); "
+    "raw retained — re-scrape the full assessment(s) to apply the change"
+)
+_NO_SUBJECTS_ERROR = (
+    "batch landed raw but produced 0 in-scope subjects (check "
+    "schools.student_role_id / tenant overrides); raw retained — re-scrape the "
+    "full assessment or run a full rebuild"
+)
+# Failure message per scoped no-op reason (``ScopeReport.noop_reason``).
+_NOOP_REASON_ERROR = {
+    "qd_only": _QD_ONLY_ERROR,
+    "all_pruned": _ALL_PRUNED_ERROR,
+    "no_subjects": _NO_SUBJECTS_ERROR,
+}
 
 
 @dataclass(frozen=True)
@@ -133,9 +148,11 @@ class _GateOutcome:
 
       * ``failed_run_ids`` — runs the roster gate pruned (≥1 subject dropped);
         the caller marks them ``failed`` and retains their raw.
-      * ``qd_only_noop`` — the batch carried question-data raw and ZERO student
-        submissions, so the scoped path built nothing (``run_all`` returned the
-        QD-only sentinel). Every folded run is failed + raw retained.
+      * ``noop_reason`` — set when the scoped path built NOTHING (``run_all``
+        returned a no-op sentinel): ``"qd_only"`` (no student submissions),
+        ``"all_pruned"`` (roster gate pruned every group), or ``"no_subjects"``
+        (real raw landed but 0 in-scope subjects). Every folded run is failed +
+        raw retained; ``None`` on a real applied transform.
       * ``pruned_subjects`` — run_id → the subject_ids of that run that were
         pruned, surfaced in ``error_details`` so the operator knows which
         assessment to re-scrape.
@@ -143,7 +160,7 @@ class _GateOutcome:
 
     outcome: str
     failed_run_ids: tuple[str, ...] = ()
-    qd_only_noop: bool = False
+    noop_reason: str | None = None
     pruned_subjects: Dict[str, List[str]] = field(default_factory=dict)
 
 
@@ -588,19 +605,22 @@ class IngestionWorker:
 
         # outcome == "applied" from here.
 
-        # QD-only no-op: the transform committed (dirty cleared) but nothing was
-        # built — the batch carried question-data raw and zero student
-        # submissions, so the scoped path had no subjects to apply. Fail every
-        # folded run so ``transforms_applied`` stays false and the purge retains
-        # their raw for a re-scrape with submissions / full rebuild (#5/#9/#12).
-        # No cube/dim was touched → no purge, no VACUUM.
-        if gate.qd_only_noop:
+        # Empty-scope no-op: the transform committed (dirty cleared) but nothing
+        # was built — the scoped path had no surviving subjects to apply. Cause is
+        # ``gate.noop_reason``: "qd_only" (no submissions), "all_pruned" (roster
+        # gate pruned every group), or "no_subjects" (raw landed but 0 in-scope
+        # subjects). Fail every folded run so ``transforms_applied`` stays false
+        # and the purge retains their raw for a re-scrape / full rebuild
+        # (#5/#9/#12). No cube/dim was touched → no purge, no VACUUM. Dirty was
+        # already cleared in the gate txn, so no re-drive loop.
+        if gate.noop_reason:
+            error = _NOOP_REASON_ERROR.get(gate.noop_reason, _NO_SUBJECTS_ERROR)
             for run_id in scope_run_ids:
-                await self._mark(run_id, "failed", {"error": _QD_ONLY_ERROR})
+                await self._mark(run_id, "failed", {"error": error})
             logger.warning(
-                "QD-only batch (%d folded run(s)): no student submissions; "
-                "nothing built, raw retained for re-scrape / full rebuild",
-                len(scope_run_ids),
+                "scoped no-op (%s, %d folded run(s)): nothing built, raw retained "
+                "for re-scrape / full rebuild",
+                gate.noop_reason, len(scope_run_ids),
             )
             return
 
@@ -663,9 +683,10 @@ class IngestionWorker:
             * ``"disabled"``  — kill-switch OFF; nothing ran, dirty flag left set.
 
         On ``"applied"`` the outcome also carries ``failed_run_ids`` (roster-gate
-        pruned runs), ``qd_only_noop`` (batch had QD raw but no submissions →
-        nothing built), and ``pruned_subjects`` (run_id → its dropped subjects);
-        the caller uses them to mark the folded run set.
+        pruned runs), ``noop_reason`` (set when the scoped path built nothing:
+        "qd_only" / "all_pruned" / "no_subjects"), and ``pruned_subjects``
+        (run_id → its dropped subjects); the caller uses them to mark the folded
+        run set.
 
         Raises on a collapse-guard trip or the §HISTORIC invariant inside
         ``run_all`` refusing to alter a slice the raw layer cannot regenerate —
@@ -765,19 +786,19 @@ class IngestionWorker:
 
         failed_run_ids = _extract_failed_run_ids(xform_result)
         pruned_subjects = _extract_pruned_subjects(xform_result)
-        qd_only_noop = bool(
-            getattr(getattr(xform_result, "scope", None), "qd_only_noop", False)
+        noop_reason = getattr(
+            getattr(xform_result, "scope", None), "noop_reason", None
         )
         logger.info(
             "transforms applied (driver run %s): fact %d rows%s%s",
             run_id, fact_post,
-            "; QD-only no-op (no submissions, nothing built)" if qd_only_noop else "",
+            f"; no-op ({noop_reason}: nothing built)" if noop_reason else "",
             f"; {len(failed_run_ids)} run(s) roster-pruned" if failed_run_ids else "",
         )
         return _GateOutcome(
             outcome="applied",
             failed_run_ids=tuple(failed_run_ids),
-            qd_only_noop=qd_only_noop,
+            noop_reason=noop_reason,
             pruned_subjects=pruned_subjects,
         )
 

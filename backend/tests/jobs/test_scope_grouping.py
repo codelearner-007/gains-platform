@@ -17,8 +17,6 @@ from __future__ import annotations
 import inspect
 from typing import Any, List, Optional
 
-import pytest
-
 import app.repositories.locked_sessions_repository as lock_repo_mod
 from app.transformations import runner as runner_mod
 from app.transformations.runner import (
@@ -110,34 +108,65 @@ def test_subject_with_no_edges_still_appears_as_a_singleton() -> None:
     assert _as_sets(comps) == {frozenset({"s1"}), frozenset({"s2"})}
 
 
-# ── _handle_empty_scope: P7 fail-closed raise + QD-only no-op (#14) ─────────
+# ── _handle_empty_scope: NEVER raise — return a no-op sentinel (#14) ─────────
+# ``_handle_empty_scope`` must NEVER raise: a raise propagates out of the gate,
+# rolls the worker txn back (dirty flag stays set, runs stay 'landed') and the
+# dirty-drain re-drive loops on the same batch forever. Every empty-scope case
+# returns a terminal ``ScopeReport(noop_reason=...)`` instead so the worker fails
+# the folded runs, retains their raw, and clears the dirty flag — no loop.
 
 
-async def test_handle_empty_scope_raises_when_student_raw_landed_all_pruned() -> None:
-    """Safety-critical: landed_student > 0 with zero survivors (the roster gate
-    pruned everything) MUST raise ``SCOPED TRANSFORM ABORTED`` so the txn rolls
-    back and raw is retained — never a silent empty commit."""
-    with pytest.raises(RuntimeError, match="ABORTED"):
-        await _handle_empty_scope(5, TransformResult(), all_pruned=True)
+async def test_handle_empty_scope_all_pruned_returns_sentinel_no_raise(caplog) -> None:
+    """landed_student > 0 with zero survivors (roster gate pruned every group):
+    NO raise. Returns an ``all_pruned`` sentinel with empty survivors so the
+    worker fails the folded run(s) + retains raw instead of looping."""
+    results = TransformResult()
+    with caplog.at_level("WARNING"):
+        out = await _handle_empty_scope(
+            5,
+            results,
+            all_pruned=True,
+            run_subjects={"r": frozenset({"s"})},
+            subjects=frozenset({"s"}),
+        )
+    assert out is results
+    assert out.scope is not None
+    assert out.scope.noop_reason == "all_pruned"
+    assert out.scope.survivors == frozenset()
+    assert out.scope.failed_subjects == frozenset({"s"})
+    assert out.scope.run_subjects == {"r": frozenset({"s"})}
 
 
-async def test_handle_empty_scope_raises_when_student_raw_landed_zero_subjects() -> None:
-    """The other >0 branch: raw landed but the batch produced ZERO in-scope
-    subjects (bad overrides / student_role_id) also fail-closes."""
-    with pytest.raises(RuntimeError, match="ABORTED"):
-        await _handle_empty_scope(5, TransformResult(), all_pruned=False)
+async def test_handle_empty_scope_no_subjects_returns_sentinel_no_raise(caplog) -> None:
+    """landed_student > 0 but the batch produced ZERO in-scope subjects (bad
+    overrides / student_role_id): NO raise. Returns a ``no_subjects`` sentinel
+    (logged at ERROR — a genuine anomaly)."""
+    results = TransformResult()
+    with caplog.at_level("ERROR"):
+        out = await _handle_empty_scope(
+            5,
+            results,
+            all_pruned=False,
+            run_subjects={"r": frozenset({"s"})},
+            subjects=frozenset({"s"}),
+        )
+    assert out is results
+    assert out.scope is not None
+    assert out.scope.noop_reason == "no_subjects"
+    assert out.scope.survivors == frozenset()
+    assert "0 in-scope subjects" in caplog.text or "ZERO in-scope subjects" in caplog.text
 
 
-async def test_handle_empty_scope_qd_only_noop_returns_sentinel(caplog) -> None:
+async def test_handle_empty_scope_qd_only_returns_sentinel(caplog) -> None:
     """landed_student == 0 (question-data-only / empty ingest): NO raise. Attaches
-    the ``qd_only_noop`` sentinel so the worker marks the folded run(s) FAILED +
+    the ``qd_only`` sentinel so the worker marks the folded run(s) FAILED +
     retains raw (never succeeded+purged, which would drop the QD correction)."""
     results = TransformResult()
     with caplog.at_level("WARNING"):
         out = await _handle_empty_scope(0, results, all_pruned=False)
     assert out is results
     assert out.scope is not None
-    assert out.scope.qd_only_noop is True
+    assert out.scope.noop_reason == "qd_only"
     assert out.scope.survivors == frozenset()
     assert "no-op" in caplog.text.lower()
 
