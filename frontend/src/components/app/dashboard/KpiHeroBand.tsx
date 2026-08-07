@@ -16,6 +16,8 @@ interface KpiHeroBandProps {
   loading: boolean;
   /** "school-wide" note on the section-invariant metrics. */
   schoolWideHint?: string;
+  /** Small note under the Grade average figure (e.g. "Excludes quizzes"). */
+  gradeAverageNote?: string;
 }
 
 /**
@@ -35,6 +37,7 @@ export default function KpiHeroBand({
   trend,
   loading,
   schoolWideHint,
+  gradeAverageNote,
 }: KpiHeroBandProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-border shadow-sm">
@@ -54,6 +57,9 @@ export default function KpiHeroBand({
               <p className="mt-0.5 text-4xl font-bold leading-none tabular-nums">
                 {gradeAveragePct}
               </p>
+            )}
+            {gradeAverageNote && !loading && (
+              <p className="mt-1 text-[11px] text-on-brand/70">{gradeAverageNote}</p>
             )}
             {schoolWideHint && !loading && (
               <p className="mt-1 text-[11px] text-on-brand/70">{schoolWideHint}</p>

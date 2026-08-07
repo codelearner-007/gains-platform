@@ -77,6 +77,9 @@ interface Props {
   assessmentDir: SortDirection;
   onAssessmentSort: (col: AssessmentSortKey) => void;
   assessmentLoading: boolean;
+  /** Empty-state label for the By-Assessment table (the Quizzes tab overrides
+   *  it, since that surface renders quiz-only rows). */
+  assessmentEmptyLabel?: string;
 
   // ── By Strand (server-paginated — legacy per-assessment × strand grain) ──
   strandRows: DashboardStrandRow[];
@@ -110,6 +113,7 @@ export default function AssessmentsSummaryTable({
   assessmentDir,
   onAssessmentSort,
   assessmentLoading,
+  assessmentEmptyLabel,
   strandRows,
   strandTotal,
   strandHasMore,
@@ -150,6 +154,7 @@ export default function AssessmentsSummaryTable({
           dir={assessmentDir}
           onSort={onAssessmentSort}
           schoolAverage={schoolAverage}
+          emptyLabel={assessmentEmptyLabel}
         />
       ) : view === 'standard' ? (
         <ByStandard rows={standards} search={search} schoolAverage={schoolAverage} />
@@ -335,6 +340,7 @@ function ByAssessment({
   dir,
   onSort,
   schoolAverage,
+  emptyLabel = 'No assessments match the current filters.',
 }: {
   rows: AssessmentSummaryListRow[];
   total: number;
@@ -345,6 +351,7 @@ function ByAssessment({
   dir: SortDirection;
   onSort: (col: AssessmentSortKey) => void;
   schoolAverage: number | null;
+  emptyLabel?: string;
 }) {
   const { scrollRef, sentinelRef } = useFetchMoreSentinel(
     hasMore,
@@ -368,7 +375,7 @@ function ByAssessment({
           </thead>
           <tbody>
             {total === 0 ? (
-              <EmptyRow cols={6} label="No assessments match the current filters." />
+              <EmptyRow cols={6} label={emptyLabel} />
             ) : (
               rows.map((r) => (
                 <tr key={r.item_id} className="transition-colors hover:bg-accent/30">

@@ -8,6 +8,7 @@ equivalent) on the session before calling these methods.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
@@ -97,6 +98,55 @@ _CQSO_YTD_FILTER_SQL = """\
               AND (CAST(:subject AS TEXT) IS NULL OR dsubj.subject = CAST(:subject AS TEXT))
               AND (CAST(:grade AS TEXT) IS NULL OR dsubj.grade = CAST(:grade AS TEXT))
               AND (CAST(:category AS TEXT) IS NULL OR dsubj.assessment_type = CAST(:category AS TEXT))"""
+
+# ── Quiz differentiator ──────────────────────────────────────────────────────
+# Evan (Athenian principal, 2026-07-31) asked to keep quiz data out of the
+# top-of-report "grade level average". Quizzes are NOT a distinct grading
+# category in the data: dim_item.item_type is the constant 'Test/Quiz' and no
+# assessment_type equals 'Quiz'. The only reliable, cross-school signal is the
+# WORD "quiz" in dim_subject.item_name. Verified 2026-08-06 against local data:
+# the word-boundary rule matches the 352 Athenian quiz items with zero false
+# positives (Quizizz / Quizlet / quizzical are correctly rejected) and ZERO
+# items at CFP / Crestwell — so excluding quizzes is a strict no-op for any
+# school that has none. \y is the Postgres regex word boundary; the (zes)? arm
+# also catches "quizzes".
+QUIZ_ITEM_NAME_SQL_REGEX = r"\yquiz(zes)?\y"
+# Python mirror of the same rule. Runtime filtering uses the SQL form only;
+# this exists as an independent classification oracle for the tests and is kept
+# in lock-step with the SQL form by
+# tests/reports/test_quiz_exclusion.py::TestQuizRegexParity.
+QUIZ_ITEM_NAME_RE = re.compile(r"\bquiz(zes)?\b", re.IGNORECASE)
+
+def _quiz_name_clause(col: str, mode: str) -> str:
+    """SQL boolean applying the quiz rule to an item-name column ``col``.
+
+    ``mode`` (dict-mapped — NEVER interpolated into SQL):
+      * ``exclude`` — keep NON-quiz rows; NULL-safe (a NULL name is not a quiz,
+        and a bare ``!~*`` on NULL is NULL → would wrongly drop the row).
+      * ``only``    — keep quiz-named rows (NULL name → NULL → excluded, correct).
+      * ``all``     — no restriction.
+
+    The regex lives in exactly one place (``QUIZ_ITEM_NAME_SQL_REGEX``); this is
+    the single construction site for every quiz predicate.
+    """
+    clauses = {
+        "exclude": f"({col} IS NULL OR {col} !~* '{QUIZ_ITEM_NAME_SQL_REGEX}')",
+        "only": f"{col} ~* '{QUIZ_ITEM_NAME_SQL_REGEX}'",
+        "all": "TRUE",
+    }
+    try:
+        return clauses[mode]
+    except KeyError as exc:
+        raise ValueError(f"invalid quiz mode: {mode!r}") from exc
+
+
+# Non-quiz predicate for the pooled grade-average aggregations (alias ``dsubj``).
+# NULL-safe: get_school_overall_grade_average LEFT JOINs dim_subject.
+_EXCLUDE_QUIZ_SQL = _quiz_name_clause("dsubj.item_name", "exclude")
+
+# Public By-Assessment ``kind`` vocabulary → clause mode. 'assessment' hides
+# quizzes, 'quiz' shows only quizzes, 'all' shows everything.
+_KIND_TO_QUIZ_MODE = {"assessment": "exclude", "quiz": "only", "all": "all"}
 
 # Instructor filter — exact match against ONE comma-split element of the
 # (comma-joined) ``dim_item.section_instructors`` list (alias ``di``). Mirrors
@@ -349,9 +399,17 @@ class CubeRepository:
         # (DEFAULT_SUMMARY_PAGE_SIZE). Kept defaulted to satisfy arg ordering.
         limit: int = 25,
         offset: int = 0,
+        kind: str = "all",
     ) -> tuple[List[Dict[str, Any]], int]:
         """ONE page of the dashboard "Assessments Summary — By Assessment" grid,
         plus the full filter-scoped total.
+
+        ``kind`` splits the list by the quiz rule (``_quiz_name_clause`` on
+        ``di.item_name``): ``all`` (default, every item — byte-identical to the
+        pre-split behaviour), ``assessment`` (non-quiz only), ``quiz`` (quiz
+        only). Safe at the merge grain: no ``subject_id`` mixes quiz/non-quiz
+        section copies (verified 2026-08-06), so the predicate never splits a
+        merged group and ``assessment`` + ``quiz`` totals sum to ``all``.
 
         Server-side pagination (``limit``/``offset``), sort (``sort_sql`` +
         ``dir_sql``) and name search (``q``) so schools with thousands of
@@ -367,6 +425,10 @@ class CubeRepository:
         RLS scopes every base table to the caller's school.
         """
         order_by = f"{sort_sql} {dir_sql} NULLS LAST, subject_id ASC"
+        quiz_mode = _KIND_TO_QUIZ_MODE.get(kind)
+        if quiz_mode is None:
+            raise ValueError(f"invalid kind: {kind!r}")
+        quiz_clause = _quiz_name_clause("di.item_name", quiz_mode)
         sql = text(
             f"""
             -- One row per section copy that passes the filters. The section /
@@ -388,6 +450,7 @@ class CubeRepository:
                   AND (CAST(:section AS TEXT)  IS NULL OR di.section_name    = CAST(:section AS TEXT))
                   AND {_DI_INSTRUCTOR_FILTER_SQL}
                   AND (CAST(:q AS TEXT)        IS NULL OR di.item_name ILIKE '%' || CAST(:q AS TEXT) || '%')
+                  AND {quiz_clause}
             ),
             -- MERGE: collapse all section copies of an assessment to ONE row,
             -- keyed on subject_id (= uuid_6 of school/subject/type/grade/
@@ -1402,21 +1465,34 @@ class CubeRepository:
         grade: Optional[str] = None,
         category: Optional[str] = None,
         section: Optional[str] = None,
-    ) -> float:
+        quiz_mode: str = "exclude",
+    ) -> Optional[float]:
         """Re-aggregated AVG(cqso.grade_average) over filter scope.
 
         Mirrors DAX ``Grade_Average_Standard_Measure``. Section filter
         ignored at this grain (section is a class-roster construct,
         questions are below it).
+
+        ``quiz_mode`` selects which items count (``_quiz_name_clause``):
+          * ``exclude`` (default) — the top-of-report "grade level average",
+            quizzes dropped (Evan's 2026-07-31 request).
+          * ``only`` — the Quizzes-tab average.
+          * ``all`` — every item.
+        Returns ``None`` for an EMPTY scope (no rows after the predicate) so a
+        scope with no matching items — e.g. an all-quiz subject/grade under
+        'exclude', or a no-quiz school under 'only' — renders blank ("—"),
+        never a misleading 0.0%. On every non-empty scope the value is
+        identical to before (the default mode did not move any real number).
         """
         sql = text(
             f"""
-            SELECT COALESCE(AVG(cqso.grade_average), 0)::float AS overall_avg
+            SELECT AVG(cqso.grade_average)::float AS overall_avg
             FROM cube_question_summary_overall cqso
             LEFT JOIN dim_subject dsubj
               ON dsubj.school_id = cqso.school_id
              AND dsubj.subject_id = cqso.subject_id
             WHERE {_CQSO_YTD_FILTER_SQL}
+              AND {_quiz_name_clause("dsubj.item_name", quiz_mode)}
             """
         )
         result = await self.session.execute(
@@ -1424,7 +1500,11 @@ class CubeRepository:
             _school_filter_params(session_filter, subject, grade, category, section),
         )
         row = result.first()
-        return float(row._mapping["overall_avg"]) if row else 0.0
+        val = row._mapping["overall_avg"] if row else None
+        # AVG over zero rows is NULL → None ("no data"): an all-quiz scope under
+        # 'exclude' (or a no-quiz scope under 'only') is blank, not 0.0%. A real
+        # 0% average (rows exist, all scored 0) is a genuine 0.0, not None.
+        return float(val) if val is not None else None
 
     async def get_subject_overview(
         self,
@@ -1441,6 +1521,10 @@ class CubeRepository:
         the cards stay visible) and NOT by section/instructor: the per-question
         OVERALL cube has no section grain, so the subject cards stay school-wide,
         exactly like the KPI strip and legacy PowerBI.
+
+        Quiz-named items are EXCLUDED (``_EXCLUDE_QUIZ_SQL``) so the per-subject
+        cards match the top-of-report grade average (both drop quizzes). No-op
+        for schools without quizzes.
         """
         sql = text(
             f"""
@@ -1452,6 +1536,7 @@ class CubeRepository:
              AND dsubj.subject_id = cqso.subject_id
             WHERE {_CQSO_YTD_FILTER_SQL}
               AND dsubj.subject IS NOT NULL AND dsubj.subject <> ''
+              AND {_EXCLUDE_QUIZ_SQL}
             GROUP BY dsubj.subject
             ORDER BY dsubj.subject
             """

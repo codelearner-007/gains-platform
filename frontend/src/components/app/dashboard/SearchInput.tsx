@@ -9,6 +9,9 @@ interface SearchInputProps {
   loading?: boolean;
   resultCount?: number;
   placeholder?: string;
+  /** Plural noun for the row type being searched (drives the placeholder,
+   *  aria label and result-count announcement). Defaults to "assessments". */
+  noun?: string;
   className?: string;
 }
 
@@ -24,9 +27,11 @@ export default function SearchInput({
   onChange,
   loading,
   resultCount,
-  placeholder = 'Search assessments…',
+  placeholder,
+  noun = 'assessments',
   className,
 }: SearchInputProps) {
+  const ph = placeholder ?? `Search ${noun}…`;
   return (
     <div className={['relative w-full sm:w-56', className ?? ''].join(' ')}>
       <Search
@@ -37,8 +42,8 @@ export default function SearchInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        aria-label="Search assessments by name"
+        placeholder={ph}
+        aria-label={`Search ${noun} by name`}
         className="h-9 pl-8 pr-8"
       />
       <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
@@ -60,7 +65,7 @@ export default function SearchInput({
           ? ''
           : value
             ? `${resultCount} ${resultCount === 1 ? 'result' : 'results'}`
-            : 'Showing all assessments'}
+            : `Showing all ${noun}`}
       </span>
     </div>
   );

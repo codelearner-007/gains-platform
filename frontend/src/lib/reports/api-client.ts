@@ -43,6 +43,8 @@ export interface AssessmentSummaryQuery {
   q?: string;
   sort?: string; // 'date' | 'item' | 'grade' | 'students' | 'average'
   dir?: 'asc' | 'desc';
+  /** Splits the By-Assessment grid: 'assessment' (non-quiz), 'quiz', or 'all'. */
+  kind?: 'assessment' | 'quiz' | 'all';
   limit?: number;
   offset?: number;
 }
@@ -171,6 +173,7 @@ export const reportsApi = {
         q: opts.q,
         sort: opts.sort,
         dir: opts.dir,
+        kind: opts.kind,
         limit: opts.limit != null ? String(opts.limit) : undefined,
         offset: opts.offset != null ? String(opts.offset) : undefined,
       })}`,
@@ -327,14 +330,19 @@ export const reportsKeys = {
   assessmentSummaries: (
     filters?: AssessmentFilters,
     schoolId?: string,
-    opts?: { q?: string; sort?: string; dir?: string },
+    opts?: { q?: string; sort?: string; dir?: string; kind?: string },
   ) =>
     [
       ...reportsKeys.all,
       'assessment-summaries',
       filters ?? {},
       schoolId ?? null,
-      { q: opts?.q ?? '', sort: opts?.sort ?? 'date', dir: opts?.dir ?? 'desc' },
+      {
+        q: opts?.q ?? '',
+        sort: opts?.sort ?? 'date',
+        dir: opts?.dir ?? 'desc',
+        kind: opts?.kind ?? 'all',
+      },
     ] as const,
   studentsBrowse: (
     filters?: AssessmentFilters,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,6 +42,7 @@ async def list_assessment_summaries(
     q: Optional[str] = Query(default=None, max_length=200),
     sort: str = Query(default="date"),
     dir: str = Query(default="desc"),
+    kind: Literal["assessment", "quiz", "all"] = Query(default="all"),
     limit: int = Query(default=DEFAULT_SUMMARY_PAGE_SIZE, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db_with_rls),
@@ -64,6 +65,7 @@ async def list_assessment_summaries(
         q=q_norm,
         sort=sort,
         direction=dir,
+        kind=kind,
         limit=limit,
         offset=offset,
     )

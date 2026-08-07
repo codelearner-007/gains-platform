@@ -20,6 +20,7 @@ from app.schemas.reports import (
     QuestionOverall,
     StandardSummaryRow,
 )
+from app.services.reports import _strip_html
 from app.utils.coercion import safe_str, to_float, to_int
 
 # Default page size for the dashboard's By-Assessment grid — single source of
@@ -56,11 +57,16 @@ class AssessmentService:
         direction: str = "desc",
         limit: int = DEFAULT_SUMMARY_PAGE_SIZE,
         offset: int = 0,
+        kind: str = "all",
     ) -> AssessmentSummaryPage:
         """One server-paginated page of the dashboard By-Assessment grid (rows
         with grade_average + total_students) plus the full scoped total. Server
         sort + name search so a school with thousands of assessments only
-        transfers one page per request."""
+        transfers one page per request.
+
+        ``kind`` splits the grid: ``all`` (every item), ``assessment`` (non-quiz
+        — the Assessments tab), ``quiz`` (the Quizzes tab). See
+        ``CubeRepository._quiz_name_clause``."""
         sort_sql = self._SORT_SQL.get(sort, "assessment_date")
         dir_sql = "ASC" if direction.lower() == "asc" else "DESC"
         rows_raw, total = await self.cube.get_assessment_summary_page(
@@ -75,6 +81,7 @@ class AssessmentService:
             dir_sql=dir_sql,
             limit=limit,
             offset=offset,
+            kind=kind,
         )
         rows = [
             AssessmentSummaryListRow.model_validate(
@@ -143,7 +150,7 @@ class AssessmentService:
                 incorrect_details_name=safe_str(q.get("incorrect_details_name")),
                 standards=safe_str(q.get("standards")),
                 standard_raw=safe_str(q.get("strand_raw")),
-                description=safe_str(q.get("description")),
+                description=_strip_html(safe_str(q.get("description"))),
             )
             for q in rows
         ]
@@ -157,7 +164,7 @@ class AssessmentService:
                 identifier=row.get("identifier"),
                 strand=row.get("strand"),
                 schoology_standard=row.get("schoology_standard"),
-                description=row.get("description"),
+                description=_strip_html(safe_str(row.get("description"))),
                 total_questions=to_int(row.get("total_questions")),
                 total_standards=to_int(row.get("total_standards")),
                 total_possible_point=to_float(row.get("total_possible_point")),

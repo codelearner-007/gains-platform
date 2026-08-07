@@ -55,7 +55,13 @@ async def test_standard_summary_athenian_anchor(db: AsyncSession):
     assert p.kpis.total_standards == 989
     assert p.kpis.total_students == 555
     assert p.kpis.total_questions == 21614
-    assert approx(p.kpis.grade_average, 0.779052)
+    # grade_average re-baselined 0.779052 -> 0.777362 (2026-08-06): the top-of-
+    # report grade average now EXCLUDES quiz-named items (Evan's 2026-07-31 ask;
+    # get_school_overall_grade_average + _EXCLUDE_QUIZ_SQL). Everything else on
+    # this anchor is unchanged — total_questions still COUNTS the 1090 quiz
+    # question-rows, and the per-standard rollup below is untouched — proving the
+    # exclusion is scoped to the pooled average only.
+    assert approx(p.kpis.grade_average, 0.777362)
     assert approx(p.kpis.at_target_pct, 0.509606)
 
     row = next(r for r in p.standards if r.cpalms_standard == "MAFS.912.A-APR.1.1")

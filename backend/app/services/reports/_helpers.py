@@ -84,23 +84,40 @@ def _classify_alignment_cause(
 
 logger = logging.getLogger(__name__)
 
-# Match HTML tags while *preserving* Schoology's `<https://…>` image-URL
-# placeholders. The negative lookahead skips `<` followed by a URL scheme so
-# the frontend's formatQuestionHtml can still convert it into an <img>.
-_HTML_TAG_RE = re.compile(r"<(?!https?://)[^>]+>")
+# Match LITERAL HTML tags while *preserving* Schoology's `<https://…>` image-URL
+# placeholders (the frontend's formatQuestionHtml converts those to <img>). A
+# real tag opens with a letter (optionally after "/"): requiring that letter
+# means a bare less-than used as a math operator ("x < 5", "y > 2") is NOT
+# treated as a tag, so inequality standards keep their operators.
+_HTML_TAG_RE = re.compile(r"<(?!https?://)/?[a-zA-Z][^>]*>")
+# ENTITY-ESCAPED tags, e.g. "&lt;i&gt;", "&lt;/p&gt;". Same letter-after-"&lt;"
+# rule: a bare "&lt;" operator (followed by a space/digit) is left alone here
+# and decoded to "<" in the final pass.
+_HTML_ENTITY_TAG_RE = re.compile(r"&lt;/?(?!https?://)[a-zA-Z][^&]*&gt;")
 
 
 def _strip_html(s: Optional[str]) -> str:
+    """Reduce a description to plain text for display, in three ordered passes.
+
+    The order matters so a literal less-than/greater-than in the text — math
+    inequalities like "x < 5", frequently stored entity-escaped as "x &lt; 5" —
+    survives, while both literal and entity-escaped MARKUP is removed:
+
+      1. Strip literal tags (``<p>``, ``<li>``, ``<i>`` …), keeping the
+         ``<https://…>`` image placeholder.
+      2. Strip entity-escaped tags (``&lt;i&gt;`` …) — identified by a letter
+         right after ``&lt;`` — BEFORE decoding, so a decoded ``<`` from a real
+         inequality can never be mistaken for a tag delimiter and eaten.
+      3. Decode the remaining entities (``&lt;`` → "<", ``&ldquo;`` → “ …) LAST.
+
+    Descriptions render as React text nodes (escaped), so this is a display
+    concern, not XSS; both markup forms are removed regardless.
+    """
     if not s:
         return ""
-    # Decode entities FIRST, then strip tags, so entity-escaped markup
-    # (e.g. "&lt;b&gt;x&lt;/b&gt;") is resurrected to real tags and then
-    # removed — never rendered live. Decoding after stripping would leave
-    # those tags intact (a latent XSS/format landmine). Legacy's cleaned
-    # descriptions are entity-free plain text; `<https://…>` image
-    # placeholders carry no entities, so unescape leaves them untouched and
-    # the tag regex's URL-scheme lookahead still preserves them.
-    return _HTML_TAG_RE.sub("", _html.unescape(s)).strip()
+    s = _HTML_TAG_RE.sub("", s)
+    s = _HTML_ENTITY_TAG_RE.sub("", s)
+    return _html.unescape(s).strip()
 
 
 def _format_pct(v: float) -> str:
