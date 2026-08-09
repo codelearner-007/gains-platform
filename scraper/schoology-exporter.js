@@ -90,6 +90,13 @@ Due-date window  (default: due within the school's due_date_window_days, up to t
                          leaves the due date empty on many hand-made test assessments;
                          without this they are invisible to discovery.
 
+Session
+  --session <YYYY-YY>    Override the academic session data is filed under (e.g.
+                         2026-27), instead of the school's configured/computed year.
+                         subject_id includes the session, so a new-year assessment
+                         filed under the current year won't collide with a prior
+                         year's real data of the same name.
+
 Execution
   --dry-run              Discovery only: no browser, no export, no upload, no trigger
   --headed               Visible browser (default: headless)
@@ -116,9 +123,51 @@ const DUE_UNTIL = (() => {
   }
   return raw;
 })();
+const SESSION_OVERRIDE = (() => {
+  const raw = flagValue("--session");
+  if (raw === null) return null;
+  if (!/^\d{4}-\d{2}$/.test(raw)) {
+    console.error(`ERROR: --session must be YYYY-YY (got "${raw}")`);
+    process.exit(2);
+  }
+  // Reject a non-consecutive pair (e.g. "2026-99"): academicSession() only ever
+  // emits consecutive years, so the second field must be (firstYear + 1) mod 100.
+  // A non-consecutive value is always a typo that would silently misfile data.
+  const [startYear, endYear] = raw.split("-");
+  if (Number(endYear) !== (Number(startYear) + 1) % 100) {
+    console.error(`ERROR: --session years must be consecutive (got "${raw}")`);
+    process.exit(2);
+  }
+  return raw;
+})();
+// --session rewrites the academic year (the top storage-path segment, hence the
+// subject_id) for EVERY school discovered in a run. Refuse to run it pool-wide,
+// which would misfile every school's data; require an explicit --school scope.
+if (SESSION_OVERRIDE && !SCHOOL_FILTER) {
+  console.error(
+    'ERROR: --session must be scoped with --school <name> (it rewrites the ' +
+    'academic year for every school in the run otherwise).'
+  );
+  process.exit(2);
+}
 
 // ── Environment ──────────────────────────────────────────────────────────────
 const SCHOOLOGY_URL = process.env.SCHOOLOGY_URL || "https://app.schoology.com";
+
+// True iff `urlStr` is a SAME-ORIGIN Schoology app page whose PATH marks a
+// logged-in session (/home or /courses). Guards against a NOT-logged-in URL that
+// merely contains "/home" in its query (e.g. ".../login?destination=/home") or a
+// cross-origin SSO interstitial whose path/query contains those tokens — a
+// full-string `.includes` would misread either as "logged in". Unparseable → false.
+function isLoggedInAppUrl(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    return u.origin === new URL(SCHOOLOGY_URL).origin
+      && (u.pathname.includes("/home") || u.pathname.includes("/courses"));
+  } catch {
+    return false;
+  }
+}
 const BACKEND_BASE_URL = (process.env.BACKEND_BASE_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
 const INGESTION_TRIGGER_SECRET = process.env.INGESTION_TRIGGER_SECRET || "";
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -503,10 +552,18 @@ async function discoverAssessments(school, creds) {
   // school — and session is the FIRST path segment, so every row would land under
   // the wrong academic year.
   const computedAcademicYear = academicSession(school.timezone, currentDate);
-  const session = school.currentSession || computedAcademicYear;
-  if (school.currentSession && school.currentSession !== computedAcademicYear) {
+  // Precedence: explicit --session flag > school's configured pin > computed year.
+  const session = SESSION_OVERRIDE || school.currentSession || computedAcademicYear;
+  if (SESSION_OVERRIDE) {
+    slog.info("session overridden by --session flag", {
+      flag: SESSION_OVERRIDE, configured: school.currentSession || null, computed: computedAcademicYear,
+    });
+  }
+  if (!SESSION_OVERRIDE && school.currentSession && school.currentSession !== computedAcademicYear) {
     // Worth one line: an override that disagrees with the computed year is either
     // a deliberate pin or a stale config, and only the operator can tell which.
+    // Suppressed when --session is set (the flag log above reports the effective
+    // session; this line would otherwise cite the now-superseded configured pin).
     slog.info("session override differs from the computed academic year", {
       configured: school.currentSession, computed: computedAcademicYear,
     });
@@ -943,7 +1000,7 @@ class SchoologySession {
     await this.page.goto(SCHOOLOGY_URL, { waitUntil: "domcontentloaded", timeout: 30000 });
     await sleep(2000);
 
-    if (this.page.url().includes("/home") || this.page.url().includes("/courses")) {
+    if (isLoggedInAppUrl(this.page.url())) {
       this.log.debug("already logged in");
       return;
     }
@@ -955,8 +1012,16 @@ class SchoologySession {
     await this.page.fill('input[name="pass"]', this.creds.password);
     await this.page.click('input[type="submit"][value="Log in"]');
     try {
-      await this.page.waitForURL((url) => url.pathname.includes("/home") || url.pathname.includes("/courses"), { timeout: 30000 });
+      await this.page.waitForURL((url) => url.pathname.includes("/home") || url.pathname.includes("/courses"), { timeout: 60000 });
     } catch (err) {
+      // The post-login redirect can be slow (Schoology throttling / a slow SSO
+      // hop). If we DID land on the logged-in app, the wait predicate simply
+      // fired late — treat that as success rather than failing a working login.
+      const landed = this.page.url();
+      if (isLoggedInAppUrl(landed)) {
+        this.log.info("login successful", { note: "post-timeout url check", url: landed });
+        return;
+      }
       // Login form re-rendered / never navigated → credential rejection, fatal.
       if (await this.page.$('input[name="mail"]').catch(() => null)) {
         throw new CredentialError(`Schoology login rejected (${this.creds.source}) for "${this.school.name}"`);
