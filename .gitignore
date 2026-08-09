@@ -85,3 +85,4 @@ data/Assessment Analysis Dashboard.pbix
 
 # Seed-loader backups (left by supabase/seeds/refresh_standards.py)
 supabase/seeds/*.csv.bak
+.vercel
