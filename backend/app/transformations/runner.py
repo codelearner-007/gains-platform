@@ -69,6 +69,12 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.jobs.db import dispose_engine, session_scope
+from app.transformations.standard_alias_resolver import (
+    _CODE_SHAPE,
+    _COPY_COLS,
+    AliasResolver,
+    _cpalms_from_alias,
+)
 
 
 logger = logging.getLogger("transformations")
@@ -1560,22 +1566,11 @@ async def run_all(
 async def _augment_standard_aliases(session: AsyncSession) -> int:
     """Insert missing Schoology-alias rows into dim_standard (idempotent).
 
-    Reuses the resolver in supabase/seeds/augment_standard_aliases.py — the
-    single source of truth for alias→base resolution — driven over the live
-    async session. Returns the number of rows inserted.
+    Uses the resolver in ``app.transformations.standard_alias_resolver`` — the
+    single source of truth for alias→base resolution (the seed CLI re-imports
+    the identical module) — driven over the live async session. Returns the
+    number of rows inserted.
     """
-    seeds_dir = _os.path.abspath(
-        _os.path.join(_BACKEND_DIR, "..", "supabase", "seeds")
-    )
-    if seeds_dir not in _sys.path:
-        _sys.path.insert(0, seeds_dir)
-    from augment_standard_aliases import (  # type: ignore
-        _CODE_SHAPE,
-        _COPY_COLS,
-        AliasResolver,
-        _cpalms_from_alias,
-    )
-
     base_rows = (
         await session.execute(
             text(
