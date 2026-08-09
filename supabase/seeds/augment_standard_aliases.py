@@ -8,8 +8,7 @@ alongside ``SC.3.N.1.1``). The per-question rollups join the *raw* label an
 assessment emitted (``dim_question_data.standard``) to ``dim_standard`` via an
 **exact** ``schoology_standard`` match. Any used alias with no exact row
 collapses into the synthetic ``Other`` bucket and silently corrupts the
-rollups (see ``docs/audit/legacy-schoology-cpalms-mapping.md`` and
-``tests/api/test_standards_alias_coverage.py``).
+rollups (see ``docs/audit/legacy-schoology-cpalms-mapping.md``).
 
 Legacy's Spark pipeline produced these alias rows by observing every distinct
 standard string in the gradebook CSVs and substring-joining each back to the
@@ -41,6 +40,12 @@ alias`` so re-running is idempotent (``ON CONFLICT DO NOTHING``).
 Aliases with no resolvable base are returned (and printed) for follow-up — we
 never invent a standard whose family does not exist.
 
+The resolution logic itself (the regexes + ``AliasResolver``) lives in
+``backend/app/transformations/standard_alias_resolver.py`` — the single source
+of truth, shared with the transform runner and pinned by
+``backend/tests/transformations/test_standard_alias_resolver.py``. This seed
+loads that module by file path (below) and drives it with psycopg2.
+
 Usage:
     python supabase/seeds/augment_standard_aliases.py
     python supabase/seeds/augment_standard_aliases.py --dry-run
@@ -49,95 +54,47 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib.util as _ilu
 import os
-import re
 import sys
-from typing import Optional
+from pathlib import Path as _Path
 
 import psycopg2
 
 DEFAULT_DSN = "postgresql://postgres:postgres@127.0.0.1:56322/postgres"
 
-# A label is a real standard CODE (not junk like "Social Studies") when it has
-# both a dot and a digit — mirrors the cube's join expectation and the
-# coverage test's _CODE_SHAPE_REGEX.
-_CODE_SHAPE = re.compile(r"\.[^.]*[0-9]|[0-9][^.]*\.")
-
-# Leading Schoology course prefix: "<ALPHA>.<grade>." where grade is K, a
-# 1-2 digit number, or a banded range like 9-12, and the remainder starts a
-# base stem (an uppercase letter). E.g. "SCI.3.", "ELA.5.", "SOC.9-12.".
-_COURSE_PREFIX = re.compile(r"^[A-Z]+\.(?:K|\d{1,2}|\d{1,2}-\d{1,2})\.(?=[A-Z])")
-_GRADE_TOKEN = re.compile(r"^[A-Z]+\.(K|\d{1,2}|\d{1,2}-\d{1,2})\.")
-
-# Base attribute columns copied verbatim onto the alias row.
-_COPY_COLS = (
-    "identifier",
-    "standard_new",
-    "strand",
-    "subject",
-    "cluster",
-    "description",
-    "custom_cleaned_description",
-    "direct_link",
-    "cognitive_complexity_rating",
-    "language",
-    "grader",
-    "last_change_date_time",
-    "rundate",
+# ── Single source of truth for alias→base resolution ────────────────────────
+# The resolver logic lives in the BACKEND package (backend/app/transformations/
+# standard_alias_resolver.py) so it ships inside the backend Docker image (whose
+# build context is backend/ only — supabase/seeds/ is NOT in that image). This
+# seed loads it by FILE PATH: a plain `import app.transformations...` would run
+# the backend package __init__ (which imports .runner → SQLAlchemy + the whole
+# transform stack) and break the seed's minimal-deps contract. spec_from_file_
+# location loads exactly one stdlib-only file, so augment()/main()/the CLI and
+# supabase/seeds/load_standards.py keep referencing these names unchanged and run
+# the IDENTICAL logic off that one source file (a separate module instance from
+# the runner's, but behaviorally identical — pinned by the parity test in
+# backend/tests/transformations/test_standard_alias_resolver.py).
+_resolver_path = (
+    _Path(__file__).resolve().parents[2]
+    / "backend" / "app" / "transformations" / "standard_alias_resolver.py"
 )
-
-
-def _drop_leaf(code: str) -> str:
-    return code.rsplit(".", 1)[0] if "." in code else code
-
-
-def _cpalms_from_alias(alias: str) -> str:
-    """Legacy: drop the first two dot-segments of the Schoology code."""
-    return ".".join(alias.split(".")[2:])
-
-
-class AliasResolver:
-    """Resolves an assessment alias code to a base ``schoology_standard``."""
-
-    def __init__(self, codes: list[str], subject_by_code: dict[str, str]):
-        self._codes = [c for c in codes if c]
-        self._subject = subject_by_code
-
-    def resolve(self, alias: str) -> Optional[str]:
-        # 1) longest base that is a substring of the alias (legacy primary).
-        best: Optional[str] = None
-        for code in self._codes:
-            if code in alias and (best is None or len(code) > len(best)):
-                best = code
-        if best is not None:
-            return best
-
-        # 2) strip the Schoology course prefix, then walk the hierarchy.
-        m = _COURSE_PREFIX.match(alias)
-        core = alias[m.end():] if m else alias
-        gm = _GRADE_TOKEN.match(alias)
-        grade = gm.group(1) if gm else None
-
-        cand = core
-        while "." in cand:
-            matches = [
-                c
-                for c in self._codes
-                if c == cand
-                or c.endswith("." + cand)
-                or _drop_leaf(c) == cand
-                or _drop_leaf(c).endswith("." + cand)
-            ]
-            if matches:
-                if grade:
-                    grade_re = re.compile(r"(^|\.)" + re.escape(grade) + r"\.")
-                    graded = [c for c in matches if grade_re.search(c)]
-                    if graded:
-                        matches = graded
-                matches.sort(key=len)
-                return matches[0]
-            cand = _drop_leaf(cand)
-        return None
+if not _resolver_path.is_file():
+    raise RuntimeError(
+        f"standard_alias_resolver.py not found at {_resolver_path}; this seed "
+        "requires the backend module (repo layout: supabase/seeds/ and backend/ "
+        "are siblings under the repo root)."
+    )
+_spec = _ilu.spec_from_file_location("gains_standard_alias_resolver", _resolver_path)
+_mod = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+_CODE_SHAPE = _mod._CODE_SHAPE
+_COURSE_PREFIX = _mod._COURSE_PREFIX
+_GRADE_TOKEN = _mod._GRADE_TOKEN
+_COPY_COLS = _mod._COPY_COLS
+_drop_leaf = _mod._drop_leaf
+_cpalms_from_alias = _mod._cpalms_from_alias
+AliasResolver = _mod.AliasResolver
 
 
 def augment(conn, *, dry_run: bool = False) -> tuple[int, list[str]]:

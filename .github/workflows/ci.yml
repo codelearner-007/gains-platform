@@ -90,6 +90,11 @@ jobs:
           # the frozen storage-key contract with the scraper.
           [ -f tests/jobs/test_prod_transform_guard.py ] && files="$files tests/jobs/test_prod_transform_guard.py"
           [ -f tests/jobs/test_storage_key_contract.py ] && files="$files tests/jobs/test_storage_key_contract.py"
+          # Alias resolver: pins the prod-import fix (resolver moved into the
+          # backend package so it ships in the image) + single-source parity
+          # with the seed. Imports runner at module level, so it would have
+          # caught the ModuleNotFoundError this fix resolves.
+          [ -f tests/transformations/test_standard_alias_resolver.py ] && files="$files tests/transformations/test_standard_alias_resolver.py"
           pytest -q $files
 
   scraper:
