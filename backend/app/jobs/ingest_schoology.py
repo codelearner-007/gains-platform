@@ -50,6 +50,7 @@ import json
 import logging
 import sys
 from dataclasses import dataclass
+from pathlib import PurePath
 from uuid import UUID
 
 from sqlalchemy import text
@@ -60,8 +61,11 @@ from app.jobs.blob_client import BlobClient, BlobInfo, make_blob_client
 from app.jobs.db import dispose_engine, session_scope
 from app.jobs.file_path_parser import (
     PathParseError,
+    classify_hmh_file_type,
+    is_hmh_file,
     parse_relative_path,
 )
+from app.jobs.parsers import hmh_assessed_standards as parse_hmh_assessed_standards
 from app.jobs.parsers import question_data as parse_question_data
 from app.jobs.parsers import student_submission as parse_student_submission
 from app.jobs.parsers import submission_summary as parse_submission_summary
@@ -87,6 +91,13 @@ class SchoolRow:
     short_name: str
     schoology_building_id: str
     is_active: bool
+    # General `schools` identity columns: schoology_school_id is the staging join
+    # key (schools.schoology_school_id = user_school_id); student_role_id is the
+    # students-only fact filter key. Loaded onto the runtime row so a parser can
+    # stamp them — the HMH parser is the first such consumer; Schoology rows carry
+    # their identity in the CSV/folder path and ignore these.
+    schoology_school_id: str | None = None
+    student_role_id: str | None = None
 
 
 @dataclass
@@ -153,7 +164,8 @@ async def _assert_privileged_db_user(session: AsyncSession) -> None:
 async def _list_schools(session: AsyncSession, school_filter: str | None) -> list[SchoolRow]:
     """Load active schools; optionally filter by short_name OR schoology_building_id."""
     sql = """
-        SELECT school_id, name, short_name, schoology_building_id, is_active
+        SELECT school_id, name, short_name, schoology_building_id, is_active,
+               schoology_school_id, student_role_id
         FROM schools
         WHERE is_active = TRUE
     """
@@ -171,6 +183,8 @@ async def _list_schools(session: AsyncSession, school_filter: str | None) -> lis
             short_name=row.short_name,
             schoology_building_id=row.schoology_building_id,
             is_active=row.is_active,
+            schoology_school_id=row.schoology_school_id,
+            student_role_id=row.student_role_id,
         )
         for row in result
     ]
@@ -435,15 +449,23 @@ async def _process_blob(
     """Hash → idempotency check → parse → INSERT → record."""
     summary.files_seen += 1
 
+    # Classify by basename first: HMH exports (prefix "HMH-") carry their
+    # dimensions in the CSV body and do NOT follow the Schoology folder layout,
+    # so they bypass parse_relative_path. Schoology files take the exact prior
+    # path (the prefixes are disjoint), so their routing is unchanged.
+    file_name = PurePath(blob.path).name
+    parsed_path = None
     try:
-        parsed_path = parse_relative_path(blob.path)
+        if is_hmh_file(file_name):
+            file_type = classify_hmh_file_type(file_name)
+        else:
+            parsed_path = parse_relative_path(blob.path)
+            file_type = parsed_path.file_type
     except PathParseError as e:
         logger.warning("[%s] skipping %s: %s", school.short_name, blob.path, e)
         summary.error_count += 1
         summary.errors.append(f"{school.short_name}/{blob.path}: {e}")
         return
-
-    file_type = parsed_path.file_type
 
     rows_inserted = 0
     try:
@@ -496,6 +518,33 @@ async def _process_blob(
             )
             rows_inserted = await _insert_rows(
                 session, _RAW_QUESTION_DATA_SQL, qd_rows
+            )
+        elif file_type == "hmh_assessed_standards":
+            # HMH tenants must carry the sentinel identity columns the transforms
+            # key on; fail loudly rather than let staging silently drop the rows.
+            if school.schoology_school_id is None or school.student_role_id is None:
+                raise ValueError(
+                    f"HMH ingest for {school.short_name!r} requires schools."
+                    "schoology_school_id and schools.student_role_id to be set"
+                )
+            hmh_result = parse_hmh_assessed_standards.parse(
+                csv_bytes=raw_bytes,
+                school_id=school.school_id,
+                ingestion_run_id=run_id,
+                source_file_path=blob.path,
+                source_file_hash=file_hash,
+                schoology_school_id=school.schoology_school_id,
+                student_role_id=school.student_role_id,
+                file_name=file_name,
+            )
+            # File 02 produces BOTH the score spine (student-submission rows) and
+            # the standards carrier (question-data rows); the fact resolves each
+            # row's standard through dim_question_data, so both are required.
+            rows_inserted = await _insert_rows(
+                session, _RAW_STUDENT_SUBMISSION_SQL, hmh_result.submission_rows
+            )
+            rows_inserted += await _insert_rows(
+                session, _RAW_QUESTION_DATA_SQL, hmh_result.question_rows
             )
         else:
             logger.warning(

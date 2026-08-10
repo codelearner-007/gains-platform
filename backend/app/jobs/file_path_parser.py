@@ -151,6 +151,32 @@ def classify_file_type(file_name: str) -> str:
     raise PathParseError(f"unknown CSV file_type for filename: {file_name!r}")
 
 
+# ── HMH-curriculum exports ───────────────────────────────────────────────────
+# HMH schools are not on Schoology, so their exports do not follow the Schoology
+# triplet naming or the 5-6-part folder layout. They are routed by an "HMH-"
+# filename prefix and carry all their dimensions (session/subject/grade/...) in
+# the CSV body, so they bypass parse_relative_path entirely. The prefix is
+# disjoint from the Schoology prefixes above, so Schoology routing is unaffected.
+HMH_FILE_PREFIX = "HMH-"
+
+
+def is_hmh_file(file_name: str) -> bool:
+    """True for HMH-curriculum export files (routed by the 'HMH-' prefix)."""
+    return file_name.startswith(HMH_FILE_PREFIX)
+
+
+def classify_hmh_file_type(file_name: str) -> str:
+    """Map an HMH export filename to its file_type identifier.
+
+        HMH-AssessedStandards-*   -> hmh_assessed_standards
+
+    Raises PathParseError for unknown HMH file kinds.
+    """
+    if file_name.startswith("HMH-AssessedStandards"):
+        return "hmh_assessed_standards"
+    raise PathParseError(f"unknown HMH CSV file_type for filename: {file_name!r}")
+
+
 def make_relative(blob_path: str | PurePath, root: str | PurePath) -> tuple[str, ...]:
     """Compute the parts of `blob_path` relative to `root`.
 

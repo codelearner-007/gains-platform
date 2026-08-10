@@ -506,6 +506,9 @@ Permanent reference docs in `docs/`. Read the relevant file before guessing — 
 - `docs/audit/05_facts.md` — `fact_student_submission` grain + dedupe semantics. Read before touching `07_facts/*.sql`.
 - `docs/audit/06_cubes_and_reports.md` — cube → repo → frontend wiring; KPI formulas. Read before touching `09_cubes/*.sql` or `backend/app/repositories/cube_repository.py`.
 
+**Alternate ingestion sources**
+- `docs/audit/hmh_known_issues.md` — HMH-curriculum (non-Schoology) ingestion: known issues (the pre-existing cluster/benchmark standards-collapse that HMH data is first to surface), the fix options + trade-offs, and the by-design limits (HMH exports carry no chosen-answer, so IAD is empty). Read before touching `backend/app/jobs/parsers/hmh_assessed_standards.py` or before changing standards-seed identifiers.
+
 **Bug-fix writeups** (historical record of major numeric fixes — read to avoid undoing them)
 - `docs/audit/fixes/01_q12_multiselect_applied.md` — Q12 multi-select aggregation collapse at the cube `totals` CTE. Read before touching `cube_question_summary.sql` or `cube_question_summary_overall.sql`.
 - `docs/audit/fixes/02_assessment_misfiling_prod_runbook.md` — **SUPERSEDED by 03** (kept for provenance of the misfiling SQL patterns; the fixes were applied to prod via the reload in 03, not this runbook's in-place convergence SQL). Read 03 for the current procedure.
