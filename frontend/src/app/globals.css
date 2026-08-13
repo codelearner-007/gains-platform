@@ -64,6 +64,16 @@
 
   /* Brand gradient — used sparingly on hero/CTA accents. */
   --gradient-brand: linear-gradient(135deg, oklch(0.62 0.22 273) 0%, oklch(0.65 0.22 305) 100%);
+  /* Logo-matched gradient (red → orange → yellow → yellow-green → green), lifted
+     from gains-logo.png's G-A-I-N-S letter colors. Headline accent only. */
+  --gradient-logo: linear-gradient(
+    90deg,
+    oklch(0.58 0.22 25) 0%,
+    oklch(0.68 0.19 55) 25%,
+    oklch(0.83 0.18 92) 50%,
+    oklch(0.78 0.17 120) 75%,
+    oklch(0.68 0.15 155) 100%
+  );
   --gradient-brand-soft:
     radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.62 0.22 273 / 0.10), transparent 70%);
   /* Auth split-screen brand panel wash (frozen to the prior inline value). */
@@ -214,6 +224,16 @@
 /* Brand text gradient for headline accents. */
 .text-gradient-brand {
   background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Logo-matched text gradient (red → orange → yellow → green), for headline
+   accents that should read as an extension of the GAINS wordmark. */
+.text-gradient-logo {
+  background: var(--gradient-logo);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
