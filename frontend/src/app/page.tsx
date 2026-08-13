@@ -14,6 +14,7 @@ import { SiteNav } from '@/components/common/SiteNav';
 import { SiteFooter } from '@/components/common/SiteFooter';
 import { Button } from '@/components/ui/button';
 import { getMe } from '@/lib/server/me';
+import { CONTACT_PHONE_HREF } from '@/lib/core/contact';
 
 export const metadata: Metadata = {
   description:
@@ -235,7 +236,7 @@ export default async function Home() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Button asChild size="xl" variant="destructive">
-                <a href="tel:+19543254346">
+                <a href={CONTACT_PHONE_HREF}>
                   Contact Edvance Learning
                 </a>
               </Button>
