@@ -73,7 +73,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/30">
       <SiteNav />
-      <main id="main-content" className="flex-1 pt-14">
+      <main id="main-content" className="flex-1">
         {/* ==================== HEADER ==================== */}
         <section className="relative overflow-hidden">
           <Image
@@ -100,14 +100,35 @@ export default function PrivacyPage() {
             </p>
           </div>
         </section>
+        <div className='relative '>
+          <Image
+                src="/legal/privacy/privacyIcon1.png"
+                alt=""
+                aria-hidden="true"
+                width={280}
+                height={280}
+                loading="lazy"
+                className="hidden xl:block absolute -translate-x-[50%]  top-1/4 opacity-10 "
+              />
+              <Image
+                src="/legal/privacy/privacyIcon2.png"
+                alt=""
+                aria-hidden="true"
+                width={280}
+                height={280}
+                loading="lazy"
+                className="hidden xl:block absolute right-0 bottom-1/4 translate-x-[55%] opacity-10 "
+              />
+              <div className="max-w-6xl mx-auto px-6 py-16 sm:py-20">
+          
 
-        <div className="max-w-6xl mx-auto px-6 py-16 sm:py-20">
           <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-16">
             {/* ==================== SIDEBAR TOC ==================== */}
             <PageTocNav sections={SECTIONS} />
 
             {/* ==================== CONTENT ==================== */}
             <div className="max-w-2xl space-y-14">
+              
               {SECTIONS.map((section, index) => (
                 <section key={section.slug} id={section.slug} className="space-y-3 scroll-mt-24">
                   <h2 className="flex items-center gap-3 font-serif text-2xl font-semibold text-foreground">
@@ -132,6 +153,8 @@ export default function PrivacyPage() {
             </div>
           </div>
         </div>
+        </div>
+        
       </main>
     </div>
   );
