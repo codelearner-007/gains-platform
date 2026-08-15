@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, GraduationCap, Target, TrendingUp, FileText } from 'lucide-react';
 import { Providers } from '@/components/common/Providers';
 import { BrandWordmark } from '@/components/common/BrandWordmark';
@@ -37,9 +38,9 @@ export default function AuthLayout({
       <div className="w-full lg:w-1/2 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
         <Link
           href="/"
-          className="absolute left-6 top-6 sm:left-8 sm:top-8 inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="group absolute left-6 top-6 sm:left-8 sm:top-8 inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-card/40 hover:text-foreground"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4 transition-transform duration-150 ease-out group-hover:-translate-x-0.5" />
           Back to home
         </Link>
 
@@ -56,21 +57,24 @@ export default function AuthLayout({
 
       {/* Right: brand panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden border-l border-border">
-        <div className="absolute inset-0 bg-auth-panel" />
-        <div className="absolute inset-0 bg-dotgrid opacity-60" />
+        <Image
+          src="/auth/login/login.jpg"
+          alt=""
+          fill
+          priority
+          sizes="50vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/70 to-black/50" />
 
         <div className="relative z-10 w-full flex items-center justify-center p-12">
           <div className="max-w-md space-y-10">
             <div className="space-y-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/40 px-3 py-1 text-xs font-medium text-foreground backdrop-blur">
-                <GraduationCap className="h-3 w-3" />
-                By invitation
-              </span>
-              <h2 className="text-3xl font-semibold tracking-tight text-foreground leading-tight">
+              <h2 className="text-3xl font-semibold tracking-tight text-white leading-tight">
                 Assessment clarity{' '}
-                <span className="text-gradient-brand">for every classroom.</span>
+                <span className="text-destructive">for every classroom.</span>
               </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm text-white/70 leading-relaxed">
                 GAINS turns your school&apos;s assessments into clear, trusted
                 reports on students, standards, and growth.
               </p>
@@ -80,16 +84,16 @@ export default function AuthLayout({
               {highlights.map((item) => (
                 <li
                   key={item.title}
-                  className="flex items-start gap-3 rounded-lg border border-border/60 bg-card/40 backdrop-blur p-4 transition-colors hover:border-primary/30"
+                  className="flex items-start gap-3 rounded-lg border border-white/15 bg-black/40 backdrop-blur-md p-4 transition-colors hover:border-primary/40"
                 >
-                  <div className="p-2 rounded-md bg-primary-soft text-primary shrink-0">
+                  <div className="p-2 rounded-md bg-destructive/15 text-destructive shrink-0">
                     <item.icon className="h-4 w-4" />
                   </div>
                   <div className="space-y-0.5">
-                    <h4 className="text-sm font-medium text-foreground leading-none">
+                    <h4 className="text-sm font-medium text-white leading-none">
                       {item.title}
                     </h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-xs text-white/70 leading-relaxed">
                       {item.description}
                     </p>
                   </div>
@@ -97,12 +101,12 @@ export default function AuthLayout({
               ))}
             </ul>
 
-            <p className="text-xs text-muted-foreground pt-4 border-t border-border/40">
+            <p className="text-xs text-white/60 pt-4 border-t border-white/15">
               GAINS. A product of{' '}
               <a
                 href="https://edvancelearning.us/"
                 rel="noopener noreferrer"
-                className="font-medium text-foreground hover:text-primary transition-colors"
+                className="font-medium text-white hover:text-primary transition-colors"
               >
                 Edvance Learning
               </a>

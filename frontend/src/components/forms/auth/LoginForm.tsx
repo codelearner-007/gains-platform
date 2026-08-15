@@ -95,7 +95,7 @@ export function LoginForm({ onSubmit, loading }: Props) {
           )}
         />
 
-        <Button type="submit" size="lg" className="w-full" disabled={loading}>
+        <Button type="submit" variant="destructive" size="lg" className="w-full" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
