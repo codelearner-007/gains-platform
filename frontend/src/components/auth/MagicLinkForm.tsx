@@ -88,7 +88,7 @@ export function MagicLinkForm() {
       {status === 'error' && errorMessage && (
         <p className="text-xs text-destructive">{errorMessage}</p>
       )}
-      <Button type="submit" variant="destructive" size="lg" className="w-full" disabled={status === 'pending'}>
+      <Button type="submit" variant="default" size="lg" className="w-full" disabled={status === 'pending'}>
         {status === 'pending' ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" /> Sending link…

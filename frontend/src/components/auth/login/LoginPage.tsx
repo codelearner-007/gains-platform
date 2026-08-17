@@ -134,7 +134,7 @@ function MethodTab({ id, controls, active, onClick, icon, label }: MethodTabProp
         'inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
-          ? 'bg-destructive text-destructive-foreground border-destructive shadow-sm'
+          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
           : 'border-border text-muted-foreground hover:text-foreground',
       )}
     >

@@ -130,9 +130,7 @@ export default async function Home() {
                   <Link href={ctaHref}>{ctaLabel}</Link>
                 </Button>
                 <Button asChild size="xl" variant="outline">
-                  <a href="https://edvancelearning.us/" rel="noopener noreferrer">
-                    Talk to us
-                  </a>
+                  <a href={CONTACT_PHONE_HREF}>Talk to us</a>
                 </Button>
               </div>
 
