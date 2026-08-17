@@ -72,7 +72,7 @@ export default function AuthLayout({
             <div className="space-y-3">
               <h2 className="text-3xl font-semibold tracking-tight text-white leading-tight">
                 Assessment clarity{' '}
-                <span className="text-destructive">for every classroom.</span>
+                <span className="text-primary">for every classroom.</span>
               </h2>
               <p className="text-sm text-white/70 leading-relaxed">
                 GAINS turns your school&apos;s assessments into clear, trusted
@@ -86,7 +86,7 @@ export default function AuthLayout({
                   key={item.title}
                   className="flex items-start gap-3 rounded-lg border border-white/15 bg-black/40 backdrop-blur-md p-4 transition-colors hover:border-primary/40"
                 >
-                  <div className="p-2 rounded-md bg-destructive/15 text-destructive shrink-0">
+                  <div className="p-2 rounded-md bg-primary/15 text-primary shrink-0">
                     <item.icon className="h-4 w-4" />
                   </div>
                   <div className="space-y-0.5">

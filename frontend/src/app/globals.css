@@ -4,8 +4,8 @@
    GAINS — Design System (v1)
    Premium developer-tool aesthetic. Restrained palette, high
    contrast, generous whitespace. Inspired by Linear / Stripe /
-   Resend. Single primary (indigo-violet), tasteful accent
-   gradients. Light-only.
+   Resend. Single primary (red-orange, from logo "G"), tasteful
+   accent gradients. Light-only.
    ============================================================ */
 
 :root {
@@ -25,9 +25,9 @@
   --popover-foreground: var(--foreground);
 
   /* Brand */
-  --primary: oklch(0.50 0.21 273);             /* indigo-600-ish */
+  --primary: oklch(0.58 0.21 30);              /* red-orange, from logo "G" */
   --primary-foreground: oklch(0.99 0 0);
-  --primary-soft: oklch(0.96 0.025 273);       /* tint behind primary chips */
+  --primary-soft: oklch(0.96 0.03 30);         /* tint behind primary chips */
 
   /* Neutral grays */
   --secondary: oklch(0.97 0.005 268);
@@ -38,15 +38,15 @@
   --accent-foreground: oklch(0.22 0.015 268);
 
   /* Semantic */
-  --destructive: oklch(0.58 0.22 25);
+  --destructive: oklch(0.55 0.24 10);          /* crimson-rose, distinct from primary's 30° */
   --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.66 0.15 155);
+  --success: oklch(26.659% 0.00904 159.611);
   --warning: oklch(0.74 0.16 75);
 
   /* Lines & inputs */
   --border: oklch(0.92 0.006 268);
   --input: oklch(0.92 0.006 268);
-  --ring: oklch(0.62 0.18 273 / 0.45);
+  --ring: oklch(0.58 0.21 30 / 0.45);
 
   /* Charts */
   --chart-1: oklch(0.62 0.18 273);
@@ -60,10 +60,10 @@
   --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 1px 1px 0 rgb(15 23 42 / 0.03);
   --shadow-md: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.04);
   --shadow-lg: 0 12px 32px -8px rgb(15 23 42 / 0.12), 0 4px 8px -4px rgb(15 23 42 / 0.06);
-  --shadow-glow: 0 0 0 1px rgb(99 102 241 / 0.25), 0 8px 24px -6px rgb(99 102 241 / 0.35);
+  --shadow-glow: 0 0 0 1px rgb(232 56 12 / 0.25), 0 8px 24px -6px rgb(232 56 12 / 0.35);
 
   /* Brand gradient — used sparingly on hero/CTA accents. */
-  --gradient-brand: linear-gradient(135deg, oklch(0.62 0.22 273) 0%, oklch(0.65 0.22 305) 100%);
+  --gradient-brand: linear-gradient(135deg, oklch(0.58 0.21 30) 0%, oklch(0.68 0.19 55) 100%);
   /* Logo-matched gradient (red → orange → yellow → yellow-green → green), lifted
      from gains-logo.png's G-A-I-N-S letter colors. Headline accent only. */
   --gradient-logo: linear-gradient(
@@ -75,11 +75,11 @@
     oklch(0.68 0.15 155) 100%
   );
   --gradient-brand-soft:
-    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.62 0.22 273 / 0.10), transparent 70%);
+    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.58 0.21 30 / 0.10), transparent 70%);
   /* Auth split-screen brand panel wash (frozen to the prior inline value). */
   --gradient-auth-panel:
-    radial-gradient(ellipse at top right, oklch(0.62 0.22 273 / 0.30), transparent 55%),
-    radial-gradient(ellipse at bottom left, oklch(0.65 0.22 305 / 0.25), transparent 55%);
+    radial-gradient(ellipse at top right, oklch(0.58 0.21 30 / 0.30), transparent 55%),
+    radial-gradient(ellipse at bottom left, oklch(0.68 0.19 55 / 0.25), transparent 55%);
 
   /* ── Pixel-frozen report/dashboard color tokens ─────────────
      FROZEN to exact pre-tokenization pixels. Do NOT retheme via
@@ -163,7 +163,7 @@
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
   ::selection {
-    background: oklch(0.74 0.16 273 / 0.30);
+    background: oklch(0.58 0.21 30 / 0.30);
   }
 }
 

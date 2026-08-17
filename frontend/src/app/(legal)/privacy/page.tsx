@@ -132,7 +132,7 @@ export default function PrivacyPage() {
               {SECTIONS.map((section, index) => (
                 <section key={section.slug} id={section.slug} className="space-y-3 scroll-mt-24">
                   <h2 className="flex items-center gap-3 font-serif text-2xl font-semibold text-foreground">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-destructive/10 text-sm font-semibold text-destructive">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">
                       {index + 1}
                     </span>
                     {section.title}

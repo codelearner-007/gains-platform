@@ -126,7 +126,7 @@ export default async function Home() {
               </p>
 
               <div className="mt-10 flex flex-col sm:flex-row gap-3">
-                <Button asChild size="xl" variant="destructive">
+                <Button asChild size="xl" variant="default">
                   <Link href={ctaHref}>{ctaLabel}</Link>
                 </Button>
                 <Button asChild size="xl" variant="outline">
@@ -157,7 +157,7 @@ export default async function Home() {
           />
           <div className="relative max-w-6xl mx-auto px-6">
             <div className="max-w-2xl mx-auto text-center">
-              <p className="text-sm font-medium text-destructive">Why schools choose us</p>
+              <p className="text-sm font-medium text-primary">Why schools choose us</p>
               <h2 className="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">
                 Clarity, not more dashboards.
               </h2>
@@ -189,7 +189,7 @@ export default async function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
               {/* Steps */}
               <div>
-                <p className="text-sm font-medium text-destructive">How it works</p>
+                <p className="text-sm font-medium text-primary">How it works</p>
                 <h2 className="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">
                   It fits the way your school already works.
                 </h2>
@@ -235,7 +235,7 @@ export default async function Home() {
               teachers reporting in days, not months.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Button asChild size="xl" variant="destructive">
+              <Button asChild size="xl" variant="default">
                 <a href={CONTACT_PHONE_HREF}>
                   Contact Edvance Learning
                 </a>
@@ -268,7 +268,7 @@ function ValueCard({
 }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-7 card-hover">
-      <div className="h-11 w-11 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center mb-5">
+      <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-5">
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
@@ -288,7 +288,7 @@ function FeatureCard({
 }) {
   return (
     <li className="rounded-2xl border border-border bg-card p-6 card-hover">
-      <div className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center mb-4">
+      <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4">
         <Icon className="h-4 w-4" />
       </div>
       <h3 className="text-sm font-semibold text-foreground mb-1.5">{title}</h3>
@@ -308,7 +308,7 @@ function Step({
 }) {
   return (
     <li className="flex gap-4">
-      <div className="h-9 w-9 shrink-0 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs font-semibold">
+      <div className="h-9 w-9 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
         {number}
       </div>
       <div>
