@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Environment Variables — ignore actual secrets, never ignore example templates
+.env
+.env.local
+.env.production
+.env.staging
+.env.test
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Local dump scratch space (BACKUP_TMP_DIR default)
+*.dump
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

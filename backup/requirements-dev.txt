@@ -1,0 +1,15 @@
+-r requirements.txt
+
+# Testing
+pytest>=8.0.0
+pytest-cov>=4.1.0
+
+# Code Quality
+black>=24.0.0
+mypy>=1.8.0
+# Pinned so linting is deterministic: local and CI run the exact same ruff, and a
+# newer release cannot fail CI on pre-existing code by promoting new default rules.
+ruff==0.15.13
+
+# Type Stubs
+boto3-stubs[s3]==1.43.78

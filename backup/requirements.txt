@@ -1,0 +1,11 @@
+# Cloudflare R2 (S3-compatible client)
+boto3==1.43.78
+
+# HTTP Client (Resend REST calls)
+httpx==0.28.1
+
+# Validation & Settings
+pydantic-settings==2.12.0
+
+# Environment
+python-dotenv==1.2.1
