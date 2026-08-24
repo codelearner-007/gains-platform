@@ -10,14 +10,14 @@ export default async function AuthAwareButtons({ variant = 'primary' }: { varian
 
   if (variant === 'nav') {
     return (
-      <Button asChild size="sm">
+      <Button asChild size="sm" variant="default" className="rounded-full">
         <Link href={href}>{label}</Link>
       </Button>
     );
   }
 
   return (
-    <Button asChild size="xl" className="btn-glow">
+    <Button asChild size="xl" variant="default">
       <Link href={href}>
         {label}
         <ArrowRight className="ml-1 h-4 w-4" />

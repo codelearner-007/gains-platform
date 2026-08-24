@@ -35,9 +35,11 @@ export function LoginPage({ googleEnabled }: LoginPageProps) {
   const surfaceError = ssoError ?? error;
 
   return (
-    <Card className="w-full">
+    <Card className="w-full rounded-2xl">
       <CardHeader className="space-y-1.5">
-        <CardTitle className="text-xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight">
+          Welcome back
+        </CardTitle>
         <CardDescription>Sign in to continue to your dashboard.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -63,7 +65,7 @@ export function LoginPage({ googleEnabled }: LoginPageProps) {
         <div
           role="tablist"
           aria-label="Email sign-in method"
-          className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/40 p-1"
+          className="grid grid-cols-2 gap-1"
         >
           <MethodTab
             id={passwordTabId}
@@ -129,11 +131,11 @@ function MethodTab({ id, controls, active, onClick, icon, label }: MethodTabProp
       tabIndex={active ? 0 : -1}
       onClick={onClick}
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out',
+        'inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
-          ? 'bg-card text-foreground shadow-sm border border-border'
-          : 'text-muted-foreground hover:text-foreground',
+          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+          : 'border-border text-muted-foreground hover:text-foreground',
       )}
     >
       {icon}
